@@ -1,50 +1,71 @@
-# Library Management Website
+# Library Management Website (LBMS)
 
 ## Introduction
-**Library Management Website** is a modern library management web application built on the Jakarta EE platform. The project is designed to simplify book management, borrowing/returning processes, and integrate with domestic shipping services.
+**Library Management Website (LBMS)** is a modern library management system built on the **Jakarta EE 10** platform. The project aims to provide a comprehensive solution for managing book inventories, tracking borrow/return cycles, and integrating with third-party services like domestic shipping (GHTK) and email notifications.
 
 ## 🚀 Key Features
 
 ### For Users
-*   **Account Management:** Register, login, and update personal information.
-*   **Book Search:** Search for books by category, author, and status.
-*   **Borrow & Reserve:** Online borrowing process and book reservation when a book is currently borrowed by others.
-*   **Shipping Tracking:** View order status through GHTK integration.
-*   **Password Recovery:** System sends tokens via email to reset passwords.
+*   **Account Management:** Register, login, and update personal profiles.
+*   **Advanced Search:** Filter books by category, author, status, and keywords.
+*   **Borrow & Reservation:** Online borrowing workflow and a reservation system for books currently on loan.
+*   **Shipping Integration:** Real-time order tracking via **Giao Hang Tiet Kiem (GHTK)**.
+*   **Security:** Password recovery with secure email-based tokens.
 
-### For Administrators (Admin)
-*   **Book Management:** CRUD (Create, Read, Update, Delete) book information and categories.
-*   **User Management:** Approve accounts, manage roles, and lock users.
-*   **Borrow/Return Management:** Monitor borrowing records and process book returns.
-*   **Shipping Management:** Create orders and track them with shipping partners.
+### For Administrators
+*   **Inventory Control:** Full CRUD operations for books and categories.
+*   **User Governance:** Approve new accounts, manage roles, and enforce account locks.
+*   **Transaction Monitoring:** Oversee all borrowing records and handle returns.
+*   **Logistics Management:** Generate shipping labels and track delivery status.
 
-## 🛠 Technologies Used
+## 🛠 Tech Stack
 *   **Language:** Java 11
-*   **Framework:** Jakarta EE 10 (Servlet, JSP, JSTL)
+*   **Framework:** Jakarta EE 10 (Servlet 6.0, JSP, JSTL)
 *   **Build Tool:** Maven 3.8+
-*   **Persistence:** JPA/Hibernate
-*   **Database:** (Configurable in `persistence.xml`)
-*   **Third-party Services:** GHTK API (Shipping), Email Service.
+*   **Persistence:** JPA 3.1 / Hibernate
+*   **Server:** Apache Tomcat 10.1+ (Recommended)
+*   **API Integrations:** GHTK API (Shipping), JavaMail / SMTP (Email).
 
 ## 📁 Directory Structure
-*   `src/main/java/com/lbms/controller`: Handles HTTP requests.
-*   `src/main/java/com/lbms/service`: Contains the business logic of the application.
-*   `src/main/java/com/lbms/dao`: Data Access Object layer.
-*   `src/main/java/com/lbms/model`: Defines entities.
-*   `src/main/webapp/WEB-INF/views`: Contains JSP views.
+*   `src/main/java/com/lbms/controller`: Servlet layers handling HTTP requests.
+*   `src/main/java/com/lbms/service`: Business logic and service implementations.
+*   `src/main/java/com/lbms/dao`: Data Access Object (DAO) layer using JPA.
+*   `src/main/java/com/lbms/model`: Entity classes and database mappings.
+*   `src/main/java/com/lbms/filter`: Authentication and Role-based access filters.
+*   `src/main/java/com/lbms/util`: Helper classes (DB Connector, Crypto, Config).
+*   `src/main/webapp/WEB-INF/views`: JSP template files.
 
-## ⚙️ Installation and Setup
+## ⚙️ Project Setup
+
+### Prerequisites
+*   JDK 11
+*   Maven 3.8+
+*   Apache Tomcat 10.1+
+*   MySQL/PostgreSQL (Configurable)
+
+### Installation Steps
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/Group-1-SE1908/LibraryManagementWebsite.git
     ```
-2.  **Database Configuration:** Update connection details in [src/main/resources/META-INF/persistence.xml](src/main/resources/META-INF/persistence.xml).
-3.  **Initialize Database:** Run the [src/main/resources/schema.sql](src/main/resources/schema.sql) file in your DB manager.
+2.  **Database Configuration:** 
+    Update [src/main/resources/META-INF/persistence.xml](src/main/resources/META-INF/persistence.xml) with your database credentials.
+3.  **Initialize Database:**
+    Execute [src/main/resources/schema.sql](src/main/resources/schema.sql) and [src/main/resources/seed_accounts.sql](src/main/resources/seed_accounts.sql) to set up tables and initial data.
 4.  **Build the project:**
     ```bash
     mvn clean install
     ```
-5.  **Deployment:** Deploy the `.war` file to servers like Tomcat 10+ or GlassFish/Payara.
+5.  **Deployment:** 
+    Deploy the generated `.war` file to your Tomcat server.
+
+## 📝 Contribution & Development Rules
+To maintain consistency, all contributors must follow these rules:
+
+### Commit Convention
+Strictly follow the format: `[UC-xx][Name] Action`
+*   **Example:** `[UC-10][QuanNM] Create User Account`
+*   **UC-xx:** Refers to the Use Case ID being implemented.
 
 ---
-*This project is under development.*
+*This project is currently under active development.*
