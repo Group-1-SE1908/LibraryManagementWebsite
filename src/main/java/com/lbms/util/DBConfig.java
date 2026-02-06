@@ -1,0 +1,4 @@
+package com.lbms.util;
+
+public class DBConfig {
+}

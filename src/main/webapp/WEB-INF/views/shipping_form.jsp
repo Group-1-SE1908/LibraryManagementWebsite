@@ -1,0 +1,1 @@
+<%-- shipping_form.jsp placeholder --%>
