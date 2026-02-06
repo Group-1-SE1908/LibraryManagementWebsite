@@ -4,167 +4,184 @@ GO
 USE LibraryDB;
 GO
 
+CREATE TABLE Role (
+  role_id INT IDENTITY(1,1) PRIMARY KEY,
+  role_name NVARCHAR(255) NOT NULL
+);
+GO
+
 CREATE TABLE [User] (
-  [user_id] int PRIMARY KEY,
-  [name] nvarchar(255),
-  [email] nvarchar(255),
-  [password] nvarchar(255),
-  [role_id] int
-)
+  user_id INT IDENTITY(1,1) PRIMARY KEY,
+  name NVARCHAR(255),
+  email NVARCHAR(255),
+  password NVARCHAR(255),
+  role_id INT
+);
 GO
 
-CREATE TABLE [Role] (
-  [role_id] int PRIMARY KEY,
-  [role_name] nvarchar(255)
-)
+CREATE TABLE Permission (
+  permission_id INT IDENTITY(1,1) PRIMARY KEY,
+  permission_name NVARCHAR(255),
+  role_id INT
+);
 GO
 
-CREATE TABLE [Permission] (
-  [permission_id] int PRIMARY KEY,
-  [permission_name] nvarchar(255),
-  [role_id] int
-)
+CREATE TABLE Category (
+  category_id INT IDENTITY(1,1) PRIMARY KEY,
+  category_name NVARCHAR(255)
+);
 GO
 
-CREATE TABLE [Book] (
-  [book_id] int PRIMARY KEY,
-  [title] nvarchar(255),
-  [author] nvarchar(255),
-  [price] decimal,
-  [availability] boolean,
-  [category_id] int
-)
+CREATE TABLE Book (
+  book_id INT IDENTITY(1,1) PRIMARY KEY,
+  title NVARCHAR(255),
+  author NVARCHAR(255),
+  price DECIMAL(10,2),
+  availability BIT,
+  category_id INT
+);
 GO
 
-CREATE TABLE [Category] (
-  [category_id] int PRIMARY KEY,
-  [category_name] nvarchar(255)
-)
+CREATE TABLE Cart (
+  cart_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT
+);
 GO
 
-CREATE TABLE [Cart] (
-  [cart_id] int PRIMARY KEY,
-  [user_id] int
-)
+CREATE TABLE CartItem (
+  cart_item_id INT IDENTITY(1,1) PRIMARY KEY,
+  cart_id INT,
+  book_id INT,
+  quantity INT
+);
 GO
 
-CREATE TABLE [CartItem] (
-  [cart_item_id] int PRIMARY KEY,
-  [cart_id] int,
-  [book_id] int,
-  [quantity] int
-)
+CREATE TABLE Borrowing (
+  borrowing_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  borrow_date DATETIME,
+  return_date DATETIME,
+  status NVARCHAR(255)
+);
 GO
 
-CREATE TABLE [Borrowing] (
-  [borrowing_id] int PRIMARY KEY,
-  [user_id] int,
-  [borrow_date] datetime,
-  [return_date] datetime,
-  [status] nvarchar(255)
-)
+CREATE TABLE BorrowItem (
+  borrow_item_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  book_id INT,
+  quantity INT
+);
 GO
 
-CREATE TABLE [BorrowItem] (
-  [borrow_item_id] int PRIMARY KEY,
-  [borrowing_id] int,
-  [book_id] int,
-  [quantity] int
-)
+CREATE TABLE Delivery (
+  delivery_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  delivery_status NVARCHAR(255),
+  shipping_code NVARCHAR(255)
+);
 GO
 
-CREATE TABLE [Delivery] (
-  [delivery_id] int PRIMARY KEY,
-  [borrowing_id] int,
-  [delivery_status] nvarchar(255),
-  [shipping_code] nvarchar(255)
-)
+CREATE TABLE Payment (
+  payment_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  amount DECIMAL(10,2),
+  payment_date DATETIME,
+  method NVARCHAR(255)
+);
 GO
 
-CREATE TABLE [Payment] (
-  [payment_id] int PRIMARY KEY,
-  [borrowing_id] int,
-  [amount] decimal,
-  [payment_date] datetime,
-  [method] nvarchar(255)
-)
+CREATE TABLE Feedback (
+  feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  book_id INT,
+  content NVARCHAR(MAX),
+  rating INT,
+  created_at DATETIME
+);
 GO
 
-CREATE TABLE [Feedback] (
-  [feedback_id] int PRIMARY KEY,
-  [user_id] int,
-  [book_id] int,
-  [content] text,
-  [rating] int,
-  [created_at] datetime
-)
+CREATE TABLE Notification (
+  notification_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  message NVARCHAR(MAX),
+  created_at DATETIME
+);
 GO
 
-CREATE TABLE [Notification] (
-  [notification_id] int PRIMARY KEY,
-  [user_id] int,
-  [message] text,
-  [created_at] datetime
-)
+CREATE TABLE LibraryInfo (
+  info_id INT IDENTITY(1,1) PRIMARY KEY,
+  description NVARCHAR(MAX)
+);
 GO
 
-CREATE TABLE [LibraryInfo] (
-  [info_id] int PRIMARY KEY,
-  [description] text
-)
+CREATE TABLE password_reset_token (
+  token_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT NOT NULL,
+  token VARCHAR(255) NOT NULL,
+  expired_at DATETIME NOT NULL,
+  used BIT DEFAULT 0,
+  created_at DATETIME DEFAULT GETDATE()
+);
 GO
 
-CREATE TABLE [password_reset_token] (
-  [token_id] int PRIMARY KEY IDENTITY(1, 1),
-  [user_id] int NOT NULL,
-  [token] varchar(255) NOT NULL,
-  [expired_at] datetime NOT NULL,
-  [used] boolean DEFAULT (false),
-  [created_at] datetime DEFAULT (CURRENT_TIMESTAMP)
-)
+-- FOREIGN KEYS
+
+ALTER TABLE [User] 
+ADD CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
 GO
 
-ALTER TABLE [password_reset_token] ADD FOREIGN KEY ([user_id]) REFERENCES [User] ([user_id])
+ALTER TABLE Permission 
+ADD CONSTRAINT FK_Permission_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
 GO
 
-ALTER TABLE [User] ADD FOREIGN KEY ([role_id]) REFERENCES [Role] ([role_id])
+ALTER TABLE Book 
+ADD CONSTRAINT FK_Book_Category FOREIGN KEY (category_id) REFERENCES Category(category_id);
 GO
 
-ALTER TABLE [Permission] ADD FOREIGN KEY ([role_id]) REFERENCES [Role] ([role_id])
+ALTER TABLE Cart 
+ADD CONSTRAINT FK_Cart_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
 
-ALTER TABLE [Book] ADD FOREIGN KEY ([category_id]) REFERENCES [Category] ([category_id])
+ALTER TABLE CartItem 
+ADD CONSTRAINT FK_CartItem_Cart FOREIGN KEY (cart_id) REFERENCES Cart(cart_id);
 GO
 
-ALTER TABLE [Cart] ADD FOREIGN KEY ([user_id]) REFERENCES [User] ([user_id])
+ALTER TABLE CartItem 
+ADD CONSTRAINT FK_CartItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
 GO
 
-ALTER TABLE [CartItem] ADD FOREIGN KEY ([cart_id]) REFERENCES [Cart] ([cart_id])
+ALTER TABLE Borrowing 
+ADD CONSTRAINT FK_Borrowing_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
 
-ALTER TABLE [CartItem] ADD FOREIGN KEY ([book_id]) REFERENCES [Book] ([book_id])
+ALTER TABLE BorrowItem 
+ADD CONSTRAINT FK_BorrowItem_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
 GO
 
-ALTER TABLE [Borrowing] ADD FOREIGN KEY ([user_id]) REFERENCES [User] ([user_id])
+ALTER TABLE BorrowItem 
+ADD CONSTRAINT FK_BorrowItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
 GO
 
-ALTER TABLE [BorrowItem] ADD FOREIGN KEY ([borrowing_id]) REFERENCES [Borrowing] ([borrowing_id])
+ALTER TABLE Delivery 
+ADD CONSTRAINT FK_Delivery_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
 GO
 
-ALTER TABLE [BorrowItem] ADD FOREIGN KEY ([book_id]) REFERENCES [Book] ([book_id])
+ALTER TABLE Payment 
+ADD CONSTRAINT FK_Payment_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
 GO
 
-ALTER TABLE [Delivery] ADD FOREIGN KEY ([borrowing_id]) REFERENCES [Borrowing] ([borrowing_id])
+ALTER TABLE Feedback 
+ADD CONSTRAINT FK_Feedback_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
 
-ALTER TABLE [Payment] ADD FOREIGN KEY ([borrowing_id]) REFERENCES [Borrowing] ([borrowing_id])
+ALTER TABLE Feedback 
+ADD CONSTRAINT FK_Feedback_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
 GO
 
-ALTER TABLE [Feedback] ADD FOREIGN KEY ([user_id]) REFERENCES [User] ([user_id])
+ALTER TABLE Notification 
+ADD CONSTRAINT FK_Notification_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
 
-ALTER TABLE [Feedback] ADD FOREIGN KEY ([book_id]) REFERENCES [Book] ([book_id])
-GO
-
-ALTER TABLE [Notification] ADD FOREIGN KEY ([user_id]) REFERENCES [User] ([user_id])
+ALTER TABLE password_reset_token 
+ADD CONSTRAINT FK_ResetToken_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
