@@ -1,3 +1,9 @@
+CREATE DATABASE LibraryDB;
+GO
+
+USE LibraryDB;
+GO
+
 CREATE TABLE [User] (
   [user_id] int PRIMARY KEY,
   [name] nvarchar(255),
