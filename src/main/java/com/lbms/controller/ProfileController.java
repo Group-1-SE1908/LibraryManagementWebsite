@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet(urlPatterns = {"/profile", "/change-password"})
+@WebServlet(urlPatterns = { "/profile", "/change-password" })
 public class ProfileController extends HttpServlet {
     private ProfileService profileService;
 
@@ -87,7 +87,7 @@ public class ProfileController extends HttpServlet {
 
         profileService.changePassword(currentUser.getId(), oldPassword, newPassword);
         req.getSession().setAttribute("flash", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
-        // logout
+
         req.getSession().invalidate();
         resp.sendRedirect(req.getContextPath() + "/login");
     }
