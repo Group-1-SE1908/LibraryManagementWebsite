@@ -1,140 +1,187 @@
--- LBMS schema (SQL Server)
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'lbms')
-BEGIN
-    CREATE DATABASE lbms;
-END
+CREATE DATABASE LibraryDB;
 GO
 
-USE lbms;
+USE LibraryDB;
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[roles]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE roles (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        name NVARCHAR(50) NOT NULL UNIQUE
-    );
-END
+CREATE TABLE Role (
+  role_id INT IDENTITY(1,1) PRIMARY KEY,
+  role_name NVARCHAR(255) NOT NULL
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[users]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE users (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        email NVARCHAR(255) NOT NULL UNIQUE,
-        password_hash NVARCHAR(100) NOT NULL,
-        full_name NVARCHAR(255) NULL,
-        status NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-        role_id BIGINT NOT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
-    );
-END
+CREATE TABLE [User] (
+  user_id INT IDENTITY(1,1) PRIMARY KEY,
+  name NVARCHAR(255),
+  email NVARCHAR(255),
+  password NVARCHAR(255),
+  role_id INT
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[categories]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE categories (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        name NVARCHAR(120) NOT NULL UNIQUE
-    );
-END
+CREATE TABLE Permission (
+  permission_id INT IDENTITY(1,1) PRIMARY KEY,
+  permission_name NVARCHAR(255),
+  role_id INT
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[books]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE books (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        isbn NVARCHAR(32) NOT NULL UNIQUE,
-        title NVARCHAR(255) NOT NULL,
-        author NVARCHAR(255) NOT NULL,
-        publisher NVARCHAR(255) NULL,
-        publish_year INT NULL,
-        quantity INT NOT NULL DEFAULT 0,
-        status NVARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
-        category_id BIGINT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_books_category FOREIGN KEY (category_id) REFERENCES categories(id)
-    );
-    CREATE INDEX idx_books_title ON books (title);
-    CREATE INDEX idx_books_author ON books (author);
-END
+CREATE TABLE Category (
+  category_id INT IDENTITY(1,1) PRIMARY KEY,
+  category_name NVARCHAR(255)
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[borrow_records]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE borrow_records (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        user_id BIGINT NOT NULL,
-        book_id BIGINT NOT NULL,
-        borrow_date DATE NOT NULL,
-        due_date DATE NOT NULL,
-        return_date DATE NULL,
-        status NVARCHAR(30) NOT NULL,
-        fine_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_borrow_user FOREIGN KEY (user_id) REFERENCES users(id),
-        CONSTRAINT fk_borrow_book FOREIGN KEY (book_id) REFERENCES books(id)
-    );
-    CREATE INDEX idx_borrow_user_status ON borrow_records (user_id, status);
-    CREATE INDEX idx_borrow_book ON borrow_records (book_id);
-END
+CREATE TABLE Book (
+  book_id INT IDENTITY(1,1) PRIMARY KEY,
+  title NVARCHAR(255),
+  author NVARCHAR(255),
+  price DECIMAL(10,2),
+  availability BIT,
+  category_id INT
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[reservations]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE reservations (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        user_id BIGINT NOT NULL,
-        book_id BIGINT NOT NULL,
-        status NVARCHAR(30) NOT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_res_user FOREIGN KEY (user_id) REFERENCES users(id),
-        CONSTRAINT fk_res_book FOREIGN KEY (book_id) REFERENCES books(id)
-    );
-    CREATE INDEX idx_res_user ON reservations (user_id);
-    CREATE INDEX idx_res_book ON reservations (book_id);
-END
+CREATE TABLE Cart (
+  cart_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[shipments]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE shipments (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        borrow_record_id BIGINT NOT NULL,
-        tracking_code NVARCHAR(100) NULL,
-        status NVARCHAR(50) NOT NULL DEFAULT 'CREATED',
-        address NVARCHAR(MAX) NOT NULL,
-        phone NVARCHAR(30) NOT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_ship_borrow FOREIGN KEY (borrow_record_id) REFERENCES borrow_records(id),
-        CONSTRAINT uq_ship_tracking UNIQUE (tracking_code)
-    );
-END
+CREATE TABLE CartItem (
+  cart_item_id INT IDENTITY(1,1) PRIMARY KEY,
+  cart_id INT,
+  book_id INT,
+  quantity INT
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[password_reset_tokens]') AND type in (N'U'))
-BEGIN
-    CREATE TABLE password_reset_tokens (
-        id BIGINT PRIMARY KEY IDENTITY(1,1),
-        user_id BIGINT NOT NULL,
-        token_hash NVARCHAR(128) NOT NULL,
-        expires_at DATETIME2 NOT NULL,
-        used_at DATETIME2 NULL,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT fk_prt_user FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    CREATE INDEX idx_prt_user ON password_reset_tokens (user_id);
-    CREATE INDEX idx_prt_expires ON password_reset_tokens (expires_at);
-END
+CREATE TABLE Borrowing (
+  borrowing_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  borrow_date DATETIME,
+  return_date DATETIME,
+  status NVARCHAR(255)
+);
 GO
 
-IF NOT EXISTS (SELECT * FROM roles WHERE name = 'ADMIN') INSERT INTO roles(name) VALUES ('ADMIN');
-IF NOT EXISTS (SELECT * FROM roles WHERE name = 'LIBRARIAN') INSERT INTO roles(name) VALUES ('LIBRARIAN');
-IF NOT EXISTS (SELECT * FROM roles WHERE name = 'USER') INSERT INTO roles(name) VALUES ('USER');
+CREATE TABLE BorrowItem (
+  borrow_item_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  book_id INT,
+  quantity INT
+);
+GO
+
+CREATE TABLE Delivery (
+  delivery_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  delivery_status NVARCHAR(255),
+  shipping_code NVARCHAR(255)
+);
+GO
+
+CREATE TABLE Payment (
+  payment_id INT IDENTITY(1,1) PRIMARY KEY,
+  borrowing_id INT,
+  amount DECIMAL(10,2),
+  payment_date DATETIME,
+  method NVARCHAR(255)
+);
+GO
+
+CREATE TABLE Feedback (
+  feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  book_id INT,
+  content NVARCHAR(MAX),
+  rating INT,
+  created_at DATETIME
+);
+GO
+
+CREATE TABLE Notification (
+  notification_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  message NVARCHAR(MAX),
+  created_at DATETIME
+);
+GO
+
+CREATE TABLE LibraryInfo (
+  info_id INT IDENTITY(1,1) PRIMARY KEY,
+  description NVARCHAR(MAX)
+);
+GO
+
+CREATE TABLE password_reset_token (
+  token_id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT NOT NULL,
+  token VARCHAR(255) NOT NULL,
+  expired_at DATETIME NOT NULL,
+  used BIT DEFAULT 0,
+  created_at DATETIME DEFAULT GETDATE()
+);
+GO
+
+-- FOREIGN KEYS
+
+ALTER TABLE [User] 
+ADD CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
+GO
+
+ALTER TABLE Permission 
+ADD CONSTRAINT FK_Permission_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
+GO
+
+ALTER TABLE Book 
+ADD CONSTRAINT FK_Book_Category FOREIGN KEY (category_id) REFERENCES Category(category_id);
+GO
+
+ALTER TABLE Cart 
+ADD CONSTRAINT FK_Cart_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
+GO
+
+ALTER TABLE CartItem 
+ADD CONSTRAINT FK_CartItem_Cart FOREIGN KEY (cart_id) REFERENCES Cart(cart_id);
+GO
+
+ALTER TABLE CartItem 
+ADD CONSTRAINT FK_CartItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
+GO
+
+ALTER TABLE Borrowing 
+ADD CONSTRAINT FK_Borrowing_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
+GO
+
+ALTER TABLE BorrowItem 
+ADD CONSTRAINT FK_BorrowItem_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
+GO
+
+ALTER TABLE BorrowItem 
+ADD CONSTRAINT FK_BorrowItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
+GO
+
+ALTER TABLE Delivery 
+ADD CONSTRAINT FK_Delivery_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
+GO
+
+ALTER TABLE Payment 
+ADD CONSTRAINT FK_Payment_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
+GO
+
+ALTER TABLE Feedback 
+ADD CONSTRAINT FK_Feedback_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
+GO
+
+ALTER TABLE Feedback 
+ADD CONSTRAINT FK_Feedback_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
+GO
+
+ALTER TABLE Notification 
+ADD CONSTRAINT FK_Notification_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
+GO
+
+ALTER TABLE password_reset_token 
+ADD CONSTRAINT FK_ResetToken_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
 GO
