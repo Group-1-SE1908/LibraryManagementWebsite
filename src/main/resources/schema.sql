@@ -1,187 +1,99 @@
-CREATE DATABASE LibraryDB;
-GO
+-- LBMS schema (MySQL)
+CREATE DATABASE IF NOT EXISTS lbms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE lbms;
 
-USE LibraryDB;
-GO
-
-CREATE TABLE Role (
-  role_id INT IDENTITY(1,1) PRIMARY KEY,
-  role_name NVARCHAR(255) NOT NULL
+CREATE TABLE IF NOT EXISTS roles (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(50) NOT NULL UNIQUE
 );
-GO
 
-CREATE TABLE [User] (
-  user_id INT IDENTITY(1,1) PRIMARY KEY,
-  name NVARCHAR(255),
-  email NVARCHAR(255),
-  password NVARCHAR(255),
-  role_id INT
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(100) NOT NULL,
+  full_name VARCHAR(255) NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  role_id BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
 );
-GO
 
-CREATE TABLE Permission (
-  permission_id INT IDENTITY(1,1) PRIMARY KEY,
-  permission_name NVARCHAR(255),
-  role_id INT
+CREATE TABLE IF NOT EXISTS categories (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(120) NOT NULL UNIQUE
 );
-GO
 
-CREATE TABLE Category (
-  category_id INT IDENTITY(1,1) PRIMARY KEY,
-  category_name NVARCHAR(255)
+CREATE TABLE IF NOT EXISTS books (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  isbn VARCHAR(32) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  publisher VARCHAR(255) NULL,
+  publish_year INT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
+  category_id BIGINT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_books_category FOREIGN KEY (category_id) REFERENCES categories(id),
+  INDEX idx_books_title (title),
+  INDEX idx_books_author (author)
 );
-GO
 
-CREATE TABLE Book (
-  book_id INT IDENTITY(1,1) PRIMARY KEY,
-  title NVARCHAR(255),
-  author NVARCHAR(255),
-  price DECIMAL(10,2),
-  availability BIT,
-  category_id INT
+CREATE TABLE IF NOT EXISTS borrow_records (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  book_id BIGINT NOT NULL,
+  borrow_date DATE NOT NULL,
+  due_date DATE NOT NULL,
+  return_date DATE NULL,
+  status VARCHAR(30) NOT NULL,
+  fine_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_borrow_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_borrow_book FOREIGN KEY (book_id) REFERENCES books(id),
+  INDEX idx_borrow_user_status (user_id, status),
+  INDEX idx_borrow_book (book_id)
 );
-GO
 
-CREATE TABLE Cart (
-  cart_id INT IDENTITY(1,1) PRIMARY KEY,
-  user_id INT
+CREATE TABLE IF NOT EXISTS reservations (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  book_id BIGINT NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_res_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_res_book FOREIGN KEY (book_id) REFERENCES books(id),
+  INDEX idx_res_user (user_id),
+  INDEX idx_res_book (book_id)
 );
-GO
 
-CREATE TABLE CartItem (
-  cart_item_id INT IDENTITY(1,1) PRIMARY KEY,
-  cart_id INT,
-  book_id INT,
-  quantity INT
+CREATE TABLE IF NOT EXISTS shipments (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  borrow_record_id BIGINT NOT NULL,
+  tracking_code VARCHAR(100) NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
+  address TEXT NOT NULL,
+  phone VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_ship_borrow FOREIGN KEY (borrow_record_id) REFERENCES borrow_records(id),
+  UNIQUE KEY uq_ship_tracking (tracking_code)
 );
-GO
 
-CREATE TABLE Borrowing (
-  borrowing_id INT IDENTITY(1,1) PRIMARY KEY,
-  user_id INT,
-  borrow_date DATETIME,
-  return_date DATETIME,
-  status NVARCHAR(255)
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  token_hash VARCHAR(128) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_prt_user FOREIGN KEY (user_id) REFERENCES users(id),
+  INDEX idx_prt_user (user_id),
+  INDEX idx_prt_expires (expires_at)
 );
-GO
 
-CREATE TABLE BorrowItem (
-  borrow_item_id INT IDENTITY(1,1) PRIMARY KEY,
-  borrowing_id INT,
-  book_id INT,
-  quantity INT
-);
-GO
-
-CREATE TABLE Delivery (
-  delivery_id INT IDENTITY(1,1) PRIMARY KEY,
-  borrowing_id INT,
-  delivery_status NVARCHAR(255),
-  shipping_code NVARCHAR(255)
-);
-GO
-
-CREATE TABLE Payment (
-  payment_id INT IDENTITY(1,1) PRIMARY KEY,
-  borrowing_id INT,
-  amount DECIMAL(10,2),
-  payment_date DATETIME,
-  method NVARCHAR(255)
-);
-GO
-
-CREATE TABLE Feedback (
-  feedback_id INT IDENTITY(1,1) PRIMARY KEY,
-  user_id INT,
-  book_id INT,
-  content NVARCHAR(MAX),
-  rating INT,
-  created_at DATETIME
-);
-GO
-
-CREATE TABLE Notification (
-  notification_id INT IDENTITY(1,1) PRIMARY KEY,
-  user_id INT,
-  message NVARCHAR(MAX),
-  created_at DATETIME
-);
-GO
-
-CREATE TABLE LibraryInfo (
-  info_id INT IDENTITY(1,1) PRIMARY KEY,
-  description NVARCHAR(MAX)
-);
-GO
-
-CREATE TABLE password_reset_token (
-  token_id INT IDENTITY(1,1) PRIMARY KEY,
-  user_id INT NOT NULL,
-  token VARCHAR(255) NOT NULL,
-  expired_at DATETIME NOT NULL,
-  used BIT DEFAULT 0,
-  created_at DATETIME DEFAULT GETDATE()
-);
-GO
-
--- FOREIGN KEYS
-
-ALTER TABLE [User] 
-ADD CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
-GO
-
-ALTER TABLE Permission 
-ADD CONSTRAINT FK_Permission_Role FOREIGN KEY (role_id) REFERENCES Role(role_id);
-GO
-
-ALTER TABLE Book 
-ADD CONSTRAINT FK_Book_Category FOREIGN KEY (category_id) REFERENCES Category(category_id);
-GO
-
-ALTER TABLE Cart 
-ADD CONSTRAINT FK_Cart_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
-GO
-
-ALTER TABLE CartItem 
-ADD CONSTRAINT FK_CartItem_Cart FOREIGN KEY (cart_id) REFERENCES Cart(cart_id);
-GO
-
-ALTER TABLE CartItem 
-ADD CONSTRAINT FK_CartItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
-GO
-
-ALTER TABLE Borrowing 
-ADD CONSTRAINT FK_Borrowing_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
-GO
-
-ALTER TABLE BorrowItem 
-ADD CONSTRAINT FK_BorrowItem_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
-GO
-
-ALTER TABLE BorrowItem 
-ADD CONSTRAINT FK_BorrowItem_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
-GO
-
-ALTER TABLE Delivery 
-ADD CONSTRAINT FK_Delivery_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
-GO
-
-ALTER TABLE Payment 
-ADD CONSTRAINT FK_Payment_Borrowing FOREIGN KEY (borrowing_id) REFERENCES Borrowing(borrowing_id);
-GO
-
-ALTER TABLE Feedback 
-ADD CONSTRAINT FK_Feedback_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
-GO
-
-ALTER TABLE Feedback 
-ADD CONSTRAINT FK_Feedback_Book FOREIGN KEY (book_id) REFERENCES Book(book_id);
-GO
-
-ALTER TABLE Notification 
-ADD CONSTRAINT FK_Notification_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
-GO
-
-ALTER TABLE password_reset_token 
-ADD CONSTRAINT FK_ResetToken_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
-GO
+INSERT IGNORE INTO roles(name) VALUES ('ADMIN'), ('LIBRARIAN'), ('USER');
