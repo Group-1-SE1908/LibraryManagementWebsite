@@ -13,6 +13,9 @@
     input{padding:10px;border:1px solid #ccc;border-radius:8px;min-width:260px;}
     a.btn, button{display:inline-block;padding:10px 12px;border-radius:8px;border:1px solid #ddd;text-decoration:none;color:#111;background:#fff;}
     .danger{border-color:#ffcccc;color:#b00020;}
+    .cart-cell form{display:flex;gap:6px;align-items:center;}
+    .cart-cell input{width:60px;padding:6px;border-radius:6px;border:1px solid #ccc;}
+    .cart-cell button{padding:6px 10px;font-size:0.9rem;}
   </style>
 </head>
 <body>
@@ -32,6 +35,7 @@
         <c:if test="${isAdmin}">
           <a class="btn" href="${pageContext.request.contextPath}/admin/users">Quản lý user</a>
         </c:if>
+        <a class="btn" href="${pageContext.request.contextPath}/cart">Giỏ hàng</a>
         <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
           <a class="btn" href="${pageContext.request.contextPath}/shipping">Giao hàng</a>
         </c:if>
@@ -47,17 +51,18 @@
 
   <table>
     <thead>
-    <tr>
-      <th>ID</th>
-      <th>ISBN</th>
-      <th>Tên sách</th>
-      <th>Tác giả</th>
-      <th>Số lượng</th>
-      <th>Trạng thái</th>
-      <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
-        <th>Thao tác</th>
-      </c:if>
-    </tr>
+      <tr>
+        <th>ID</th>
+        <th>ISBN</th>
+        <th>Tên sách</th>
+        <th>Tác giả</th>
+        <th>Số lượng</th>
+        <th>Trạng thái</th>
+        <th>Giỏ hàng</th>
+        <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
+          <th>Thao tác</th>
+        </c:if>
+      </tr>
     </thead>
     <tbody>
     <c:forEach items="${books}" var="b">
@@ -68,6 +73,13 @@
         <td>${b.author}</td>
         <td>${b.quantity}</td>
         <td>${b.status}</td>
+        <td class="cart-cell">
+          <form method="post" action="${pageContext.request.contextPath}/cart/add">
+            <input type="hidden" name="bookId" value="${b.id}" />
+            <input type="number" name="quantity" min="1" value="1" />
+            <button type="submit">Thêm</button>
+          </form>
+        </td>
         <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
           <td>
             <a class="btn" href="${pageContext.request.contextPath}/books/edit?id=${b.id}">Sửa</a>
