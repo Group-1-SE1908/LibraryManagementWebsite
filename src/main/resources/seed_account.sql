@@ -9,9 +9,9 @@ INSERT INTO Role (role_name) VALUES
 
 -- USER
 INSERT INTO [User] (name, email, password, status, role_id) VALUES
-(N'Nguyễn Văn A', 'admin@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.X.YUGEv0Z93REAeRAqfAYJfWvDFjQ6', 'ACTIVE', 1),
-(N'Trần Thị B', 'librarian@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.X.YUGEv0Z93REAeRAqfAYJfWvDFjQ6', 'ACTIVE', 2),
-(N'Lê Văn C', 'user@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.X.YUGEv0Z93REAeRAqfAYJfWvDFjQ6', 'ACTIVE', 3);
+(N'Nguyễn Văn A', 'admin@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 1),
+(N'Trần Thị B', 'librarian@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 2),
+(N'Lê Văn C', 'user@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 3);
 
 -- PERMISSION
 INSERT INTO Permission (permission_name, role_id) VALUES
