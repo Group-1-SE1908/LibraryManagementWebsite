@@ -11,7 +11,7 @@ import java.util.List;
 public class UserDAO {
 
     public List<User> listAll() throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
                 "FROM [User] u JOIN Role r ON u.role_id = r.role_id ORDER BY u.user_id DESC";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql);
@@ -46,7 +46,7 @@ public class UserDAO {
     }
 
     public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
                 "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.email = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
@@ -60,7 +60,7 @@ public class UserDAO {
     }
 
     public User findById(long id) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
                 "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.user_id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
@@ -95,7 +95,7 @@ public class UserDAO {
 
     public long createUser(String email, String passwordHash, String fullName, String roleName) throws SQLException {
         long roleId = getRoleIdByName(roleName);
-        String sql = "INSERT INTO [User](email, password, name, role_id) VALUES(?, ?, ?, ?)";
+        String sql = "INSERT INTO [User](email, password, name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, email);
@@ -130,6 +130,7 @@ public class UserDAO {
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password"));
         u.setFullName(rs.getString("name"));
+        u.setStatus(rs.getString("status"));
         Role r = new Role(rs.getLong("role_id"), rs.getString("role_name"));
         u.setRole(r);
         return u;

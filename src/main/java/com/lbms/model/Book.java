@@ -12,10 +12,14 @@ public class Book {
     private int quantity;
     private String status;
     private Category category;
+    private Long categoryId;
+    private Double price;
+    private boolean availability;
     private Instant createdAt;
     private Instant updatedAt;
 
-    public Book() {}
+    public Book() {
+    }
 
     public long getId() {
         return id;
@@ -103,5 +107,29 @@ public class Book {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public boolean isAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(boolean availability) {
+        this.availability = availability;
     }
 }

@@ -15,6 +15,7 @@ CREATE TABLE [User] (
   name NVARCHAR(255),
   email NVARCHAR(255),
   password NVARCHAR(255),
+  status NVARCHAR(50) DEFAULT 'ACTIVE',
   role_id INT
 );
 GO
@@ -184,4 +185,14 @@ GO
 
 ALTER TABLE password_reset_token 
 ADD CONSTRAINT FK_ResetToken_User FOREIGN KEY (user_id) REFERENCES [User](user_id);
+GO
+
+-- Migration: Add status column to [User] table if it doesn't exist
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'User' AND COLUMN_NAME = 'status')
+BEGIN
+    ALTER TABLE [User]
+    ADD status NVARCHAR(50) DEFAULT 'ACTIVE';
+    
+    UPDATE [User] SET status = 'ACTIVE' WHERE status IS NULL;
+END
 GO

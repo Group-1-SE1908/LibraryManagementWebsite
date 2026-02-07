@@ -15,9 +15,12 @@ public class AuthService {
 
     public User login(String email, String password) throws SQLException {
         User u = userDAO.findByEmail(email);
-        if (u == null) return null;
-        if (!"ACTIVE".equalsIgnoreCase(u.getStatus())) return null;
-        if (!BCrypt.checkpw(password, u.getPasswordHash())) return null;
+        if (u == null)
+            return null;
+        if (!"ACTIVE".equalsIgnoreCase(u.getStatus()))
+            return null;
+        if (!BCrypt.checkpw(password, u.getPasswordHash()))
+            return null;
         return u;
     }
 
@@ -26,6 +29,6 @@ public class AuthService {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
         String hash = BCrypt.hashpw(password, BCrypt.gensalt(10));
-        return userDAO.createUser(email, hash, fullName, "USER");
+        return userDAO.createUser(email, hash, fullName, "Member");
     }
 }

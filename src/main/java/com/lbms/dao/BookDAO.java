@@ -3,6 +3,7 @@ package com.lbms.dao;
 import com.lbms.model.Book;
 import com.lbms.util.DBConnection;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,14 +99,11 @@ public class BookDAO {
     private Book mapBook(ResultSet rs) throws SQLException {
         Book b = new Book();
         b.setId(rs.getLong("id"));
-        b.setIsbn(rs.getString("isbn"));
         b.setTitle(rs.getString("title"));
         b.setAuthor(rs.getString("author"));
-        b.setPublisher(rs.getString("publisher"));
-        int y = rs.getInt("publish_year");
-        b.setPublishYear(rs.wasNull() ? null : y);
-        b.setQuantity(rs.getInt("quantity"));
-        b.setStatus(rs.getString("status"));
+        b.setPrice(rs.getDouble("price"));
+        b.setAvailability(rs.getInt("availability") > 0);
+        b.setCategoryId(rs.getLong("category_id"));
         return b;
     }
 }

@@ -8,10 +8,10 @@ INSERT INTO Role (role_name) VALUES
 (N'Member');
 
 -- USER
-INSERT INTO [User] (name, email, password, role_id) VALUES
-(N'Nguyễn Văn A', 'admin@gmail.com', '123456', 1),
-(N'Trần Thị B', 'librarian@gmail.com', '123456', 2),
-(N'Lê Văn C', 'user@gmail.com', '123456', 3);
+INSERT INTO [User] (name, email, password, status, role_id) VALUES
+(N'Nguyễn Văn A', 'admin@gmail.com', '123456', 'ACTIVE', 1),
+(N'Trần Thị B', 'librarian@gmail.com', '123456', 'ACTIVE', 2),
+(N'Lê Văn C', 'user@gmail.com', '123456', 'ACTIVE', 3);
 
 -- PERMISSION
 INSERT INTO Permission (permission_name, role_id) VALUES
