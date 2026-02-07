@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/admin/users", "/admin/users/role", "/admin/users/status"})
+@WebServlet(urlPatterns = { "/admin/users", "/admin/users/role", "/admin/users/status" })
 public class AdminUserController extends HttpServlet {
     private UserManagementService userManagementService;
 
@@ -55,21 +55,23 @@ public class AdminUserController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/admin/users/role" -> {
-                    long userId = Long.parseLong(req.getParameter("userId"));
+                case "/admin/users/role":
+                    long roleUserId = Long.parseLong(req.getParameter("userId"));
                     String roleName = req.getParameter("role");
-                    userManagementService.setUserRole(userId, roleName);
+                    userManagementService.setUserRole(roleUserId, roleName);
                     req.getSession().setAttribute("flash", "Cập nhật role thành công");
                     resp.sendRedirect(req.getContextPath() + "/admin/users");
-                }
-                case "/admin/users/status" -> {
-                    long userId = Long.parseLong(req.getParameter("userId"));
+                    break;
+                case "/admin/users/status":
+                    long statusUserId = Long.parseLong(req.getParameter("userId"));
                     String status = req.getParameter("status");
-                    userManagementService.setUserStatus(userId, status);
+                    userManagementService.setUserStatus(statusUserId, status);
                     req.getSession().setAttribute("flash", "Cập nhật trạng thái thành công");
                     resp.sendRedirect(req.getContextPath() + "/admin/users");
-                }
-                default -> resp.sendError(405);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());

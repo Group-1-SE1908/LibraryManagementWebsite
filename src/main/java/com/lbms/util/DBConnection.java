@@ -7,14 +7,15 @@ import java.sql.SQLException;
 public final class DBConnection {
     static {
         try {
-            // Đăng ký MySQL Driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            // Đăng ký SQL Server Driver
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Không tìm thấy MySQL JDBC Driver");
+            throw new RuntimeException("Không tìm thấy SQL Server JDBC Driver");
         }
     }
 
-    private DBConnection() {}
+    private DBConnection() {
+    }
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DBConfig.URL, DBConfig.USER, DBConfig.PASSWORD);

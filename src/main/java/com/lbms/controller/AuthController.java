@@ -25,15 +25,21 @@ public class AuthController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         switch (path) {
-            case "/login" -> req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
-            case "/register" -> req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
-            case "/logout" -> {
+            case "/login":
+                req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+                break;
+            case "/register":
+                req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
+                break;
+            case "/logout":
                 HttpSession session = req.getSession(false);
                 if (session != null)
                     session.invalidate();
                 resp.sendRedirect(req.getContextPath() + "/login");
-            }
-            default -> resp.sendError(404);
+                break;
+            default:
+                resp.sendError(404);
+                break;
         }
     }
 
@@ -44,9 +50,15 @@ public class AuthController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/login" -> handleLogin(req, resp);
-                case "/register" -> handleRegister(req, resp);
-                default -> resp.sendError(405);
+                case "/login":
+                    handleLogin(req, resp);
+                    break;
+                case "/register":
+                    handleRegister(req, resp);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());

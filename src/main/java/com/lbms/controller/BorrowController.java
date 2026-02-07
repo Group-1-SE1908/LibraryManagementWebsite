@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return"})
+@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return" })
 public class BorrowController extends HttpServlet {
     private BorrowService borrowService;
     private BorrowDAO borrowDAO;
@@ -36,28 +36,34 @@ public class BorrowController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/borrow" -> handleList(req, resp);
-                case "/borrow/request" -> handleRequestForm(req, resp);
-                case "/borrow/approve" -> {
+                case "/borrow":
+                    handleList(req, resp);
+                    break;
+                case "/borrow/request":
+                    handleRequestForm(req, resp);
+                    break;
+                case "/borrow/approve":
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
                     borrowService.approve(id);
                     resp.sendRedirect(req.getContextPath() + "/borrow");
-                }
-                case "/borrow/reject" -> {
+                    break;
+                case "/borrow/reject":
                     requireStaff(req);
-                    long id = Long.parseLong(req.getParameter("id"));
-                    borrowService.reject(id);
+                    long rejectId = Long.parseLong(req.getParameter("id"));
+                    borrowService.reject(rejectId);
                     resp.sendRedirect(req.getContextPath() + "/borrow");
-                }
-                case "/borrow/return" -> {
+                    break;
+                case "/borrow/return":
                     requireStaff(req);
-                    long id = Long.parseLong(req.getParameter("id"));
-                    BigDecimal fine = borrowService.returnBook(id);
+                    long returnId = Long.parseLong(req.getParameter("id"));
+                    BigDecimal fine = borrowService.returnBook(returnId);
                     req.getSession().setAttribute("flash", "Trả sách thành công. Phạt: " + fine + " VND");
                     resp.sendRedirect(req.getContextPath() + "/borrow");
-                }
-                default -> resp.sendError(404);
+                    break;
+                default:
+                    resp.sendError(404);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());
@@ -74,8 +80,12 @@ public class BorrowController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/borrow/request" -> handleRequestSubmit(req, resp);
-                default -> resp.sendError(405);
+                case "/borrow/request":
+                    handleRequestSubmit(req, resp);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());
@@ -116,7 +126,8 @@ public class BorrowController extends HttpServlet {
     private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         String bookIdStr = req.getParameter("bookId");
-        if (bookIdStr == null || bookIdStr.isBlank()) throw new IllegalArgumentException("Vui lòng chọn sách");
+        if (bookIdStr == null || bookIdStr.isBlank())
+            throw new IllegalArgumentException("Vui lòng chọn sách");
 
         long bookId = Long.parseLong(bookIdStr);
         borrowService.requestBorrow(currentUser.getId(), bookId);
@@ -133,7 +144,8 @@ public class BorrowController extends HttpServlet {
     }
 
     private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null) return false;
+        if (u == null || u.getRole() == null || u.getRole().getName() == null)
+            return false;
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
     }

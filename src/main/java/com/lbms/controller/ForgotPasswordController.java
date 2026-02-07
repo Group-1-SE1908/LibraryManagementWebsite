@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet(urlPatterns = {"/forgot-password", "/reset-password"})
+@WebServlet(urlPatterns = { "/forgot-password", "/reset-password" })
 public class ForgotPasswordController extends HttpServlet {
     private ForgotPasswordService forgotPasswordService;
 
@@ -23,12 +23,16 @@ public class ForgotPasswordController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         switch (path) {
-            case "/forgot-password" -> req.getRequestDispatcher("/WEB-INF/views/forgot_password.jsp").forward(req, resp);
-            case "/reset-password" -> {
+            case "/forgot-password":
+                req.getRequestDispatcher("/WEB-INF/views/forgot_password.jsp").forward(req, resp);
+                break;
+            case "/reset-password":
                 req.setAttribute("token", req.getParameter("token"));
                 req.getRequestDispatcher("/WEB-INF/views/reset_password.jsp").forward(req, resp);
-            }
-            default -> resp.sendError(404);
+                break;
+            default:
+                resp.sendError(404);
+                break;
         }
     }
 
@@ -39,9 +43,15 @@ public class ForgotPasswordController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/forgot-password" -> handleForgot(req, resp);
-                case "/reset-password" -> handleReset(req, resp);
-                default -> resp.sendError(405);
+                case "/forgot-password":
+                    handleForgot(req, resp);
+                    break;
+                case "/reset-password":
+                    handleReset(req, resp);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());

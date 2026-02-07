@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/books", "/books/new", "/books/edit", "/books/delete"})
+@WebServlet(urlPatterns = { "/books", "/books/new", "/books/edit", "/books/delete" })
 public class BookController extends HttpServlet {
     private BookService bookService;
 
@@ -27,12 +27,14 @@ public class BookController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/books" -> handleList(req, resp);
-                case "/books/new" -> {
+                case "/books":
+                    handleList(req, resp);
+                    break;
+                case "/books/new":
                     req.setAttribute("mode", "create");
                     req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
-                }
-                case "/books/edit" -> {
+                    break;
+                case "/books/edit":
                     String idStr = req.getParameter("id");
                     if (idStr == null) {
                         resp.sendRedirect(req.getContextPath() + "/books");
@@ -46,15 +48,17 @@ public class BookController extends HttpServlet {
                     req.setAttribute("mode", "edit");
                     req.setAttribute("book", b);
                     req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
-                }
-                case "/books/delete" -> {
-                    String idStr = req.getParameter("id");
-                    if (idStr != null) {
-                        bookService.delete(Long.parseLong(idStr));
+                    break;
+                case "/books/delete":
+                    String delId = req.getParameter("id");
+                    if (delId != null) {
+                        bookService.delete(Long.parseLong(delId));
                     }
                     resp.sendRedirect(req.getContextPath() + "/books");
-                }
-                default -> resp.sendError(404);
+                    break;
+                default:
+                    resp.sendError(404);
+                    break;
             }
         } catch (Exception ex) {
             throw new ServletException(ex);
@@ -68,9 +72,15 @@ public class BookController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/books/new" -> handleCreate(req, resp);
-                case "/books/edit" -> handleUpdate(req, resp);
-                default -> resp.sendError(405);
+                case "/books/new":
+                    handleCreate(req, resp);
+                    break;
+                case "/books/edit":
+                    handleUpdate(req, resp);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());
@@ -101,7 +111,8 @@ public class BookController extends HttpServlet {
 
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String idStr = req.getParameter("id");
-        if (idStr == null || idStr.isBlank()) throw new IllegalArgumentException("Thiếu id");
+        if (idStr == null || idStr.isBlank())
+            throw new IllegalArgumentException("Thiếu id");
         Book b = readBookFromRequest(req);
         b.setId(Long.parseLong(idStr));
         bookService.update(b);

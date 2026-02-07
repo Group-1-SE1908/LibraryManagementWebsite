@@ -1,30 +1,55 @@
--- Seed default accounts for LBMS (MySQL)
+-- Seed default accounts for LBMS (SQL Server)
 USE lbms;
+GO
 
 -- Roles (idempotent)
-INSERT IGNORE INTO roles(name) VALUES ('ADMIN'), ('LIBRARIAN'), ('USER');
+IF NOT EXISTS (SELECT * FROM roles WHERE name = 'ADMIN') INSERT INTO roles(name) VALUES ('ADMIN');
+IF NOT EXISTS (SELECT * FROM roles WHERE name = 'LIBRARIAN') INSERT INTO roles(name) VALUES ('LIBRARIAN');
+IF NOT EXISTS (SELECT * FROM roles WHERE name = 'USER') INSERT INTO roles(name) VALUES ('USER');
+GO
 
 -- Default passwords (BCrypt for '123456')
--- Generated with jBCrypt (10 rounds)
-SET @HASH_123456 = '$2a$10$1Q7lUSpJpZ8J3QpC9r7s4e8tYpXl6D9d3S0z8m7q5wYw8vZr8q3eK';
+DECLARE @HASH_123456 NVARCHAR(100) = '';
 
 -- Admin
-INSERT INTO users(email, password_hash, full_name, status, role_id)
-SELECT 'admin@lbms.local', @HASH_123456, 'Admin', 'ACTIVE', r.id
-FROM roles r
-WHERE r.name='ADMIN'
-ON DUPLICATE KEY UPDATE role_id=VALUES(role_id), status=VALUES(status);
+IF NOT EXISTS (SELECT * FROM users WHERE email = 'admin@lbms.local')
+BEGIN
+    INSERT INTO users(email, password_hash, full_name, status, role_id)
+    SELECT 'admin@lbms.local', @HASH_123456, 'Admin', 'ACTIVE', id
+    FROM roles WHERE name = 'ADMIN';
+END
+ELSE
+BEGIN
+    UPDATE users 
+    SET role_id = (SELECT id FROM roles WHERE name = 'ADMIN'), status = 'ACTIVE'
+    WHERE email = 'admin@lbms.local';
+END
 
 -- Librarian
-INSERT INTO users(email, password_hash, full_name, status, role_id)
-SELECT 'librarian@lbms.local', @HASH_123456, 'Librarian', 'ACTIVE', r.id
-FROM roles r
-WHERE r.name='LIBRARIAN'
-ON DUPLICATE KEY UPDATE role_id=VALUES(role_id), status=VALUES(status);
+IF NOT EXISTS (SELECT * FROM users WHERE email = 'librarian@lbms.local')
+BEGIN
+    INSERT INTO users(email, password_hash, full_name, status, role_id)
+    SELECT 'librarian@lbms.local', @HASH_123456, 'Librarian', 'ACTIVE', id
+    FROM roles WHERE name = 'LIBRARIAN';
+END
+ELSE
+BEGIN
+    UPDATE users 
+    SET role_id = (SELECT id FROM roles WHERE name = 'LIBRARIAN'), status = 'ACTIVE'
+    WHERE email = 'librarian@lbms.local';
+END
 
 -- User
-INSERT INTO users(email, password_hash, full_name, status, role_id)
-SELECT 'user@lbms.local', @HASH_123456, 'User', 'ACTIVE', r.id
-FROM roles r
-WHERE r.name='USER'
-ON DUPLICATE KEY UPDATE role_id=VALUES(role_id), status=VALUES(status);
+IF NOT EXISTS (SELECT * FROM users WHERE email = 'user@lbms.local')
+BEGIN
+    INSERT INTO users(email, password_hash, full_name, status, role_id)
+    SELECT 'user@lbms.local', @HASH_123456, 'User', 'ACTIVE', id
+    FROM roles WHERE name = 'USER';
+END
+ELSE
+BEGIN
+    UPDATE users 
+    SET role_id = (SELECT id FROM roles WHERE name = 'USER'), status = 'ACTIVE'
+    WHERE email = 'user@lbms.local';
+END
+GO

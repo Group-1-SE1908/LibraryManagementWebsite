@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/shipping", "/shipping/new", "/shipping/status"})
+@WebServlet(urlPatterns = { "/shipping", "/shipping/new", "/shipping/status" })
 public class ShippingController extends HttpServlet {
     private ShippingService shippingService;
     private ShipmentDAO shipmentDAO;
@@ -35,8 +35,10 @@ public class ShippingController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/shipping" -> handleList(req, resp);
-                case "/shipping/new" -> {
+                case "/shipping":
+                    handleList(req, resp);
+                    break;
+                case "/shipping/new":
                     requireStaff(req);
                     String borrowIdStr = req.getParameter("borrowId");
                     if (borrowIdStr == null) {
@@ -50,15 +52,17 @@ public class ShippingController extends HttpServlet {
                     }
                     req.setAttribute("borrow", br);
                     req.getRequestDispatcher("/WEB-INF/views/shipping_form.jsp").forward(req, resp);
-                }
-                case "/shipping/status" -> {
+                    break;
+                case "/shipping/status":
                     requireStaff(req);
                     long shipmentId = Long.parseLong(req.getParameter("id"));
                     Shipment s = shippingService.refreshStatus(shipmentId);
                     req.setAttribute("shipment", s);
                     req.getRequestDispatcher("/WEB-INF/views/shipping_status.jsp").forward(req, resp);
-                }
-                default -> resp.sendError(404);
+                    break;
+                default:
+                    resp.sendError(404);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());
@@ -75,7 +79,7 @@ public class ShippingController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/shipping/new" -> {
+                case "/shipping/new":
                     requireStaff(req);
                     long borrowId = Long.parseLong(req.getParameter("borrowId"));
                     String address = req.getParameter("address");
@@ -83,15 +87,18 @@ public class ShippingController extends HttpServlet {
                     shippingService.createShipment(borrowId, address, phone);
                     req.getSession().setAttribute("flash", "Tạo đơn giao hàng thành công");
                     resp.sendRedirect(req.getContextPath() + "/shipping");
-                }
-                default -> resp.sendError(405);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());
             try {
                 BorrowRecord br = borrowDAO.findById(Long.parseLong(req.getParameter("borrowId")));
                 req.setAttribute("borrow", br);
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
             req.getRequestDispatcher("/WEB-INF/views/shipping_form.jsp").forward(req, resp);
         } catch (Exception ex) {
             throw new ServletException(ex);
@@ -126,7 +133,8 @@ public class ShippingController extends HttpServlet {
     }
 
     private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null) return false;
+        if (u == null || u.getRole() == null || u.getRole().getName() == null)
+            return false;
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
     }

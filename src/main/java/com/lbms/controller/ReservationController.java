@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/reservations", "/reservations/create", "/reservations/cancel"})
+@WebServlet(urlPatterns = { "/reservations", "/reservations/create", "/reservations/cancel" })
 public class ReservationController extends HttpServlet {
     private ReservationService reservationService;
     private ReservationDAO reservationDAO;
@@ -31,15 +31,19 @@ public class ReservationController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/reservations" -> handleList(req, resp);
-                case "/reservations/cancel" -> {
+                case "/reservations":
+                    handleList(req, resp);
+                    break;
+                case "/reservations/cancel":
                     long id = Long.parseLong(req.getParameter("id"));
                     User currentUser = (User) req.getSession().getAttribute("currentUser");
                     reservationService.cancelReservation(id, currentUser.getId());
                     req.getSession().setAttribute("flash", "Đã hủy đặt trước");
                     resp.sendRedirect(req.getContextPath() + "/reservations");
-                }
-                default -> resp.sendError(404);
+                    break;
+                default:
+                    resp.sendError(404);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());
@@ -56,14 +60,16 @@ public class ReservationController extends HttpServlet {
 
         try {
             switch (path) {
-                case "/reservations/create" -> {
+                case "/reservations/create":
                     User currentUser = (User) req.getSession().getAttribute("currentUser");
                     long bookId = Long.parseLong(req.getParameter("bookId"));
                     reservationService.createReservation(currentUser.getId(), bookId);
                     req.getSession().setAttribute("flash", "Đặt trước thành công");
                     resp.sendRedirect(req.getContextPath() + "/reservations");
-                }
-                default -> resp.sendError(405);
+                    break;
+                default:
+                    resp.sendError(405);
+                    break;
             }
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());
@@ -77,7 +83,8 @@ public class ReservationController extends HttpServlet {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         boolean isStaff = isStaff(currentUser);
 
-        List<Reservation> reservations = isStaff ? reservationDAO.listAll() : reservationDAO.listByUser(currentUser.getId());
+        List<Reservation> reservations = isStaff ? reservationDAO.listAll()
+                : reservationDAO.listByUser(currentUser.getId());
         req.setAttribute("reservations", reservations);
         req.setAttribute("isStaff", isStaff);
 
@@ -91,7 +98,8 @@ public class ReservationController extends HttpServlet {
     }
 
     private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null) return false;
+        if (u == null || u.getRole() == null || u.getRole().getName() == null)
+            return false;
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
     }
