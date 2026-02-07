@@ -29,11 +29,13 @@ public class ForgotPasswordService {
     }
 
     public void requestReset(String email) throws SQLException {
-        if (email == null || email.isBlank()) return;
+        if (email == null || email.isBlank())
+            return;
 
         User u = userDAO.findByEmail(email.trim());
         // Không tiết lộ email có tồn tại hay không
-        if (u == null) return;
+        if (u == null)
+            return;
 
         String token = generateToken();
         String tokenHash = CryptoUtil.sha256Hex(token);
@@ -44,7 +46,8 @@ public class ForgotPasswordService {
         String link = AppConfig.APP_BASE_URL + "/reset-password?token=" + token;
         String subject = "LBMS - Đặt lại mật khẩu";
         String body = "<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p>" +
-                "<p>Nhấn vào link sau để đặt lại mật khẩu (hết hạn sau " + AppConfig.RESET_TOKEN_MINUTES + " phút):</p>" +
+                "<p>Nhấn vào link sau để đặt lại mật khẩu (hết hạn sau " + AppConfig.RESET_TOKEN_MINUTES + " phút):</p>"
+                +
                 "<p><a href='" + link + "'>" + link + "</a></p>" +
                 "<p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>";
 
@@ -52,14 +55,16 @@ public class ForgotPasswordService {
     }
 
     public void resetPassword(String rawToken, String newPassword) throws SQLException {
-        if (rawToken == null || rawToken.isBlank()) throw new IllegalArgumentException("Token không hợp lệ");
+        if (rawToken == null || rawToken.isBlank())
+            throw new IllegalArgumentException("Token không hợp lệ");
         if (newPassword == null || newPassword.isBlank() || newPassword.length() < 6) {
             throw new IllegalArgumentException("Mật khẩu tối thiểu 6 ký tự");
         }
 
         String tokenHash = CryptoUtil.sha256Hex(rawToken);
         Long userId = tokenDAO.findValidUserIdByTokenHash(tokenHash);
-        if (userId == null) throw new IllegalArgumentException("Token không hợp lệ hoặc đã hết hạn");
+        if (userId == null)
+            throw new IllegalArgumentException("Token không hợp lệ hoặc đã hết hạn");
 
         String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt(10));
 
@@ -67,13 +72,14 @@ public class ForgotPasswordService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                try (var ps = c.prepareStatement("UPDATE users SET password_hash = ? WHERE id = ?")) {
+                try (var ps = c.prepareStatement("UPDATE [User] SET password = ? WHERE user_id = ?")) {
                     ps.setString(1, newHash);
                     ps.setLong(2, userId);
                     ps.executeUpdate();
                 }
 
-                try (var ps = c.prepareStatement("UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE token_hash = ? AND used_at IS NULL")) {
+                try (var ps = c
+                        .prepareStatement("UPDATE password_reset_token SET used = 1 WHERE token = ? AND used = 0")) {
                     ps.setString(1, tokenHash);
                     ps.executeUpdate();
                 }
@@ -81,8 +87,10 @@ public class ForgotPasswordService {
                 c.commit();
             } catch (Exception ex) {
                 c.rollback();
-                if (ex instanceof SQLException) throw (SQLException) ex;
-                if (ex instanceof RuntimeException) throw (RuntimeException) ex;
+                if (ex instanceof SQLException)
+                    throw (SQLException) ex;
+                if (ex instanceof RuntimeException)
+                    throw (RuntimeException) ex;
                 throw new RuntimeException(ex);
             } finally {
                 c.setAutoCommit(true);
@@ -94,7 +102,8 @@ public class ForgotPasswordService {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         StringBuilder sb = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes) sb.append(String.format("%02x", b));
+        for (byte b : bytes)
+            sb.append(String.format("%02x", b));
         return sb.toString();
     }
 }

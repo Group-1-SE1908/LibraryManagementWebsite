@@ -13,26 +13,27 @@ import java.util.List;
 public class RoleDAO {
 
     public List<Role> listAll() throws SQLException {
-        String sql = "SELECT id, name FROM roles ORDER BY name";
+        String sql = "SELECT role_id, role_name FROM Role ORDER BY role_name";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             List<Role> out = new ArrayList<>();
             while (rs.next()) {
-                out.add(new Role(rs.getLong("id"), rs.getString("name")));
+                out.add(new Role(rs.getLong("role_id"), rs.getString("role_name")));
             }
             return out;
         }
     }
 
     public Role findByName(String name) throws SQLException {
-        String sql = "SELECT id, name FROM roles WHERE name = ?";
+        String sql = "SELECT role_id, role_name FROM Role WHERE role_name = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, name);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
-                return new Role(rs.getLong("id"), rs.getString("name"));
+                if (!rs.next())
+                    return null;
+                return new Role(rs.getLong("role_id"), rs.getString("role_name"));
             }
         }
     }

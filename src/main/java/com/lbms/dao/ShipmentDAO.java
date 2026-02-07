@@ -86,10 +86,11 @@ public class ShipmentDAO {
     }
 
     private String baseSelect() {
-        return "SELECT s.id, s.borrow_record_id, s.tracking_code, s.status, s.address, s.phone, s.created_at, s.updated_at, "
+        return "SELECT s.delivery_id AS id, s.borrowing_id AS borrow_record_id, s.shipping_code AS tracking_code, s.delivery_status AS status, "
                 +
-                "br.status AS br_status " +
-                "FROM shipments s JOIN borrow_records br ON s.borrow_record_id = br.id";
+                "'N/A' AS address, 'N/A' AS phone, b.borrow_date AS created_at, b.return_date AS updated_at, " +
+                "b.status AS br_status " +
+                "FROM Delivery s JOIN Borrowing b ON s.borrowing_id = b.borrowing_id";
     }
 
     private Shipment mapOne(ResultSet rs) throws SQLException {

@@ -28,8 +28,10 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId) throws SQLException {
         Book b = bookDAO.findById(bookId);
-        if (b == null) throw new IllegalArgumentException("Sách không tồn tại");
-        if (b.getQuantity() <= 0) throw new IllegalArgumentException("Sách đã hết");
+        if (b == null)
+            throw new IllegalArgumentException("Sách không tồn tại");
+        if (b.getQuantity() <= 0)
+            throw new IllegalArgumentException("Sách đã hết");
 
         int active = borrowDAO.countActiveBorrows(userId);
         if (active >= MAX_ACTIVE_BORROWS) {
@@ -42,7 +44,8 @@ public class BorrowService {
 
     public void approve(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null) throw new IllegalArgumentException("Yêu cầu không tồn tại");
+        if (br == null)
+            throw new IllegalArgumentException("Yêu cầu không tồn tại");
         if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ để duyệt");
         }
@@ -52,37 +55,40 @@ public class BorrowService {
             c.setAutoCommit(false);
             try {
                 // re-check quantity with lock
-                try (var ps = c.prepareStatement("SELECT quantity FROM books WHERE id=? FOR UPDATE")) {
+                try (var ps = c.prepareStatement("SELECT availability FROM Book WHERE book_id=? FOR UPDATE")) {
                     ps.setLong(1, br.getBook().getId());
                     try (var rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new SQLException("Book not found");
-                        int qty = rs.getInt(1);
-                        if (qty <= 0) throw new IllegalArgumentException("Sách đã hết");
+                        if (!rs.next())
+                            throw new SQLException("Book not found");
+                        int available = rs.getInt(1);
+                        if (available <= 0)
+                            throw new IllegalArgumentException("Sách đã hết");
                     }
                 }
 
-                // reduce qty
-                try (var ps = c.prepareStatement("UPDATE books SET quantity = quantity - 1 WHERE id=?")) {
+                // reduce availability
+                try (var ps = c.prepareStatement(
+                        "UPDATE Book SET availability = CASE WHEN availability > 0 THEN availability - 1 ELSE 0 END WHERE book_id=?")) {
                     ps.setLong(1, br.getBook().getId());
                     ps.executeUpdate();
                 }
 
-                // set borrow_date/due_date/status BORROWED
+                // set borrow_date/status BORROWED
                 LocalDate today = LocalDate.now();
-                LocalDate due = today.plusDays(LOAN_DAYS);
                 try (var ps = c.prepareStatement(
-                        "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=? WHERE id=?")) {
+                        "UPDATE Borrowing SET status='BORROWED', borrow_date=? WHERE borrowing_id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setDate(2, java.sql.Date.valueOf(due));
-                    ps.setLong(3, borrowId);
+                    ps.setLong(2, borrowId);
                     ps.executeUpdate();
                 }
 
                 c.commit();
             } catch (Exception ex) {
                 c.rollback();
-                if (ex instanceof SQLException) throw (SQLException) ex;
-                if (ex instanceof RuntimeException) throw (RuntimeException) ex;
+                if (ex instanceof SQLException)
+                    throw (SQLException) ex;
+                if (ex instanceof RuntimeException)
+                    throw (RuntimeException) ex;
                 throw new RuntimeException(ex);
             } finally {
                 c.setAutoCommit(true);
@@ -92,7 +98,8 @@ public class BorrowService {
 
     public void reject(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null) throw new IllegalArgumentException("Yêu cầu không tồn tại");
+        if (br == null)
+            throw new IllegalArgumentException("Yêu cầu không tồn tại");
         if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ để từ chối");
         }
@@ -101,7 +108,8 @@ public class BorrowService {
 
     public BigDecimal returnBook(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null) throw new IllegalArgumentException("Phiếu mượn không tồn tại");
+        if (br == null)
+            throw new IllegalArgumentException("Phiếu mượn không tồn tại");
         if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Chỉ có thể trả khi đang BORROWED");
         }
@@ -112,26 +120,27 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // increase qty
-                try (var ps = c.prepareStatement("UPDATE books SET quantity = quantity + 1 WHERE id=?")) {
+                // increase availability
+                try (var ps = c.prepareStatement("UPDATE Book SET availability = availability + 1 WHERE book_id=?")) {
                     ps.setLong(1, br.getBook().getId());
                     ps.executeUpdate();
                 }
 
                 // mark returned
                 try (var ps = c.prepareStatement(
-                        "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id=?")) {
+                        "UPDATE Borrowing SET status='RETURNED', return_date=? WHERE borrowing_id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setBigDecimal(2, fine);
-                    ps.setLong(3, borrowId);
+                    ps.setLong(2, borrowId);
                     ps.executeUpdate();
                 }
 
                 c.commit();
             } catch (Exception ex) {
                 c.rollback();
-                if (ex instanceof SQLException) throw (SQLException) ex;
-                if (ex instanceof RuntimeException) throw (RuntimeException) ex;
+                if (ex instanceof SQLException)
+                    throw (SQLException) ex;
+                if (ex instanceof RuntimeException)
+                    throw (RuntimeException) ex;
                 throw new RuntimeException(ex);
             } finally {
                 c.setAutoCommit(true);
@@ -142,9 +151,11 @@ public class BorrowService {
     }
 
     public BigDecimal calculateFine(LocalDate dueDate, LocalDate returnDate) {
-        if (dueDate == null || returnDate == null) return BigDecimal.ZERO;
+        if (dueDate == null || returnDate == null)
+            return BigDecimal.ZERO;
         long lateDays = ChronoUnit.DAYS.between(dueDate, returnDate);
-        if (lateDays <= 0) return BigDecimal.ZERO;
+        if (lateDays <= 0)
+            return BigDecimal.ZERO;
         return FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
     }
 }

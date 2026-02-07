@@ -12,7 +12,7 @@ import java.util.List;
 public class ReservationDAO {
 
     public boolean existsActive(long userId, long bookId) throws SQLException {
-        String sql = "SELECT TOP 1 1 FROM reservations WHERE user_id=? AND book_id=? AND status IN ('WAITING','NOTIFIED')";
+        String sql = "SELECT TOP 1 1 FROM Borrowing WHERE user_id=? AND book_id=? AND status IN ('WAITING','NOTIFIED')";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -24,7 +24,7 @@ public class ReservationDAO {
     }
 
     public long create(long userId, long bookId) throws SQLException {
-        String sql = "INSERT INTO reservations(user_id, book_id, status) VALUES(?, ?, 'WAITING')";
+        String sql = "INSERT INTO Borrowing(user_id, book_id, borrow_date, status) VALUES(?, ?, GETDATE(), 'WAITING')";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
@@ -39,7 +39,7 @@ public class ReservationDAO {
     }
 
     public void cancel(long reservationId, long userId) throws SQLException {
-        String sql = "UPDATE reservations SET status='CANCELLED' WHERE id=? AND user_id=?";
+        String sql = "UPDATE Borrowing SET status='CANCELLED' WHERE borrowing_id=? AND user_id=?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, reservationId);
@@ -69,13 +69,13 @@ public class ReservationDAO {
     }
 
     private String baseSelect() {
-        return "SELECT r.id, r.user_id, r.book_id, r.status, r.created_at, " +
-                "u.email AS user_email, u.full_name AS user_full_name, " +
-                "b.isbn AS book_isbn, b.title AS book_title, b.author AS book_author, b.quantity AS book_quantity, b.status AS book_status "
+        return "SELECT b.borrowing_id, b.user_id, b.book_id, b.status, b.borrow_date, " +
+                "u.email AS user_email, u.name AS user_full_name, " +
+                "bk.title AS book_title, bk.author AS book_author, bk.price AS book_quantity, bk.availability AS book_status "
                 +
-                "FROM reservations r " +
-                "JOIN users u ON r.user_id = u.id " +
-                "JOIN books b ON r.book_id = b.id";
+                "FROM Borrowing b " +
+                "JOIN [User] u ON b.user_id = u.user_id " +
+                "JOIN Book bk ON b.book_id = bk.book_id";
     }
 
     private List<Reservation> mapList(ResultSet rs) throws SQLException {
@@ -87,9 +87,9 @@ public class ReservationDAO {
 
     private Reservation mapOne(ResultSet rs) throws SQLException {
         Reservation r = new Reservation();
-        r.setId(rs.getLong("id"));
+        r.setId(rs.getLong("borrowing_id"));
         r.setStatus(rs.getString("status"));
-        Timestamp ts = rs.getTimestamp("created_at");
+        Timestamp ts = rs.getTimestamp("borrow_date");
         r.setCreatedAt(ts == null ? null : ts.toInstant());
 
         User u = new User();
@@ -100,11 +100,8 @@ public class ReservationDAO {
 
         Book b = new Book();
         b.setId(rs.getLong("book_id"));
-        b.setIsbn(rs.getString("book_isbn"));
         b.setTitle(rs.getString("book_title"));
         b.setAuthor(rs.getString("book_author"));
-        b.setQuantity(rs.getInt("book_quantity"));
-        b.setStatus(rs.getString("book_status"));
         r.setBook(b);
 
         return r;
