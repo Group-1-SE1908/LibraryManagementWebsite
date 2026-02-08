@@ -1,73 +1,93 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <title>Form sách - LBMS</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;max-width:820px;margin:30px auto;padding:0 16px;}
-    .card{border:1px solid #ddd;border-radius:10px;padding:18px;}
-    .row{margin:10px 0;}
-    label{display:block;margin-bottom:6px;}
-    input,select{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;}
-    button,a.btn{display:inline-block;padding:10px 12px;border-radius:8px;border:1px solid #ddd;text-decoration:none;color:#111;background:#fff;}
-    .err{color:#b00020;margin:10px 0;}
-  </style>
-</head>
-<body>
-  <c:set var="isEdit" value="${mode == 'edit'}" />
-  <h2><c:choose><c:when test="${isEdit}">Sửa sách</c:when><c:otherwise>Thêm sách</c:otherwise></c:choose></h2>
+    <head>
+        <meta charset="UTF-8">
+        <title>${mode == 'create' ? 'Thêm Sách Mới' : 'Cập Nhật Sách'}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-light">
 
-  <div class="card">
-    <c:if test="${not empty error}">
-      <div class="err">${error}</div>
-    </c:if>
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0 text-center">
+                                ${mode == 'create' ? 'THÊM SÁCH MỚI' : 'CẬP NHẬT THÔNG TIN SÁCH'}
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
 
-    <form method="post" action="${pageContext.request.contextPath}<c:choose><c:when test='${isEdit}'>/books/edit</c:when><c:otherwise>/books/new</c:otherwise></c:choose>">
-      <c:if test="${isEdit}">
-        <input type="hidden" name="id" value="${book.id}" />
-      </c:if>
+                            <c:if test="${not empty error}">
+                                <div class="alert alert-danger" role="alert">
+                                    ${error}
+                                </div>
+                            </c:if>
 
-      <div class="row">
-        <label>ISBN</label>
-        <input name="isbn" value="${book.isbn}" required />
-      </div>
-      <div class="row">
-        <label>Tên sách</label>
-        <input name="title" value="${book.title}" required />
-      </div>
-      <div class="row">
-        <label>Tác giả</label>
-        <input name="author" value="${book.author}" required />
-      </div>
-      <div class="row">
-        <label>Nhà xuất bản</label>
-        <input name="publisher" value="${book.publisher}" />
-      </div>
-      <div class="row">
-        <label>Năm xuất bản</label>
-        <input name="publishYear" value="${book.publishYear}" type="number" min="0" />
-      </div>
-      <div class="row">
-        <label>Số lượng</label>
-        <input name="quantity" value="${book.quantity}" type="number" min="0" required />
-      </div>
-      <div class="row">
-        <label>Trạng thái</label>
-        <select name="status">
-          <c:set var="st" value="${empty book.status ? 'AVAILABLE' : book.status}" />
-          <option value="AVAILABLE" <c:if test="${st == 'AVAILABLE'}">selected</c:if>>AVAILABLE</option>
-          <option value="OUT_OF_STOCK" <c:if test="${st == 'OUT_OF_STOCK'}">selected</c:if>>OUT_OF_STOCK</option>
-          <option value="ARCHIVED" <c:if test="${st == 'ARCHIVED'}">selected</c:if>>ARCHIVED</option>
-        </select>
-      </div>
+                            <form action="${pageContext.request.contextPath}/books/${mode == 'create' ? 'new' : 'edit'}" method="post">
 
-      <div class="row">
-        <button type="submit">Lưu</button>
-        <a class="btn" href="${pageContext.request.contextPath}/books">Quay lại</a>
-      </div>
-    </form>
-  </div>
-</body>
+                                <c:if test="${mode == 'edit'}">
+                                    <input type="hidden" name="id" value="${book.bookId}">
+                                </c:if>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tên sách <span class="text-danger">*</span></label>
+                                    <input type="text" name="title" class="form-control" value="${book.title}" required placeholder="Nhập tên sách...">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Tác giả <span class="text-danger">*</span></label>
+                                        <input type="text" name="author" class="form-control" value="${book.author}" required placeholder="Nhập tên tác giả">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Giá tiền (VNĐ)</label>
+                                        <input type="number" name="price" class="form-control" value="${book.price}" min="0" step="1000" placeholder="0">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Thể loại</label>
+                                    <select name="categoryId" class="form-select">
+                                        <option value="0">-- Chọn thể loại --</option>
+                                        <c:forEach var="c" items="${categories}">
+                                            <option value="${c.categoryId}" ${book.categoryId == c.categoryId ? 'selected' : ''}>
+                                                ${c.categoryName}
+                                            </option>
+                                        </c:forEach>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Đường dẫn ảnh</label>
+                                    <input type="text" name="image" class="form-control" value="${book.image}" 
+                                           placeholder="Ví dụ: assets/images/books/ten-file.jpg">
+                                    <div class="form-text">Copy ảnh vào thư mục dự án và nhập đường dẫn tương đối.</div>
+                                </div>
+
+                                <c:if test="${not empty book.image}">
+                                    <div class="mb-3 text-center">
+                                        <label>Ảnh hiện tại:</label><br>
+                                        <img src="${pageContext.request.contextPath}/${book.image}" 
+                                             alt="Preview" class="img-thumbnail shadow-sm" style="max-height: 150px;">
+                                    </div>
+                                </c:if>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <a href="${pageContext.request.contextPath}/books" class="btn btn-secondary me-md-2">Quay lại</a>
+                                    <button type="submit" class="btn btn-primary fw-bold">
+                                        ${mode == 'create' ? 'Lưu Sách Mới' : 'Cập Nhật'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
 </html>

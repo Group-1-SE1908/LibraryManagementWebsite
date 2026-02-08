@@ -1,40 +1,37 @@
 package com.lbms.model;
 
-import java.time.Instant;
+import java.math.BigDecimal;
 
 public class Book {
-    private long id;
-    private String isbn;
+    private int bookId;
     private String title;
     private String author;
-    private String publisher;
-    private Integer publishYear;
-    private int quantity;
-    private String status;
-    private Category category;
-    private Long categoryId;
-    private Double price;
+    private BigDecimal price;
     private boolean availability;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private int categoryId;
+    private String categoryName;
+    private String image;
 
     public Book() {
     }
 
-    public long getId() {
-        return id;
+    public Book(int bookId, String title, String author, BigDecimal price, boolean availability, int categoryId, String categoryName,String image) {
+        this.bookId = bookId;
+        this.title = title;
+        this.author = author;
+        this.price = price;
+        this.availability = availability;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+        this.image = image;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public int getBookId() {
+        return bookId;
     }
 
-    public String getIsbn() {
-        return isbn;
-    }
-
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
+    public void setBookId(int bookID) {
+        this.bookId = bookID;
     }
 
     public String getTitle() {
@@ -53,75 +50,11 @@ public class Book {
         this.author = author;
     }
 
-    public String getPublisher() {
-        return publisher;
-    }
-
-    public void setPublisher(String publisher) {
-        this.publisher = publisher;
-    }
-
-    public Integer getPublishYear() {
-        return publishYear;
-    }
-
-    public void setPublishYear(Integer publishYear) {
-        this.publishYear = publishYear;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -132,4 +65,31 @@ public class Book {
     public void setAvailability(boolean availability) {
         this.availability = availability;
     }
+
+    public int getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+    
+    
+    
 }
