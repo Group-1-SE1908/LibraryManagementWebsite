@@ -1,36 +1,44 @@
 package com.lbms.controller;
 
 import com.lbms.model.Book;
-import com.lbms.model.Category; // Import Model
+import com.lbms.model.Category;
 import com.lbms.service.BookService;
-import com.lbms.service.CategoryService; // Import Service
+import com.lbms.service.CategoryService;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig; // Cần thiết cho Upload File
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet(urlPatterns = {
-    
-    "/books",
-    "/books/search",
-    "/books/new",
-    "/books/edit",
-    "/books/availability",
-    "/books/delete"
+    "/books",           // Danh sách
+    "/books/search",    // Tìm kiếm
+    "/books/new",       // Form thêm
+    "/books/edit",      // Form sửa
+    "/books/delete"     // Xóa
 })
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+    maxFileSize = 1024 * 1024 * 10,      // 10MB
+    maxRequestSize = 1024 * 1024 * 50    // 50MB
+)
 public class BookController extends HttpServlet {
     private BookService bookService;
-    private CategoryService categoryService; // Đã khai báo
+    private CategoryService categoryService;
 
     @Override
     public void init() {
         this.bookService = new BookService();
-        this.categoryService = new CategoryService(); // Đã khởi tạo
+        this.categoryService = new CategoryService();
     }
 
     @Override
@@ -43,11 +51,9 @@ public class BookController extends HttpServlet {
                 case "/books/search" -> handleSearch(req, resp);
 
                 case "/books/new" -> {
-                    // --- ĐÃ UNCOMMENT & SỬ DỤNG ---
-                    // Lấy danh sách thể loại để đổ vào thẻ <select> trong JSP
+                    // Load danh sách Category để đổ vào Dropdown
                     List<Category> categories = categoryService.listAll();
                     req.setAttribute("categories", categories);
-                    // ------------------------------
                     
                     req.setAttribute("mode", "create");
                     req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
@@ -59,39 +65,32 @@ public class BookController extends HttpServlet {
                         resp.sendRedirect(req.getContextPath() + "/books");
                         return;
                     }
-                    int id = Integer.parseInt(idStr);
-                    Book b = bookService.findById(id);
+                    
+                    Book b = bookService.findById(Integer.parseInt(idStr));
                     if (b == null) {
-                        req.setAttribute("error", "Không tìm thấy sách!");
+                        req.setAttribute("error", "Không tìm thấy sách có ID: " + idStr);
                         handleList(req, resp);
                         return;
                     }
-                    
-                    // --- ĐÃ UNCOMMENT & SỬ DỤNG ---
+
+                    // Load Category và Book lên form
                     List<Category> categories = categoryService.listAll();
                     req.setAttribute("categories", categories);
-                    // ------------------------------
-
+                    
                     req.setAttribute("mode", "edit");
                     req.setAttribute("book", b);
                     req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
                 }
 
-                case "/books/availability" -> {
-                    String idStr = req.getParameter("id");
-                    String statusStr = req.getParameter("status");
-                    if (idStr != null && statusStr != null) {
-                        int id = Integer.parseInt(idStr);
-                        boolean currentStatus = Boolean.parseBoolean(statusStr);
-                        bookService.updateAvailability(id, !currentStatus);
-                    }
-                    resp.sendRedirect(req.getContextPath() + "/books");
-                }
-
                 case "/books/delete" -> {
                     String idStr = req.getParameter("id");
                     if (idStr != null) {
-                        bookService.delete(Integer.parseInt(idStr));
+                        try {
+                            bookService.delete(Integer.parseInt(idStr));
+                        } catch (Exception e) {
+                            // Nếu xóa lỗi (do ràng buộc), quay lại danh sách và báo lỗi
+                            req.getSession().setAttribute("globalError", e.getMessage());
+                        }
                     }
                     resp.sendRedirect(req.getContextPath() + "/books");
                 }
@@ -109,36 +108,89 @@ public class BookController extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
 
         try {
-            if ("/books/new".equals(path)) {
-                Book b = readBookFromRequest(req);
-                b.setAvailability(true);
-                bookService.create(b);
-                resp.sendRedirect(req.getContextPath() + "/books");
-            } 
-            else if ("/books/edit".equals(path)) {
-                Book b = readBookFromRequest(req);
-                b.setBookId(Integer.parseInt(req.getParameter("id")));
-                bookService.update(b);
+            if ("/books/new".equals(path) || "/books/edit".equals(path)) {
+                
+                // 1. Đọc dữ liệu từ Form
+                Book b = new Book();
+                // Nếu là edit thì lấy ID
+                if ("/books/edit".equals(path)) {
+                    b.setBookId(Integer.parseInt(req.getParameter("id")));
+                }
+
+                b.setTitle(req.getParameter("title"));
+                b.setAuthor(req.getParameter("author"));
+                b.setIsbn(req.getParameter("isbn"));
+                
+                String catId = req.getParameter("categoryId");
+                b.setCategoryId((catId == null || catId.isEmpty()) ? 0 : Integer.parseInt(catId));
+
+                String priceStr = req.getParameter("price");
+                b.setPrice((priceStr == null || priceStr.isEmpty()) ? BigDecimal.ZERO : new BigDecimal(priceStr));
+
+                String qtyStr = req.getParameter("quantity");
+                b.setQuantity((qtyStr == null || qtyStr.isEmpty()) ? 0 : Integer.parseInt(qtyStr));
+
+                // 2. Xử lý Upload Ảnh
+                Part filePart = req.getPart("imageFile"); // Input name="imageFile"
+                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+
+                if (fileName != null && !fileName.isEmpty()) {
+                    // Người dùng có chọn file ảnh mới -> Upload và Lưu
+                    
+                    // Đường dẫn thực trên server: .../webapp/assets/images/books
+                    String uploadPath = getServletContext().getRealPath("") + File.separator + "assets" + File.separator + "images" + File.separator + "books";
+                    
+                    // Tạo thư mục nếu chưa có
+                    File uploadDir = new File(uploadPath);
+                    if (!uploadDir.exists()) uploadDir.mkdirs();
+
+                    // Đổi tên file để tránh trùng (Dùng UUID)
+                    String newFileName = UUID.randomUUID().toString() + "_" + fileName;
+                    
+                    // Ghi file
+                    filePart.write(uploadPath + File.separator + newFileName);
+                    
+                    // Lưu đường dẫn tương đối vào DB
+                    b.setImage("assets/images/books/" + newFileName);
+                } else {
+                    // Không chọn ảnh mới -> Giữ ảnh cũ (Lấy từ hidden field)
+                    b.setImage(req.getParameter("currentImage"));
+                }
+
+                // 3. Gọi Service để xử lý nghiệp vụ
+                if ("/books/new".equals(path)) {
+                    bookService.create(b);
+                } else {
+                    bookService.update(b);
+                }
+
+                // Thành công -> Về trang danh sách
                 resp.sendRedirect(req.getContextPath() + "/books");
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
+            // Xảy ra lỗi (Validate, Trùng ISBN...) -> Ở lại trang Form và hiện lỗi
             req.setAttribute("error", ex.getMessage());
-            req.setAttribute("book", readBookFromRequest(req));
             
-            // Nếu lỗi, cần load lại category để form không bị mất dropdown
-            try {
-                req.setAttribute("categories", categoryService.listAll());
-            } catch (Exception e) {}
+            // Cần load lại categories để dropdown không bị trống
+            try { req.setAttribute("categories", categoryService.listAll()); } catch (Exception e) {}
             
+            // Map lại dữ liệu vừa nhập để người dùng không phải nhập lại từ đầu
+            Book b = new Book();
+            b.setTitle(req.getParameter("title"));
+            b.setAuthor(req.getParameter("author"));
+            b.setIsbn(req.getParameter("isbn"));
+            b.setImage(req.getParameter("currentImage")); // Giữ ảnh cũ để preview
+            // ... (map thêm các trường khác nếu cần thiết hiển thị lại)
+            try { b.setQuantity(Integer.parseInt(req.getParameter("quantity"))); } catch(Exception e){}
+            try { b.setPrice(new BigDecimal(req.getParameter("price"))); } catch(Exception e){}
+            try { b.setCategoryId(Integer.parseInt(req.getParameter("categoryId"))); } catch(Exception e){}
+
+            req.setAttribute("book", b);
             req.setAttribute("mode", path.contains("new") ? "create" : "edit");
             req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
-        } catch (Exception ex) {
-            throw new ServletException(ex);
         }
     }
 
-    // ... Giữ nguyên các hàm handleList, handleSearch ...
-    
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         List<Book> books = bookService.listAll();
         req.setAttribute("books", books);
@@ -151,30 +203,5 @@ public class BookController extends HttpServlet {
         req.setAttribute("books", books);
         req.setAttribute("q", keyword);
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
-    }
-
-    private Book readBookFromRequest(HttpServletRequest req) {
-        Book b = new Book();
-        b.setTitle(req.getParameter("title"));
-        b.setAuthor(req.getParameter("author"));
-        b.setImage(req.getParameter("image"));
-        
-        String priceStr = req.getParameter("price");
-        if (priceStr == null || priceStr.trim().isEmpty()) {
-            b.setPrice(BigDecimal.ZERO);
-        } else {
-            try {
-                b.setPrice(new BigDecimal(priceStr.trim()));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Giá sách phải là số hợp lệ");
-            }
-        }
-
-        String catIdStr = req.getParameter("categoryId");
-        if (catIdStr != null && !catIdStr.isBlank()) {
-            b.setCategoryId(Integer.parseInt(catIdStr));
-        }
-
-        return b;
     }
 }

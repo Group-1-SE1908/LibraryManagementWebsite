@@ -19,11 +19,13 @@
                 <div class="card-body">
                     <div class="row g-2 align-items-center">
                         <div class="col-md-8">
-                            <form action="books/search" method="get" class="d-flex">
+                            <form action="${pageContext.request.contextPath}/books/search" method="get" class="d-flex">
+
                                 <input type="text" name="q" class="form-control me-2" placeholder="Tìm theo tên sách hoặc tác giả..." value="${param.q}">
                                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
+
                                 <c:if test="${not empty param.q}">
-                                    <a href="books" class="btn btn-outline-secondary ms-2">Hủy</a>
+                                    <a href="${pageContext.request.contextPath}/books" class="btn btn-outline-secondary ms-2">Hủy</a>
                                 </c:if>
                             </form>
                         </div>

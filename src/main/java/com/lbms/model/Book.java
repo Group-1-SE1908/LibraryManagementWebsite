@@ -11,11 +11,13 @@ public class Book {
     private int categoryId;
     private String categoryName;
     private String image;
+    private String isbn;
+    private int quantity;
 
     public Book() {
     }
 
-    public Book(int bookId, String title, String author, BigDecimal price, boolean availability, int categoryId, String categoryName,String image) {
+    public Book(int bookId, String title, String author, BigDecimal price, boolean availability, int categoryId, String categoryName,String image, String isbn, int quantity) {
         this.bookId = bookId;
         this.title = title;
         this.author = author;
@@ -24,6 +26,9 @@ public class Book {
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.image = image;
+        this.isbn = isbn;
+        this.quantity = quantity;
+        
     }
 
     public int getBookId() {
@@ -59,7 +64,7 @@ public class Book {
     }
 
     public boolean isAvailability() {
-        return availability;
+        return this.quantity > 0;
     }
 
     public void setAvailability(boolean availability) {
@@ -88,6 +93,22 @@ public class Book {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
     
     
