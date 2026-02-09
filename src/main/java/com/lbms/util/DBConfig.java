@@ -9,5 +9,5 @@ public final class DBConfig {
 
     public static final String USER = System.getenv().getOrDefault("LBMS_DB_USER", "sa");
 
-    public static final String PASSWORD = System.getenv().getOrDefault("LBMS_DB_PASSWORD", "123456");
+    public static final String PASSWORD = System.getenv().getOrDefault("LBMS_DB_PASSWORD", "12345");
 }

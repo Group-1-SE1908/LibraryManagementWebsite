@@ -2,7 +2,6 @@ package com.lbms.dao;
 
 import com.lbms.model.Role;
 import com.lbms.util.DBConnection;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,29 +11,41 @@ import java.util.List;
 
 public class RoleDAO {
 
-    public List<Role> listAll() throws SQLException {
-        String sql = "SELECT role_id, role_name FROM Role ORDER BY role_name";
+    public List<Role> getAllRoles() throws SQLException {
+        List<Role> roles = new ArrayList<>();
+        String sql = "SELECT role_id, role_name FROM Role ORDER BY role_name ASC";
+
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
-            List<Role> out = new ArrayList<>();
+
             while (rs.next()) {
-                out.add(new Role(rs.getLong("role_id"), rs.getString("role_name")));
+                Role role = new Role(
+                        rs.getInt("role_id"),
+                        rs.getString("role_name"));
+                roles.add(role);
             }
-            return out;
+
         }
+        return roles;
     }
 
-    public Role findByName(String name) throws SQLException {
-        String sql = "SELECT role_id, role_name FROM Role WHERE role_name = ?";
+    public Role getRoleById(int roleId) throws SQLException {
+        String sql = "SELECT role_id, role_name FROM Role WHERE role_id = ?";
+
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, name);
+
+            ps.setInt(1, roleId);
+
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next())
-                    return null;
-                return new Role(rs.getLong("role_id"), rs.getString("role_name"));
+                if (rs.next()) {
+                    return new Role(
+                            rs.getInt("role_id"),
+                            rs.getString("role_name"));
+                }
             }
         }
+        return null;
     }
 }

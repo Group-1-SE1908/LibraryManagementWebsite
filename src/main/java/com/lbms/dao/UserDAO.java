@@ -3,45 +3,22 @@ package com.lbms.dao;
 import com.lbms.model.Role;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
 
-    public List<User> listAll() throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
-                "FROM [User] u JOIN Role r ON u.role_id = r.role_id ORDER BY u.user_id DESC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            List<User> out = new ArrayList<>();
-            while (rs.next()) {
-                out.add(mapUser(rs));
-            }
-            return out;
-        }
-    }
-
-    public void updateStatus(long userId, String status) throws SQLException {
-        String sql = "UPDATE [User] SET status = ? WHERE user_id = ?";
+    public boolean updateUser(User user) throws SQLException {
+        String sql = "UPDATE [User] SET name = ?, email = ?, password = ?, role_id = ? WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setLong(2, userId);
-            ps.executeUpdate();
-        }
-    }
-
-    public void updateRole(long userId, String roleName) throws SQLException {
-        long roleId = getRoleIdByName(roleName);
-        String sql = "UPDATE [User] SET role_id = ? WHERE user_id = ?";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setLong(1, roleId);
-            ps.setLong(2, userId);
-            ps.executeUpdate();
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPasswordHash());
+            ps.setLong(4, user.getRole().getId());
+            ps.setLong(5, user.getId());
+            return ps.executeUpdate() > 0;
         }
     }
 
@@ -122,6 +99,96 @@ public class UserDAO {
                 return rs.getLong("role_id");
             }
         }
+    }
+
+    public boolean createUserAccount(User user) throws SQLException {
+        String sql = "INSERT INTO [User] (name, email, password, role_id, status) VALUES (?, ?, ?, ?, 'ACTIVE')";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPasswordHash());
+            ps.setLong(4, user.getRole().getId());
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updateStatus(long userId, String status) throws SQLException {
+        String sql = "UPDATE [User] SET status = ? WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isEmailExists(String email, int excludeUserId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM [User] WHERE email = ? AND user_id != ?";
+
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ps.setInt(2, excludeUserId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
+        List<User> list = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+        String sql = "SELECT u.user_id, u.name, u.email, u.password, u.status, u.role_id, r.role_name " +
+                "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id " +
+                "WHERE u.name LIKE ? OR u.email LIKE ? " +
+                "ORDER BY u.user_id ASC " +
+                "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
+            String searchPattern = "%" + keyword + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setInt(3, offset);
+            ps.setInt(4, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return list;
+    }
+
+    public int getTotalUserCount(String keyword) {
+        String sql = "SELECT COUNT(*) FROM [User] WHERE name LIKE ? OR email LIKE ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
+            String searchPattern = "%" + keyword + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private User mapUser(ResultSet rs) throws SQLException {

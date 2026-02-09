@@ -1,7 +1,7 @@
 package com.lbms.controller;
 
 import com.lbms.model.User;
-import com.lbms.service.UserManagementService;
+import com.lbms.dao.UserDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,11 +15,11 @@ import java.util.List;
 
 @WebServlet(urlPatterns = { "/admin", "/admin/dashboard" })
 public class AdminDashboardController extends HttpServlet {
-    private UserManagementService userManagementService;
+    private UserDAO userDAO;
 
     @Override
     public void init() {
-        this.userManagementService = new UserManagementService();
+        this.userDAO = new UserDAO();
     }
 
     @Override
@@ -29,11 +29,8 @@ public class AdminDashboardController extends HttpServlet {
 
             // Get user data for the user management table
             try {
-                users = userManagementService.listAllUsers();
-                // Limit to first 4 users for display
-                if (users.size() > 4) {
-                    users = users.subList(0, 4);
-                }
+                // Use UserDAO to fetch first 4 users for dashboard
+                users = userDAO.getAllUsers(1, 4, "");
             } catch (Exception e) {
                 // If there's any error getting users, just use empty list
                 e.printStackTrace();
