@@ -17,19 +17,25 @@ public class BookService {
         return bookDAO.search(q);
     }
 
+    public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
+        return bookDAO.searchByCategory(q, categoryId);
+    }
+
     public Book findById(long id) throws SQLException {
         return bookDAO.findById(id);
     }
 
     public long create(Book b) throws SQLException {
         validate(b);
-        if (b.getStatus() == null || b.getStatus().isBlank()) b.setStatus("AVAILABLE");
+        if (b.getStatus() == null || b.getStatus().isBlank())
+            b.setStatus("AVAILABLE");
         return bookDAO.create(b);
     }
 
     public void update(Book b) throws SQLException {
         validate(b);
-        if (b.getStatus() == null || b.getStatus().isBlank()) b.setStatus("AVAILABLE");
+        if (b.getStatus() == null || b.getStatus().isBlank())
+            b.setStatus("AVAILABLE");
         bookDAO.update(b);
     }
 
@@ -38,10 +44,15 @@ public class BookService {
     }
 
     private void validate(Book b) {
-        if (b == null) throw new IllegalArgumentException("Dữ liệu sách không hợp lệ");
-        if (b.getIsbn() == null || b.getIsbn().isBlank()) throw new IllegalArgumentException("ISBN là bắt buộc");
-        if (b.getTitle() == null || b.getTitle().isBlank()) throw new IllegalArgumentException("Tên sách là bắt buộc");
-        if (b.getAuthor() == null || b.getAuthor().isBlank()) throw new IllegalArgumentException("Tác giả là bắt buộc");
-        if (b.getQuantity() < 0) throw new IllegalArgumentException("Số lượng không hợp lệ");
+        if (b == null)
+            throw new IllegalArgumentException("Dữ liệu sách không hợp lệ");
+        if (b.getIsbn() == null || b.getIsbn().isBlank())
+            throw new IllegalArgumentException("ISBN là bắt buộc");
+        if (b.getTitle() == null || b.getTitle().isBlank())
+            throw new IllegalArgumentException("Tên sách là bắt buộc");
+        if (b.getAuthor() == null || b.getAuthor().isBlank())
+            throw new IllegalArgumentException("Tác giả là bắt buộc");
+        if (b.getQuantity() < 0)
+            throw new IllegalArgumentException("Số lượng không hợp lệ");
     }
 }

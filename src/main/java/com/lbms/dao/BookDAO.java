@@ -37,6 +37,43 @@ public class BookDAO {
         }
     }
 
+    public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
+        String like = q == null ? null : ("%" + q.trim() + "%");
+        String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book " +
+                "WHERE (? IS NULL OR title LIKE ? OR author LIKE ?) " +
+                "AND (? IS NULL OR category_id = ?) " +
+                "ORDER BY book_id DESC";
+
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            if (like == null || like.equals("%%")) {
+                ps.setNull(1, Types.VARCHAR);
+                ps.setNull(2, Types.VARCHAR);
+                ps.setNull(3, Types.VARCHAR);
+            } else {
+                ps.setString(1, like);
+                ps.setString(2, like);
+                ps.setString(3, like);
+            }
+
+            if (categoryId == null) {
+                ps.setNull(4, Types.BIGINT);
+                ps.setNull(5, Types.BIGINT);
+            } else {
+                ps.setLong(4, categoryId);
+                ps.setLong(5, categoryId);
+            }
+
+            List<Book> out = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapBook(rs));
+                }
+            }
+            return out;
+        }
+    }
+
     public Book findById(long id) throws SQLException {
         String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book WHERE book_id = ?";
         try (Connection c = DBConnection.getConnection();
