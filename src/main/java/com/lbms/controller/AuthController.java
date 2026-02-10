@@ -2,6 +2,7 @@ package com.lbms.controller;
 
 import com.lbms.model.User;
 import com.lbms.service.AuthService;
+import com.lbms.service.CartService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,10 +16,12 @@ import java.io.IOException;
 @WebServlet(urlPatterns = { "/login", "/register", "/logout" })
 public class AuthController extends HttpServlet {
     private AuthService authService;
+    private CartService cartService;
 
     @Override
     public void init() {
         this.authService = new AuthService();
+        this.cartService = new CartService();
     }
 
     @Override
@@ -32,10 +35,7 @@ public class AuthController extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
                 break;
             case "/logout":
-                HttpSession session = req.getSession(false);
-                if (session != null)
-                    session.invalidate();
-                resp.sendRedirect(req.getContextPath() + "/login");
+                handleLogout(req, resp);
                 break;
             default:
                 resp.sendError(404);
@@ -110,6 +110,22 @@ public class AuthController extends HttpServlet {
         }
 
         authService.register(email.trim(), password, fullName);
+        resp.sendRedirect(req.getContextPath() + "/login");
+    }
+
+    private void handleLogout(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser != null) {
+                try {
+                    cartService.clearCart(currentUser.getId());
+                } catch (Exception ex) {
+                    throw new ServletException(ex);
+                }
+            }
+            session.invalidate();
+        }
         resp.sendRedirect(req.getContextPath() + "/login");
     }
 }

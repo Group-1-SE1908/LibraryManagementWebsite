@@ -113,6 +113,15 @@ public class CartDAO {
         }
     }
 
+    public void clearCart(long cartId) throws SQLException {
+        String sql = "DELETE FROM CartItem WHERE cart_id = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, cartId);
+            ps.executeUpdate();
+        }
+    }
+
     private void insertItem(Connection c, long cartId, long bookId, int quantity) throws SQLException {
         String insertSql = "INSERT INTO CartItem(cart_id, book_id, quantity) VALUES(?, ?, ?)";
         try (PreparedStatement ps = c.prepareStatement(insertSql)) {
