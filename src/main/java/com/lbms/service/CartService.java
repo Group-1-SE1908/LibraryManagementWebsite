@@ -46,6 +46,11 @@ public class CartService {
         cartDAO.deleteItem(cartId, bookId);
     }
 
+    public void clearCart(long userId) throws SQLException {
+        long cartId = cartDAO.ensureCart(userId);
+        cartDAO.clearCart(cartId);
+    }
+
     private void validateBookExist(long bookId) throws SQLException {
         Book book = bookDAO.findById(bookId);
         if (book == null) {
