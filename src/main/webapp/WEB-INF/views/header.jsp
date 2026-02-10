@@ -24,9 +24,16 @@
                             🔔
                             <span class="notification-badge">2</span>
                         </div>
-                        <div class="user-profile">
+                        <a href="${pageContext.request.contextPath}/cart" class="btn"
+                            style="text-decoration: none; color: white; background: rgba(255,255,255,0.2); padding: 8px 12px; font-size: 13px;">🛒
+                            Cart</a>
+                        <div class="user-profile" onclick="toggleUserDropdown(event)">
                             <div class="user-avatar">${userInitial}</div>
                             <span class="user-name">${userName}</span>
+                            <div class="user-dropdown" id="userDropdown">
+                                <a href="${pageContext.request.contextPath}/profile">👤 Profile</a>
+                                <a href="${pageContext.request.contextPath}/logout" class="logout">🚪 Logout</a>
+                            </div>
                         </div>
                     </div>
                 </div>

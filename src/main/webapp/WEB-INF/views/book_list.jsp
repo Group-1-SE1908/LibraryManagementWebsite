@@ -1,162 +1,274 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
   <%@ taglib prefix="c" uri="jakarta.tags.core" %>
     <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+
       <!DOCTYPE html>
-      <html lang="vi">
+      <html lang="en">
 
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>LBMS Portal - Tìm kiếm sách</title>
+        <title>Book Catalog - LBMS Library Portal</title>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
+        <style>
+          .page-header {
+            background: linear-gradient(135deg, #0b57d0 0%, #3366cc 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 40px;
+            text-align: center;
+          }
+
+          .page-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 700;
+          }
+
+          .page-header p {
+            font-size: 18px;
+            opacity: 0.95;
+          }
+
+          .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+          }
+
+          .filter-group label {
+            margin-bottom: 0;
+          }
+
+          .filter-group select {
+            min-width: 150px;
+          }
+
+          .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .results-count {
+            font-size: 14px;
+            color: #6b7280;
+          }
+
+          .sort-by {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+          }
+
+          .sort-by select {
+            min-width: 200px;
+            padding: 8px 12px;
+            font-size: 14px;
+          }
+        </style>
       </head>
 
       <body>
         <jsp:include page="header.jsp" />
 
-        <!-- Search & Filter Section -->
-        <div class="search-filter-section">
-          <div class="search-container">
-            <h3>Search Book</h3>
-            <form method="get" action="${pageContext.request.contextPath}/books" class="search-filter-form">
-              <div class="form-group">
-                <input type="text" name="q" value="${q}" placeholder="Search by title, author, or ISBN..."
-                  class="search-input" />
-              </div>
-              <div class="form-group">
-                <label for="category">Filter by Category:</label>
-                <select name="category" id="category" class="category-select">
-                  <option value="0">All Categories</option>
-                  <c:forEach items="${categories}" var="cat">
-                    <option value="${cat.id}" <c:if test="${selectedCategory == cat.id}">selected</c:if>>${cat.name}
-                    </option>
-                  </c:forEach>
-                </select>
-              </div>
-              <button type="submit" class="btn primary">Search</button>
-              <a href="${pageContext.request.contextPath}/books" class="btn">Clear Filters</a>
-            </form>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="container">
+            <h1>📚 Book Catalog</h1>
+            <p>Explore our extensive collection of books and resources</p>
           </div>
         </div>
 
-        <!-- Stats Section -->
-        <c:set var="roleName" value="${sessionScope.currentUser.role.name}" />
-        <c:if test="${sessionScope.currentUser != null}">
-          <div class="stats-section">
-            <div class="stats-container">
-              <div class="stat-card">
-                <div class="stat-icon">📖</div>
-                <div class="stat-content">
-                  <h3>Currently Borrowed</h3>
-                  <p>3 Books</p>
-                </div>
-              </div>
-              <div class="stat-card due-soon">
-                <div class="stat-icon">⏰</div>
-                <div class="stat-content">
-                  <h3>Due Soon</h3>
-                  <p>1 Item</p>
-                </div>
-              </div>
-              <div class="stat-card reserved">
-                <div class="stat-icon">⭐</div>
-                <div class="stat-content">
-                  <h3>Reserved</h3>
-                  <p>2 Pending</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </c:if>
-
         <!-- Main Content -->
-        <div class="main-content">
-          <!-- Admin Controls -->
-          <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
-            <div class="admin-controls">
-              <a class="btn primary" href="${pageContext.request.contextPath}/books/new">+ Add New Book</a>
-              <a class="btn" href="${pageContext.request.contextPath}/admin/users">Manage Users</a>
-              <a class="btn" href="${pageContext.request.contextPath}/shipping">Manage Shipping</a>
-            </div>
-          </c:if>
+        <div class="container">
+          <!-- Search & Filter Section -->
+          <div class="search-container">
+            <form method="get" action="${pageContext.request.contextPath}/books" id="searchForm">
+              <div class="search-box">
+                <div style="flex: 1; min-width: 200px;">
+                  <label for="searchInput">Search by book title or author</label>
+                  <input type="text" id="searchInput" name="search" placeholder="Enter book title, author..."
+                    value="${param.search}" />
+                </div>
 
-          <!-- Section Header -->
-          <div class="section-header">
-            <h2>Featured Books</h2>
-            <div class="category-filter">
-              <button class="active">All</button>
-              <button>Computer Science</button>
-              <button>Literature</button>
-              <button>Business</button>
+                <div class="filter-group">
+                  <div>
+                    <label for="categoryFilter">Category</label>
+                    <select id="categoryFilter" name="category">
+                      <option value="">All Categories</option>
+                      <c:forEach var="cat" items="${categories}">
+                        <option value="${cat.id}" ${param.category==cat.id ? 'selected' : '' }>${cat.name}</option>
+                      </c:forEach>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" name="status">
+                      <option value="">All</option>
+                      <option value="available" ${param.status=='available' ? 'selected' : '' }>Available</option>
+                      <option value="borrowed" ${param.status=='borrowed' ? 'selected' : '' }>Borrowed</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="btn primary">🔍 Search</button>
+                  <a href="${pageContext.request.contextPath}/books" class="btn" style="text-decoration: none;">↺
+                    Reset</a>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Results Info -->
+          <div class="results-info">
+            <div class="results-count">
+              Found <strong>${totalBooks > 0 ? totalBooks : 0}</strong> book(s)
+              <c:if test="${not empty param.search}">
+                for "<strong>${param.search}</strong>"
+              </c:if>
+            </div>
+            <div class="sort-by">
+              <label for="sortBy">Sort by:</label>
+              <select id="sortBy" name="sort" onchange="updateSort(this.value)">
+                <option value="newest" ${param.sort=='newest' ? 'selected' : '' }>Newest</option>
+                <option value="popular" ${param.sort=='popular' ? 'selected' : '' }>Most Popular</option>
+                <option value="rating" ${param.sort=='rating' ? 'selected' : '' }>Top Rated</option>
+                <option value="title_asc" ${param.sort=='title_asc' ? 'selected' : '' }>Title A-Z</option>
+              </select>
             </div>
           </div>
 
           <!-- Books Grid -->
           <c:choose>
-            <c:when test="${empty books}">
-              <div style="text-align: center; padding: 60px 20px; color: #999;">
-                <p style="font-size: 18px; margin-bottom: 20px;">No books found</p>
-                <a href="${pageContext.request.contextPath}/books" class="btn primary">Clear Search</a>
-              </div>
-            </c:when>
-            <c:otherwise>
+            <c:when test="${not empty books}">
               <div class="books-grid">
-                <c:forEach items="${books}" var="b">
+                <c:forEach var="book" items="${books}">
                   <div class="book-card">
-                    <div class="book-cover">
-                      <c:if test="${b.quantity > 0}">
-                        <span class="book-badge available">Available</span>
+                    <!-- Book Image -->
+                    <div class="book-image">
+                      📖
+                      <c:if test="${book.quantity > 0}">
+                        <span class="book-badge">Available</span>
                       </c:if>
-                      <c:if test="${b.quantity <= 0}">
-                        <span class="book-badge waitlist">Waitlist</span>
+                      <c:if test="${book.quantity <= 0}">
+                        <span class="book-badge unavailable">Out of Stock</span>
                       </c:if>
-                      <!-- Placeholder for book cover -->
-                      <span style="font-size: 60px; opacity: 0.3;">📖</span>
                     </div>
+
+                    <!-- Book Info -->
                     <div class="book-info">
-                      <div class="book-title">
-                        <a href="${pageContext.request.contextPath}/books/detail?id=${b.id}"
-                          style="text-decoration: none; color: inherit;">
-                          ${b.title}
-                        </a>
+                      <h3 class="book-title">${book.title}</h3>
+                      <p class="book-author">by ${book.author}</p>
+
+                      <div class="book-meta">
+                        <div>
+                          <c:if test="${not empty book.publishYear}">
+                            <span>${book.publishYear}</span>
+                          </c:if>
+                        </div>
+                        <div class="book-rating">
+                          📖 ISBN: ${book.isbn}
+                        </div>
                       </div>
-                      <div class="book-author">${b.author}</div>
-                      <div class="book-rating">
-                        <span class="stars">★★★★★</span>
-                        <span class="rating-count">(42)</span>
-                      </div>
+
+                      <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">
+                        <c:if test="${not empty book.publisher}">
+                          <strong>Publisher:</strong> ${book.publisher}
+                        </c:if>
+                        <c:if test="${empty book.publisher}">
+                          <em>No publisher information</em>
+                        </c:if>
+                      </p>
+
+                      <!-- Stock Info -->
+                      <p
+                        style="font-size: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+                        <c:choose>
+                          <c:when test="${book.quantity > 0}">
+                            <span style="color: #0d9488; font-weight: 600;">📚 ${book.quantity} copy(ies)
+                              available</span>
+                          </c:when>
+                          <c:otherwise>
+                            <span style="color: #dc2626; font-weight: 600;">❌ Out of Stock</span>
+                          </c:otherwise>
+                        </c:choose>
+                      </p>
+
+                      <!-- Actions -->
                       <div class="book-actions">
-                        <c:if test="${b.quantity > 0}">
-                          <form method="post" action="${pageContext.request.contextPath}/cart/add"
-                            style="flex: 2; display: flex; gap: 4px;">
-                            <input type="hidden" name="bookId" value="${b.id}" />
-                            <input type="hidden" name="quantity" value="1" />
-                            <button type="submit" class="btn primary" style="flex: 1; margin: 0;">Borrow Now</button>
-                          </form>
-                        </c:if>
-                        <c:if test="${b.quantity <= 0}">
-                          <button class="btn secondary" onclick="alert('Currently unavailable')">Reserve</button>
-                        </c:if>
-                        <c:if test="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}">
-                          <a href="${pageContext.request.contextPath}/books/edit?id=${b.id}" class="btn">Edit</a>
-                          <a href="${pageContext.request.contextPath}/books/delete?id=${b.id}" class="btn danger"
-                            onclick="return confirm('Delete this book?');">Delete</a>
+                        <a href="${pageContext.request.contextPath}/books/detail?id=${book.id}" class="btn small"
+                          style="text-decoration: none; justify-content: center;">
+                          👁️ View Details
+                        </a>
+                        <c:if test="${book.quantity > 0}">
+                          <a href="${pageContext.request.contextPath}/cart/add/${book.id}" class="btn small primary"
+                            style="text-decoration: none; justify-content: center;">
+                            🛒 Borrow
+                          </a>
                         </c:if>
                       </div>
                     </div>
                   </div>
                 </c:forEach>
               </div>
+
+              <!-- Pagination (if needed) -->
+              <c:if test="${totalBooks > 12}">
+                <div class="pagination">
+                  <a href="#" class="btn small">← Previous</a>
+                  <span class="current">1</span>
+                  <a href="#" class="btn small">2</a>
+                  <a href="#" class="btn small">3</a>
+                  <a href="#" class="btn small">Next →</a>
+                </div>
+              </c:if>
+            </c:when>
+
+            <c:otherwise>
+              <!-- Empty State -->
+              <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <h3>No books found</h3>
+                <p>Try adjusting your search criteria</p>
+                <a href="${pageContext.request.contextPath}/books" class="btn primary mt-20"
+                  style="text-decoration: none;">← Back to List</a>
+              </div>
             </c:otherwise>
           </c:choose>
-
-          <!-- View All Link -->
-          <div class="view-all">
-            <a href="${pageContext.request.contextPath}/books">View all new arrivals →</a>
-          </div>
         </div>
 
         <jsp:include page="footer.jsp" />
+
+        <script>
+          function updateSort(sortValue) {
+            const form = document.getElementById('searchForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'sort';
+            input.value = sortValue;
+            form.appendChild(input);
+            form.submit();
+          }
+
+          // Add smooth scroll behavior
+          document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+              e.preventDefault();
+              const target = document.querySelector(this.getAttribute('href'));
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+              }
+            });
+          });
+        </script>
       </body>
 
       </html>

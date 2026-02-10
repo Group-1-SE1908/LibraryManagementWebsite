@@ -2,110 +2,161 @@
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
             <!DOCTYPE html>
-            <html lang="vi">
+            <html lang="en">
 
             <head>
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>${book.title} - Book Details</title>
+                <title>${book.title} - Book Details - LBMS</title>
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
                 <style>
-                    .detail-container {
+                    .detail-page {
                         max-width: 1000px;
                         margin: 40px auto;
-                        padding: 20px;
+                        padding: 0 20px;
+                    }
+
+                    .breadcrumb {
+                        margin-bottom: 20px;
+                        color: var(--text-muted);
+                        font-size: 14px;
+                    }
+
+                    .breadcrumb a {
+                        color: var(--primary-color);
+                        text-decoration: none;
+                    }
+
+                    .book-detail-card {
                         display: flex;
                         gap: 40px;
                         background: white;
                         border-radius: 12px;
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                        box-shadow: var(--shadow-lg);
+                        padding: 40px;
+                        border: 1px solid var(--border-color);
                     }
 
-                    .detail-image {
-                        flex: 1;
-                        background: #f8f9fa;
-                        border-radius: 8px;
+                    .book-visual {
+                        flex: 0 0 320px;
+                    }
+
+                    .detail-img-placeholder {
+                        width: 100%;
+                        height: 450px;
+                        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        border-radius: 12px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        min-height: 400px;
-                        font-size: 100px;
+                        font-size: 120px;
+                        color: #dee2e6;
+                        border: 1px solid var(--border-color);
                     }
 
-                    .detail-info {
-                        flex: 1.5;
+                    .book-content {
+                        flex: 1;
                         display: flex;
                         flex-direction: column;
                     }
 
-                    .detail-title {
-                        font-size: 32px;
-                        font-weight: 700;
-                        margin-bottom: 10px;
-                        color: #2d3436;
-                    }
-
-                    .detail-author {
-                        font-size: 18px;
-                        color: #636e72;
-                        margin-bottom: 20px;
-                    }
-
-                    .detail-meta {
-                        margin-bottom: 30px;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 15px;
-                    }
-
-                    .meta-item {
-                        padding: 10px;
-                        background: #f0f2f5;
-                        border-radius: 6px;
-                    }
-
-                    .meta-label {
-                        font-size: 12px;
-                        color: #b2bec3;
-                        text-transform: uppercase;
-                        display: block;
-                    }
-
-                    .meta-value {
-                        font-weight: 600;
-                        color: #2d3436;
-                    }
-
-                    .detail-actions {
-                        margin-top: auto;
-                        display: flex;
-                        gap: 15px;
-                        padding-top: 20px;
-                        border-top: 1px solid #eee;
-                    }
-
-                    .status-badge {
+                    .badge-status {
                         display: inline-block;
-                        padding: 4px 12px;
+                        padding: 6px 16px;
                         border-radius: 20px;
                         font-size: 14px;
                         font-weight: 600;
-                        margin-bottom: 20px;
+                        margin-bottom: 16px;
                     }
 
-                    .status-available {
-                        background: #e3f9e5;
-                        color: #1f8b24;
+                    .badge-available {
+                        background: #dcfce7;
+                        color: #166534;
                     }
 
-                    .status-out {
+                    .badge-unavailable {
                         background: #fee2e2;
-                        color: #dc2626;
+                        color: #991b1b;
+                    }
+
+                    .book-title {
+                        font-size: 36px;
+                        font-weight: 800;
+                        color: var(--text-dark);
+                        margin-bottom: 12px;
+                        line-height: 1.2;
+                    }
+
+                    .book-author-name {
+                        font-size: 20px;
+                        color: var(--primary-color);
+                        margin-bottom: 24px;
+                        font-weight: 500;
+                    }
+
+                    .book-details-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 20px;
+                        margin-bottom: 30px;
+                        padding: 24px;
+                        background: var(--light-bg);
+                        border-radius: 12px;
+                    }
+
+                    .detail-item {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                    }
+
+                    .detail-label {
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--text-muted);
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+
+                    .detail-value {
+                        font-size: 16px;
+                        color: var(--text-dark);
+                        font-weight: 500;
+                    }
+
+                    .book-description {
+                        color: var(--text-muted);
+                        line-height: 1.6;
+                        margin-bottom: 30px;
+                        font-size: 16px;
+                    }
+
+                    .action-footer {
+                        margin-top: auto;
+                        display: flex;
+                        gap: 16px;
+                        padding-top: 24px;
+                        border-top: 1px solid var(--border-color);
+                    }
+
+                    .action-footer .btn {
+                        padding: 12px 32px;
+                        font-size: 16px;
                     }
 
                     @media (max-width: 768px) {
-                        .detail-container {
+                        .book-detail-card {
                             flex-direction: column;
+                            padding: 20px;
+                        }
+
+                        .book-visual {
+                            flex: none;
+                            width: 100%;
+                        }
+
+                        .book-details-grid {
+                            grid-template-columns: 1fr;
                         }
                     }
                 </style>
@@ -114,60 +165,72 @@
             <body>
                 <jsp:include page="header.jsp" />
 
-                <div class="main-content">
-                    <div style="max-width: 1000px; margin: 20px auto;">
-                        <a href="${pageContext.request.contextPath}/books"
-                            style="text-decoration: none; color: #636e72;">← Back to Books</a>
-                    </div>
+                <div class="detail-page">
+                    <nav class="breadcrumb">
+                        <a href="${pageContext.request.contextPath}/books">Catalog</a> &nbsp;/&nbsp;
+                        <span>${book.title}</span>
+                    </nav>
 
-                    <div class="detail-container">
-                        <div class="detail-image">
-                            📖
+                    <div class="book-detail-card">
+                        <div class="book-visual">
+                            <div class="detail-img-placeholder">
+
+                            </div>
                         </div>
-                        <div class="detail-info">
-                            <c:choose>
-                                <c:when test="${book.availability}">
-                                    <span class="status-badge status-available">Available</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="status-badge status-out">Unavailable</span>
-                                </c:otherwise>
-                            </c:choose>
 
-                            <h1 class="detail-title">${book.title}</h1>
-                            <p class="detail-author">by ${book.author}</p>
+                        <div class="book-content">
+                            <div class="status-wrapper">
+                                <c:choose>
+                                    <c:when test="${book.quantity > 0}">
+                                        <span class="badge-status badge-available">Available</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge-status badge-unavailable">Out of Stock</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
 
-                            <div class="detail-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">ID</span>
-                                    <span class="meta-value">#${book.id}</span>
+                            <h1 class="book-title">${book.title}</h1>
+                            <p class="book-author-name">by ${book.author}</p>
+
+                            <div class="book-details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">ISBN</span>
+                                    <span class="detail-value">${book.isbn}</span>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Price</span>
-                                    <span class="meta-value">${book.price} $</span>
+                                <div class="detail-item">
+                                    <span class="detail-label">Publisher</span>
+                                    <span class="detail-value">${not empty book.publisher ? book.publisher :
+                                        'Unknown'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Published Year</span>
+                                    <span class="detail-value">${not empty book.publishYear ? book.publishYear :
+                                        'N/A'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Current Stock</span>
+                                    <span class="detail-value">${book.quantity} copies</span>
                                 </div>
                             </div>
 
-                            <div class="detail-actions">
-                                <c:if test="${book.availability}">
-                                    <form method="post" action="${pageContext.request.contextPath}/cart/add"
-                                        style="flex: 1;">
-                                        <input type="hidden" name="bookId" value="${book.id}" />
-                                        <input type="hidden" name="quantity" value="1" />
-                                        <button type="submit" class="btn primary" style="width: 100%;">Add to
-                                            Cart</button>
-                                    </form>
-                                </c:if>
-                                <c:if test="${!book.availability}">
-                                    <button class="btn secondary" style="flex: 1;"
-                                        onclick="alert('Join the waitlist to be notified!')">Join Waitlist</button>
-                                </c:if>
+                            <div class="book-description">
+                                <p>Explore the fascinating world of this book titled <strong>${book.title}</strong> by
+                                    <strong>${book.author}</strong>. This resource is part of our extensive collection,
+                                    provided to empower students and faculty with the knowledge they need for their
+                                    academic pursuits.</p>
+                            </div>
 
-                                <c:if
-                                    test="${sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
-                                    <a href="${pageContext.request.contextPath}/books/edit?id=${book.id}" class="btn"
-                                        style="flex: 0.5; text-align: center;">Edit</a>
+                            <div class="action-footer">
+                                <c:if test="${book.quantity > 0}">
+                                    <a href="${pageContext.request.contextPath}/cart/add/${book.id}"
+                                        class="btn primary">
+                                        Borrow This Book
+                                    </a>
                                 </c:if>
+                                <a href="${pageContext.request.contextPath}/books" class="btn">
+                                    Back to Catalog
+                                </a>
                             </div>
                         </div>
                     </div>

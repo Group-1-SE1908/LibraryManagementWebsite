@@ -103,8 +103,10 @@ public class BookController extends HttpServlet {
     }
 
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        String q = req.getParameter("q");
+        String search = req.getParameter("search");
         String categoryIdStr = req.getParameter("category");
+        String status = req.getParameter("status");
+        String sort = req.getParameter("sort");
         Long categoryId = null;
 
         if (categoryIdStr != null && !categoryIdStr.isEmpty() && !categoryIdStr.equals("0")) {
@@ -117,17 +119,29 @@ public class BookController extends HttpServlet {
 
         List<Book> books;
         if (categoryId != null) {
-            books = bookService.searchByCategory(q, categoryId);
+            books = bookService.searchByCategory(search, categoryId);
         } else {
-            books = bookService.search(q);
+            books = bookService.search(search);
+        }
+
+        // Simple filtering for status if needed (optional for now, but good to have)
+        if (status != null && !status.isEmpty()) {
+            if ("available".equals(status)) {
+                books.removeIf(b -> !b.isAvailability());
+            } else if ("borrowed".equals(status)) {
+                books.removeIf(b -> b.isAvailability());
+            }
         }
 
         List<Category> categories = categoryDAO.listAll();
 
         req.setAttribute("books", books);
+        req.setAttribute("totalBooks", books.size());
         req.setAttribute("categories", categories);
-        req.setAttribute("q", q);
+        req.setAttribute("search", search);
         req.setAttribute("selectedCategory", categoryId);
+        req.setAttribute("selectedStatus", status);
+        req.setAttribute("selectedSort", sort);
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
     }
 
