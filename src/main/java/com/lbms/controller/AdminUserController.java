@@ -160,7 +160,7 @@ public class AdminUserController extends HttpServlet {
             user.setRole(role);
 
             if (userDAO.createUserAccount(user)) {
-                request.getSession().setAttribute("flash", "User created successfully!");
+                request.getSession().setAttribute("flash", "Thêm người dùng mới thành công!");
                 response.sendRedirect(request.getContextPath() + "/admin/users");
                 return;
             }
@@ -193,7 +193,7 @@ public class AdminUserController extends HttpServlet {
         User existingUser = userDAO.findById(userId);
 
         if (existingUser == null) {
-            request.getSession().setAttribute("flash", "Error: User not found!");
+            request.getSession().setAttribute("flash", "Lỗi : Không tìm thấy người dùng!");
             response.sendRedirect(request.getContextPath() + "/admin/users");
             return;
         }
@@ -222,7 +222,7 @@ public class AdminUserController extends HttpServlet {
             user.setRole(role);
 
             if (userDAO.updateUser(user)) {
-                request.getSession().setAttribute("flash", "User updated successfully!");
+                request.getSession().setAttribute("flash", "Cập nhật thông tin người dùng thành công!");
 
                 String target = request.getContextPath() + "/admin/users?page=" + p + "&keyword=" + k;
 
@@ -251,13 +251,13 @@ public class AdminUserController extends HttpServlet {
 
         User currentUser = (User) request.getSession().getAttribute("currentUser");
         if (currentUser != null && id == currentUser.getId()) {
-            request.getSession().setAttribute("flash", "Error: You cannot block your own account!");
+            request.getSession().setAttribute("flash", "Lỗi : Bạn không thể tự khóa tài khoản của chính mình!");
         } else {
 
             if (userDAO.updateStatus(id, status)) {
-                request.getSession().setAttribute("flash", "Status updated to " + status + " successfully!");
+                request.getSession().setAttribute("flash", "Cập nhật trạng thái thành " + status + " thành công!");
             } else {
-                request.getSession().setAttribute("flash", "Error: Failed to update status.");
+                request.getSession().setAttribute("flash", "Cập nhật trạng thái thất bại!");
             }
         }
 
@@ -272,7 +272,7 @@ public class AdminUserController extends HttpServlet {
             request.setAttribute("user", user);
             request.getRequestDispatcher("/WEB-INF/views/admin/viewUser.jsp").forward(request, response);
         } else {
-            request.getSession().setAttribute("flash", "Error: User not found!");
+            request.getSession().setAttribute("flash", "Lỗi : Không tìm thấy người dùng!");
             response.sendRedirect(request.getContextPath() + "/admin/users");
         }
     }
@@ -283,40 +283,40 @@ public class AdminUserController extends HttpServlet {
         List<String> errors = new ArrayList<>();
 
         if (name == null || name.trim().isEmpty()) {
-            errors.add("Name cannot be empty.");
+            errors.add("Họ tên không được để trống.");
         } else if (name.trim().length() > 100) {
-            errors.add("Name must not exceed 100 characters.");
+            errors.add("Họ tên không được vượt quá 100 ký tự.");
         }
 
         if (email == null || email.trim().isEmpty()) {
-            errors.add("Email cannot be empty.");
+            errors.add("Email không được để trống.");
         } else if (!isValidEmail(email.trim())) {
-            errors.add("Email format is invalid.");
+            errors.add("Định dạng email không hợp lệ.");
         } else if (userDAO.isEmailExists(email.trim(), excludeUserId)) {
-            errors.add("Email already exists in the system.");
+            errors.add("Email này đã tồn tại trong hệ thống.");
         }
 
         if (isCreate || (password != null && !password.trim().isEmpty())) {
             if (password == null || password.trim().isEmpty()) {
-                errors.add("Password cannot be empty.");
+                errors.add("Mật khẩu không được để trống.");
             } else if (password.length() < 6) {
-                errors.add("Password must have at least 6 characters.");
+                errors.add("Mật khẩu phải có ít nhất 6 ký tự.");
             } else if (!password.equals(confirmPassword)) {
-                errors.add("Password confirmation does not match.");
+                errors.add("Mật khẩu xác nhận không khớp.");
             }
         }
 
         if (roleIdStr == null || roleIdStr.trim().isEmpty()) {
-            errors.add("Please select a role.");
+            errors.add("Vui lòng chọn vai trò.");
         } else {
             try {
                 int roleId = Integer.parseInt(roleIdStr);
                 Role role = roleDAO.getRoleById(roleId);
                 if (role == null) {
-                    errors.add("Invalid role.");
+                    errors.add("Vai trò không hợp lệ.");
                 }
             } catch (NumberFormatException e) {
-                errors.add("Invalid role.");
+                errors.add("Vai trò không hợp lệ.");
             }
         }
 

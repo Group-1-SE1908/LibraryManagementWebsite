@@ -6,319 +6,703 @@
         <head>
             <meta charset="utf-8" />
             <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-            <title>LBMS - User Management</title>
-            <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+            <title>LBMS - Quản lý người dùng</title>
+
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
                 rel="stylesheet" />
             <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-            <script>
-                tailwind.config = {
-                    theme: {
-                        extend: {
-                            colors: {
-                                primary: "#1E40AF",
-                                "background-light": "#F3F4F6",
-                                "card-light": "#FFFFFF",
-                            },
-                            fontFamily: { display: ["Inter", "sans-serif"] },
-                        }
-                    }
-                };
-            </script>
+
             <style>
+                :root {
+                    --primary-color: #1E40AF;
+                    --primary-hover: #1e3a8a;
+                    --bg-light: #F3F4F6;
+                    --card-light: #FFFFFF;
+                    --text-main: #111827;
+                    --text-muted: #6B7280;
+                    --border-color: #E5E7EB;
+                }
+
+                * {
+                    box-sizing: border-box;
+                    font-family: 'Inter', sans-serif;
+                }
+
+                body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: var(--bg-light);
+                    color: var(--text-main);
+                }
+
+                .app-container {
+                    display: flex;
+                    min-height: 100vh;
+                }
+
+                .main-wrapper {
+                    flex: 1;
+                    margin-left: 280px;
+                    background-color: var(--bg-light);
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    transition: margin-left 0.3s;
+                }
+
+                .content-area {
+                    padding: 2rem;
+                    flex: 1;
+                }
+
+                .max-w-7xl {
+                    max-width: 80rem;
+                    margin: 0 auto;
+                }
+
+                /* Header & Buttons */
+                .header-section {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 2rem;
+                    gap: 1rem;
+                }
+
+                .btn-add {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0.625rem 1.25rem;
+                    background-color: var(--primary-color);
+                    color: white;
+                    font-weight: 600;
+                    border-radius: 0.5rem;
+                    text-decoration: none;
+                    gap: 0.5rem;
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                    transition: background-color 0.2s;
+                }
+
+                .btn-add:hover {
+                    background-color: var(--primary-hover);
+                }
+
+                /* Notifications */
                 #toast-msg {
+                    margin-bottom: 1rem;
+                    padding: 1rem;
+                    border-left: 4px solid;
+                    border-radius: 0.25rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
                     transition: opacity 0.5s ease-out;
+                }
+
+                .msg-error {
+                    background-color: #FEE2E2;
+                    border-color: #EF4444;
+                    color: #B91C1C;
+                }
+
+                .msg-success {
+                    background-color: #DCFCE7;
+                    border-color: #22C55E;
+                    color: #15803D;
+                }
+
+                /* Search Bar */
+                .search-container {
+                    background: var(--card-light);
+                    padding: 1rem;
+                    border-radius: 0.75rem;
+                    margin-bottom: 1.5rem;
+                    border: 1px solid #F3F4F6;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                }
+
+                .search-form {
+                    display: flex;
+                    gap: 0.75rem;
+                }
+
+                .search-input-wrapper {
+                    position: relative;
+                    flex-grow: 1;
+                }
+
+                .search-icon {
+                    position: absolute;
+                    left: 0.75rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #9CA3AF;
+                    font-size: 1.25rem;
+                }
+
+                .input-text {
+                    width: 100%;
+                    padding: 0.625rem 0.625rem 0.625rem 2.5rem;
+                    border: 1px solid #D1D5DB;
+                    border-radius: 0.5rem;
+                    outline: none;
+                }
+
+                .input-text:focus {
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
+                }
+
+                .btn-search {
+                    padding: 0.625rem 1.5rem;
+                    background-color: #DBEAFE;
+                    color: #1D4ED8;
+                    border: none;
+                    border-radius: 0.5rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                }
+
+                .btn-search:hover {
+                    background-color: #BFDBFE;
+                }
+
+                /* Table Style */
+                .table-card {
+                    background: var(--card-light);
+                    border-radius: 0.75rem;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                    border: 1px solid #F3F4F6;
+                }
+
+                .overflow-x {
+                    overflow-x: auto;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    text-align: left;
+                }
+
+                thead tr {
+                    background-color: #F9FAFB;
+                    border-bottom: 1px solid #F3F4F6;
+                }
+
+                th {
+                    padding: 1rem 1.5rem;
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #4B5563;
+                    font-weight: 600;
+                }
+
+                td {
+                    padding: 1rem 1.5rem;
+                    font-size: 0.875rem;
+                    border-bottom: 1px solid #F3F4F6;
+                }
+
+                tr:hover {
+                    background-color: rgba(30, 64, 175, 0.02);
+                }
+
+
+                .user-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                }
+
+                .avatar {
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 50%;
+                    background-color: #DBEAFE;
+                    color: var(--primary-color);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                }
+
+
+                .badge {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0.125rem 0.625rem;
+                    border-radius: 9999px;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                }
+
+                .badge-dot {
+                    width: 0.375rem;
+                    height: 0.375rem;
+                    border-radius: 50%;
+                    margin-right: 0.375rem;
+                }
+
+                .role-admin {
+                    background: #F3E8FF;
+                    color: #6B21A8;
+                }
+
+                .role-admin .badge-dot {
+                    background: #A855F7;
+                }
+
+                .role-lib {
+                    background: #DBEAFE;
+                    color: #1E40AF;
+                }
+
+                .role-lib .badge-dot {
+                    background: #3B82F6;
+                }
+
+                .status-active {
+                    background: #DCFCE7;
+                    color: #166534;
+                }
+
+                .status-active .badge-dot {
+                    background: #22C55E;
+                }
+
+                .status-blocked {
+                    background: #FEE2E2;
+                    color: #991B1B;
+                }
+
+                .status-blocked .badge-dot {
+                    background: #EF4444;
+                }
+
+
+                .action-group {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.5rem;
+                }
+
+                .action-btn {
+                    padding: 0.5rem;
+                    border-radius: 0.5rem;
+                    text-decoration: none;
+                    display: flex;
+                    border: none;
+                    cursor: pointer;
+                    background: transparent;
+                }
+
+                .view-btn {
+                    color: #2563EB;
+                }
+
+                .view-btn:hover {
+                    background: #DBEAFE;
+                }
+
+                .edit-btn {
+                    color: #D97706;
+                }
+
+                .edit-btn:hover {
+                    background: #FEF3C7;
+                }
+
+                .block-btn {
+                    color: #DC2626;
+                }
+
+                .block-btn:hover {
+                    background: #FEE2E2;
+                }
+
+                .unblock-btn {
+                    color: #16A34A;
+                }
+
+                .unblock-btn:hover {
+                    background: #DCFCE7;
+                }
+
+                /* Pagination */
+                .pagination-container {
+                    padding: 1rem 1.5rem;
+                    background: #F9FAFB;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-top: 1px solid #F3F4F6;
+                }
+
+                .pagination-nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                }
+
+                .page-link {
+                    padding: 0.375rem 0.875rem;
+                    border-radius: 0.5rem;
+                    text-decoration: none;
+                    font-size: 0.875rem;
+                    color: #6B7280;
+                    font-weight: 600;
+                }
+
+                .page-link:hover {
+                    background: #F3F4F6;
+                }
+
+                .page-active {
+                    background: var(--primary-color);
+                    color: white;
+                    box-shadow: 0 4px 6px rgba(30, 64, 175, 0.2);
+                }
+
+                /* Modal */
+                .modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100;
+                }
+
+                .modal-content {
+                    background: white;
+                    padding: 1.5rem;
+                    border-radius: 0.75rem;
+                    width: 100%;
+                    max-width: 24rem;
+                }
+
+                .modal-footer {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.75rem;
+                    margin-top: 1.5rem;
+                }
+
+                @media (max-width: 768px) {
+                    .main-wrapper {
+                        margin-left: 0;
+                    }
+
+                    .header-section {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+
+                    .search-form {
+                        flex-direction: column;
+                    }
+
+                    .pagination-container {
+                        flex-direction: column;
+                    }
                 }
             </style>
         </head>
-        <div id="confirmModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
-            <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
 
-                <div class="flex items-center gap-3 mb-3">
-                    <span class="material-icons text-red-600 text-3xl">warning</span>
-                    <h3 class="text-lg font-semibold text-gray-800">
-                        Confirm Status Change
-                    </h3>
-                </div>
+        <body>
 
-                <p class="text-sm text-gray-500 mb-6">
-                    Are you sure you want to change this user's status?
-                </p>
+            <div class="app-container">
+                <jsp:include page="sidebar.jsp" />
 
-                <div class="flex justify-end gap-3">
-                    <button onclick="closeConfirmModal()"
-                        class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700">
-                        Cancel
-                    </button>
+                <main class="main-wrapper">
+                    <div class="content-area">
+                        <div class="max-w-7xl">
 
-                    <button id="confirmSubmitBtn"
-                        class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">
-                        Confirm
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <script>
-            let pendingForm = null;
-
-            function openConfirmModal(form) {
-                pendingForm = form;
-                const modal = document.getElementById("confirmModal");
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-            }
-
-            function closeConfirmModal() {
-                document.getElementById("confirmModal").classList.add("hidden");
-            }
-
-            document.getElementById("confirmSubmitBtn").addEventListener("click", function () {
-                if (pendingForm) pendingForm.submit();
-            });
-        </script>
-
-        <body class="bg-background-light font-display text-gray-900 min-h-screen p-4 md:p-8">
-
-            <div class="max-w-7xl mx-auto">
-
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                            <span class="material-icons text-primary text-4xl">group</span>
-                            User Management
-                        </h1>
-                        <p class="text-gray-500 mt-1">Manage library members, roles, and account status.</p>
-                    </div>
-
-                    <a href="${pageContext.request.contextPath}/admin/users/create"
-                        class="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-blue-800 transition-all gap-2">
-                        <span class="material-icons text-sm">person_add</span>
-                        Add New User
-                    </a>
-                </div>
-
-                <%-- Notifications --%>
-                    <div id="notification-container">
-                        <c:if test="${not empty flash}">
-                            <c:set var="isErr" value="${flash.contains('Error')}" />
-                            <div id="toast-msg"
-                                class="mb-4 p-4 ${isErr ? 'bg-red-100 border-red-500 text-red-700' : 'bg-green-100 border-green-500 text-green-700'} border-l-4 rounded shadow-sm flex items-center gap-3">
-                                <span class="material-icons">${isErr ? 'report_problem' : 'check_circle'}</span>
-                                <span class="font-medium">${flash}</span>
-                            </div>
-                        </c:if>
-                    </div>
-
-                    <%-- Search Bar --%>
-                        <div class="bg-card-light rounded-xl shadow-sm p-4 mb-6">
-
-                            <form method="get" action="${pageContext.request.contextPath}/admin/users"
-                                class="flex flex-col md:flex-row gap-3">
-                                <div class="relative flex-grow">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="material-icons text-gray-400 text-sm">search</span>
+                            <%-- Header --%>
+                                <div class="header-section">
+                                    <div>
+                                        <h1
+                                            style="font-size: 1.875rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                            <span class="material-icons"
+                                                style="color: var(--primary-color); font-size: 2.25rem;">group</span>
+                                            Quản lý người dùng
+                                        </h1>
+                                        <p style="color: var(--text-muted); margin-top: 0.25rem;">Quản lý thành viên thư
+                                            viện, vai trò và trạng thái tài khoản.</p>
                                     </div>
-                                    <input type="text" name="keyword" value="${keyword}"
-                                        class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-                                        placeholder="Search by name or email...">
+
+                                    <a href="${pageContext.request.contextPath}/admin/users/create" class="btn-add">
+                                        <span class="material-icons" style="font-size: 1.125rem;">person_add</span>
+                                        Thêm người dùng mới
+                                    </a>
                                 </div>
-                                <button type="submit"
-                                    class="px-6 py-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
-                                    Search
-                                </button>
 
-                            </form>
-                        </div>
+                                <%-- Notifications --%>
+                                    <div id="notification-container">
+                                        <c:if test="${not empty flash}">
+                                            <c:set var="isErr"
+                                                value="${flash.contains('Error') || flash.contains('không thể') || flash.contains('Lỗi')}" />
 
-                        <%-- Main Table --%>
-                            <div class="bg-card-light rounded-xl shadow-md overflow-hidden">
-                                <c:choose>
-                                    <c:when test="${not empty userList}">
-                                        <div class="overflow-x-auto">
-                                            <table class="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr
-                                                        class="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs uppercase tracking-wider font-semibold">
-                                                        <th class="px-6 py-4">ID</th>
-                                                        <th class="px-6 py-4">User Details</th>
-                                                        <th class="px-6 py-4">Role</th>
-                                                        <th class="px-6 py-4 text-center">Status</th>
-                                                        <th class="px-6 py-4 text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-gray-100">
-                                                    <c:forEach var="user" items="${userList}">
-                                                        <tr class="hover:bg-blue-50/30 transition-colors">
-                                                            <td class="px-6 py-4 text-sm font-medium text-gray-400">
-                                                                #${user.id}</td>
-                                                            <td class="px-6 py-4">
-                                                                <div class="flex items-center gap-3">
-                                                                    <div
-                                                                        class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold">
-                                                                        <c:out
-                                                                            value="${not empty user.fullName ? user.fullName.substring(0,1).toUpperCase() : 'U'}" />
-                                                                    </div>
-                                                                    <div>
-                                                                        <div
-                                                                            class="text-sm font-semibold text-gray-900">
-                                                                            ${user.fullName}</div>
-                                                                        <div class="text-xs text-gray-500">${user.email}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td class="px-6 py-4">
-                                                                <span
-                                                                    class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                                                                    ${user.role.name}
-                                                                </span>
-                                                            </td>
-                                                            <td class="px-6 py-4 text-center">
-                                                                <c:choose>
-                                                                    <c:when test="${user.status == 'ACTIVE'}">
-                                                                        <span
-                                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                                            <span
-                                                                                class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                                                                            ACTIVE
-                                                                        </span>
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <span
-                                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                                            <span
-                                                                                class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
-                                                                            BLOCKED
-                                                                        </span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                            </td>
-                                                            <td class="px-6 py-4 text-right">
-                                                                <div class="flex justify-end items-center gap-2">
-                                                                    <a href="${pageContext.request.contextPath}/admin/users/view?id=${user.id}&page=${currentPage}&keyword=${keyword}"
-                                                                        class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg">
-                                                                        <span
-                                                                            class="material-icons text-xl">visibility</span>
-                                                                    </a>
+                                            <div id="toast-msg" class="${isErr ? 'msg-error' : 'msg-success'}">
+                                                <span class="material-icons">
+                                                    ${isErr ? 'report_problem' : 'check_circle'}
+                                                </span>
+                                                <span style="font-weight: 500;">${flash}</span>
+                                            </div>
+                                            <c:remove var="flash" scope="session" />
+                                        </c:if>
+                                    </div>
 
-                                                                    <a href="${pageContext.request.contextPath}/admin/users/edit?id=${user.id}&page=${currentPage}&keyword=${keyword}"
-                                                                        class="p-2 text-amber-600 hover:bg-amber-100 rounded-lg">
-                                                                        <span class="material-icons text-xl">edit</span>
-                                                                    </a>
 
-                                                                    <form
-                                                                        action="${pageContext.request.contextPath}/admin/users/status"
-                                                                        method="post" class="inline">
-                                                                        <input type="hidden" name="id"
-                                                                            value="${user.id}">
-                                                                        <input type="hidden" name="status"
-                                                                            value="${user.status == 'ACTIVE' ? 'BLOCKED' : 'ACTIVE'}">
-                                                                        <input type="hidden" name="page"
-                                                                            value="${currentPage}">
-                                                                        <input type="hidden" name="keyword"
-                                                                            value="${keyword}">
-
-                                                                        <button type="button"
-                                                                            onclick="openConfirmModal(this.closest('form'))"
-                                                                            class="p-2 ${user.status == 'ACTIVE' ? 'text-red-600 hover:bg-red-100' : 'text-green-600 hover:bg-green-100'} rounded-lg">
-                                                                            <span
-                                                                                class="material-icons text-xl">${user.status
-                                                                                == 'ACTIVE' ? 'block' :
-                                                                                'lock_open'}</span>
-                                                                        </button>
-
-                                                                    </form>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
+                                    <%-- Search Bar --%>
+                                        <div class="search-container">
+                                            <form method="get" action="${pageContext.request.contextPath}/admin/users"
+                                                class="search-form">
+                                                <div class="search-input-wrapper">
+                                                    <span class="material-icons search-icon">search</span>
+                                                    <input type="text" name="keyword" value="${keyword}"
+                                                        class="input-text"
+                                                        placeholder="Tìm kiếm theo tên hoặc email...">
+                                                </div>
+                                                <button type="submit" class="btn-search">Tìm kiếm</button>
+                                            </form>
                                         </div>
 
-                                        <%-- Pagination --%>
-                                            <div
-                                                class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                                                <div class="text-sm text-gray-500">
-                                                    Showing <span class="font-semibold text-gray-900">${(currentPage -
-                                                        1) * pageSize + 1}</span>
-                                                    to <span class="font-semibold text-gray-900">
-                                                        <c:set var="endRow" value="${currentPage * pageSize}" />
-                                                        ${endRow > totalUsers ? totalUsers : endRow}
-                                                    </span>
-                                                    of <span class="font-semibold text-gray-900">${totalUsers}</span>
-                                                    users
-                                                </div>
+                                        <%-- Main Table --%>
+                                            <div class="table-card">
+                                                <c:choose>
+                                                    <c:when test="${not empty userList}">
+                                                        <div class="overflow-x">
+                                                            <table>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>ID</th>
+                                                                        <th>Thông tin người dùng</th>
+                                                                        <th>Vai trò</th>
+                                                                        <th style="text-align: center;">Trạng thái
+                                                                        </th>
+                                                                        <th style="text-align: right;">Thao tác</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <c:forEach var="user" items="${userList}">
+                                                                        <tr>
+                                                                            <td
+                                                                                style="color: #9CA3AF; font-weight: 500;">
+                                                                                #${user.id}</td>
+                                                                            <td>
+                                                                                <div class="user-info">
+                                                                                    <div class="avatar">
+                                                                                        <c:out
+                                                                                            value="${not empty user.fullName ? user.fullName.substring(0,1).toUpperCase() : 'U'}" />
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <div
+                                                                                            style="font-weight: 600; color: #111827;">
+                                                                                            ${user.fullName}</div>
+                                                                                        <div
+                                                                                            style="font-size: 0.75rem; color: #6B7280;">
+                                                                                            ${user.email}</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <c:choose>
+                                                                                    <c:when
+                                                                                        test="${user.role.name == 'Admin' || user.role.name == 'ADMIN'}">
+                                                                                        <span
+                                                                                            class="badge role-admin"><span
+                                                                                                class="badge-dot"></span>Admin</span>
+                                                                                    </c:when>
+                                                                                    <c:when
+                                                                                        test="${user.role.name == 'Librarian' || user.role.name == 'LIBRARIAN'}">
+                                                                                        <span
+                                                                                            class="badge role-lib"><span
+                                                                                                class="badge-dot"></span>Librarian</span>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <span class="badge"
+                                                                                            style="background:#F3F4F6; color:#374151;"><span
+                                                                                                class="badge-dot"
+                                                                                                style="background:#9CA3AF;"></span>${user.role.name}</span>
+                                                                                    </c:otherwise>
+                                                                                </c:choose>
+                                                                            </td>
+                                                                            <td style="text-align: center;">
+                                                                                <c:choose>
+                                                                                    <c:when
+                                                                                        test="${user.status == 'ACTIVE'}">
+                                                                                        <span
+                                                                                            class="badge status-active"><span
+                                                                                                class="badge-dot"></span>HOẠT
+                                                                                            ĐỘNG</span>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <span
+                                                                                            class="badge status-blocked"><span
+                                                                                                class="badge-dot"></span>BỊ
+                                                                                            KHÓA</span>
+                                                                                    </c:otherwise>
+                                                                                </c:choose>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="action-group">
+                                                                                    <a href="${pageContext.request.contextPath}/admin/users/view?id=${user.id}&page=${currentPage}&keyword=${keyword}"
+                                                                                        class="action-btn view-btn">
+                                                                                        <span
+                                                                                            class="material-icons">visibility</span>
+                                                                                    </a>
+                                                                                    <a href="${pageContext.request.contextPath}/admin/users/edit?id=${user.id}&page=${currentPage}&keyword=${keyword}"
+                                                                                        class="action-btn edit-btn">
+                                                                                        <span
+                                                                                            class="material-icons">edit</span>
+                                                                                    </a>
+                                                                                    <form
+                                                                                        action="${pageContext.request.contextPath}/admin/users/status"
+                                                                                        method="post"
+                                                                                        style="display:inline;">
+                                                                                        <input type="hidden" name="id"
+                                                                                            value="${user.id}">
+                                                                                        <input type="hidden"
+                                                                                            name="status"
+                                                                                            value="${user.status == 'ACTIVE' ? 'BLOCKED' : 'ACTIVE'}">
+                                                                                        <input type="hidden" name="page"
+                                                                                            value="${currentPage}">
+                                                                                        <input type="hidden"
+                                                                                            name="keyword"
+                                                                                            value="${keyword}">
+                                                                                        <button type="button"
+                                                                                            onclick="openConfirmModal(this.closest('form'))"
+                                                                                            class="action-btn ${user.status == 'ACTIVE' ? 'block-btn' : 'unblock-btn'}">
+                                                                                            <span
+                                                                                                class="material-icons">${user.status
+                                                                                                == 'ACTIVE' ?
+                                                                                                'block' :
+                                                                                                'lock_open'}</span>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </c:forEach>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
 
-                                                <nav class="flex items-center gap-1">
-                                                    <c:if test="${currentPage > 1}">
-                                                        <a href="?page=${currentPage - 1}&keyword=${keyword}"
-                                                            class="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors">
-                                                            <span class="material-icons">chevron_left</span>
-                                                        </a>
-                                                    </c:if>
+                                                        <%-- Pagination --%>
+                                                            <div class="pagination-container">
+                                                                <div style="font-size: 0.875rem; color: #6B7280;">
+                                                                    Hiển thị <b>${(currentPage - 1) * pageSize +
+                                                                        1}</b> đến <b>
+                                                                        <c:set var="endRow"
+                                                                            value="${currentPage * pageSize}" />
+                                                                        ${endRow > totalUsers ? totalUsers : endRow}
+                                                                    </b> trong số <b>${totalUsers}</b> người dùng
+                                                                </div>
 
-                                                    <c:set var="beginPage"
-                                                        value="${currentPage - 1 > 0 ? currentPage - 1 : 1}" />
-                                                    <c:set var="endPage"
-                                                        value="${beginPage + 2 > totalPages ? totalPages : beginPage + 2}" />
+                                                                <nav class="pagination-nav">
+                                                                    <c:if test="${currentPage > 1}">
+                                                                        <a href="?page=${currentPage - 1}&keyword=${keyword}"
+                                                                            class="page-link"><span
+                                                                                class="material-icons">chevron_left</span></a>
+                                                                    </c:if>
 
-                                                    <c:if test="${endPage == totalPages and endPage - 2 > 0}">
-                                                        <c:set var="beginPage" value="${endPage - 2}" />
-                                                    </c:if>
+                                                                    <c:set var="beginPage"
+                                                                        value="${currentPage - 1 > 0 ? currentPage - 1 : 1}" />
+                                                                    <c:set var="endPage"
+                                                                        value="${beginPage + 2 > totalPages ? totalPages : beginPage + 2}" />
+                                                                    <c:if
+                                                                        test="${endPage == totalPages and endPage - 2 > 0}">
+                                                                        <c:set var="beginPage" value="${endPage - 2}" />
+                                                                    </c:if>
 
-                                                    <c:forEach begin="${beginPage}" end="${endPage}" var="i">
-                                                        <a href="?page=${i}&keyword=${keyword}"
-                                                            class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all 
-                                       ${i == currentPage ? 'bg-primary text-white shadow-md shadow-blue-200' : 'text-gray-500 hover:bg-gray-100'}">
-                                                            ${i}
-                                                        </a>
-                                                    </c:forEach>
+                                                                    <c:forEach begin="${beginPage}" end="${endPage}"
+                                                                        var="i">
+                                                                        <a href="?page=${i}&keyword=${keyword}"
+                                                                            class="page-link ${i == currentPage ? 'page-active' : ''}">${i}</a>
+                                                                    </c:forEach>
 
-                                                    <c:if test="${currentPage < totalPages}">
-                                                        <a href="?page=${currentPage + 1}&keyword=${keyword}"
-                                                            class="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors">
-                                                            <span class="material-icons">chevron_right</span>
-                                                        </a>
-                                                    </c:if>
-                                                </nav>
+                                                                    <c:if test="${currentPage < totalPages}">
+                                                                        <a href="?page=${currentPage + 1}&keyword=${keyword}"
+                                                                            class="page-link"><span
+                                                                                class="material-icons">chevron_right</span></a>
+                                                                    </c:if>
+                                                                </nav>
+                                                            </div>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <div style="padding: 3rem; text-align: center; color: #9CA3AF;">
+                                                            <span class="material-icons"
+                                                                style="font-size: 4rem; color: #E5E7EB; margin-bottom: 1rem;">search_off</span>
+                                                            <p style="font-size: 1.125rem; color: #6B7280;">Không
+                                                                tìm thấy người dùng phù hợp.</p>
+                                                            <a href="${pageContext.request.contextPath}/admin/users"
+                                                                style="color: var(--primary-color); text-decoration: underline; font-weight: 500;">Quay
+                                                                lại danh sách</a>
+                                                        </div>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </div>
-                                    </c:when>
-                                    <%-- Empty State --%>
-                                        <c:otherwise>
-                                            <div class="p-12 text-center text-gray-500">
-                                                <span
-                                                    class="material-icons text-6xl text-gray-200 mb-4">search_off</span>
-                                                <p class="text-lg">No users found matching your criteria.</p>
-                                                <a href="${pageContext.request.contextPath}/admin/users"
-                                                    class="text-primary hover:underline mt-2 inline-block font-medium">Clear
-                                                    search and view all</a>
-                                            </div>
-                                        </c:otherwise>
-                                </c:choose>
-                            </div>
 
-                            <%-- Footer --%>
-                                <div class="mt-4 text-sm text-gray-500 flex justify-between items-center">
-                                    <p>© 2026 Library Management System (LBMS)</p>
-                                </div>
+                        </div>
+                    </div>
+                </main>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const toast = document.getElementById('toast-msg');
-                    if (toast) {
-                        setTimeout(function () {
-                            toast.style.opacity = '0';
-                            setTimeout(function () {
-                                toast.style.display = 'none';
-                            }, 500);
-                        }, 3000);
+            <%-- Confirm Modal --%>
+                <div id="confirmModal" class="modal-overlay">
+                    <div class="modal-content">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <span class="material-icons" style="color: #DC2626; font-size: 2rem;">warning</span>
+                            <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">Xác nhận thay đổi</h3>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6B7280; margin-bottom: 1.5rem;">Bạn có chắc chắn muốn
+                            thay đổi trạng thái của người dùng này không?</p>
+                        <div class="modal-footer">
+                            <button onclick="closeConfirmModal()"
+                                style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background: #F3F4F6; cursor: pointer;">Hủy</button>
+                            <button id="confirmSubmitBtn"
+                                style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background: #DC2626; color: white; font-weight: 600; cursor: pointer;">Xác
+                                nhận</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    let pendingForm = null;
+
+                    function openConfirmModal(form) {
+                        pendingForm = form;
+                        const modal = document.getElementById("confirmModal");
+                        modal.style.display = "flex";
                     }
-                });
-            </script>
+
+                    function closeConfirmModal() {
+                        const modal = document.getElementById("confirmModal");
+                        modal.style.display = "none";
+                    }
+
+                    document.getElementById("confirmSubmitBtn").addEventListener("click", function () {
+                        if (pendingForm) pendingForm.submit();
+                    });
+
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const toast = document.getElementById('toast-msg');
+                        if (toast) {
+                            setTimeout(function () {
+                                toast.style.opacity = '0';
+                                setTimeout(() => toast.style.display = 'none', 500);
+                            }, 3000);
+                        }
+                    });
+                </script>
         </body>
 
         </html>
