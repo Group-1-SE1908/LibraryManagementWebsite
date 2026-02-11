@@ -9,14 +9,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BookDAO {
+//Function de lay so luong quantity cua book
+
+    public int getQuantityByBookId(long bookId) throws Exception {
+        String sql = "SELECT quantity FROM Book WHERE book_id = ?";
+
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, bookId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("quantity");
+                }
+            }
+        }
+        return 0; // nếu không tìm thấy
+    }
 
     public List<Book> search(String q) throws SQLException {
         String like = q == null ? null : ("%" + q.trim() + "%");
-        String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book " +
-                "WHERE (? IS NULL OR title LIKE ? OR author LIKE ?) ORDER BY book_id DESC";
 
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = "SELECT book_id, title, author, price, quantity, category_id FROM Book "
+                + "WHERE (? IS NULL OR title LIKE ? OR author LIKE ?) "
+                + "ORDER BY book_id DESC";
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
             if (like == null || like.equals("%%")) {
                 ps.setNull(1, Types.VARCHAR);
                 ps.setNull(2, Types.VARCHAR);
@@ -28,6 +47,7 @@ public class BookDAO {
             }
 
             List<Book> out = new ArrayList<>();
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     out.add(mapBook(rs));
@@ -39,13 +59,12 @@ public class BookDAO {
 
     public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
         String like = q == null ? null : ("%" + q.trim() + "%");
-        String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book " +
-                "WHERE (? IS NULL OR title LIKE ? OR author LIKE ?) " +
-                "AND (? IS NULL OR category_id = ?) " +
-                "ORDER BY book_id DESC";
+        String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book "
+                + "WHERE (? IS NULL OR title LIKE ? OR author LIKE ?) "
+                + "AND (? IS NULL OR category_id = ?) "
+                + "ORDER BY book_id DESC";
 
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             if (like == null || like.equals("%%")) {
                 ps.setNull(1, Types.VARCHAR);
                 ps.setNull(2, Types.VARCHAR);
@@ -75,13 +94,13 @@ public class BookDAO {
     }
 
     public Book findById(long id) throws SQLException {
-        String sql = "SELECT book_id AS id, title, author, price, availability, category_id FROM Book WHERE book_id = ?";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = "SELECT book_id, title, author, price, quantity, category_id FROM Book WHERE book_id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next())
+                if (!rs.next()) {
                     return null;
+                }
                 return mapBook(rs);
             }
         }
@@ -89,19 +108,20 @@ public class BookDAO {
 
     public long create(Book b) throws SQLException {
         String sql = "INSERT INTO Book(title, author, price, availability, category_id) VALUES(?, ?, ?, 1, ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
             ps.setBigDecimal(3, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
-            if (b.getCategoryId() == null)
+            if (b.getCategoryId() == null) {
                 ps.setNull(4, Types.INTEGER);
-            else
+            } else {
                 ps.setInt(4, b.getCategoryId().intValue());
+            }
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next())
+                if (rs.next()) {
                     return rs.getLong(1);
+                }
                 return 0;
             }
         }
@@ -109,16 +129,16 @@ public class BookDAO {
 
     public void update(Book b) throws SQLException {
         String sql = "UPDATE Book SET title=?, author=?, price=?, availability=?, category_id=? WHERE book_id=?";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
             ps.setBigDecimal(3, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
             ps.setInt(4, b.isAvailability() ? 1 : 0);
-            if (b.getCategoryId() == null)
+            if (b.getCategoryId() == null) {
                 ps.setNull(5, Types.INTEGER);
-            else
+            } else {
                 ps.setInt(5, b.getCategoryId().intValue());
+            }
             ps.setLong(6, b.getId());
             ps.executeUpdate();
         }
@@ -126,8 +146,7 @@ public class BookDAO {
 
     public void delete(long id) throws SQLException {
         String sql = "DELETE FROM Book WHERE book_id = ?";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         }
@@ -135,11 +154,12 @@ public class BookDAO {
 
     private Book mapBook(ResultSet rs) throws SQLException {
         Book b = new Book();
-        b.setId(rs.getLong("id"));
+        b.setId(rs.getLong("book_id"));
         b.setTitle(rs.getString("title"));
         b.setAuthor(rs.getString("author"));
         b.setPrice(rs.getDouble("price"));
-        b.setAvailability(rs.getInt("availability") > 0);
+        b.setQuantity(rs.getInt("quantity"));
+//        b.setAvailability(rs.getInt("availability") > 0);
         b.setCategoryId(rs.getLong("category_id"));
         return b;
     }
