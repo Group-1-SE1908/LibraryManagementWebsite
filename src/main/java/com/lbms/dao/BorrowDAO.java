@@ -97,7 +97,7 @@ public class BorrowDAO {
 
     private String baseSelect() {
         return "SELECT br.borrowing_id, br.user_id, br.book_id, br.borrow_date, br.return_date, br.status, " +
-                "u.email AS user_email, u.name AS user_full_name, " +
+                "u.email AS user_email, u.full_name AS user_full_name, " +
                 "bk.title AS book_title, bk.author AS book_author, bk.price AS book_quantity, bk.availability AS book_status "
                 +
                 "FROM Borrowing br " +

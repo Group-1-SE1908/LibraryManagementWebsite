@@ -70,7 +70,7 @@ public class ReservationDAO {
 
     private String baseSelect() {
         return "SELECT b.borrowing_id, b.user_id, b.book_id, b.status, b.borrow_date, " +
-                "u.email AS user_email, u.name AS user_full_name, " +
+                "u.email AS user_email, u.full_name AS user_full_name, " +
                 "bk.title AS book_title, bk.author AS book_author, bk.price AS book_quantity, bk.availability AS book_status "
                 +
                 "FROM Borrowing b " +

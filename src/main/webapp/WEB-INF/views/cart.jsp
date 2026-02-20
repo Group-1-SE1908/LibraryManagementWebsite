@@ -31,7 +31,8 @@
             <p class="hero-subtitle">Gửi yêu cầu mượn ngay khi bạn sẵn sàng. Chúng tôi sẽ giữ kho sách và hỗ trợ gia hạn nếu cần.</p>
             <div class="hero-actions">
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục khám phá</a>
-                <a href="${pageContext.request.contextPath}/borrow" class="btn primary">Tạo yêu cầu mượn</a>
+                <a href="${pageContext.request.contextPath}/borrow" class="btn secondary">Tạo yêu cầu mượn</a>
+                <a href="${pageContext.request.contextPath}/checkout" class="btn primary">Thanh toán (Checkout)</a>
             </div>
         </div>
         <div class="hero-summary">
@@ -129,7 +130,8 @@
                     <span>Tổng tiền</span>
                     <strong><fmt:formatNumber value="${cart.totalAmount != null ? cart.totalAmount : 0}" pattern="#,##0" /> ₫</strong>
                 </div>
-                <button type="button" class="btn primary" onclick="window.location='${pageContext.request.contextPath}/borrow'">Tạo yêu cầu mượn</button>
+                <button type="button" class="btn secondary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/borrow'">Tạo yêu cầu mượn</button>
+                <button type="button" class="btn primary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/checkout'">Thanh toán (Checkout)</button>
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục xem sách</a>
             </aside>
         </section>

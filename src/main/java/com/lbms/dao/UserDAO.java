@@ -73,7 +73,7 @@ public class UserDAO {
 
     public long createUser(String email, String passwordHash, String fullName, String roleName) throws SQLException {
         long roleId = getRoleIdByName(roleName);
-        String sql = "INSERT INTO [User](email, password, name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
+        String sql = "INSERT INTO [User](email, password, full_name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, email);
