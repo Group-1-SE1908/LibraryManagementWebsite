@@ -148,13 +148,20 @@ public class AdminUserController extends HttpServlet {
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
         String roleIdStr = request.getParameter("roleId");
+        String phone = request.getParameter("phone");
+        String address = request.getParameter("address");
 
-        List<String> errors = validateUserInput(name, email, password, confirmPassword, roleIdStr, true, 0);
+        List<String> errors = validateUserInput(name, email, password, phone, address, confirmPassword, roleIdStr, true,
+                0);
+
         if (errors.isEmpty()) {
             User user = new User();
             user.setFullName(name.trim());
             user.setEmail(email.trim());
-            user.setPasswordHash(hashPassword(password)); // Hash the password
+            user.setPasswordHash(hashPassword(password));
+            user.setPhone(phone.trim());
+            user.setAddress(address.trim());
+
             Role role = new Role();
             role.setId(Integer.parseInt(roleIdStr));
             user.setRole(role);
@@ -165,6 +172,7 @@ public class AdminUserController extends HttpServlet {
                 return;
             }
         }
+
         request.setAttribute("errors", errors);
         request.setAttribute("roleList", roleDAO.getAllRoles());
         request.getRequestDispatcher("/WEB-INF/views/admin/createUser.jsp").forward(request, response);
@@ -203,17 +211,22 @@ public class AdminUserController extends HttpServlet {
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
         String roleIdStr = request.getParameter("roleId");
+        String phone = request.getParameter("phone");
+        String address = request.getParameter("address");
+
         String p = request.getParameter("page");
         String k = request.getParameter("keyword");
 
-        List<String> errors = validateUserInput(name, email, password, confirmPassword, roleIdStr, false, userId);
+        List<String> errors = validateUserInput(name, email, password, phone, address, confirmPassword, roleIdStr,
+                false, userId);
 
         if (errors.isEmpty()) {
             User user = new User();
             user.setId(userId);
             user.setFullName(name.trim());
             user.setEmail(email.trim());
-
+            user.setPhone(phone.trim());
+            user.setAddress(address.trim());
             boolean isPasswordEmpty = (password == null || password.trim().isEmpty());
             user.setPasswordHash(isPasswordEmpty ? existingUser.getPasswordHash() : hashPassword(password));
 
@@ -244,10 +257,12 @@ public class AdminUserController extends HttpServlet {
         String status = request.getParameter("status");
         String p = request.getParameter("page");
         String k = request.getParameter("keyword");
-        if (p == null || p.isEmpty())
+        if (p == null || p.isEmpty()) {
             p = "1";
-        if (k == null)
+        }
+        if (k == null) {
             k = "";
+        }
 
         User currentUser = (User) request.getSession().getAttribute("currentUser");
         if (currentUser != null && id == currentUser.getId()) {
@@ -277,7 +292,7 @@ public class AdminUserController extends HttpServlet {
         }
     }
 
-    private List<String> validateUserInput(String name, String email, String password,
+    private List<String> validateUserInput(String name, String email, String password, String phone, String address,
             String confirmPassword, String roleIdStr,
             boolean isCreate, int excludeUserId) throws SQLException {
         List<String> errors = new ArrayList<>();
@@ -304,6 +319,23 @@ public class AdminUserController extends HttpServlet {
             } else if (!password.equals(confirmPassword)) {
                 errors.add("Mật khẩu xác nhận không khớp.");
             }
+        }
+
+        if (phone == null || phone.trim().isEmpty()) {
+            errors.add("Số điện thoại không được để trống.");
+        } else {
+            phone = phone.trim();
+            if (!phone.matches("^0\\d{9,10}$")) {
+                errors.add("Số điện thoại không hợp lệ (phải bắt đầu bằng số 0, từ 10-11 chữ số).");
+            } else if (userDAO.isPhoneExists(phone, excludeUserId)) { // THÊM DÒNG NÀY
+                errors.add("Số điện thoại này đã được sử dụng bởi một tài khoản khác.");
+            }
+        }
+
+        if (address == null || address.trim().isEmpty()) {
+            errors.add("Địa chỉ không được để trống.");
+        } else if (address.trim().length() > 255) {
+            errors.add("Địa chỉ không được vượt quá 255 ký tự.");
         }
 
         if (roleIdStr == null || roleIdStr.trim().isEmpty()) {
