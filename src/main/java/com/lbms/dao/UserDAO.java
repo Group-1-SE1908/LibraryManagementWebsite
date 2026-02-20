@@ -10,7 +10,7 @@ import java.util.List;
 public class UserDAO {
 
     public boolean updateUser(User user) throws SQLException {
-        String sql = "UPDATE [User] SET name = ?, email = ?, password = ?, role_id = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ?, email = ?, password = ?, role_id = ? WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
@@ -23,7 +23,7 @@ public class UserDAO {
     }
 
     public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, u.role_id, r.role_name " +
                 "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.email = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
@@ -37,7 +37,7 @@ public class UserDAO {
     }
 
     public User findById(long id) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, u.role_id, r.role_name " +
                 "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.user_id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
@@ -51,7 +51,7 @@ public class UserDAO {
     }
 
     public void updateFullName(long userId, String fullName) throws SQLException {
-        String sql = "UPDATE [User] SET name = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ? WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, fullName);
@@ -72,7 +72,7 @@ public class UserDAO {
 
     public long createUser(String email, String passwordHash, String fullName, String roleName) throws SQLException {
         long roleId = getRoleIdByName(roleName);
-        String sql = "INSERT INTO [User](email, password, name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
+        String sql = "INSERT INTO [User](email, password, full_name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, email);
@@ -102,7 +102,7 @@ public class UserDAO {
     }
 
     public boolean createUserAccount(User user) throws SQLException {
-        String sql = "INSERT INTO [User] (name, email, password, role_id, status) VALUES (?, ?, ?, ?, 'ACTIVE')";
+        String sql = "INSERT INTO [User] (full_name, email, password, role_id, status) VALUES (?, ?, ?, ?, 'ACTIVE')";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
@@ -144,9 +144,9 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
         List<User> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        String sql = "SELECT u.user_id, u.name, u.email, u.password, u.status, u.role_id, r.role_name " +
+        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, r.role_name " +
                 "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id " +
-                "WHERE u.name LIKE ? OR u.email LIKE ? " +
+                "WHERE u.full_name LIKE ? OR u.email LIKE ? " +
                 "ORDER BY u.user_id ASC " +
                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
@@ -172,7 +172,7 @@ public class UserDAO {
     }
 
     public int getTotalUserCount(String keyword) {
-        String sql = "SELECT COUNT(*) FROM [User] WHERE name LIKE ? OR email LIKE ?";
+        String sql = "SELECT COUNT(*) FROM [User] WHERE full_name LIKE ? OR email LIKE ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
 
@@ -196,7 +196,7 @@ public class UserDAO {
         u.setId(rs.getLong("user_id"));
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password"));
-        u.setFullName(rs.getString("name"));
+        u.setFullName(rs.getString("full_name"));
         u.setStatus(rs.getString("status"));
         Role r = new Role(rs.getLong("role_id"), rs.getString("role_name"));
         u.setRole(r);
