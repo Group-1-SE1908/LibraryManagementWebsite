@@ -14,8 +14,8 @@ import java.util.List;
 public class BorrowDAO {
 
     public long createRequest(long userId, long bookId) throws SQLException {
-        String sql = "INSERT INTO Borrowing(user_id, book_id, borrow_date, return_date, status) " +
-                "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED')";
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, return_date, status, fine_amount) " +
+                "VALUES(?, ?, GETDATE(), NULL, NULL, 'REQUESTED', 0)";
 
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -50,8 +50,18 @@ public class BorrowDAO {
         }
     }
 
+    // Lấy danh sách phiếu mượn QUÁ HẠN (Yêu cầu 41)
+    public List<BorrowRecord> listOverdue() throws SQLException {
+        String sql = baseSelect() + " WHERE br.status = 'BORROWED' AND br.due_date < CAST(GETDATE() AS DATE) ORDER BY br.due_date ASC";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            return mapList(rs);
+        }
+    }
+
     public int countActiveBorrows(long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) AS c FROM Borrowing WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
+        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -76,7 +86,7 @@ public class BorrowDAO {
     }
 
     public void updateStatus(long id, String status) throws SQLException {
-        String sql = "UPDATE Borrowing SET status = ? WHERE borrowing_id = ?";
+        String sql = "UPDATE borrow_records SET status = ? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -85,22 +95,23 @@ public class BorrowDAO {
         }
     }
 
+    // Cập nhật khi trả sách: Lưu ngày trả và tiền phạt (Yêu cầu 40 & 42)
     public void markReturned(long id, LocalDate returnDate, BigDecimal fineAmount) throws SQLException {
-        String sql = "UPDATE Borrowing SET status='RETURNED', return_date=? WHERE borrowing_id = ?";
+        String sql = "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(returnDate));
-            ps.setLong(2, id);
+            ps.setBigDecimal(2, fineAmount);
+            ps.setLong(3, id);
             ps.executeUpdate();
         }
     }
 
     private String baseSelect() {
-        return "SELECT br.borrowing_id, br.user_id, br.book_id, br.borrow_date, br.return_date, br.status, " +
-                "u.email AS user_email, u.name AS user_full_name, " +
-                "bk.title AS book_title, bk.author AS book_author, bk.price AS book_quantity, bk.availability AS book_status "
-                +
-                "FROM Borrowing br " +
+        return "SELECT br.id, br.user_id, br.book_id, br.borrow_date, br.due_date, br.return_date, br.status, br.fine_amount, " +
+                "u.email AS user_email, u.full_name AS user_full_name, " +
+                "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.quantity AS book_quantity " +
+                "FROM borrow_records br " +
                 "JOIN [User] u ON br.user_id = u.user_id " +
                 "JOIN Book bk ON br.book_id = bk.book_id";
     }
@@ -114,7 +125,7 @@ public class BorrowDAO {
 
     private BorrowRecord mapOne(ResultSet rs) throws SQLException {
         BorrowRecord br = new BorrowRecord();
-        br.setId(rs.getLong("borrowing_id"));
+        br.setId(rs.getLong("id"));
 
         User u = new User();
         u.setId(rs.getLong("user_id"));
@@ -123,18 +134,24 @@ public class BorrowDAO {
         br.setUser(u);
 
         Book b = new Book();
-        b.setId(rs.getLong("book_id"));
+        b.setBookId(rs.getInt("book_id"));
         b.setTitle(rs.getString("book_title"));
         b.setAuthor(rs.getString("book_author"));
+        b.setIsbn(rs.getString("book_isbn"));
+        b.setQuantity(rs.getInt("book_quantity"));
         br.setBook(b);
 
         Date bd = rs.getDate("borrow_date");
         br.setBorrowDate(bd == null ? null : bd.toLocalDate());
 
+        Date dd = rs.getDate("due_date");
+        br.setDueDate(dd == null ? null : dd.toLocalDate());
+
         Date rd = rs.getDate("return_date");
         br.setReturnDate(rd == null ? null : rd.toLocalDate());
 
         br.setStatus(rs.getString("status"));
+        br.setFineAmount(rs.getBigDecimal("fine_amount"));
         return br;
     }
 }

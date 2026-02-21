@@ -17,7 +17,14 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return" })
+@WebServlet(urlPatterns = { 
+    "/borrow", 
+    "/borrow/request", 
+    "/borrow/approve", 
+    "/borrow/reject", 
+    "/borrow/return",
+    "/borrow/overdue" // Thêm đường dẫn cho danh sách quá hạn
+})
 public class BorrowController extends HttpServlet {
     private BorrowService borrowService;
     private BorrowDAO borrowDAO;
@@ -46,20 +53,30 @@ public class BorrowController extends HttpServlet {
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
                     borrowService.approve(id);
+                    req.getSession().setAttribute("flash", "Đã duyệt yêu cầu mượn sách thành công.");
                     resp.sendRedirect(req.getContextPath() + "/borrow");
                     break;
                 case "/borrow/reject":
                     requireStaff(req);
                     long rejectId = Long.parseLong(req.getParameter("id"));
                     borrowService.reject(rejectId);
+                    req.getSession().setAttribute("flash", "Đã từ chối yêu cầu mượn sách.");
                     resp.sendRedirect(req.getContextPath() + "/borrow");
                     break;
                 case "/borrow/return":
                     requireStaff(req);
                     long returnId = Long.parseLong(req.getParameter("id"));
                     BigDecimal fine = borrowService.returnBook(returnId);
-                    req.getSession().setAttribute("flash", "Trả sách thành công. Phạt: " + fine + " VND");
+                    String msg = "Đánh dấu trả sách thành công.";
+                    if (fine.compareTo(BigDecimal.ZERO) > 0) {
+                        msg += " Khách hàng bị phạt trễ hạn: " + fine + " VNĐ.";
+                    }
+                    req.getSession().setAttribute("flash", msg);
                     resp.sendRedirect(req.getContextPath() + "/borrow");
+                    break;
+                case "/borrow/overdue":
+                    requireStaff(req);
+                    handleOverdueList(req, resp);
                     break;
                 default:
                     resp.sendError(404);
@@ -106,12 +123,23 @@ public class BorrowController extends HttpServlet {
         List<BorrowRecord> records = isStaff ? borrowDAO.listAll() : borrowDAO.listByUser(currentUser.getId());
         req.setAttribute("records", records);
         req.setAttribute("isStaff", isStaff);
+        req.setAttribute("pageTitle", "Danh sách phiếu mượn");
 
         Object flash = req.getSession().getAttribute("flash");
         if (flash != null) {
             req.setAttribute("flash", flash);
             req.getSession().removeAttribute("flash");
         }
+
+        req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+    }
+
+    private void handleOverdueList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        List<BorrowRecord> records = borrowService.getOverdueList();
+        
+        req.setAttribute("records", records);
+        req.setAttribute("isStaff", true);
+        req.setAttribute("pageTitle", "Danh sách mượn sách QUÁ HẠN"); // Để phân biệt trên giao diện
 
         req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
     }
@@ -129,7 +157,7 @@ public class BorrowController extends HttpServlet {
         if (bookIdStr == null || bookIdStr.isBlank())
             throw new IllegalArgumentException("Vui lòng chọn sách");
 
-        long bookId = Long.parseLong(bookIdStr);
+        int bookId = Integer.parseInt(bookIdStr);
         borrowService.requestBorrow(currentUser.getId(), bookId);
 
         req.getSession().setAttribute("flash", "Gửi yêu cầu mượn thành công (chờ thủ thư duyệt)");

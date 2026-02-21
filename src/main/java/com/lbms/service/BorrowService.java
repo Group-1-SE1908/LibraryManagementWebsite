@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import com.lbms.util.DBConnection;
 
@@ -26,7 +27,7 @@ public class BorrowService {
         this.bookDAO = new BookDAO();
     }
 
-    public long requestBorrow(long userId, long bookId) throws SQLException {
+    public long requestBorrow(long userId, int bookId) throws SQLException {
         Book b = bookDAO.findById(bookId);
         if (b == null)
             throw new IllegalArgumentException("Sách không tồn tại");
@@ -38,7 +39,6 @@ public class BorrowService {
             throw new IllegalArgumentException("Bạn đã mượn tối đa " + MAX_ACTIVE_BORROWS + " sách");
         }
 
-        // create request
         return borrowDAO.createRequest(userId, bookId);
     }
 
@@ -50,35 +50,37 @@ public class BorrowService {
             throw new IllegalArgumentException("Trạng thái không hợp lệ để duyệt");
         }
 
-        // Transaction: update borrow status + reduce book quantity
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // re-check quantity with lock
-                try (var ps = c.prepareStatement("SELECT availability FROM Book WHERE book_id=? FOR UPDATE")) {
-                    ps.setLong(1, br.getBook().getId());
+                // Kiểm tra lại số lượng sách với khóa (Lock)
+                try (var ps = c.prepareStatement("SELECT quantity FROM Book WHERE book_id=? FOR UPDATE")) {
+                    ps.setLong(1, br.getBook().getBookId());
                     try (var rs = ps.executeQuery()) {
                         if (!rs.next())
                             throw new SQLException("Book not found");
-                        int available = rs.getInt(1);
-                        if (available <= 0)
-                            throw new IllegalArgumentException("Sách đã hết");
+                        int quantity = rs.getInt(1);
+                        if (quantity <= 0)
+                            throw new IllegalArgumentException("Sách đã hết, không thể duyệt mượn");
                     }
                 }
 
-                // reduce availability
+                // Trừ số lượng sách (quantity) đi 1
                 try (var ps = c.prepareStatement(
-                        "UPDATE Book SET availability = CASE WHEN availability > 0 THEN availability - 1 ELSE 0 END WHERE book_id=?")) {
-                    ps.setLong(1, br.getBook().getId());
+                        "UPDATE Book SET quantity = quantity - 1 WHERE book_id=?")) {
+                    ps.setLong(1, br.getBook().getBookId());
                     ps.executeUpdate();
                 }
 
-                // set borrow_date/status BORROWED
+                // Cập nhật trạng thái BORROWED, set ngày mượn và hạn trả (due_date)
                 LocalDate today = LocalDate.now();
+                LocalDate dueDate = today.plusDays(LOAN_DAYS);
+                
                 try (var ps = c.prepareStatement(
-                        "UPDATE Borrowing SET status='BORROWED', borrow_date=? WHERE borrowing_id=?")) {
+                        "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=? WHERE id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setLong(2, borrowId);
+                    ps.setDate(2, java.sql.Date.valueOf(dueDate));
+                    ps.setLong(3, borrowId);
                     ps.executeUpdate();
                 }
 
@@ -111,7 +113,7 @@ public class BorrowService {
         if (br == null)
             throw new IllegalArgumentException("Phiếu mượn không tồn tại");
         if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Chỉ có thể trả khi đang BORROWED");
+            throw new IllegalArgumentException("Chỉ có thể trả khi sách đang được mượn (BORROWED)");
         }
 
         LocalDate today = LocalDate.now();
@@ -120,19 +122,14 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // increase availability
-                try (var ps = c.prepareStatement("UPDATE Book SET availability = availability + 1 WHERE book_id=?")) {
-                    ps.setLong(1, br.getBook().getId());
+                // Cộng lại số lượng sách (quantity) lên 1
+                try (var ps = c.prepareStatement("UPDATE Book SET quantity = quantity + 1 WHERE book_id=?")) {
+                    ps.setLong(1, br.getBook().getBookId());
                     ps.executeUpdate();
                 }
 
-                // mark returned
-                try (var ps = c.prepareStatement(
-                        "UPDATE Borrowing SET status='RETURNED', return_date=? WHERE borrowing_id=?")) {
-                    ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setLong(2, borrowId);
-                    ps.executeUpdate();
-                }
+                // Đánh dấu trả sách, ghi nhận ngày trả và lưu tiền phạt
+                borrowDAO.markReturned(borrowId, today, fine);
 
                 c.commit();
             } catch (Exception ex) {
@@ -157,5 +154,9 @@ public class BorrowService {
         if (lateDays <= 0)
             return BigDecimal.ZERO;
         return FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
+    }
+    
+    public List<BorrowRecord> getOverdueList() throws SQLException {
+        return borrowDAO.listOverdue();
     }
 }

@@ -36,6 +36,9 @@
         <c:if test="${isAdmin}">
           <a class="btn" href="${pageContext.request.contextPath}/admin/users">Quản lý user</a>
         </c:if>
+        <c:if test="${isStaff}">
+          <a class="btn danger" href="${pageContext.request.contextPath}/borrow/overdue">Xem sách quá hạn</a>
+        </c:if>
         <a class="btn" href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
       </div>
     </div>
