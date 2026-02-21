@@ -1,6 +1,10 @@
 package com.lbms.util;
 
+import java.sql.Connection;
+
 public final class DBConfig {
+
+   
     private DBConfig() {
     }
 

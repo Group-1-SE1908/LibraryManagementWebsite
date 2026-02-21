@@ -19,6 +19,7 @@ public class UserDAO {
             ps.setLong(4, user.getRole().getId());
             ps.setString(5, user.getPhone()); // Thêm dòng này
             ps.setString(6, user.getAddress()); // Thêm dòng này
+
             ps.setLong(7, user.getId());
 
             return ps.executeUpdate() > 0;
@@ -26,8 +27,10 @@ public class UserDAO {
     }
 
     public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, u.phone, u.address,u.created_at, r.role_name "
-                + "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.email = ?";
+        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, "
+                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
+                + "WHERE u.email = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
@@ -40,8 +43,11 @@ public class UserDAO {
     }
 
     public User findById(long id) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, u.role_id, u.phone, u.address, u.created_at,r.role_name "
-                + "FROM [User] u JOIN Role r ON u.role_id = r.role_id WHERE u.user_id = ?";
+        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, "
+                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "FROM [User] u "
+                + "JOIN Role r ON u.role_id = r.role_id "
+                + "WHERE u.user_id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -74,8 +80,7 @@ public class UserDAO {
     public long createUser(String email, String passwordHash, String fullName, String roleName) throws SQLException {
         long roleId = getRoleIdByName(roleName);
         String sql = "INSERT INTO [User](email, password, full_name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, email);
             ps.setString(2, passwordHash);
             ps.setString(3, fullName);
@@ -212,6 +217,7 @@ public class UserDAO {
         u.setPasswordHash(rs.getString("password"));
         u.setFullName(rs.getString("name"));
         u.setPhone(rs.getString("phone"));
+        u.setAvatar(rs.getString("avatar"));
         u.setAddress(rs.getString("address"));
         u.setStatus(rs.getString("status"));
         Timestamp ts = rs.getTimestamp("created_at");
@@ -221,5 +227,54 @@ public class UserDAO {
         Role r = new Role(rs.getLong("role_id"), rs.getString("role_name"));
         u.setRole(r);
         return u;
+    }
+
+    public boolean existsByUsernameExcept(String username, int userId) throws Exception {
+
+        String sql = "SELECT COUNT(*) FROM [user] WHERE username = ? AND user_id <> ?";
+
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setInt(2, userId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+
+        return false;
+    }
+
+    public void updateProfile(long userId,
+            String fullName,
+            String phone,
+            String address) throws Exception {
+
+        String sql = "UPDATE [User] SET name = ?, phone = ?, address = ? WHERE user_id = ?";
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setString(3, address);
+            ps.setLong(4, userId);
+
+            ps.executeUpdate();
+        }
+    }
+
+    public void updateAvatar(long userId, String avatar) throws Exception {
+
+        String sql = "UPDATE [User] SET avatar = ? WHERE user_id = ?";
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setString(1, avatar);
+            ps.setLong(2, userId);
+
+            ps.executeUpdate();
+        }
     }
 }

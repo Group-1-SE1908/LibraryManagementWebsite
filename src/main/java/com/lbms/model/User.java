@@ -2,10 +2,8 @@ package com.lbms.model;
 
 import java.time.Instant;
 
-   
-
-
 public class User {
+
     private long id;
     private String email;
     private String passwordHash;
@@ -16,8 +14,10 @@ public class User {
     private Role role;
     private Instant createdAt;
     private Instant updatedAt;
+    private String avatar;
 
-    public User() {}
+    public User() {
+    }
 
     public User(long id, String email, String passwordHash, String fullName, String phone, String address, String status, Role role, Instant createdAt, Instant updatedAt) {
         this.id = id;
@@ -32,8 +32,14 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    
-    
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
     public long getId() {
         return id;
     }
@@ -81,7 +87,6 @@ public class User {
     public void setAddress(String address) {
         this.address = address;
     }
-    
 
     public String getStatus() {
         return status;
@@ -114,6 +119,5 @@ public class User {
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
-
 
 }
