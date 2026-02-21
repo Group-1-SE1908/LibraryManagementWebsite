@@ -17,8 +17,8 @@ public class UserDAO {
             ps.setString(2, user.getEmail());
             ps.setString(3, user.getPasswordHash());
             ps.setLong(4, user.getRole().getId());
-            ps.setString(5, user.getPhone()); // Thêm dòng này
-            ps.setString(6, user.getAddress()); // Thêm dòng này
+            ps.setString(5, user.getPhone());
+            ps.setString(6, user.getAddress());
 
             ps.setLong(7, user.getId());
 
@@ -80,7 +80,8 @@ public class UserDAO {
     public long createUser(String email, String passwordHash, String fullName, String roleName) throws SQLException {
         long roleId = getRoleIdByName(roleName);
         String sql = "INSERT INTO [User](email, password, full_name, status, role_id) VALUES(?, ?, ?, 'ACTIVE', ?)";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, email);
             ps.setString(2, passwordHash);
             ps.setString(3, fullName);
@@ -165,7 +166,7 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
         List<User> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        String sql = "SELECT u.user_id, u.name, u.email, u.password, u.status, u.role_id, u.phone, u.address,u.created_at, r.role_name "
+        String sql = "SELECT u.user_id, u.name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
                 + "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.name LIKE ? OR u.email LIKE ? "
                 + "ORDER BY u.user_id ASC "
