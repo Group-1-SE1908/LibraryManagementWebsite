@@ -24,7 +24,8 @@ import java.util.UUID;
     "/books/search", // Tìm kiếm
     "/books/new", // Form thêm
     "/books/edit", // Form sửa
-    "/books/delete" // Xóa
+    "/books/delete", // Xóa
+    "/books/availability"
 })
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024 * 2, // 2MB
@@ -94,6 +95,16 @@ public class BookController extends HttpServlet {
                             // Nếu xóa lỗi (do ràng buộc), quay lại danh sách và báo lỗi
                             req.getSession().setAttribute("globalError", e.getMessage());
                         }
+                    }
+                    resp.sendRedirect(req.getContextPath() + "/books");
+                }
+                case "/books/availability" -> {
+                    String idStr = req.getParameter("id");
+                    String statusStr = req.getParameter("status");
+                    if (idStr != null && statusStr != null) {
+                        int id = Integer.parseInt(idStr);
+                        boolean status = Boolean.parseBoolean(statusStr);
+                        bookService.updateAvailability(id, status);
                     }
                     resp.sendRedirect(req.getContextPath() + "/books");
                 }

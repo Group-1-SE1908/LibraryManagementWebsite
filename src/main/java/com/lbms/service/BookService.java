@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class BookService {
+
     private final BookDAO bookDAO;
 
     public BookService() {
@@ -33,7 +34,7 @@ public class BookService {
         if (b.getIsbn() == null || b.getIsbn().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã ISBN không được để trống!");
         }
-        
+
         Book existingBook = bookDAO.findByIsbn(b.getIsbn());
         if (existingBook != null) {
             throw new IllegalArgumentException("Lỗi: Sách có ISBN '" + b.getIsbn() + "' đã tồn tại trong hệ thống!");
@@ -47,14 +48,13 @@ public class BookService {
     public void update(Book b) throws SQLException {
         // 1. Kiểm tra dữ liệu cơ bản
         validateBook(b);
-        
+
         if (b.getBookId() <= 0) {
             throw new IllegalArgumentException("ID sách không hợp lệ!");
         }
 
         // Lưu ý: Thường thì ISBN không được sửa, hoặc nếu sửa phải check trùng với sách khác.
         // Ở đây ta giả định ISBN không thay đổi hoặc DAO sẽ xử lý update.
-        
         bookDAO.update(b);
     }
 
@@ -88,5 +88,9 @@ public class BookService {
         if (b.getQuantity() < 0) {
             throw new IllegalArgumentException("Số lượng sách không được là số âm!");
         }
+    }
+
+    public void updateAvailability(int bookId, boolean isAvailable) throws SQLException {
+        bookDAO.updateAvailability(bookId, isAvailable);
     }
 }
