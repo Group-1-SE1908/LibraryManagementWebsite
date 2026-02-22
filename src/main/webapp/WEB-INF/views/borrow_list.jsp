@@ -7,50 +7,57 @@
   <title>${pageTitle} - LBMS</title>
   <style>
     :root {
-      --primary: #4361ee;
-      --primary-hover: #3a53d0;
-      --success: #2ecc71;
-      --success-hover: #27ae60;
-      --danger: #e74c3c;
-      --danger-hover: #c0392b;
-      --bg: #f4f7f6;
-      --text: #333;
-      --border: #e2e8f0;
+      --bg: #f8f9fa;
+      --text: #212529;
+      --border: #dee2e6;
     }
     body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--text); max-width: 1200px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
-    .container { background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; }
+    .container { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 24px; }
     .top { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
-    h2 { margin: 0; color: #2c3e50; font-size: 24px; }
+    h2 { margin: 0; color: #2c3e50; font-size: 24px; font-weight: 700; }
     .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
     
-    /* Nút bấm */
-    a.btn, button.btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; transition: all 0.2s; background: #f1f5f9; color: #475569; }
-    a.btn:hover, button.btn:hover { background: #e2e8f0; transform: translateY(-1px); }
-    .btn-primary { background: var(--primary); color: #fff !important; }
-    .btn-primary:hover { background: var(--primary-hover); box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2); }
-    .btn-success { background: var(--success); color: #fff !important; }
-    .btn-success:hover { background: var(--success-hover); box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2); }
-    .btn-danger { background: #fff0f0; color: var(--danger) !important; border: 1px solid #ffdcdc; }
-    .btn-danger:hover { background: var(--danger); color: #fff !important; }
+    /* === BỘ NÚT BẤM ĐÃ ĐƯỢC FIX MÀU ĐẬM === */
+    a.btn, button.btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; background-color: #e9ecef; color: #495057; }
+    a.btn:hover, button.btn:hover { background-color: #ced4da; transform: translateY(-1px); }
     
-    /* Bảng */
+    /* Nút Xanh Dương (Yêu cầu mượn, Xác nhận trả) */
+    .btn-primary { background-color: #0d6efd !important; color: #ffffff !important; box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2); }
+    .btn-primary:hover { background-color: #0b5ed7 !important; box-shadow: 0 4px 8px rgba(13, 110, 253, 0.4); }
+    
+    /* Nút Xanh Lá (Duyệt) */
+    .btn-success { background-color: #198754 !important; color: #ffffff !important; box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2); }
+    .btn-success:hover { background-color: #157347 !important; box-shadow: 0 4px 8px rgba(25, 135, 84, 0.4); }
+    
+    /* Nút Đỏ (Từ chối, Quá hạn) */
+    .btn-danger { background-color: #dc3545 !important; color: #ffffff !important; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2); }
+    .btn-danger:hover { background-color: #bb2d3b !important; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4); }
+
+    /* Nút Nav Menu trên cùng */
+    .nav-links a.btn { background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
+    .nav-links a.btn:hover { background-color: #e9ecef; }
+    .nav-links a.btn-danger { background-color: #fff5f5 !important; color: #dc3545 !important; border-color: #ffcccc; }
+    .nav-links a.btn-danger:hover { background-color: #dc3545 !important; color: #ffffff !important; }
+    
+    /* === BẢNG DỮ LIỆU === */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th { background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 13px; padding: 12px 15px; text-align: left; border-bottom: 2px solid var(--border); }
-    td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; }
-    tr:hover td { background-color: #f8fafc; }
+    th { background: #f8f9fa; color: #6c757d; font-weight: 700; text-transform: uppercase; font-size: 13px; padding: 14px 15px; text-align: left; border-bottom: 2px solid var(--border); }
+    td { padding: 16px 15px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; }
+    tr:hover td { background-color: #f8f9fa; }
     
-    /* Tag trạng thái */
-    .tag { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-align: center; }
-    .tag-requested { background: #e1f5fe; color: #0288d1; }
-    .tag-borrowed { background: #fff8e1; color: #f57c00; }
-    .tag-returned { background: #e8f5e9; color: #2e7d32; }
-    .tag-rejected { background: #ffebee; color: #c62828; }
-    .tag-overdue { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    /* === TAG TRẠNG THÁI === */
+    .tag { display: inline-block; padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 700; text-align: center; }
+    .tag-requested { background: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+    .tag-borrowed { background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+    .tag-returned { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+    .tag-rejected { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    .tag-overdue { background: #dc3545; color: #ffffff; box-shadow: 0 2px 4px rgba(220,53,69,0.3); }
     
-    .barcode-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 140px; font-size: 13px; outline: none; transition: border 0.2s; }
-    .barcode-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15); }
-    .muted { color: #64748b; font-size: 13px; margin-top: 4px; }
-    .flash { margin-bottom: 20px; padding: 12px 16px; border-left: 4px solid var(--success); border-radius: 4px; background: #f0fdf4; color: #166534; font-weight: 500; }
+    /* Các thành phần khác */
+    .barcode-input { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; width: 140px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .barcode-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25); }
+    .muted { color: #6c757d; font-size: 13px; margin-top: 4px; }
+    .flash { margin-bottom: 20px; padding: 14px 20px; border-left: 5px solid #198754; border-radius: 6px; background: #d1e7dd; color: #0f5132; font-weight: 600; font-size: 15px; }
   </style>
 </head>
 <body>
