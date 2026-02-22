@@ -48,4 +48,43 @@ public class RoleDAO {
         }
         return null;
     }
+
+    public boolean addRole(String roleName) throws SQLException {
+        String sql = "INSERT INTO Role (role_name) VALUES (?)";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public Role getRoleByName(String roleName) throws SQLException {
+        String sql = "SELECT role_id, role_name FROM Role WHERE role_name = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Role(
+                            rs.getLong("role_id"),
+                            rs.getString("role_name"));
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isRoleNameExists(String roleName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Role WHERE role_name = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
 }
