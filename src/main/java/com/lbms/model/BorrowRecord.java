@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class BorrowRecord {
+
     private long id;
     private User user;
     private Book book;
@@ -12,8 +13,19 @@ public class BorrowRecord {
     private LocalDate returnDate;
     private String status;
     private BigDecimal fineAmount;
+    private BookCopy bookCopy;
 
-    public BorrowRecord() {}
+    public BorrowRecord() {
+    }
+
+    public BookCopy getBookCopy() {
+        return bookCopy;
+    }
+
+    public void setBookCopy(BookCopy bookCopy) {
+        this.bookCopy = bookCopy;
+    }
+    
 
     public long getId() {
         return id;
