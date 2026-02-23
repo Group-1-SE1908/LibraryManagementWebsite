@@ -19,6 +19,7 @@ import java.util.List;
 
 @WebServlet(urlPatterns = {
     "/borrow",
+    "/borrow/request",
     "/borrow/requests",
     "/borrow/approve",
     "/borrow/reject",
@@ -56,6 +57,8 @@ public class BorrowController extends HttpServlet {
         }
 
         // hết code test
+        
+        
         try {
             switch (path) {
                 case "/borrow/requests": // UC 30: View Borrow Request
@@ -64,6 +67,10 @@ public class BorrowController extends HttpServlet {
                     req.setAttribute("records", pendingRecords);
                     req.setAttribute("pageTitle", "Yêu cầu mượn sách (Chờ duyệt)");
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+                    break;
+                
+                case "/borrow/request": // Dành cho form tìm kiếm sách để mượn
+                    handleRequestForm(req, resp);
                     break;
 
                 case "/borrow/approve": // UC 31: Confirm Borrow (Approve)

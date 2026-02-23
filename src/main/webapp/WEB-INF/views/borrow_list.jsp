@@ -78,7 +78,7 @@
         </div>
       </div>
       <div>
-        <a class="btn btn-primary" href="${pageContext.request.contextPath}/borrow/requests">+ Yêu cầu mượn sách</a>
+        <a class="btn btn-primary" href="${pageContext.request.contextPath}/borrow/request">+ Yêu cầu mượn sách</a>
       </div>
     </div>
 
