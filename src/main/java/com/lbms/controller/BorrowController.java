@@ -17,16 +17,18 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
-@WebServlet(urlPatterns = { 
-    "/borrow", 
-    "/borrow/requests", 
-    "/borrow/approve", 
-    "/borrow/reject", 
+@WebServlet(urlPatterns = {
+    "/borrow",
+    "/borrow/requests",
+    "/borrow/approve",
+    "/borrow/reject",
     "/borrow/return",
     "/borrow/overdue",
-    "/borrow/history"
+    "/borrow/history",
+    "/borrow/detail"
 })
 public class BorrowController extends HttpServlet {
+
     private BorrowService borrowService;
     private BorrowDAO borrowDAO;
     private BookDAO bookDAO;
@@ -38,14 +40,11 @@ public class BorrowController extends HttpServlet {
         this.bookDAO = new BookDAO();
     }
 
-    
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
-        
+
         //Code để test không cần đăng nhập
-        
         if (req.getSession().getAttribute("currentUser") == null) {
             com.lbms.model.User mockUser = new com.lbms.model.User();
             mockUser.setId(1L); // 1 là ID của Admin, đổi thành 3 nếu muốn test quyền Member
@@ -55,12 +54,8 @@ public class BorrowController extends HttpServlet {
             mockUser.setRole(mockRole);
             req.getSession().setAttribute("currentUser", mockUser);
         }
-        
-        // hết code test
-        
-        
-        
 
+        // hết code test
         try {
             switch (path) {
                 case "/borrow/requests": // UC 30: View Borrow Request
@@ -70,7 +65,7 @@ public class BorrowController extends HttpServlet {
                     req.setAttribute("pageTitle", "Yêu cầu mượn sách (Chờ duyệt)");
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
                     break;
-                    
+
                 case "/borrow/approve": // UC 31: Confirm Borrow (Approve)
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
@@ -82,7 +77,7 @@ public class BorrowController extends HttpServlet {
                     req.getSession().setAttribute("flash", "Duyệt thành công!");
                     resp.sendRedirect(req.getContextPath() + "/borrow/requests");
                     break;
-                    
+
                 case "/borrow/reject": // UC 31: Confirm Borrow (Reject)
                     requireStaff(req);
                     long rejectId = Long.parseLong(req.getParameter("id"));
@@ -90,17 +85,19 @@ public class BorrowController extends HttpServlet {
                     req.getSession().setAttribute("flash", "Đã từ chối yêu cầu.");
                     resp.sendRedirect(req.getContextPath() + "/borrow/requests");
                     break;
-                    
+
                 case "/borrow/return": // UC 32: Confirm Return & UC 34: Generate Fine
                     requireStaff(req);
                     long returnId = Long.parseLong(req.getParameter("id"));
                     BigDecimal fine = borrowService.returnBook(returnId);
                     String msg = "Trả sách thành công.";
-                    if (fine.compareTo(BigDecimal.ZERO) > 0) msg += " Phạt trễ hạn: " + fine + " VNĐ.";
+                    if (fine.compareTo(BigDecimal.ZERO) > 0) {
+                        msg += " Phạt trễ hạn: " + fine + " VNĐ.";
+                    }
                     req.getSession().setAttribute("flash", msg);
                     resp.sendRedirect(req.getContextPath() + "/borrow/history");
                     break;
-                    
+
                 case "/borrow/overdue": // UC 33: View Overdue List
                     requireStaff(req);
                     List<BorrowRecord> overdueRecords = borrowService.getOverdueList();
@@ -108,17 +105,34 @@ public class BorrowController extends HttpServlet {
                     req.setAttribute("pageTitle", "Danh sách quá hạn");
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
                     break;
-                    
-                case "/borrow/history": // UC 35: View Borrow History
+
+                case "/borrow/history": // Cập nhật Case này
                     User currentUser = (User) req.getSession().getAttribute("currentUser");
                     boolean isStaff = isStaff(currentUser);
-                    List<BorrowRecord> records = isStaff ? borrowDAO.listAll() : borrowDAO.listByUser(currentUser.getId());
+
+                    String methodFilter = req.getParameter("method");
+                    String statusFilter = req.getParameter("status");
+
+                    Long targetUserId = isStaff ? null : currentUser.getId();
+                    List<BorrowRecord> records = borrowDAO.filterBorrows(targetUserId, methodFilter, statusFilter);
+
                     req.setAttribute("records", records);
                     req.setAttribute("isStaff", isStaff);
+                    req.setAttribute("methodFilter", methodFilter);
+                    req.setAttribute("statusFilter", statusFilter);
                     req.setAttribute("pageTitle", "Lịch sử mượn trả");
+
+                    checkFlashMessage(req);
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
                     break;
-                    
+
+                case "/borrow/detail": // Thêm Case Mới Này
+                    long detailId = Long.parseLong(req.getParameter("id"));
+                    BorrowRecord detail = borrowDAO.findById(detailId);
+                    req.setAttribute("record", detail);
+                    req.getRequestDispatcher("/WEB-INF/views/borrow_detail.jsp").forward(req, resp);
+                    break;
+
                 default:
                     resp.sendRedirect(req.getContextPath() + "/borrow/history");
             }
@@ -176,7 +190,7 @@ public class BorrowController extends HttpServlet {
 
     private void handleOverdueList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         List<BorrowRecord> records = borrowService.getOverdueList();
-        
+
         req.setAttribute("records", records);
         req.setAttribute("isStaff", true);
         req.setAttribute("pageTitle", "Danh sách mượn sách QUÁ HẠN"); // Để phân biệt trên giao diện
@@ -194,8 +208,9 @@ public class BorrowController extends HttpServlet {
     private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         String bookIdStr = req.getParameter("bookId");
-        if (bookIdStr == null || bookIdStr.isBlank())
+        if (bookIdStr == null || bookIdStr.isBlank()) {
             throw new IllegalArgumentException("Vui lòng chọn sách");
+        }
 
         int bookId = Integer.parseInt(bookIdStr);
         borrowService.requestBorrow(currentUser.getId(), bookId);
@@ -212,9 +227,18 @@ public class BorrowController extends HttpServlet {
     }
 
     private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null)
+        if (u == null || u.getRole() == null || u.getRole().getName() == null) {
             return false;
+        }
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
+    }
+    
+    private void checkFlashMessage(HttpServletRequest req) {
+        Object flash = req.getSession().getAttribute("flash");
+        if (flash != null) {
+            req.setAttribute("flash", flash);
+            req.getSession().removeAttribute("flash");
+        }
     }
 }

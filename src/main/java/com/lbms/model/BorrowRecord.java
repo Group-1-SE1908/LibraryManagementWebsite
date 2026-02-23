@@ -14,6 +14,7 @@ public class BorrowRecord {
     private String status;
     private BigDecimal fineAmount;
     private BookCopy bookCopy;
+    private String borrowMethod;
 
     public BorrowRecord() {
     }
@@ -90,4 +91,13 @@ public class BorrowRecord {
     public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
+
+    public String getBorrowMethod() {
+        return borrowMethod;
+    }
+
+    public void setBorrowMethod(String borrowMethod) {
+        this.borrowMethod = borrowMethod;
+    }
+    
 }

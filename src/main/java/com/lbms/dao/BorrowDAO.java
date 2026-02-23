@@ -31,6 +31,34 @@ public class BorrowDAO {
         }
     }
 
+    public List<BorrowRecord> filterBorrows(Long userId, String method, String status) throws SQLException {
+        StringBuilder sql = new StringBuilder(baseSelect() + " WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+
+        if (userId != null) {
+            sql.append(" AND br.user_id = ? ");
+            params.add(userId);
+        }
+        if (method != null && !method.isBlank()) {
+            sql.append(" AND br.borrow_method = ? ");
+            params.add(method);
+        }
+        if (status != null && !status.isBlank()) {
+            sql.append(" AND br.status = ? ");
+            params.add(status);
+        }
+        sql.append(" ORDER BY br.id DESC");
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return mapList(rs);
+            }
+        }
+    }
+
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
@@ -101,8 +129,8 @@ public class BorrowDAO {
     }
 
     private String baseSelect() {
-        return "SELECT br.id, br.user_id, br.book_id, br.borrow_date, br.due_date, br.return_date, br.status, br.fine_amount, br.copy_id, "
-                + "u.email AS user_email, u.full_name AS user_full_name, "
+        return "SELECT br.id, br.user_id, br.book_id, br.borrow_date, br.due_date, br.return_date, br.status, br.fine_amount, br.copy_id, br.borrow_method, "
+                + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.quantity AS book_quantity, "
                 + "bc.barcode AS copy_barcode "
                 + "FROM borrow_records br "
@@ -134,6 +162,8 @@ public class BorrowDAO {
         u.setId(rs.getLong("user_id"));
         u.setEmail(rs.getString("user_email"));
         u.setFullName(rs.getString("user_full_name"));
+        u.setPhone(rs.getString("user_phone"));
+        u.setAddress(rs.getString("user_address"));
         br.setUser(u);
 
         Book b = new Book();
@@ -164,6 +194,7 @@ public class BorrowDAO {
 
         br.setStatus(rs.getString("status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
+        br.setBorrowMethod(rs.getString("borrow_method"));
         return br;
     }
 }
