@@ -14,10 +14,10 @@ public class VNPayConfig {
     public static String vnp_ReturnUrl = "/vnpay-return";
 
     // Mã merchant (TmnCode) / Merchant code
-    public static String vnp_TmnCode = "DUMMY_TMN_CODE";
+    public static String vnp_TmnCode = "CGXZLS0Z"; // Test TmnCode
 
     // Chuỗi bí mật tạo checksum (HashSecret) / Secret key for checksum
-    public static String vnp_HashSecret = "DUMMY_HASH_SECRET";
+    public static String vnp_HashSecret = "XNBCJFAKAZQSGTARRLGCHVZWCIOIGSHN"; // Test HashSecret
 
     // URL truy vấn giao dịch / Transaction query URL
     public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";

@@ -1,11 +1,8 @@
 package com.lbms.controller;
 
 import com.lbms.config.VNPayConfig;
-import com.lbms.model.Cart;
-import com.lbms.model.CartItem;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
-import com.lbms.service.CartService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,12 +21,10 @@ import java.util.Map;
 @WebServlet(urlPatterns = { "/vnpay-return" })
 public class VNPayReturnController extends HttpServlet {
 
-    private CartService cartService;
     private BorrowService borrowService;
 
     @Override
     public void init() {
-        this.cartService = new CartService();
         this.borrowService = new BorrowService();
     }
 
@@ -65,34 +60,31 @@ public class VNPayReturnController extends HttpServlet {
             if (signValue.equals(vnp_SecureHash)) {
                 if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
                     // Payment success
-                    Cart cart = cartService.getCart(currentUser.getId());
-                    if (cart != null && cart.getItems() != null && !cart.getItems().isEmpty()) {
-                        int successCount = 0;
-                        for (CartItem item : cart.getItems()) {
-                            for (int i = 0; i < item.getQuantity(); i++) {
-                                borrowService.requestBorrow(currentUser.getId(), item.getBook().getId());
-                                successCount++;
-                            }
-                        }
-                        cartService.clearCart(currentUser.getId());
-                        req.getSession().setAttribute("flash", "Thanh toán thành công / Payment successful! Đã gửi "
-                                + successCount + " yêu cầu mượn sách.");
+                    String vnp_TxnRef = req.getParameter("vnp_TxnRef");
+                    if (vnp_TxnRef != null && vnp_TxnRef.contains("_")) {
+                        long borrowId = Long.parseLong(vnp_TxnRef.split("_")[0]);
+                        borrowService.returnBook(borrowId);
+                        req.getSession().setAttribute("flash", "Thanh toán thành công & Trả sách thành công!");
                     } else {
                         req.getSession().setAttribute("flash",
-                                "Thanh toán thành công nhưng không tìm thấy sách trong giỏ / Payment successful but cart is empty.");
+                                "Thanh toán thành công nhưng không tìm thấy thông tin phiếu mượn.");
                     }
-                    resp.sendRedirect(req.getContextPath() + "/borrow");
+                    resp.sendRedirect(req.getContextPath() + "/history");
                 } else {
                     // Payment failed
-                    req.getSession().setAttribute("flash", "Thanh toán thất bại / Payment failed! (Mã lỗi/Error code: "
-                            + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại / Please try again.");
-                    resp.sendRedirect(req.getContextPath() + "/checkout");
+                    String vnp_TxnRef = req.getParameter("vnp_TxnRef");
+                    String borrowIdPart = "";
+                    if (vnp_TxnRef != null && vnp_TxnRef.contains("_")) {
+                        borrowIdPart = "?borrowId=" + vnp_TxnRef.split("_")[0];
+                    }
+                    req.getSession().setAttribute("flash", "Thanh toán thất bại! (Mã lỗi: "
+                            + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại.");
+                    resp.sendRedirect(req.getContextPath() + "/checkout" + borrowIdPart);
                 }
             } else {
                 // Invalid signature
-                req.getSession().setAttribute("flash",
-                        "Chữ ký không hợp lệ / Invalid signature! Vui lòng không thực hiện hành vi giả mạo / Stop fake request.");
-                resp.sendRedirect(req.getContextPath() + "/checkout");
+                req.getSession().setAttribute("flash", "Chữ ký không hợp lệ!");
+                resp.sendRedirect(req.getContextPath() + "/history");
             }
 
         } catch (Exception ex) {

@@ -1,6 +1,6 @@
 package com.lbms.service;
 
-import com.lbms.util.AppConfig;
+import com.lbms.config.AppConfig;
 
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
