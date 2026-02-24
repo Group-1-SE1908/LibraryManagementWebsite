@@ -4,7 +4,6 @@ import java.sql.Connection;
 
 public final class DBConfig {
 
-   
     private DBConfig() {
     }
 
@@ -13,5 +12,5 @@ public final class DBConfig {
 
     public static final String USER = System.getenv().getOrDefault("LBMS_DB_USER", "sa");
 
-    public static final String PASSWORD = System.getenv().getOrDefault("LBMS_DB_PASSWORD", "12345");
+    public static final String PASSWORD = System.getenv().getOrDefault("LBMS_DB_PASSWORD", "123456");
 }
