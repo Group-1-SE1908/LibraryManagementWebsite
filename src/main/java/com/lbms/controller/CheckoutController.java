@@ -1,10 +1,8 @@
 package com.lbms.controller;
 
-import com.lbms.model.Cart;
-import com.lbms.model.CartItem;
+import com.lbms.model.BorrowRecord;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
-import com.lbms.service.CartService;
 import com.lbms.config.VNPayConfig;
 
 import jakarta.servlet.ServletException;
@@ -29,13 +27,13 @@ import java.util.TimeZone;
 
 @WebServlet(urlPatterns = { "/checkout", "/checkout/process" })
 public class CheckoutController extends HttpServlet {
-    private CartService cartService;
     private BorrowService borrowService;
+    private com.lbms.dao.BorrowDAO borrowDAO;
 
     @Override
     public void init() {
-        this.cartService = new CartService();
         this.borrowService = new BorrowService();
+        this.borrowDAO = new com.lbms.dao.BorrowDAO();
     }
 
     @Override
@@ -46,13 +44,29 @@ public class CheckoutController extends HttpServlet {
             return;
         }
 
+        String borrowIdStr = req.getParameter("borrowId");
+        if (borrowIdStr == null || borrowIdStr.isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
         try {
-            Cart cart = cartService.getCart(currentUser.getId());
-            if (cart.getItems() == null || cart.getItems().isEmpty()) {
-                resp.sendRedirect(req.getContextPath() + "/cart");
+            long borrowId = Long.parseLong(borrowIdStr);
+            BorrowRecord br = borrowDAO.findById(borrowId);
+            if (br == null || br.getUser().getId() != currentUser.getId()) {
+                resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
-            req.setAttribute("cart", cart);
+
+            if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
+                req.getSession().setAttribute("flash", "Sách này không đang trong trạng thái mượn.");
+                resp.sendRedirect(req.getContextPath() + "/history");
+                return;
+            }
+
+            java.math.BigDecimal fine = borrowService.calculateFine(br.getDueDate(), java.time.LocalDate.now());
+            req.setAttribute("borrowRecord", br);
+            req.setAttribute("fineAmount", fine);
             req.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(req, resp);
         } catch (Exception ex) {
             throw new ServletException(ex);
@@ -72,27 +86,29 @@ public class CheckoutController extends HttpServlet {
             return;
         }
 
+        String borrowIdStr = req.getParameter("borrowId");
+        if (borrowIdStr == null || borrowIdStr.isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
         try {
-            Cart cart = cartService.getCart(currentUser.getId());
-            if (cart.getItems() == null || cart.getItems().isEmpty()) {
-                resp.sendRedirect(req.getContextPath() + "/cart");
+            long borrowId = Long.parseLong(borrowIdStr);
+            BorrowRecord br = borrowDAO.findById(borrowId);
+            if (br == null || br.getUser().getId() != currentUser.getId()
+                    || !"BORROWED".equalsIgnoreCase(br.getStatus())) {
+                resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
 
-            long amount = (long) (cart.getTotalAmount() * 100);
+            java.math.BigDecimal fine = borrowService.calculateFine(br.getDueDate(), java.time.LocalDate.now());
+            long amount = fine.multiply(new java.math.BigDecimal("100")).longValue();
+
             if (amount <= 0) {
-                // If amount is zero or negative, checkout directly without VNPay
-                int successCount = 0;
-                for (CartItem item : cart.getItems()) {
-                    for (int i = 0; i < item.getQuantity(); i++) {
-                        borrowService.requestBorrow(currentUser.getId(), item.getBook().getId());
-                        successCount++;
-                    }
-                }
-                cartService.clearCart(currentUser.getId());
-                req.getSession().setAttribute("flash",
-                        "Thanh toán thành công! Đã gửi " + successCount + " yêu cầu mượn sách.");
-                resp.sendRedirect(req.getContextPath() + "/borrow");
+                // If amount is zero or negative, return directly without VNPay
+                borrowService.returnBook(borrowId);
+                req.getSession().setAttribute("flash", "Trả sách thành công!");
+                resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
 
@@ -100,7 +116,8 @@ public class CheckoutController extends HttpServlet {
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
             String orderType = "other";
-            String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
+            // Use borrowId as part of TxnRef to retrieve later
+            String vnp_TxnRef = borrowId + "_" + VNPayConfig.getRandomNumber(8);
             String vnp_IpAddr = VNPayConfig.getIpAddress(req);
             String vnp_TmnCode = VNPayConfig.vnp_TmnCode;
 
@@ -112,7 +129,7 @@ public class CheckoutController extends HttpServlet {
             vnp_Params.put("vnp_CurrCode", "VND");
 
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-            vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang vnpay thue sach");
+            vnp_Params.put("vnp_OrderInfo", "Thanh toan phi phat tra sach phieu #" + borrowId);
             vnp_Params.put("vnp_OrderType", orderType);
             vnp_Params.put("vnp_Locale", "vn");
 
@@ -163,7 +180,7 @@ public class CheckoutController extends HttpServlet {
 
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", "Lỗi thanh toán: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/checkout");
+            resp.sendRedirect(req.getContextPath() + "/checkout?borrowId=" + req.getParameter("borrowId"));
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
