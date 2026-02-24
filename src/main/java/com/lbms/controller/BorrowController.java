@@ -17,7 +17,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return" })
+@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
+        "/history" })
 public class BorrowController extends HttpServlet {
     private BorrowService borrowService;
     private BorrowDAO borrowDAO;
@@ -60,6 +61,9 @@ public class BorrowController extends HttpServlet {
                     BigDecimal fine = borrowService.returnBook(returnId);
                     req.getSession().setAttribute("flash", "Trả sách thành công. Phạt: " + fine + " VND");
                     resp.sendRedirect(req.getContextPath() + "/borrow");
+                    break;
+                case "/history":
+                    handleHistory(req, resp);
                     break;
                 default:
                     resp.sendError(404);
@@ -134,6 +138,25 @@ public class BorrowController extends HttpServlet {
 
         req.getSession().setAttribute("flash", "Gửi yêu cầu mượn thành công (chờ thủ thư duyệt)");
         resp.sendRedirect(req.getContextPath() + "/borrow");
+    }
+
+    private void handleHistory(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        List<BorrowRecord> records = borrowDAO.listByUser(currentUser.getId());
+        req.setAttribute("records", records);
+
+        Object flash = req.getSession().getAttribute("flash");
+        if (flash != null) {
+            req.setAttribute("flash", flash);
+            req.getSession().removeAttribute("flash");
+        }
+
+        req.getRequestDispatcher("/WEB-INF/views/borrow_history.jsp").forward(req, resp);
     }
 
     private void requireStaff(HttpServletRequest req) {

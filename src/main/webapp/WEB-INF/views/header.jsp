@@ -16,7 +16,7 @@
         <ul class="nav-menu">
             <li><a href="${pageContext.request.contextPath}/" class="active">Home</a></li>
             <li><a href="${pageContext.request.contextPath}/borrow">My Books</a></li>
-            <li><a href="${pageContext.request.contextPath}/reservations">History</a></li>
+                <li><a href="${pageContext.request.contextPath}/history">History</a></li>
             <li><a href="${pageContext.request.contextPath}/books">Catalog</a></li>
         </ul>
         <div class="header-right">
