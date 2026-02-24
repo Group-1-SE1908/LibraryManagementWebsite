@@ -3,7 +3,7 @@ package com.lbms.service;
 import com.lbms.dao.PasswordResetTokenDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
-import com.lbms.util.AppConfig;
+import com.lbms.config.AppConfig;
 import com.lbms.util.CryptoUtil;
 import org.mindrot.jbcrypt.BCrypt;
 
