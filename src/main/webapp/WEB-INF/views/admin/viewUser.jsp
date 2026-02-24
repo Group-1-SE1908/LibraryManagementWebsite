@@ -88,6 +88,7 @@
                         left: 2rem;
                     }
 
+                    /* Tối ưu avatar-box để chứa ảnh */
                     .avatar-box {
                         height: 6rem;
                         width: 6rem;
@@ -99,6 +100,14 @@
                         justify-content: center;
                         border: 4px solid white;
                         color: var(--primary);
+                        overflow: hidden;
+                        /* Đảm bảo ảnh không tràn ra ngoài bo góc */
+                    }
+
+                    .avatar-img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
                     }
 
                     .card-content {
@@ -203,10 +212,6 @@
                         word-break: break-word;
                     }
 
-                    .col-span-2 {
-                        grid-column: span 2;
-                    }
-
                     .btn-group {
                         margin-top: 2.5rem;
                         display: flex;
@@ -273,10 +278,6 @@
                         .info-grid {
                             grid-template-columns: 1fr;
                         }
-
-                        .col-span-2 {
-                            grid-column: span 1;
-                        }
                     }
                 </style>
             </head>
@@ -292,8 +293,17 @@
                                     <div class="card-header">
                                         <div class="avatar-container">
                                             <div class="avatar-box">
-                                                <span class="material-icons"
-                                                    style="font-size: 3rem;">account_circle</span>
+                                                <c:choose>
+                                                    <c:when test="${not empty user.avatar}">
+                                                        <img src="${pageContext.request.contextPath}/uploads/${user.avatar}"
+                                                            alt="Profile Picture" class="avatar-img"
+                                                            onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=1E40AF&color=fff';">
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="material-icons"
+                                                            style="font-size: 4rem;">account_circle</span>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </div>
                                         </div>
                                     </div>
@@ -362,16 +372,17 @@
                                                 <div>
                                                     <p class="info-label">Ngày đăng ký</p>
                                                     <p class="info-value">
+
                                                         <fmt:parseDate value="${user.createdAt}"
                                                             pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedDate"
                                                             type="both" />
-                                                        <fmt:formatDate value="${parsedDate}"
-                                                            pattern="dd/MM/yyyy HH:mm" />
+                                                        <fmt:formatDate value="${parsedDate}" pattern="dd/MM/yyyy" />
+
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <div class="info-item ">
+                                            <div class="info-item">
                                                 <div class="info-icon-box"><span
                                                         class="material-icons">location_on</span></div>
                                                 <div>
