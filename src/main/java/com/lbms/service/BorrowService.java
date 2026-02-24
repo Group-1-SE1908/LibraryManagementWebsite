@@ -2,11 +2,13 @@ package com.lbms.service;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
@@ -42,56 +44,53 @@ public class BorrowService {
         // create request
         return borrowDAO.createRequest(userId, bookId);
     }
-
-    // Trong BorrowService.java
-public void approve(long borrowId, String barcode) throws SQLException {
-    BorrowRecord br = borrowDAO.findById(borrowId);
-    if (br == null) throw new IllegalArgumentException("Yêu cầu không tồn tại");
-
-    try (Connection c = DBConnection.getConnection()) {
-        c.setAutoCommit(false);
-        try {
-            // 1. Tìm bản sao sách (BookCopy) theo Barcode và khóa hàng để xử lý
-            long copyId = -1;
-            String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
-            try (PreparedStatement ps = c.prepareStatement(findCopySql)) {
-                ps.setString(1, barcode);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        copyId = rs.getLong("copy_id");
-                    } else {
-                        throw new IllegalArgumentException("Barcode không hợp lệ hoặc sách không sẵn sàng");
+     
+    public void approve(long borrowId, String barcode) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                // 1. Tìm bản sao sách (BookCopy) và khóa hàng (SQL Server syntax)
+                long copyId = -1;
+                String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
+                try (PreparedStatement ps = c.prepareStatement(findCopySql)) {
+                    ps.setString(1, barcode);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) copyId = rs.getLong("copy_id");
+                        else throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã được mượn!");
                     }
                 }
-            }
 
-            // 2. Cập nhật trạng thái BookCopy thành 'BORROWED'
-            try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
-                ps.setLong(1, copyId);
-                ps.executeUpdate();
-            }
+                // 2. Cập nhật trạng thái bản sao sách
+                try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                    ps.setLong(1, copyId);
+                    ps.executeUpdate();
+                }
 
-            // 3. Cập nhật BorrowRecord: liên kết với copyId, đặt ngày mượn, hạn trả và trạng thái 'BORROWED'
-            LocalDate today = LocalDate.now();
-            LocalDate dueDate = today.plusDays(LOAN_DAYS);
-            String updateBorrowSql = "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=?, copy_id=? WHERE id=?";
-            try (PreparedStatement ps = c.prepareStatement(updateBorrowSql)) {
-                ps.setDate(1, java.sql.Date.valueOf(today));
-                ps.setDate(2, java.sql.Date.valueOf(dueDate));
-                ps.setLong(3, copyId);
-                ps.setLong(4, borrowId);
-                ps.executeUpdate();
-            }
+                // 3. Cập nhật phiếu mượn (status, copy_id, ngày mượn, hạn trả)
+                LocalDate today = LocalDate.now();
+                LocalDate dueDate = today.plusDays(LOAN_DAYS);
+                String updateBrSql = "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=?, copy_id=? WHERE id=?";
+                try (PreparedStatement ps = c.prepareStatement(updateBrSql)) {
+                    ps.setDate(1, Date.valueOf(today));
+                    ps.setDate(2, Date.valueOf(dueDate));
+                    ps.setLong(3, copyId);
+                    ps.setLong(4, borrowId);
+                    ps.executeUpdate();
+                }
 
-            c.commit();
-        } catch (Exception ex) {
-            c.rollback();
-            throw ex;
-        } finally {
-            c.setAutoCommit(true);
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            } finally {
+                c.setAutoCommit(true);
+            }
         }
     }
-}
+
+        public List<BorrowRecord> getOverdueList() throws SQLException {
+        return borrowDAO.listOverdue();
+    }
 
     public void reject(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
