@@ -173,8 +173,8 @@
                             </div>
 
                             <form action="${pageContext.request.contextPath}/checkout/process" method="post">
-                                <button type="submit" class="btn primary btn-confirm">Xác nhận thanh toán
-                                    (Confirm)</button>
+                                <button type="submit" class="btn primary btn-confirm">Thanh toán qua VNPay
+                                    (Checkout with VNPay)</button>
                             </form>
                             <div style="margin-top: 15px; text-align: center;">
                                 <a href="${pageContext.request.contextPath}/cart"

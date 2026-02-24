@@ -75,10 +75,12 @@ public class BorrowService {
 
                 // set borrow_date/status BORROWED
                 LocalDate today = LocalDate.now();
+                LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 try (var ps = c.prepareStatement(
-                        "UPDATE Borrowing SET status='BORROWED', borrow_date=? WHERE borrowing_id=?")) {
+                        "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=? WHERE id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setLong(2, borrowId);
+                    ps.setDate(2, java.sql.Date.valueOf(dueDate));
+                    ps.setLong(3, borrowId);
                     ps.executeUpdate();
                 }
 
@@ -128,9 +130,10 @@ public class BorrowService {
 
                 // mark returned
                 try (var ps = c.prepareStatement(
-                        "UPDATE Borrowing SET status='RETURNED', return_date=? WHERE borrowing_id=?")) {
+                        "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setLong(2, borrowId);
+                    ps.setBigDecimal(2, fine);
+                    ps.setLong(3, borrowId);
                     ps.executeUpdate();
                 }
 

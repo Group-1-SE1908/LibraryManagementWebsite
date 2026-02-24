@@ -14,7 +14,7 @@ import java.util.List;
 public class BorrowDAO {
 
     public long createRequest(long userId, long bookId) throws SQLException {
-        String sql = "INSERT INTO Borrowing(user_id, book_id, borrow_date, return_date, status) " +
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status) " +
                 "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED')";
 
         try (Connection c = DBConnection.getConnection();
@@ -51,7 +51,7 @@ public class BorrowDAO {
     }
 
     public int countActiveBorrows(long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) AS c FROM Borrowing WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
+        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -76,7 +76,7 @@ public class BorrowDAO {
     }
 
     public void updateStatus(long id, String status) throws SQLException {
-        String sql = "UPDATE Borrowing SET status = ? WHERE borrowing_id = ?";
+        String sql = "UPDATE borrow_records SET status = ? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -86,7 +86,7 @@ public class BorrowDAO {
     }
 
     public void markReturned(long id, LocalDate returnDate, BigDecimal fineAmount) throws SQLException {
-        String sql = "UPDATE Borrowing SET status='RETURNED', return_date=? WHERE borrowing_id = ?";
+        String sql = "UPDATE borrow_records SET status='RETURNED', return_date=? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(returnDate));
@@ -96,11 +96,12 @@ public class BorrowDAO {
     }
 
     private String baseSelect() {
-        return "SELECT br.borrowing_id, br.user_id, br.book_id, br.borrow_date, br.return_date, br.status, " +
+        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.borrow_date, br.due_date, br.return_date, br.status, br.fine_amount, "
+                +
                 "u.email AS user_email, u.full_name AS user_full_name, " +
                 "bk.title AS book_title, bk.author AS book_author, bk.price AS book_quantity, bk.availability AS book_status "
                 +
-                "FROM Borrowing br " +
+                "FROM borrow_records br " +
                 "JOIN [User] u ON br.user_id = u.user_id " +
                 "JOIN Book bk ON br.book_id = bk.book_id";
     }
@@ -133,6 +134,11 @@ public class BorrowDAO {
 
         Date rd = rs.getDate("return_date");
         br.setReturnDate(rd == null ? null : rd.toLocalDate());
+
+        Date dd = rs.getDate("due_date");
+        br.setDueDate(dd == null ? null : dd.toLocalDate());
+
+        br.setFineAmount(rs.getBigDecimal("fine_amount"));
 
         br.setStatus(rs.getString("status"));
         return br;
