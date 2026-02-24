@@ -14,8 +14,8 @@ import java.util.List;
 public class BorrowDAO {
 
     public long createRequest(long userId, long bookId) throws SQLException {
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status) " +
-                "VALUES(?, ?, GETDATE(), 'REQUESTED')";
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status) " +
+            "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED')";
 
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

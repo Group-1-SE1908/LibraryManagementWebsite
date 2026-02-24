@@ -90,7 +90,7 @@ public class ShipmentDAO {
                 +
                 "'N/A' AS address, 'N/A' AS phone, b.borrow_date AS created_at, b.return_date AS updated_at, " +
                 "b.status AS br_status " +
-                "FROM Delivery s JOIN Borrowing b ON s.borrowing_id = b.borrowing_id";
+                "FROM Delivery s JOIN borrow_records b ON s.borrowing_id = b.id";
     }
 
     private Shipment mapOne(ResultSet rs) throws SQLException {
