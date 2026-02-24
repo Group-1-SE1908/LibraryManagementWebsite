@@ -1,5 +1,9 @@
 package com.lbms.controller;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
+
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
 import com.lbms.model.Book;
@@ -12,10 +16,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.List;
 
 @WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
         "/history" })
@@ -46,9 +46,17 @@ public class BorrowController extends HttpServlet {
                 case "/borrow/approve":
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
-                    borrowService.approve(id);
-                    resp.sendRedirect(req.getContextPath() + "/borrow");
-                    break;
+                    String barcode = req.getParameter("barcode"); // Lấy barcode từ form
+    
+                    if (barcode == null || barcode.trim().isEmpty()) {
+                            req.getSession().setAttribute("flash", "Vui lòng nhập Barcode để duyệt sách");
+                            resp.sendRedirect(req.getContextPath() + "/borrow");
+                            return;
+                        }
+    
+    borrowService.approve(id, barcode);
+    resp.sendRedirect(req.getContextPath() + "/borrow");
+    break;
                 case "/borrow/reject":
                     requireStaff(req);
                     long rejectId = Long.parseLong(req.getParameter("id"));
@@ -64,6 +72,15 @@ public class BorrowController extends HttpServlet {
                     break;
                 case "/history":
                     handleHistory(req, resp);
+                    break;
+
+                
+                case "/borrow/overdue":
+                    requireStaff(req);
+                    List<BorrowRecord> overdueRecords = borrowDAO.listOverdue();
+                    req.setAttribute("records", overdueRecords);
+                    req.setAttribute("isOverduePage", true); // Để đánh dấu trên giao diện
+                    req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
                     break;
                 default:
                     resp.sendError(404);
@@ -102,23 +119,34 @@ public class BorrowController extends HttpServlet {
             throw new ServletException(ex);
         }
     }
-
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        User currentUser = (User) req.getSession().getAttribute("currentUser");
-        boolean isStaff = isStaff(currentUser);
-
-        List<BorrowRecord> records = isStaff ? borrowDAO.listAll() : borrowDAO.listByUser(currentUser.getId());
-        req.setAttribute("records", records);
-        req.setAttribute("isStaff", isStaff);
-
-        Object flash = req.getSession().getAttribute("flash");
-        if (flash != null) {
-            req.setAttribute("flash", flash);
-            req.getSession().removeAttribute("flash");
+    User currentUser = (User) req.getSession().getAttribute("currentUser");
+    boolean isStaff = isStaff(currentUser);
+    
+    List<BorrowRecord> records;
+    if (isStaff) {
+       
+        String filter = req.getParameter("filter");
+        if ("OVERDUE".equals(filter)) {
+            records = borrowDAO.listOverdue(); 
+            req.setAttribute("pageTitle", "Danh sách sách quá hạn");
+        } else {
+            records = borrowDAO.listAll(); 
+            req.setAttribute("pageTitle", "Quản lý mượn trả toàn hệ thống");
         }
-
-        req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+    } else {
+        
+        records = borrowDAO.listByUser(currentUser.getId());
+        req.setAttribute("pageTitle", "Lịch sử mượn sách của tôi");
     }
+
+    req.setAttribute("records", records);
+    req.setAttribute("isStaff", isStaff);
+    req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+}
+
+  
+
 
     private void handleRequestForm(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         List<Book> books = bookDAO.search(req.getParameter("q"));

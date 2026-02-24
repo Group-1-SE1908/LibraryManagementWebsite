@@ -1,15 +1,20 @@
 package com.lbms.dao;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
-
-import java.math.BigDecimal;
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 public class BorrowDAO {
 
@@ -143,4 +148,13 @@ public class BorrowDAO {
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         return br;
     }
+    
+public List<BorrowRecord> listOverdue() throws SQLException {
+    String sql = baseSelect() + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
+    try (Connection c = DBConnection.getConnection();
+         PreparedStatement ps = c.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        return mapList(rs);
+    }
+}
 }

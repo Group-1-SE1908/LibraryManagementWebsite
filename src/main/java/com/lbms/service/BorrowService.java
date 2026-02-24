@@ -1,16 +1,17 @@
 package com.lbms.service;
 
-import com.lbms.dao.BookDAO;
-import com.lbms.dao.BorrowDAO;
-import com.lbms.model.Book;
-import com.lbms.model.BorrowRecord;
-
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+import com.lbms.dao.BookDAO;
+import com.lbms.dao.BorrowDAO;
+import com.lbms.model.Book;
+import com.lbms.model.BorrowRecord;
 import com.lbms.util.DBConnection;
 
 public class BorrowService {
@@ -42,61 +43,55 @@ public class BorrowService {
         return borrowDAO.createRequest(userId, bookId);
     }
 
-    public void approve(long borrowId) throws SQLException {
-        BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null)
-            throw new IllegalArgumentException("Yêu cầu không tồn tại");
-        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Trạng thái không hợp lệ để duyệt");
-        }
+    // Trong BorrowService.java
+public void approve(long borrowId, String barcode) throws SQLException {
+    BorrowRecord br = borrowDAO.findById(borrowId);
+    if (br == null) throw new IllegalArgumentException("Yêu cầu không tồn tại");
 
-        // Transaction: update borrow status + reduce book quantity
-        try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false);
-            try {
-                // re-check quantity with lock
-                try (var ps = c.prepareStatement("SELECT availability FROM Book WHERE book_id=? FOR UPDATE")) {
-                    ps.setLong(1, br.getBook().getId());
-                    try (var rs = ps.executeQuery()) {
-                        if (!rs.next())
-                            throw new SQLException("Book not found");
-                        int available = rs.getInt(1);
-                        if (available <= 0)
-                            throw new IllegalArgumentException("Sách đã hết");
+    try (Connection c = DBConnection.getConnection()) {
+        c.setAutoCommit(false);
+        try {
+            // 1. Tìm bản sao sách (BookCopy) theo Barcode và khóa hàng để xử lý
+            long copyId = -1;
+            String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
+            try (PreparedStatement ps = c.prepareStatement(findCopySql)) {
+                ps.setString(1, barcode);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        copyId = rs.getLong("copy_id");
+                    } else {
+                        throw new IllegalArgumentException("Barcode không hợp lệ hoặc sách không sẵn sàng");
                     }
                 }
-
-                // reduce availability
-                try (var ps = c.prepareStatement(
-                        "UPDATE Book SET availability = CASE WHEN availability > 0 THEN availability - 1 ELSE 0 END WHERE book_id=?")) {
-                    ps.setLong(1, br.getBook().getId());
-                    ps.executeUpdate();
-                }
-
-                // set borrow_date/status BORROWED
-                LocalDate today = LocalDate.now();
-                LocalDate dueDate = today.plusDays(LOAN_DAYS);
-                try (var ps = c.prepareStatement(
-                        "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=? WHERE id=?")) {
-                    ps.setDate(1, java.sql.Date.valueOf(today));
-                    ps.setDate(2, java.sql.Date.valueOf(dueDate));
-                    ps.setLong(3, borrowId);
-                    ps.executeUpdate();
-                }
-
-                c.commit();
-            } catch (Exception ex) {
-                c.rollback();
-                if (ex instanceof SQLException)
-                    throw (SQLException) ex;
-                if (ex instanceof RuntimeException)
-                    throw (RuntimeException) ex;
-                throw new RuntimeException(ex);
-            } finally {
-                c.setAutoCommit(true);
             }
+
+            // 2. Cập nhật trạng thái BookCopy thành 'BORROWED'
+            try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                ps.setLong(1, copyId);
+                ps.executeUpdate();
+            }
+
+            // 3. Cập nhật BorrowRecord: liên kết với copyId, đặt ngày mượn, hạn trả và trạng thái 'BORROWED'
+            LocalDate today = LocalDate.now();
+            LocalDate dueDate = today.plusDays(LOAN_DAYS);
+            String updateBorrowSql = "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=?, copy_id=? WHERE id=?";
+            try (PreparedStatement ps = c.prepareStatement(updateBorrowSql)) {
+                ps.setDate(1, java.sql.Date.valueOf(today));
+                ps.setDate(2, java.sql.Date.valueOf(dueDate));
+                ps.setLong(3, copyId);
+                ps.setLong(4, borrowId);
+                ps.executeUpdate();
+            }
+
+            c.commit();
+        } catch (Exception ex) {
+            c.rollback();
+            throw ex;
+        } finally {
+            c.setAutoCommit(true);
         }
     }
+}
 
     public void reject(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
