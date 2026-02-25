@@ -16,7 +16,10 @@ import jakarta.servlet.http.Part;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = { "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search" })
 
@@ -93,7 +96,11 @@ public class BookController extends HttpServlet {
         } catch (IllegalArgumentException ex) {
             req.setAttribute("error", ex.getMessage());
             req.setAttribute("mode", path.contains("new") ? "create" : "edit");
-            req.setAttribute("categories", categoryDAO.listAll());
+            try {
+                req.setAttribute("categories", categoryDAO.listAll());
+            } catch (SQLException ex1) {
+                Logger.getLogger(BookController.class.getName()).log(Level.SEVERE, null, ex1);
+            }
             req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
         } catch (Exception ex) {
             throw new ServletException(ex);
