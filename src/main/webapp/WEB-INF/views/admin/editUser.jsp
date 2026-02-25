@@ -13,6 +13,7 @@
             <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
             <style>
+                /* Variables & Base Styles */
                 :root {
                     --primary: #1E40AF;
                     --primary-hover: #1e3a8a;
@@ -292,121 +293,6 @@
                 }
 
 
-                .role-modal-overlay {
-                    display: none;
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(15, 23, 42, 0.55);
-                    backdrop-filter: blur(6px);
-                    z-index: 2000;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .role-modal {
-                    background: white;
-                    width: 100%;
-                    max-width: 420px;
-                    border-radius: 1.25rem;
-                    padding: 2rem;
-                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-                    animation: scaleIn 0.25s ease;
-                }
-
-                @keyframes scaleIn {
-                    from {
-                        opacity: 0;
-                        transform: scale(0.95);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                }
-
-                .role-modal-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    margin-bottom: 0.5rem;
-                }
-
-                .role-modal-icon {
-                    width: 42px;
-                    height: 42px;
-                    border-radius: 0.75rem;
-                    background: var(--blue-100);
-                    color: var(--primary);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .role-modal h3 {
-                    margin: 0;
-                    font-size: 1.25rem;
-                }
-
-                .role-modal-desc {
-                    font-size: 0.875rem;
-                    color: var(--text-gray-500);
-                    margin-bottom: 1.5rem;
-                }
-
-                .role-input-wrapper {
-                    position: relative;
-                }
-
-                .role-input-wrapper span {
-                    position: absolute;
-                    left: 0.75rem;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: var(--text-gray-400);
-                }
-
-                .role-input {
-                    width: 100%;
-                    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-                    border-radius: 0.75rem;
-                    border: 1px solid #D1D5DB;
-                    font-size: 0.95rem;
-                }
-
-                .role-input:focus {
-                    outline: none;
-                    border-color: var(--primary);
-                    box-shadow: 0 0 0 3px var(--blue-100);
-                }
-
-                .role-modal-actions {
-                    display: flex;
-                    gap: 0.75rem;
-                    margin-top: 1.75rem;
-                }
-
-                .btn-outline {
-                    flex: 1;
-                    padding: 0.65rem;
-                    border-radius: 0.75rem;
-                    border: 1px solid #D1D5DB;
-                    background: white;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-
-                .btn-primary {
-                    flex: 2;
-                    padding: 0.65rem;
-                    border-radius: 0.75rem;
-                    border: none;
-                    background: linear-gradient(135deg, #1E40AF, #2563EB);
-                    color: white;
-                    font-weight: 700;
-                    cursor: pointer;
-                }
-
                 @media (min-width: 1024px) {
                     .card-container {
                         flex-direction: row;
@@ -593,23 +479,11 @@
 
                                                         <div class="form-group">
                                                             <label class="label">Vai trò</label>
-
-                                                            <button type="button" onclick="openRoleModal()" style="border:none;
-                                                 background:none; color:var(--primary); 
-                                                 font-weight:700; font-size:0.75rem; 
-                                                 cursor:pointer;display:flex; align-items:center;">
-                                                                <span class="material-icons"
-                                                                    style="font-size:1rem; margin-right:2px;">
-                                                                    add_circle
-                                                                </span>
-                                                                THÊM VAI TRÒ
-                                                            </button>
-
                                                             <div class="input-wrapper">
-                                                                <div class="icon-box"><span
-                                                                        class="material-icons">badge</span></div>
-                                                                <select id="roleSelect" name="roleId"
-                                                                    class="input-field">
+                                                                <div class="icon-box">
+                                                                    <span class="material-icons">badge</span>
+                                                                </div>
+                                                                <select name="roleId" class="input-field">
                                                                     <c:forEach items="${roleList}" var="r">
                                                                         <option value="${r.id}" ${user.role.id==r.id
                                                                             ? 'selected' : '' }>
@@ -642,37 +516,6 @@
                 </main>
             </div>
 
-
-            <div id="roleModal" class="role-modal-overlay">
-                <div class="role-modal">
-
-                    <div class="role-modal-header">
-                        <div class="role-modal-icon">
-                            <span class="material-icons">badge</span>
-                        </div>
-                        <h3>Thêm vai trò mới</h3>
-                    </div>
-
-                    <p class="role-modal-desc">
-                        Vai trò này sẽ xuất hiện ngay trong danh sách chọn.
-                    </p>
-
-                    <div class="role-input-wrapper">
-                        <span class="material-icons">edit</span>
-                        <input type="text" id="modalRoleName" class="role-input" placeholder="Ví dụ: Quản lý kho">
-                    </div>
-
-                    <div class="role-modal-actions">
-                        <button type="button" onclick="closeRoleModal()" class="btn-outline">
-                            Đóng
-                        </button>
-                        <button type="button" onclick="submitQuickRole()" class="btn-primary">
-                            Xác nhận lưu
-                        </button>
-                    </div>
-
-                </div>
-            </div>
             <script>
                 setTimeout(() => {
                     const errorBox = document.getElementById('error-box');
@@ -682,51 +525,6 @@
                         setTimeout(() => errorBox.remove(), 500);
                     }
                 }, 4000);
-
-                function openRoleModal() {
-                    document.getElementById('roleModal').style.display = 'flex';
-                    document.getElementById('modalRoleName').focus();
-                }
-
-                function closeRoleModal() {
-                    document.getElementById('roleModal').style.display = 'none';
-                    document.getElementById('modalRoleName').value = '';
-                }
-
-                function submitQuickRole() {
-                    const name = document.getElementById('modalRoleName').value.trim();
-                    if (!name) {
-                        alert("Vui lòng nhập tên vai trò!");
-                        return;
-                    }
-
-                    const params = new URLSearchParams();
-                    params.append('name', name);
-
-                    fetch('${pageContext.request.contextPath}/admin/roles/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                const select = document.getElementById('roleSelect');
-                                const option = new Option(data.roleName, data.roleId);
-                                select.add(option);
-                                select.value = data.roleId;
-                                closeRoleModal();
-                            } else {
-                                alert(data.message || 'Không thể thêm vai trò');
-                            }
-                        })
-                        .catch(() => alert("Lỗi kết nối server"));
-                }
-
-                window.onclick = e => {
-                    const modal = document.getElementById('roleModal');
-                    if (e.target === modal) closeRoleModal();
-                };
             </script>
         </body>
 
