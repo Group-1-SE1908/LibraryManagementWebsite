@@ -17,9 +17,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
-        "/history" })
+@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
+    "/history"})
 public class BorrowController extends HttpServlet {
+
     private BorrowService borrowService;
     private BorrowDAO borrowDAO;
     private BookDAO bookDAO;
@@ -47,16 +48,16 @@ public class BorrowController extends HttpServlet {
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
                     String barcode = req.getParameter("barcode"); // Lấy barcode từ form
-    
+
                     if (barcode == null || barcode.trim().isEmpty()) {
-                            req.getSession().setAttribute("flash", "Vui lòng nhập Barcode để duyệt sách");
-                            resp.sendRedirect(req.getContextPath() + "/borrow");
-                            return;
-                        }
-    
-    borrowService.approve(id, barcode);
-    resp.sendRedirect(req.getContextPath() + "/borrow");
-    break;
+                        req.getSession().setAttribute("flash", "Vui lòng nhập Barcode để duyệt sách");
+                        resp.sendRedirect(req.getContextPath() + "/borrow");
+                        return;
+                    }
+
+                    borrowService.approve(id, barcode);
+                    resp.sendRedirect(req.getContextPath() + "/borrow");
+                    break;
                 case "/borrow/reject":
                     requireStaff(req);
                     long rejectId = Long.parseLong(req.getParameter("id"));
@@ -74,7 +75,6 @@ public class BorrowController extends HttpServlet {
                     handleHistory(req, resp);
                     break;
 
-                
                 case "/borrow/overdue":
                     requireStaff(req);
                     List<BorrowRecord> overdueRecords = borrowDAO.listOverdue();
@@ -119,34 +119,36 @@ public class BorrowController extends HttpServlet {
             throw new ServletException(ex);
         }
     }
+
+    // Cập nhật hàm handleList trong BorrowController.java
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-    User currentUser = (User) req.getSession().getAttribute("currentUser");
-    boolean isStaff = isStaff(currentUser);
-    
-    List<BorrowRecord> records;
-    if (isStaff) {
-       
-        String filter = req.getParameter("filter");
-        if ("OVERDUE".equals(filter)) {
-            records = borrowDAO.listOverdue(); 
-            req.setAttribute("pageTitle", "Danh sách sách quá hạn");
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        boolean isStaff = isStaff(currentUser);
+
+        List<BorrowRecord> records;
+        String filter = req.getParameter("filter"); // Lấy tham số từ URL
+
+        if (isStaff) {
+            if ("OVERDUE".equals(filter)) {
+                records = borrowDAO.listOverdue();
+                req.setAttribute("pageTitle", "⏰ Danh sách sách quá hạn");
+            } else if ("ONLINE".equals(filter)) {
+                // GỌI HÀM MỚI TẠO ĐỂ LỌC RIÊNG ONLINE
+                records = borrowDAO.listByMethod("ONLINE");
+                req.setAttribute("pageTitle", "🌐 Danh sách yêu cầu Online");
+            } else {
+                records = borrowDAO.listAll();
+                req.setAttribute("pageTitle", "🛠️ Quản lý mượn trả toàn hệ thống");
+            }
         } else {
-            records = borrowDAO.listAll(); 
-            req.setAttribute("pageTitle", "Quản lý mượn trả toàn hệ thống");
+            records = borrowDAO.listByUser(currentUser.getId());
+            req.setAttribute("pageTitle", "📖 Lịch sử mượn sách của tôi");
         }
-    } else {
-        
-        records = borrowDAO.listByUser(currentUser.getId());
-        req.setAttribute("pageTitle", "Lịch sử mượn sách của tôi");
+
+        req.setAttribute("records", records);
+        req.setAttribute("isStaff", isStaff);
+        req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
     }
-
-    req.setAttribute("records", records);
-    req.setAttribute("isStaff", isStaff);
-    req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
-}
-
-  
-
 
     private void handleRequestForm(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         List<Book> books = bookDAO.search(req.getParameter("q"));
@@ -158,11 +160,13 @@ public class BorrowController extends HttpServlet {
     private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         String bookIdStr = req.getParameter("bookId");
-        if (bookIdStr == null || bookIdStr.isBlank())
+        if (bookIdStr == null || bookIdStr.isBlank()) {
             throw new IllegalArgumentException("Vui lòng chọn sách");
+        }
 
         long bookId = Long.parseLong(bookIdStr);
-        borrowService.requestBorrow(currentUser.getId(), bookId);
+
+        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE");
 
         req.getSession().setAttribute("flash", "Gửi yêu cầu mượn thành công (chờ thủ thư duyệt)");
         resp.sendRedirect(req.getContextPath() + "/borrow");
@@ -195,8 +199,9 @@ public class BorrowController extends HttpServlet {
     }
 
     private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null)
+        if (u == null || u.getRole() == null || u.getRole().getName() == null) {
             return false;
+        }
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
     }
