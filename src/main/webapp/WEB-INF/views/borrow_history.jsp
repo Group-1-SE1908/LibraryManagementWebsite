@@ -95,104 +95,157 @@
 
                     .history-stack {
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
                         gap: 20px;
+                    }
+
+                    @media (max-width: 1100px) {
+                        .history-stack {
+                            grid-template-columns: repeat(2, minmax(0, 1fr));
+                        }
+                    }
+
+                    @media (max-width: 760px) {
+                        .history-stack {
+                            grid-template-columns: 1fr;
+                        }
                     }
 
                     .history-card {
                         background: white;
                         border: 1px solid var(--history-card-border);
-                        border-radius: 18px;
-                        padding: 20px;
+                        border-radius: 24px;
+                        overflow: hidden;
                         box-shadow: var(--shadow-sm);
                         display: flex;
                         flex-direction: column;
-                        gap: 18px;
                     }
 
-                    .history-card__header {
+                    .history-card__banner {
+                        padding: 24px;
+                        background: var(--history-gradient);
+                        color: white;
                         display: flex;
                         justify-content: space-between;
-                        gap: 12px;
                         align-items: flex-start;
+                        gap: 20px;
                     }
 
-                    .history-card__header h2 {
-                        font-size: 1.25rem;
-                        margin-bottom: 6px;
+                    .history-card__poster {
+                        position: relative;
+                        height: 220px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: hidden;
+                        font-size: 48px;
+                        color: white;
+                    }
+
+                    .history-card__poster img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                    }
+
+                    .history-card__poster-placeholder {
+                        font-size: 48px;
+                        font-weight: 600;
+                        text-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+                    }
+
+                    .history-card__banner h2 {
+                        font-size: 1.35rem;
+                        margin: 6px 0 4px;
+                        line-height: 1.2;
+                    }
+
+                    .history-card__banner .muted {
+                        color: rgba(255, 255, 255, 0.9);
                     }
 
                     .history-card__eyebrow {
-                        font-size: 0.8rem;
-                        letter-spacing: 0.2em;
+                        font-size: 0.75rem;
+                        letter-spacing: 0.25em;
                         text-transform: uppercase;
-                        color: var(--text-muted);
+                        color: rgba(255, 255, 255, 0.8);
                     }
 
                     .status-pill {
-                        font-size: 0.8rem;
-                        padding: 6px 12px;
+                        font-size: 0.75rem;
+                        padding: 6px 16px;
                         border-radius: 999px;
-                        border: 1px solid transparent;
-                        font-weight: 600;
+                        font-weight: 700;
                         text-transform: uppercase;
+                        border: 1px solid rgba(255, 255, 255, 0.4);
+                        background: rgba(255, 255, 255, 0.2);
+                        color: white;
+                        box-shadow: 0 8px 18px rgba(12, 108, 208, 0.3);
+                        letter-spacing: 0.12em;
                     }
 
                     .status-borrowed {
-                        color: #0f766e;
-                        border-color: #86efac;
-                        background: rgba(16, 185, 129, 0.12);
+                        border-color: rgba(16, 185, 129, 0.8);
+                        background: rgba(16, 185, 129, 0.2);
                     }
 
                     .status-returned {
-                        color: #1d4ed8;
-                        border-color: #bfdbfe;
-                        background: rgba(59, 130, 246, 0.12);
+                        border-color: rgba(59, 130, 246, 0.8);
+                        background: rgba(59, 130, 246, 0.2);
                     }
 
                     .status-pending {
-                        color: #d97706;
-                        border-color: #fde68a;
-                        background: rgba(249, 115, 22, 0.12);
+                        border-color: rgba(249, 115, 22, 0.8);
+                        background: rgba(249, 115, 22, 0.2);
                     }
 
                     .status-muted {
-                        color: #4b5563;
-                        border-color: #e5e7eb;
-                        background: rgba(15, 23, 42, 0.05);
+                        border-color: rgba(229, 231, 235, 0.8);
+                        background: rgba(229, 231, 235, 0.3);
                     }
 
-                    .history-card__metrics {
+                    .history-card__body {
+                        padding: 24px;
+                        background: #f6f8ff;
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                        gap: 12px;
+                        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                        gap: 16px;
                     }
 
-                    .history-card__metrics div {
-                        background: var(--light-bg);
-                        border-radius: 12px;
-                        padding: 12px 14px;
+                    .history-card__field {
+                        background: white;
+                        border-radius: 16px;
+                        padding: 14px 16px;
                         border: 1px solid var(--border-color);
+                        min-height: 72px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
                     }
 
-                    .history-card__metrics span {
-                        display: block;
+                    .history-card__field span {
                         font-size: 0.8rem;
                         color: var(--text-muted);
+                        letter-spacing: 0.05em;
+                        text-transform: uppercase;
                     }
 
-                    .history-card__metrics strong {
-                        display: block;
+                    .history-card__field strong {
                         font-size: 1rem;
-                        margin-top: 6px;
+                        color: #0f172a;
                     }
 
                     .history-card__actions {
+                        padding: 18px 24px;
+                        border-top: 1px solid #e3e8f2;
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
                         gap: 12px;
                         flex-wrap: wrap;
+                        background: white;
                     }
 
                     .history-card__actions .muted {
@@ -272,21 +325,33 @@
                                         </c:choose>
                                     </c:set>
                                     <article class="history-card">
-                                        <header class="history-card__header">
+                                        <div class="history-card__banner">
                                             <div>
                                                 <p class="history-card__eyebrow">Phiếu #${r.id}</p>
                                                 <h2>${r.book.title}</h2>
                                                 <p class="muted">${r.book.author}</p>
                                             </div>
                                             <span class="status-pill ${statusClass}">${r.status}</span>
-                                        </header>
+                                        </div>
 
-                                        <div class="history-card__metrics">
-                                            <div>
+                                        <div class="history-card__poster">
+                                            <c:choose>
+                                                <c:when test="${not empty r.book.image}">
+                                                    <img src="${pageContext.request.contextPath}/${r.book.image}"
+                                                         alt="${r.book.title}" />
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="history-card__poster-placeholder">📖</div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+
+                                        <div class="history-card__body">
+                                            <div class="history-card__field">
                                                 <span>Ngày mượn</span>
                                                 <strong>${r.borrowDate}</strong>
                                             </div>
-                                            <div>
+                                            <div class="history-card__field">
                                                 <span>Ngày trả</span>
                                                 <strong>
                                                     <c:choose>
@@ -296,7 +361,7 @@
                                                     </c:choose>
                                                 </strong>
                                             </div>
-                                            <div>
+                                            <div class="history-card__field">
                                                 <span>ISBN</span>
                                                 <strong>
                                                     <c:choose>
@@ -305,18 +370,15 @@
                                                     </c:choose>
                                                 </strong>
                                             </div>
-                                        </div>
-
-                                        <div class="history-card__metrics">
-                                            <div>
+                                            <div class="history-card__field">
                                                 <span>Người mượn</span>
                                                 <strong>${r.user.fullName}</strong>
                                             </div>
-                                            <div>
+                                            <div class="history-card__field">
                                                 <span>Trạng thái mượn</span>
                                                 <strong>${r.status}</strong>
                                             </div>
-                                            <div>
+                                            <div class="history-card__field">
                                                 <span>Phạt</span>
                                                 <strong>
                                                     <c:choose>
@@ -337,7 +399,6 @@
                                                     href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả
                                                     sách & Thanh toán</a>
                                             </c:if>
-                                            <span class="muted">ID sách ${r.book.id}</span>
                                         </div>
                                     </article>
                                 </c:forEach>

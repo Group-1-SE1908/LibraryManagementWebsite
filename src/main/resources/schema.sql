@@ -89,6 +89,7 @@ CREATE TABLE borrow_records (
     return_date DATE NULL,  -- Ngày thực tế trả
     status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED', -- REQUESTED, APPROVED, BORROWED, RETURNED, REJECTED, OVERDUE
     fine_amount DECIMAL(10,2) DEFAULT 0, -- Tiền phạt
+    borrow_method VARCHAR(20) NULL, -- Ghi lại hình thức mượn
     created_at DATETIME DEFAULT GETDATE(),
     
     CONSTRAINT FK_Borrow_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
@@ -202,9 +203,9 @@ WHERE barcode IS NULL;
 
 
 --Thêm copy id vào Borrow
-ALTER TABLE borrow
+ALTER TABLE borrow_records
 ADD copy_id INT NULL;
-ALTER TABLE borrow
+ALTER TABLE borrow_records
 ADD CONSTRAINT FK_Borrow_Copy
 FOREIGN KEY (copy_id) REFERENCES BookCopy(copy_id);
 
