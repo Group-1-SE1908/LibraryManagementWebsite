@@ -89,6 +89,7 @@ CREATE TABLE borrow_records (
     return_date DATE NULL,  -- Ngày thực tế trả
     status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED', -- REQUESTED, APPROVED, BORROWED, RETURNED, REJECTED, OVERDUE
     fine_amount DECIMAL(10,2) DEFAULT 0, -- Tiền phạt
+    borrow_method VARCHAR(20) NULL, -- Ghi lại hình thức mượn
     created_at DATETIME DEFAULT GETDATE(),
     
     CONSTRAINT FK_Borrow_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
@@ -181,5 +182,80 @@ GO
 INSERT INTO borrow_records (user_id, book_id, borrow_date, due_date, status) VALUES
 (3, 1, GETDATE(), DATEADD(DAY, 14, GETDATE()), 'BORROWED'); -- Đang mượn
 GO
+
+--Tạo bảng book copy
+CREATE TABLE BookCopy (
+    copy_id INT IDENTITY(1,1) PRIMARY KEY,
+    book_id INT NOT NULL,
+    barcode VARCHAR(30) UNIQUE,
+    status VARCHAR(20) DEFAULT 'AVAILABLE',
+    condition VARCHAR(20) DEFAULT 'NEW',
+    created_at DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_BookCopy_Book
+        FOREIGN KEY (book_id) REFERENCES book(book_id)
+);
+
+--Barcode tự động generate theo book_id
+UPDATE BookCopy
+SET barcode = 'LIB-' + RIGHT('000000' + CAST(copy_id AS VARCHAR), 6)
+WHERE barcode IS NULL;
+
+
+--Thêm copy id vào Borrow
+ALTER TABLE borrow_records
+ADD copy_id INT NULL;
+ALTER TABLE borrow_records
+ADD CONSTRAINT FK_Borrow_Copy
+FOREIGN KEY (copy_id) REFERENCES BookCopy(copy_id);
+
+--Tự động tạo trigger khi thêm sách
+CREATE TRIGGER trg_AfterInsert_Book
+ON book
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @book_id INT;
+    DECLARE @quantity INT;
+    DECLARE @new_copy_id INT;
+    DECLARE @i INT;
+
+    -- xử lý từng dòng insert
+    DECLARE book_cursor CURSOR FOR
+    SELECT book_id, quantity
+    FROM inserted;
+
+    OPEN book_cursor;
+    FETCH NEXT FROM book_cursor INTO @book_id, @quantity;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @i = 1;
+
+        WHILE @i <= @quantity
+        BEGIN
+            INSERT INTO BookCopy (book_id)
+            VALUES (@book_id);
+
+            SET @new_copy_id = SCOPE_IDENTITY();
+
+            UPDATE BookCopy
+            SET barcode = 'LIB-' + RIGHT('000000' + CAST(@new_copy_id AS VARCHAR), 6)
+            WHERE copy_id = @new_copy_id;
+
+            SET @i = @i + 1;
+        END
+
+        FETCH NEXT FROM book_cursor INTO @book_id, @quantity;
+    END
+
+    CLOSE book_cursor;
+    DEALLOCATE book_cursor;
+END;
+
+ALTER TABLE [user]
+ADD avatar VARCHAR(255);
 
 PRINT '--- CÀI ĐẶT DATABASE LIBRARYDB HOÀN TẤT VÀ THÀNH CÔNG ---';

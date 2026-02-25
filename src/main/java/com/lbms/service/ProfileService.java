@@ -26,7 +26,7 @@ public class ProfileService {
             String phone,
             String address) throws Exception {
 
-        String sql = "UPDATE [User] SET name = ?, phone = ?, address = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ?, phone = ?, address = ? WHERE user_id = ?";
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
 

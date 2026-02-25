@@ -130,8 +130,9 @@
 
                     <main class="checkout-page">
                         <div class="checkout-header">
-                            <h1>Thanh toán / Checkout</h1>
-                            <p>Kiểm tra lại danh sách sách bạn muốn mượn trước khi xác nhận.</p>
+                            <h1>Thanh toán phí phạt & Trả sách</h1>
+                            <p>Vui lòng kiểm tra thông tin phiếu mượn và số tiền phạt (nếu có) trước khi xác nhận trả
+                                sách.</p>
                         </div>
 
                         <c:if test="${not empty flash}">
@@ -139,46 +140,43 @@
                         </c:if>
 
                         <div class="checkout-items">
-                            <h2>Sách trong đơn hàng</h2>
-                            <c:forEach items="${cart.items}" var="item">
-                                <div class="item-row">
-                                    <div class="item-info">
-                                        <h3>${item.book.title}</h3>
-                                        <p class="author">Tác giả: ${item.book.author}</p>
-                                        <p class="muted">Số lượng: ${item.quantity}</p>
-                                    </div>
-                                    <div class="item-price">
-                                        <fmt:formatNumber value="${item.subtotal}" pattern="#,##0" /> ₫
-                                    </div>
+                            <h2>Thông tin phiếu mượn #${borrowRecord.id}</h2>
+                            <div class="item-row">
+                                <div class="item-info">
+                                    <h3>${borrowRecord.book.title}</h3>
+                                    <p class="author">Tác giả: ${borrowRecord.book.author}</p>
+                                    <p class="muted">Ngày mượn: ${borrowRecord.borrowDate}</p>
+                                    <p class="muted">Hạn trả: ${borrowRecord.dueDate}</p>
                                 </div>
-                            </c:forEach>
+                                <div class="item-price">
+                                    Phí phạt dự kiến:
+                                    <fmt:formatNumber value="${fineAmount}" pattern="#,##0" /> ₫
+                                </div>
+                            </div>
                         </div>
 
                         <aside class="checkout-summary">
-                            <h2>Tóm tắt</h2>
+                            <h2>Tóm tắt thanh toán</h2>
                             <div class="summary-row">
-                                <span>Số loại sách</span>
-                                <strong>${itemCount}</strong>
-                            </div>
-                            <div class="summary-row">
-                                <span>Tổng số lượng</span>
-                                <strong>${totalQuantity}</strong>
+                                <span>Phiếu mượn</span>
+                                <strong>#${borrowRecord.id}</strong>
                             </div>
                             <div class="summary-total">
-                                <span>Tổng tiền</span>
+                                <span>Tổng tiền phạt</span>
                                 <span>
-                                    <fmt:formatNumber value="${cart.totalAmount != null ? cart.totalAmount : 0}"
-                                        pattern="#,##0" /> ₫
+                                    <fmt:formatNumber value="${fineAmount != null ? fineAmount : 0}" pattern="#,##0" />
+                                    ₫
                                 </span>
                             </div>
 
                             <form action="${pageContext.request.contextPath}/checkout/process" method="post">
-                                <button type="submit" class="btn primary btn-confirm">Xác nhận thanh toán
-                                    (Confirm)</button>
+                                <input type="hidden" name="borrowId" value="${borrowRecord.id}" />
+                                <button type="submit" class="btn primary btn-confirm">Xác nhận trả sách & Thanh
+                                    toán</button>
                             </form>
                             <div style="margin-top: 15px; text-align: center;">
-                                <a href="${pageContext.request.contextPath}/cart"
-                                    style="color: #666; text-decoration: none;">Quay lại giỏ hàng</a>
+                                <a href="${pageContext.request.contextPath}/history"
+                                    style="color: #666; text-decoration: none;">Hủy bỏ & Quay lại</a>
                             </div>
                         </aside>
                     </main>

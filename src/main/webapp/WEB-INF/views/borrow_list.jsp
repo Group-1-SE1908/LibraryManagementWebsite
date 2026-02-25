@@ -1,102 +1,238 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <title>Phiếu mượn - LBMS</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;max-width:1100px;margin:30px auto;padding:0 16px;}
-    table{width:100%;border-collapse:collapse;}
-    th,td{border-bottom:1px solid #eee;padding:10px;text-align:left;vertical-align:top;}
-    .top{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;}
-    a.btn, button{display:inline-block;padding:10px 12px;border-radius:8px;border:1px solid #ddd;text-decoration:none;color:#111;background:#fff;}
-    .danger{border-color:#ffcccc;color:#b00020;}
-    .ok{border-color:#ccffcc;color:#0b6b0b;}
-    .flash{margin:10px 0;padding:10px;border:1px solid #ddd;border-radius:8px;background:#fafafa;}
-    .muted{color:#666;}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #ddd;font-size:12px;}
-  </style>
-</head>
-<body>
-  <c:set var="roleName" value="${sessionScope.currentUser.role.name}" />
-  <c:set var="isAdmin" value="${roleName == 'ADMIN'}" />
-  <c:set var="isStaff" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quản lý Mượn Trả | LBMS Dashboard</title>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
+        <style>
+            :root {
+                --primary: #0b57d0;
+                --success: #10b981;
+                --danger: #ef4444;
+                --warning: #f59e0b;
+                --bg: #f1f5f9;
+                --text-main: #1e293b;
+            }
 
-  <div class="top">
-    <div>
-      <h2>LBMS - Quản lý mượn/trả</h2>
-      <div>
-        <a class="btn" href="${pageContext.request.contextPath}/books">Sách</a>
-        <a class="btn" href="${pageContext.request.contextPath}/reservations">Đặt trước</a>
-        <a class="btn" href="${pageContext.request.contextPath}/profile">Hồ sơ</a>
-        <c:if test="${isStaff}">
-          <a class="btn" href="${pageContext.request.contextPath}/shipping">Giao hàng</a>
-        </c:if>
-        <c:if test="${isAdmin}">
-          <a class="btn" href="${pageContext.request.contextPath}/admin/users">Quản lý user</a>
-        </c:if>
-        <a class="btn" href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
-      </div>
-    </div>
-    <div>
-      <a class="btn" href="${pageContext.request.contextPath}/borrow/request">Yêu cầu mượn</a>
-    </div>
-  </div>
+            body {
+                background-color: var(--bg);
+                font-family: 'Inter', sans-serif;
+                color: var(--text-main);
+            }
+            .dashboard-container {
+                max-width: 1240px;
+                margin: 0 auto;
+                padding: 30px 15px;
+            }
 
-  <c:if test="${not empty flash}">
-    <div class="flash">${flash}</div>
-  </c:if>
+            .nav-tabs {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 25px;
+                border-bottom: 1px solid #e2e8f0;
+                padding-bottom: 15px;
+            }
+            .tab-link {
+                padding: 10px 20px;
+                border-radius: 8px;
+                text-decoration: none;
+                color: #64748b;
+                font-weight: 600;
+                background: white;
+                border: 1px solid #e2e8f0;
+            }
+            .tab-link.active {
+                background: var(--primary);
+                color: white;
+                border-color: var(--primary);
+            }
 
-  <table>
-    <thead>
-    <tr>
-      <th>ID</th>
-      <th>User</th>
-      <th>Sách</th>
-      <th>Ngày mượn</th>
-      <th>Hạn trả</th>
-      <th>Ngày trả</th>
-      <th>Trạng thái</th>
-      <th>Phạt</th>
-      <th>Thao tác</th>
-    </tr>
-    </thead>
-    <tbody>
-    <c:forEach items="${records}" var="r">
-      <tr>
-        <td>${r.id}</td>
-        <td>
-          <div><strong>${r.user.email}</strong></div>
-          <div class="muted">${r.user.fullName}</div>
-        </td>
-        <td>
-          <div><strong>${r.book.title}</strong></div>
-          <div class="muted">${r.book.author} | ${r.book.isbn}</div>
-        </td>
-        <td>${r.borrowDate}</td>
-        <td>${r.dueDate}</td>
-        <td>${r.returnDate}</td>
-        <td><span class="tag">${r.status}</span></td>
-        <td>${r.fineAmount}</td>
-        <td>
-          <c:if test="${isStaff}">
-            <c:if test="${r.status == 'REQUESTED'}">
-              <a class="btn ok" href="${pageContext.request.contextPath}/borrow/approve?id=${r.id}">Duyệt</a>
-              <a class="btn danger" href="${pageContext.request.contextPath}/borrow/reject?id=${r.id}">Từ chối</a>
+            .table-card {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                overflow: hidden;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                background: #f8fafc;
+                padding: 18px;
+                text-align: left;
+                font-size: 12px;
+                color: #64748b;
+                text-transform: uppercase;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            td {
+                padding: 18px;
+                border-bottom: 1px solid #f1f5f9;
+                vertical-align: middle;
+            }
+
+            .badge {
+                padding: 6px 12px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                display: inline-block;
+                border: 1px solid transparent;
+            }
+            .tag-requested {
+                background: #fff7ed;
+                color: #c2410c;
+            }
+            .tag-borrowed {
+                background: #f0fdf4;
+                color: #15803d;
+            }
+
+            /* Style cho Borrow Method */
+            .method-online {
+                background: #e0f2fe;
+                color: #0369a1;
+                border-color: #bae6fd;
+            }
+            .method-person {
+                background: #f1f5f9;
+                color: #475569;
+                border-color: #e2e8f0;
+            }
+
+            .barcode-input {
+                width: 140px;
+                padding: 8px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                font-size: 13px;
+            }
+            .btn-action {
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+            }
+            .btn-approve {
+                background: var(--success);
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <jsp:include page="header.jsp" />
+
+        <c:set var="isStaff" value="${sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}" />
+
+        <div class="dashboard-container">
+            <div class="page-title" style="margin-bottom: 20px;">
+                <h1>${isStaff ? '🛠️ Quản lý Mượn Trả Toàn Hệ Thống' : '📖 Sách của tôi'}</h1>
+            </div>
+
+            <div class="nav-tabs">
+                <a href="borrow" 
+                   class="tab-link ${empty param.filter ? 'active' : ''}">
+                    📥 Tất cả
+                </a>
+
+                <a href="borrow?filter=ONLINE" 
+                   class="tab-link ${param.filter == 'ONLINE' ? 'active' : ''}">
+                    🌐 Yêu cầu Online
+                </a>
+
+                <a href="borrow?filter=OVERDUE" 
+                   class="tab-link tab-link-danger ${param.filter == 'OVERDUE' ? 'active' : ''}">
+                    ⏰ Quá hạn
+                </a>
+            </div>
+
+            <div class="page-title">
+                <h1>${pageTitle}</h1>
+            </div>
+
+            <c:if test="${not empty flash}">
+                <div style="padding:15px; background:#dcfce7; color:#166534; border-radius:10px; margin-bottom:20px;">${flash}</div>
             </c:if>
-            <c:if test="${r.status == 'BORROWED'}">
-              <a class="btn" href="${pageContext.request.contextPath}/borrow/return?id=${r.id}">Đánh dấu trả</a>
-              <a class="btn" href="${pageContext.request.contextPath}/shipping/new?borrowId=${r.id}">Tạo giao hàng</a>
-            </c:if>
-          </c:if>
-          <c:if test="${not isStaff}">
-            <span class="muted">-</span>
-          </c:if>
-        </td>
-      </tr>
-    </c:forEach>
-    </tbody>
-  </table>
-</body>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <c:if test="${isStaff}"><th>Người mượn</th></c:if>
+                                <th>Thông tin sách</th>
+                                <th>Hình thức</th>
+                                <th>Thời hạn</th>
+                                <th>Trạng thái</th>
+                            <c:if test="${isStaff}"><th>Thao tác</th></c:if>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <c:forEach items="${records}" var="r">
+                            <tr>
+                                <td><strong>#${r.id}</strong></td>
+                                <c:if test="${isStaff}">
+                                    <td>
+                                        <div style="font-weight:600">${r.user.fullName}</div>
+                                        <div style="font-size:11px; color:#64748b">${r.user.email}</div>
+                                    </td>
+                                </c:if>
+                                <td>
+                                    <div style="font-weight:600">${r.book.title}</div>
+                                    <div style="font-size:11px; color:#64748b">ISBN: ${r.book.isbn}</div>
+                                </td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${r.borrowMethod == 'ONLINE'}">
+                                            <span class="badge method-online">🌐 Online</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge method-person">📍 Tại quầy</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
+                                    <div style="font-size:12px">Hạn: ${not empty r.dueDate ? r.dueDate : '-'}</div>
+                                </td>
+                                <td>
+                                    <span class="badge tag-${fn:toLowerCase(r.status)}">${r.status}</span>
+                                </td>
+                                <c:if test="${isStaff}">
+                                    <td>
+                                        <c:if test="${r.status == 'REQUESTED'}">
+                                            <div style="display:flex; gap:5px;">
+                                                <input type="text" id="bc_${r.id}" class="barcode-input" placeholder="Quét mã vạch...">
+                                                <button onclick="handleApprove(${r.id})" class="btn-action btn-approve">Duyệt</button>
+                                            </div>
+                                        </c:if>
+                                    </td>
+                                </c:if>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            function handleApprove(id) {
+                const barcode = document.getElementById('bc_' + id).value;
+                if (!barcode || barcode.trim() === "") {
+                    alert("Bạn phải nhập Barcode của cuốn sách vật lý để duyệt!");
+                    return;
+                }
+                window.location.href = "${pageContext.request.contextPath}/borrow/approve?id=" + id + "&barcode=" + encodeURIComponent(barcode);
+            }
+        </script>
+    </body>
 </html>

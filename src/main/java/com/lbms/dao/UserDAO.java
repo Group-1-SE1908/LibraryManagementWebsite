@@ -1,17 +1,23 @@
 package com.lbms.dao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;   
+import java.util.ArrayList;
+import java.util.List;
+
 import com.lbms.model.Role;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class UserDAO {
 
     public boolean updateUser(User user) throws SQLException {
 
-        String sql = "UPDATE [User] SET name = ?, email = ?, password = ?, role_id = ?, phone = ?, address = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ?, email = ?, password = ?, role_id = ?, phone = ?, address = ? WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
             ps.setString(2, user.getEmail());
@@ -27,7 +33,7 @@ public class UserDAO {
     }
 
     public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, "
+        String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
                 + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
                 + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.email = ?";
@@ -43,7 +49,7 @@ public class UserDAO {
     }
 
     public User findById(long id) throws SQLException {
-        String sql = "SELECT u.user_id, u.email, u.password, u.name, u.status, "
+        String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
                 + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
                 + "FROM [User] u "
                 + "JOIN Role r ON u.role_id = r.role_id "
@@ -60,7 +66,7 @@ public class UserDAO {
     }
 
     public void updateFullName(long userId, String fullName) throws SQLException {
-        String sql = "UPDATE [User] SET name = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ? WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, fullName);
             ps.setLong(2, userId);
@@ -110,7 +116,7 @@ public class UserDAO {
     }
 
     public boolean createUserAccount(User user) throws SQLException {
-        String sql = "INSERT INTO [User] (name, email, password, role_id, status, phone, address, created_at) "
+        String sql = "INSERT INTO [User] (full_name, email, password, role_id, status, phone, address, created_at) "
                 + "VALUES (?, ?, ?, ?, 'ACTIVE', ?, ?, GETDATE())";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
@@ -166,9 +172,9 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
         List<User> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        String sql = "SELECT u.user_id, u.name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
                 + "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id "
-                + "WHERE u.name LIKE ? OR u.email LIKE ? "
+                + "WHERE u.full_name LIKE ? OR u.email LIKE ? "
                 + "ORDER BY u.user_id ASC "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
@@ -193,7 +199,7 @@ public class UserDAO {
     }
 
     public int getTotalUserCount(String keyword) {
-        String sql = "SELECT COUNT(*) FROM [User] WHERE name LIKE ? OR email LIKE ?";
+        String sql = "SELECT COUNT(*) FROM [User] WHERE full_name LIKE ? OR email LIKE ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
 
             String searchPattern = "%" + keyword + "%";
@@ -216,7 +222,7 @@ public class UserDAO {
         u.setId(rs.getLong("user_id"));
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password"));
-        u.setFullName(rs.getString("name"));
+        u.setFullName(rs.getString("full_name"));
         u.setPhone(rs.getString("phone"));
         u.setAvatar(rs.getString("avatar"));
         u.setAddress(rs.getString("address"));
@@ -232,7 +238,7 @@ public class UserDAO {
 
     public boolean existsByUsernameExcept(String username, int userId) throws Exception {
 
-        String sql = "SELECT COUNT(*) FROM [user] WHERE username = ? AND user_id <> ?";
+        String sql = "SELECT COUNT(*) FROM [User] WHERE full_name = ? AND user_id <> ?";
 
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -253,7 +259,7 @@ public class UserDAO {
             String phone,
             String address) throws Exception {
 
-        String sql = "UPDATE [User] SET name = ?, phone = ?, address = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ?, phone = ?, address = ? WHERE user_id = ?";
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
 

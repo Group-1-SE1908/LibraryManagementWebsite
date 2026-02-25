@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -32,7 +31,7 @@
             <div class="hero-actions">
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục khám phá</a>
                 <a href="${pageContext.request.contextPath}/borrow" class="btn secondary">Tạo yêu cầu mượn</a>
-                <a href="${pageContext.request.contextPath}/checkout" class="btn primary">Thanh toán (Checkout)</a>
+                <a href="${pageContext.request.contextPath}/borrow/request" class="btn primary">Mượn sách</a>
             </div>
         </div>
         <div class="hero-summary">
@@ -45,14 +44,6 @@
                 <p class="label">Tổng số lượng</p>
                 <p class="value">${totalQuantity}</p>
                 <small>cuốn bạn vừa thêm</small>
-            </div>
-            <div class="hero-card">
-                <p class="label">Tạm tính</p>
-                <p class="value">
-                    <fmt:formatNumber value="${cart.totalAmount != null ? cart.totalAmount : 0}" pattern="#,##0" />
-                    <span class="currency">₫</span>
-                </p>
-                <small>chưa bao gồm bất kỳ phí nào.</small>
             </div>
         </div>
         </section>
@@ -89,10 +80,6 @@
                                 <p class="cart-item-author">Tác giả ${item.book.author}</p>
                             </div>
                             <div class="cart-item-meta">
-                                <div class="cart-price">
-                                    <fmt:formatNumber value="${item.book.price}" pattern="#,##0" />
-                                    <small>₫ / cuốn</small>
-                                </div>
                                 <span class="availability ${item.book.availability ? 'in-stock' : 'out-of-stock'}">
                                     ${item.book.availability ? 'Còn hàng' : 'Hết hàng'}
                                 </span>
@@ -108,10 +95,6 @@
                                     <button type="submit" class="btn danger">Xóa</button>
                                 </form>
                             </div>
-                            <div class="cart-item-subtotal">
-                                <span>Tạm tính</span>
-                                <strong><fmt:formatNumber value="${item.subtotal}" pattern="#,##0" /> ₫</strong>
-                            </div>
                         </div>
                     </article>
                 </c:forEach>
@@ -126,12 +109,8 @@
                     <span>Tổng số lượng</span>
                     <strong>${totalQuantity}</strong>
                 </div>
-                <div class="summary-row total-row">
-                    <span>Tổng tiền</span>
-                    <strong><fmt:formatNumber value="${cart.totalAmount != null ? cart.totalAmount : 0}" pattern="#,##0" /> ₫</strong>
-                </div>
                 <button type="button" class="btn secondary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/borrow'">Tạo yêu cầu mượn</button>
-                <button type="button" class="btn primary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/checkout'">Thanh toán (Checkout)</button>
+                <button type="button" class="btn primary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/borrow/request'">Mượn sách</button>
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục xem sách</a>
             </aside>
         </section>
