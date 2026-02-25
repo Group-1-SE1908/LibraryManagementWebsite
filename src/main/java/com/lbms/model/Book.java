@@ -17,6 +17,7 @@ public class Book {
     private boolean availability;
     private Instant createdAt;
     private Instant updatedAt;
+    private String image;
 
     public Book() {
     }
@@ -131,6 +132,11 @@ public class Book {
 
     public void setAvailability(boolean availability) {
         this.availability = availability;
+    }
+    public String getImage() { return image; }
+
+    public void setImage(String image) {
+         this.image = image;
     }
 
     

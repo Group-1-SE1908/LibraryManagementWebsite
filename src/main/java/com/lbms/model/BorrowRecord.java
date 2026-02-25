@@ -12,6 +12,8 @@ public class BorrowRecord {
     private LocalDate returnDate;
     private String status;
     private BigDecimal fineAmount;
+    private BookCopy bookCopy; 
+    private String borrowMethod;
 
     public BorrowRecord() {}
 
@@ -78,4 +80,9 @@ public class BorrowRecord {
     public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
+    public BookCopy getBookCopy() { return bookCopy; }
+    public void setBookCopy(BookCopy bookCopy) { this.bookCopy = bookCopy; }
+
+    public String getBorrowMethod() { return borrowMethod; }
+    public void setBorrowMethod(String borrowMethod) { this.borrowMethod = borrowMethod; }
 }

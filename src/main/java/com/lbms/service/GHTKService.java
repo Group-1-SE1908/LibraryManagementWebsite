@@ -2,7 +2,7 @@ package com.lbms.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.lbms.util.AppConfig;
+import com.lbms.config.AppConfig;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -21,7 +21,8 @@ public class GHTKService {
     /**
      * Tạo đơn hàng trên GHTK.
      *
-     * Lưu ý: Đây là skeleton tối giản. Nếu chưa cấu hình token thì trả về mã giả lập.
+     * Lưu ý: Đây là skeleton tối giản. Nếu chưa cấu hình token thì trả về mã giả
+     * lập.
      */
     public String createOrder(String address, String phone, String note) {
         if (AppConfig.GHTK_TOKEN == null || AppConfig.GHTK_TOKEN.isBlank()) {
@@ -67,7 +68,8 @@ public class GHTKService {
      * Nếu chưa cấu hình token thì trả về CREATED.
      */
     public String getStatus(String trackingCode) {
-        if (trackingCode == null || trackingCode.isBlank()) return "CREATED";
+        if (trackingCode == null || trackingCode.isBlank())
+            return "CREATED";
         if (AppConfig.GHTK_TOKEN == null || AppConfig.GHTK_TOKEN.isBlank()) {
             return "CREATED";
         }

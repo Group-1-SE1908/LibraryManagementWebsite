@@ -49,15 +49,6 @@ public class RoleDAO {
         return null;
     }
 
-    public boolean addRole(String roleName) throws SQLException {
-        String sql = "INSERT INTO Role (role_name) VALUES (?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, roleName);
-            return ps.executeUpdate() > 0;
-        }
-    }
-
     public Role getRoleByName(String roleName) throws SQLException {
         String sql = "SELECT role_id, role_name FROM Role WHERE role_name = ?";
         try (Connection c = DBConnection.getConnection();

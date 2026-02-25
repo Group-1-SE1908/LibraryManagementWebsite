@@ -2,77 +2,166 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
     <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Book Catalog - LBMS Library Portal</title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Danh mục Sách | LBMS Library</title>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
         <style>
+            :root {
+                --primary-gradient: linear-gradient(135deg, #0b57d0 0%, #3366cc 100%);
+                --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
             .page-header {
-                background: linear-gradient(135deg, #0b57d0 0%, #3366cc 100%);
+                background: var(--primary-gradient);
                 color: white;
-                padding: 40px 0;
-                margin-bottom: 40px;
+                padding: 50px 0;
                 text-align: center;
+                margin-bottom: 40px;
             }
 
-            .page-header h1 {
-                font-size: 36px;
-                margin-bottom: 10px;
+            .search-container {
+                background: white;
+                padding: 25px;
+                border-radius: 15px;
+                box-shadow: var(--shadow);
+                margin-top: -60px;
+                position: relative;
+                z-index: 10;
+            }
+
+            .books-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 25px;
+                margin-top: 30px;
+            }
+
+            .book-card {
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                border: 1px solid #eef0f2;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .book-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+            }
+
+            .book-image {
+                height: 320px; 
+                background: #f1f5f9;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+                border-bottom: 1px solid #eef0f2;
+            }
+            .book-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; 
+                transition: transform 0.5s ease;
+            }
+
+            .book-card:hover .book-image img {
+                transform: scale(1.05); 
+            }
+
+            
+            .book-title {
+                font-size: 16px;
                 font-weight: 700;
+                margin-bottom: 6px;
+                color: #1e293b;
+                display: -webkit-box;
+                -webkit-line-clamp: 2; 
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                height: 40px; 
             }
 
-            .page-header p {
+            .status-badge {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .badge-available {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .badge-out {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .book-info {
+                padding: 20px;
+                flex-grow: 1;
+            }
+
+            .book-title {
                 font-size: 18px;
-                opacity: 0.95;
+                font-weight: 700;
+                margin-bottom: 8px;
+                color: #1e293b;
             }
 
-            .filter-group {
+            .book-author {
+                color: #64748b;
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+
+            .book-actions {
+                padding: 15px 20px;
+                background: #f8fafc;
+                border-top: 1px solid #edf2f7;
                 display: flex;
-                gap: 12px;
-                align-items: flex-end;
-                flex-wrap: wrap;
+                gap: 10px;
             }
 
-            .filter-group label {
-                margin-bottom: 0;
-            }
-
-            .filter-group select {
-                min-width: 150px;
-            }
-
-            .results-info {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 24px;
-                padding: 16px;
-                background-color: #f3f4f6;
+            .btn-full {
+                flex: 1;
+                text-align: center;
+                padding: 10px;
                 border-radius: 8px;
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-
-            .results-count {
+                text-decoration: none;
                 font-size: 14px;
-                color: #6b7280;
+                font-weight: 600;
             }
 
-            .sort-by {
+            .btn-staff {
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #cbd5e1;
+            }
+
+            .btn-staff:hover {
+                background: #e2e8f0;
+            }
+
+            /* Chức năng 30-35 cho Thủ thư */
+            .admin-controls {
+                margin-bottom: 20px;
                 display: flex;
-                gap: 8px;
-                align-items: center;
-            }
-
-            .sort-by select {
-                min-width: 200px;
-                padding: 8px 12px;
-                font-size: 14px;
+                justify-content: flex-end;
             }
         </style>
     </head>
@@ -80,196 +169,119 @@
     <body>
         <jsp:include page="header.jsp" />
 
-        <!-- Page Header -->
-        <div class="page-header">
+        <c:set var="user" value="${sessionScope.currentUser}" />
+        <c:set var="isStaff" value="${user.role.name == 'ADMIN' || user.role.name == 'LIBRARIAN'}" />
+
+        <header class="page-header">
             <div class="container">
-                <h1>📚 Book Catalog</h1>
-                <p>Explore our extensive collection of books and resources</p>
+                <h1>📚 Thư viện số LBMS</h1>
+                <p>Khám phá hàng ngàn cuốn sách tri thức</p>
             </div>
-        </div>
+        </header>
 
-        <!-- Main Content -->
-        <div class="container">
-            <!-- Search & Filter Section -->
+        <main class="container">
             <div class="search-container">
-                <form method="get" action="${pageContext.request.contextPath}/books" id="searchForm">
-                    <div class="search-box">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label for="searchInput">Search by book title or author</label>
-                            <input type="text" id="searchInput" name="search" placeholder="Enter book title, author..."
-                                   value="${param.search}" />
-                        </div>
+                <form action="${pageContext.request.contextPath}/books" method="get" class="filter-group"
+                      style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" name="search" placeholder="Tìm tên sách, tác giả, ISBN..."
+                           value="${param.search}"
+                           style="flex: 2; min-width: 250px; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
 
-                        <div class="filter-group">
-                            <div>
-                                <label for="categoryFilter">Category</label>
-                                <select id="categoryFilter" name="category">
-                                    <option value="">All Categories</option>
-                                    <c:forEach var="cat" items="${categories}">
-                                        <option value="${cat.id}" ${param.category==cat.id ? 'selected' : '' }>${cat.name}</option>
-                                    </c:forEach>
-                                </select>
-                            </div>
+                    <select name="category"
+                            style="flex: 1; min-width: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                        <option value="0">Tất cả thể loại</option>
+                        <c:forEach var="cat" items="${categories}">
+                            <option value="${cat.id}" ${param.category==cat.id ? 'selected' : '' }>${cat.name}
+                            </option>
+                        </c:forEach>
+                    </select>
 
-                            <div>
-                                <label for="statusFilter">Status</label>
-                                <select id="statusFilter" name="status">
-                                    <option value="">All</option>
-                                    <option value="available" ${param.status=='available' ? 'selected' : '' }>Available</option>
-                                    <option value="borrowed" ${param.status=='borrowed' ? 'selected' : '' }>Borrowed</option>
-                                </select>
-                            </div>
-
-                            <button type="submit" class="btn primary">🔍 Search</button>
-                            <a href="${pageContext.request.contextPath}/books" class="btn" style="text-decoration: none;">↺
-                                Reset</a>
-                        </div>
-                    </div>
+                    <button type="submit" class="btn primary" style="padding: 12px 25px;">Tìm kiếm</button>
                 </form>
             </div>
 
-            <!-- Results Info -->
-            <div class="results-info">
-                <div class="results-count">
-                    Found <strong>${totalBooks > 0 ? totalBooks : 0}</strong> book(s)
-                    <c:if test="${not empty param.search}">
-                        for "<strong>${param.search}</strong>"
-                    </c:if>
+            <c:if test="${isStaff}">
+                <div class="admin-controls" style="margin-top: 30px;">
+                    <a href="${pageContext.request.contextPath}/books/new" class="btn primary">➕ Thêm sách
+                        mới</a>
                 </div>
-                <div class="sort-by">
-                    <label for="sortBy">Sort by:</label>
-                    <select id="sortBy" name="sort" onchange="updateSort(this.value)">
-                        <option value="newest" ${param.sort=='newest' ? 'selected' : '' }>Newest</option>
-                        <option value="popular" ${param.sort=='popular' ? 'selected' : '' }>Most Popular</option>
-                        <option value="rating" ${param.sort=='rating' ? 'selected' : '' }>Top Rated</option>
-                        <option value="title_asc" ${param.sort=='title_asc' ? 'selected' : '' }>Title A-Z</option>
-                    </select>
-                </div>
+            </c:if>
+
+            <div class="results-info" style="margin-top: 20px; color: #64748b;">
+                Tìm thấy <strong>${totalBooks}</strong> cuốn sách
             </div>
 
-            <!-- Books Grid -->
-            <c:choose>
-                <c:when test="${not empty books}">
-                    <div class="books-grid">
-                        <c:forEach var="book" items="${books}">
-                            <div class="book-card">
-                                <!-- Book Image -->
-                                <div class="book-image">
-                                    📖
-                                    <c:if test="${book.quantity > 0}">
-                                        <span class="book-badge">Available</span>
-                                    </c:if>
-                                    <c:if test="${book.quantity <= 0}">
-                                        <span class="book-badge unavailable">Out of Stock</span>
-                                    </c:if>
-                                </div>
+            <div class="books-grid">
+                <c:forEach var="book" items="${books}">
+                    <div class="book-card">
+                        <div class="book-image">
+                            <c:choose>
+                                <c:when test="${not empty book.image}">
+                                    <img src="${pageContext.request.contextPath}/${book.image}"
+                                         alt="${book.title}"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                </c:when>
+                                <c:otherwise>
+                                    <div style="font-size: 50px;">📖</div>
+                                </c:otherwise>
+                            </c:choose>
 
-                                <!-- Book Info -->
-                                <div class="book-info">
-                                    <h3 class="book-title">${book.title}</h3>
-                                    <p class="book-author">by ${book.author}</p>
-
-                                    <div class="book-meta">
-                                        <div>
-                                            <c:if test="${not empty book.publishYear}">
-                                                <span>${book.publishYear}</span>
-                                            </c:if>
-                                        </div>
-                                        <div class="book-rating">
-                                            📖 ISBN: ${book.isbn}
-                                        </div>
-                                    </div>
-
-                                    <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">
-                                        <c:if test="${not empty book.publisher}">
-                                            <strong>Publisher:</strong> ${book.publisher}
-                                        </c:if>
-                                        <c:if test="${empty book.publisher}">
-                                            <em>No publisher information</em>
-                                        </c:if>
-                                    </p>
-
-                                    <!-- Stock Info -->
-                                    <p
-                                        style="font-size: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
-                                        <c:choose>
-                                            <c:when test="${book.quantity > 0}">
-                                                <span style="color: #0d9488; font-weight: 600;">📚 ${book.quantity} copy(ies)
-                                                    available</span>
-                                                </c:when>
-                                                <c:otherwise>
-                                                <span style="color: #dc2626; font-weight: 600;">❌ Out of Stock</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </p>
-
-                                    <!-- Actions -->
-                                    <div class="book-actions">
-                                        <a href="${pageContext.request.contextPath}/books/detail?id=${book.id}" class="btn small"
-                                           style="text-decoration: none; justify-content: center;">
-                                            👁️ View Details
-                                        </a>
-                                        <c:if test="${book.quantity > 0}">
-                                            <a href="${pageContext.request.contextPath}/cart/add/${book.id}" class="btn small primary"
-                                               style="text-decoration: none; justify-content: center;">
-                                                🛒 Borrow
-                                            </a>
-                                        </c:if>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:forEach>
-                    </div>
-
-                    <!-- Pagination (if needed) -->
-                    <c:if test="${totalBooks > 12}">
-                        <div class="pagination">
-                            <a href="#" class="btn small">← Previous</a>
-                            <span class="current">1</span>
-                            <a href="#" class="btn small">2</a>
-                            <a href="#" class="btn small">3</a>
-                            <a href="#" class="btn small">Next →</a>
+                            <c:choose>
+                                <c:when test="${book.quantity > 0}">
+                                    [cite_start]<span class="status-badge badge-available">Sẵn có</span> [cite:
+                                    250]
+                                </c:when>
+                                <c:otherwise>
+                                    [cite_start]<span class="status-badge badge-out">Hết sách</span> [cite: 251]
+                                </c:otherwise>
+                            </c:choose>
                         </div>
-                    </c:if>
-                </c:when>
 
-                <c:otherwise>
-                    <!-- Empty State -->
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <h3>No books found</h3>
-                        <p>Try adjusting your search criteria</p>
-                        <a href="${pageContext.request.contextPath}/books" class="btn primary mt-20"
-                           style="text-decoration: none;">← Back to List</a>
+                        <div class="book-info">
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-author">Tác giả: ${book.author}</div>
+                            <div style="font-size: 12px; color: #94a3b8;">
+                                ISBN: ${book.isbn} | Năm: ${book.publishYear}
+                            </div>
+                        </div>
+
+                        <div class="book-actions">
+                            <a href="${pageContext.request.contextPath}/books/detail?id=${book.id}"
+                               class="btn-full btn-staff">Chi tiết</a>
+
+                            <c:choose>
+                                <c:when test="${isStaff}">
+                                    <a href="${pageContext.request.contextPath}/books/edit?id=${book.id}"
+                                       class="btn-full primary">Chỉnh sửa</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:if test="${book.quantity > 0}">
+                                        <form action="${pageContext.request.contextPath}/borrow/request"
+                                              method="post" style="flex: 1;">
+                                            <input type="hidden" name="bookId" value="${book.id}">
+                                            <button type="submit" class="btn-full primary"
+                                                    style="width: 100%; border: none; cursor: pointer;">Mượn
+                                                ngay</button>
+                                        </form>
+                                    </c:if>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
                     </div>
-                </c:otherwise>
-            </c:choose>
-        </div>
+                </c:forEach>
+            </div>
+
+            <c:if test="${empty books}">
+                <div style="text-align: center; padding: 50px;">
+                    <div style="font-size: 50px;">🔍</div>
+                    <h3>Không tìm thấy cuốn sách nào phù hợp</h3>
+                    <a href="${pageContext.request.contextPath}/books" class="btn">Quay lại danh sách chính</a>
+                </div>
+            </c:if>
+        </main>
 
         <jsp:include page="footer.jsp" />
-
-        <script>
-            function updateSort(sortValue) {
-                const form = document.getElementById('searchForm');
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'sort';
-                input.value = sortValue;
-                form.appendChild(input);
-                form.submit();
-            }
-
-            // Add smooth scroll behavior
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({behavior: 'smooth'});
-                    }
-                });
-            });
-        </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 
 </html>

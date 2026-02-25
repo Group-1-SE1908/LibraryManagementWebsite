@@ -8,7 +8,7 @@ INSERT INTO Role (role_name) VALUES
 (N'Member');
 
 -- USER
-INSERT INTO [User] (name, email, password, status, role_id) VALUES
+INSERT INTO [User] (full_name, email, password, status, role_id) VALUES
 (N'Nguyễn Văn A', 'admin@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 1),
 (N'Trần Thị B', 'librarian@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 2),
 (N'Lê Văn C', 'user@gmail.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', 'ACTIVE', 3);

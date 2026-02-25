@@ -3,51 +3,263 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <c:set var="roleName" value="${sessionScope.currentUser.role.name}" />
-<c:set var="isAdmin" value="${roleName == 'ADMIN'}" />
-<c:set var="userName" value="${sessionScope.currentUser.fullName}" />
+<c:set var="isAdmin" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
+<c:set var="userName" value="${not empty sessionScope.currentUser.fullName ? sessionScope.currentUser.fullName : 'Guest'}" />
 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
 
-<!-- Header -->
+<style>
+    :root {
+        --primary-color: #0b57d0;
+        --header-bg: #0b57d0;
+    }
+
+    header {
+        background: var(--header-bg);
+        padding: 12px 0;
+        color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1100;
+    }
+
+    header .container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    .logo {
+        font-size: 20px;
+        font-weight: 800;
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-menu {
+        display: flex;
+        list-style: none;
+        gap: 24px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav-menu a {
+        color: rgba(255,255,255,0.85);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .nav-menu a:hover, .nav-menu a.active {
+        color: white;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .notification-icon {
+        position: relative;
+        cursor: pointer;
+        font-size: 18px;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -8px;
+        background: #ea4335;
+        color: white;
+        font-size: 10px;
+        padding: 2px 5px;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+    /* User Profile & Dropdown Area */
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 12px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 30px;
+        cursor: pointer;
+        position: relative;
+        transition: 0.2s;
+        user-select: none;
+    }
+
+    .user-profile:hover {
+        background: rgba(255,255,255,0.25);
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        background: white;
+        color: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        object-fit: cover;
+    }
+
+    .user-name {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .user-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: white;
+        min-width: 180px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        overflow: hidden;
+        z-index: 2000;
+        border: 1px solid #eee;
+    }
+
+    .user-dropdown.show {
+        display: block;
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-dropdown a {
+        display: block;
+        padding: 12px 16px;
+        color: #444;
+        text-decoration: none;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .user-dropdown a:hover {
+        background: #f1f5f9;
+        color: var(--primary-color);
+    }
+
+    .user-dropdown .logout {
+        border-top: 1px solid #eee;
+        color: #dc3545;
+    }
+
+    .cart-btn {
+        text-decoration: none;
+        color: white;
+        background: rgba(255,255,255,0.2);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: 0.2s;
+    }
+
+    .cart-btn:hover {
+        background: rgba(255,255,255,0.3);
+    }
+</style>
+
 <header>
     <div class="container">
         <a href="${pageContext.request.contextPath}/" class="logo">
             📚 LBMS.Portal
         </a>
+
         <ul class="nav-menu">
-            <li><a href="${pageContext.request.contextPath}/" class="active">Home</a></li>
+            <li><a href="${pageContext.request.contextPath}/">Home</a></li>
             <li><a href="${pageContext.request.contextPath}/borrow">My Books</a></li>
-            <li><a href="${pageContext.request.contextPath}/reservations">History</a></li>
+            <li><a href="${pageContext.request.contextPath}/history">History</a></li>
             <li><a href="${pageContext.request.contextPath}/books">Catalog</a></li>
         </ul>
+
         <div class="header-right">
             <div class="notification-icon">
-                🔔
-                <span class="notification-badge">2</span>
+                🔔 <span class="notification-badge">2</span>
             </div>
-            <a href="${pageContext.request.contextPath}/cart" class="btn"
-               style="text-decoration: none; color: white; background: rgba(255,255,255,0.2); padding: 8px 12px; font-size: 13px;">🛒
-                Cart</a>
-            <div class="user-profile" onclick="toggleUserDropdown(event)">
-                <c:set var="now" value="<%= System.currentTimeMillis()%>" />
 
-                <c:choose>
-                    <c:when test="${not empty sessionScope.currentUser.avatar}">
-                        <img class="user-avatar"
-                             src="${pageContext.request.contextPath}/uploads/${sessionScope.currentUser.avatar}?v=${now}"
-                             style="width:35px;height:35px;border-radius:50%;object-fit:cover;">
-                    </c:when>
-                    <c:otherwise>
-                        <div class="user-avatar">
-                            ${userInitial}
+            <a href="${pageContext.request.contextPath}/cart" class="cart-btn">
+                🛒 Cart
+            </a>
+
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser}">
+                    <div class="user-profile" id="userProfileBtn" onclick="toggleUserDropdown(event)">
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.currentUser.avatar}">
+                                <img class="user-avatar" 
+                                     src="${pageContext.request.contextPath}/uploads/${sessionScope.currentUser.avatar}" 
+                                     alt="Avatar">
+                            </c:when>
+                            <c:otherwise>
+                                <div class="user-avatar">${userInitial}</div>
+                            </c:otherwise>
+                        </c:choose>
+                        <span class="user-name">${userName}</span>
+
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="${pageContext.request.contextPath}/profile">👤 Profile</a>
+                            <c:if test="${isAdmin}">
+                                <a href="${pageContext.request.contextPath}/borrow">🛠️ Management</a>
+                            </c:if>
+                            <a href="${pageContext.request.contextPath}/logout" class="logout">🚪 Logout</a>
                         </div>
-                    </c:otherwise>
-                </c:choose>
-                <span class="user-name">${userName}</span>
-                <div class="user-dropdown" id="userDropdown">
-                    <a href="${pageContext.request.contextPath}/profile">👤 Profile</a>
-                    <a href="${pageContext.request.contextPath}/logout" class="logout">🚪 Logout</a>
-                </div>
-            </div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <a href="${pageContext.request.contextPath}/login" style="color: white; text-decoration: none; font-weight: 600;">Login</a>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 </header>
+
+<script>
+    function toggleUserDropdown(event) {
+        // Ngăn chặn sự kiện click lan ra ngoài làm đóng menu ngay lập tức
+        event.stopPropagation();
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('show');
+    }
+
+    // Đóng dropdown khi click vào bất kỳ đâu trên màn hình
+    window.addEventListener('click', function (e) {
+        const dropdown = document.getElementById('userDropdown');
+        const profileBtn = document.getElementById('userProfileBtn');
+
+        if (dropdown && dropdown.classList.contains('show')) {
+            if (!profileBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        }
+    });
+</script>

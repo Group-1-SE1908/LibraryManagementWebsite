@@ -20,8 +20,8 @@ import jakarta.servlet.http.HttpServletResponse;
         "/admin/users/create",
         "/admin/users/edit",
         "/admin/users/status",
-        "/admin/users/view",
-        "/admin/roles/create"
+        "/admin/users/view"
+
 })
 public class AdminUserController extends HttpServlet {
 
@@ -82,9 +82,7 @@ public class AdminUserController extends HttpServlet {
                 case "/admin/users/status":
                     handleUpdateStatus(request, response);
                     break;
-                case "/admin/roles/create":
-                    handleCreateRole(request, response);
-                    break;
+
                 default:
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     break;
@@ -295,41 +293,6 @@ public class AdminUserController extends HttpServlet {
             request.getSession().setAttribute("flash", "Lỗi : Không tìm thấy người dùng!");
             response.sendRedirect(request.getContextPath() + "/admin/users");
         }
-    }
-
-    private void handleCreateRole(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, SQLException {
-
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        String roleName = request.getParameter("name");
-        StringBuilder jsonResponse = new StringBuilder();
-
-        if (roleName == null || roleName.trim().isEmpty()) {
-            jsonResponse.append("{\"success\": false, \"message\": \"Tên vai trò không được để trống!\"}");
-        } else {
-            String normalizedName = roleName.trim();
-
-            if (roleDAO.isRoleNameExists(normalizedName)) {
-                jsonResponse.append("{\"success\": false, \"message\": \"Vai trò này đã tồn tại!\"}");
-            } else {
-
-                if (roleDAO.addRole(normalizedName)) {
-
-                    Role newRole = roleDAO.getRoleByName(normalizedName);
-
-                    if (newRole != null) {
-                        jsonResponse.append("{\"success\": true, ")
-                                .append("\"roleId\": ").append(newRole.getId()).append(", ")
-                                .append("\"roleName\": \"").append(newRole.getName()).append("\"}");
-                    }
-                } else {
-                    jsonResponse.append("{\"success\": false, \"message\": \"Lỗi database không thể lưu.\"}");
-                }
-            }
-        }
-        response.getWriter().write(jsonResponse.toString());
     }
 
     private List<String> validateUserInput(String name, String email, String password, String phone, String address,
