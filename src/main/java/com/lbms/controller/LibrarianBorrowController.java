@@ -1,127 +1,108 @@
 package com.lbms.controller;
 
+import com.lbms.dao.BorrowDAO;
+import com.lbms.dao.UserDAO;
+import com.lbms.model.BorrowRecord;
+import com.lbms.model.User;
+import com.lbms.service.LibrarianBorrowService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.lbms.dao.BorrowDAO;
-import com.lbms.model.BorrowRecord;
-import com.lbms.model.User;
-import com.lbms.service.BorrowService;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-@WebServlet(urlPatterns = { 
-    "/borrowlibrary", 
-    "/borrowlibrary/approve", 
-    "/borrowlibrary/reject", 
-    "/borrowlibrary/return",
-    "/borrowlibrary/overdue" 
-})
+@WebServlet(urlPatterns = {"/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject", "/borrowlibrary/return", "/borrowlibrary/detail"})
 public class LibrarianBorrowController extends HttpServlet {
-    private BorrowService borrowService;
-    private BorrowDAO borrowDAO;
 
-    @Override
-    public void init() {
-        this.borrowService = new BorrowService();
-        this.borrowDAO = new BorrowDAO();
-    }
+    private final LibrarianBorrowService libService = new LibrarianBorrowService();
+    private final BorrowDAO borrowDAO = new BorrowDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String path = req.getServletPath();
 
         try {
             requireStaff(req);
+            String path = req.getServletPath();
+            if ("/borrowlibrary/detail".equals(path)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                BorrowRecord record = borrowDAO.findById(id);
+                if (record != null) {
+                    record.setUser(userDAO.findById(record.getUser().getId()));
+                }
+                req.setAttribute("record", record);
+                req.getRequestDispatcher("/WEB-INF/views/borrow_detail.jsp").forward(req, resp);
+            } else if ("/borrowlibrary/approve".equals(path)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                String barcode = req.getParameter("barcode");
+                libService.approveRequest(id, barcode);
+                req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
+                resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+            } else if ("/borrowlibrary/return".equals(path)) {
+                String idStr = req.getParameter("id");
+                String barcode = req.getParameter("barcode");
 
-            switch (path) {
-                case "/borrowlibrary":
-                    handleLibrarianList(req, resp);
-                    break;
-                case "/borrowlibrary/approve":
-                    handleApprove(req, resp);
-                    break;
-                case "/borrowlibrary/reject":
-                    handleReject(req, resp);
-                    break;
-                case "/borrowlibrary/return":
-                    handleReturn(req, resp);
-                    break;
-                case "/borrowlibrary/overdue":
-                    handleOverdueList(req, resp);
-                    break;
-                default:
-                    resp.sendError(404);
-                    break;
+                if (idStr == null || barcode == null || barcode.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Thiếu ID hoặc mã vạch sách.");
+                }
+
+                libService.returnBook(Long.parseLong(idStr), barcode);
+                req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+            } else { // Mặc định là trang danh sách + Lọc
+                String q = req.getParameter("q");
+                String status = req.getParameter("status");
+                List<BorrowRecord> list = libService.searchBorrowings(q, status);
+                req.setAttribute("records", list);
+                req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
             }
+
         } catch (IllegalArgumentException ex) {
-            req.getSession().setAttribute("flash", ex.getMessage());
+            req.getSession().setAttribute("flash", "Truy cập bị từ chối: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
         } catch (Exception ex) {
-            throw new ServletException(ex);
-        }
-    }
-
-    private void handleLibrarianList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        List<BorrowRecord> records = borrowDAO.listAll(); 
-        req.setAttribute("records", records);
-        req.setAttribute("pageTitle", "Quản lý mượn trả hệ thống");
-        req.setAttribute("isStaff", true);
-        req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
-    }
-
-    private void handleApprove(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        long id = Long.parseLong(req.getParameter("id"));
-        String barcode = req.getParameter("barcode");
-
-        if (barcode == null || barcode.trim().isEmpty()) {
-            req.getSession().setAttribute("flash", "Vui lòng nhập Barcode để duyệt sách");
+            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
-            return;
         }
-
-        borrowService.approve(id, barcode);
-        resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
     }
 
-    private void handleReject(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        long rejectId = Long.parseLong(req.getParameter("id"));
-        borrowService.reject(rejectId);
-        resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
-    }
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            requireStaff(req);
+            String path = req.getServletPath();
 
-    private void handleReturn(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        long returnId = Long.parseLong(req.getParameter("id"));
-        BigDecimal fine = borrowService.returnBook(returnId);
-        req.getSession().setAttribute("flash", "Trả sách thành công. Phạt: " + fine + " VND");
-        resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
-    }
-
-    private void handleOverdueList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        List<BorrowRecord> overdueRecords = borrowDAO.listOverdue();
-        req.setAttribute("records", overdueRecords);
-        req.setAttribute("pageTitle", "Danh sách sách quá hạn");
-        req.setAttribute("isStaff", true);
-        req.setAttribute("filter", "OVERDUE");
-        req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+            if ("/borrowlibrary/approve".equals(path)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                String barcode = req.getParameter("barcode");
+                libService.approveRequest(id, barcode);
+                req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
+            } else if ("/borrowlibrary/return".equals(path)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                String barcode = req.getParameter("barcode");
+                libService.returnBook(id, barcode);
+                req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+            } else if ("/borrowlibrary/reject".equals(path)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                libService.rejectRequest(id);
+                req.getSession().setAttribute("flash", "Đã từ chối yêu cầu #" + id);
+            }
+            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+        } catch (Exception ex) {
+            req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+        }
     }
 
     private void requireStaff(HttpServletRequest req) {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
-        if (currentUser == null || !isStaff(currentUser)) {
-            throw new IllegalArgumentException("Bạn không có quyền thực hiện thao tác này");
+        if (currentUser == null || currentUser.getRole() == null) {
+            throw new IllegalArgumentException("Vui lòng đăng nhập để tiếp tục.");
         }
-    }
-
-    private boolean isStaff(User u) {
-        if (u == null || u.getRole() == null || u.getRole().getName() == null)
-            return false;
-        String r = u.getRole().getName();
-        return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
+        String role = currentUser.getRole().getName();
+        if (!"ADMIN".equalsIgnoreCase(role) && !"LIBRARIAN".equalsIgnoreCase(role)) {
+            throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
+        }
     }
 }
