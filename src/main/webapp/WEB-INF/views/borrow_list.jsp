@@ -231,7 +231,7 @@
                     alert("Bạn phải nhập Barcode của cuốn sách vật lý để duyệt!");
                     return;
                 }
-                window.location.href = "${pageContext.request.contextPath}/borrow/approve?id=" + id + "&barcode=" + encodeURIComponent(barcode);
+                window.location.href = "${pageContext.request.contextPath}/borrowlibrary/approve?id=" + id + "&barcode=" + encodeURIComponent(barcode);
             }
         </script>
     </body>
