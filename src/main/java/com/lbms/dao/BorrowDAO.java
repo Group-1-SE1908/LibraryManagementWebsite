@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lbms.model.Book;
+import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
@@ -27,8 +28,7 @@ public class BorrowDAO {
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
                 + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
 
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
@@ -44,9 +44,7 @@ public class BorrowDAO {
 
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -105,13 +103,13 @@ public class BorrowDAO {
     }
 
     private String baseSelect() {
-        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.borrow_date, br.due_date, br.return_date, " +
-                "br.status, br.fine_amount, br.borrow_method, " + // Bổ sung borrow_method
-                "u.email AS user_email, u.full_name AS user_full_name, " +
-                "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image " +
-                "FROM borrow_records br " +
-                "JOIN [User] u ON br.user_id = u.user_id " +
-                "JOIN Book bk ON br.book_id = bk.book_id";
+        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
+                + "br.status, br.fine_amount, br.borrow_method, "
+                + "u.email AS user_email, u.full_name AS user_full_name, "
+                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image "
+                + "FROM borrow_records br "
+                + "JOIN [User] u ON br.user_id = u.user_id "
+                + "JOIN Book bk ON br.book_id = bk.book_id";
     }
 
     private List<BorrowRecord> mapList(ResultSet rs) throws SQLException {
@@ -122,7 +120,7 @@ public class BorrowDAO {
         return out;
     }
 
-    private BorrowRecord mapOne(ResultSet rs) throws SQLException {
+    public BorrowRecord mapOne(ResultSet rs) throws SQLException {
         BorrowRecord br = new BorrowRecord();
         br.setId(rs.getLong("borrowing_id"));
 
@@ -151,15 +149,20 @@ public class BorrowDAO {
         br.setStatus(rs.getString("status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         br.setBorrowMethod(rs.getString("borrow_method"));
+        long cid = rs.getLong("copy_id");
+        if (cid > 0) {
+            BookCopy bc = new BookCopy();
+            bc.setCopyId((int) cid);
+            br.setBookCopy(bc);
+        }
+        
         return br;
     }
 
     public List<BorrowRecord> listOverdue() throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -169,8 +172,7 @@ public class BorrowDAO {
         // baseSelect() đã bao gồm các cột cần thiết và JOIN bảng
         String sql = baseSelect() + " WHERE br.borrow_method = ? ORDER BY br.id DESC";
 
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, method); // "ONLINE" hoặc "IN_PERSON"
             try (ResultSet rs = ps.executeQuery()) {
                 List<BorrowRecord> out = new ArrayList<>();
@@ -184,9 +186,7 @@ public class BorrowDAO {
 
     private static void ensureBorrowMethodColumn() {
         String checkSql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='borrow_records' AND COLUMN_NAME='borrow_method'";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(checkSql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(checkSql); ResultSet rs = ps.executeQuery()) {
 
             if (!rs.next()) {
                 try (Statement stmt = c.createStatement()) {
