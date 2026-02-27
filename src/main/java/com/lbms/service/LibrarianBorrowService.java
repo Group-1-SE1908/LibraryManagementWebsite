@@ -186,22 +186,96 @@ public class LibrarianBorrowService {
         }
     }
 
-    public List<BorrowRecord> searchBorrowings(String keyword, String status) throws SQLException {
-        // Đây là phương thức thực thi lọc chính xác
+    // 1. Mượn tại quầy: Tạo phiếu mượn và Trừ kho ngay lập tức
+    public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                // 1. Kiểm tra giới hạn mượn (Ví dụ: Tối đa 3 cuốn đang mượn)
+                int currentBorrowed = borrowDAO.countActiveBorrows(userId);
+                if (currentBorrowed + barcodes.size() > 3) {
+                    throw new IllegalArgumentException("Độc giả này sẽ vượt quá giới hạn mượn (Tối đa 3 cuốn). Đang mượn: " + currentBorrowed);
+                }
+
+                java.time.LocalDate borrowDate = java.time.LocalDate.now();
+                java.time.LocalDate dueDate = borrowDate.plusDays(14);
+
+                for (String barcode : barcodes) {
+                    barcode = barcode.trim();
+                    if (barcode.isEmpty()) {
+                        continue;
+                    }
+
+                    // 2. Tìm ID sách và Copy ID từ Barcode
+                    int copyId = -1;
+                    long bookId = -1;
+                    String checkCopySql = "SELECT copy_id, book_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
+                    try (PreparedStatement ps = c.prepareStatement(checkCopySql)) {
+                        ps.setString(1, barcode);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                copyId = rs.getInt("copy_id");
+                                bookId = rs.getLong("book_id");
+                            } else {
+                                throw new IllegalArgumentException("Mã vạch '" + barcode + "' không tồn tại hoặc sách đã có người mượn.");
+                            }
+                        }
+                    }
+
+                    // 3. Tạo phiếu mượn riêng biệt cho từng cuốn sách
+                    String insertBrSql = "INSERT INTO borrow_records(user_id, book_id, copy_id, borrow_date, due_date, status, borrow_method) "
+                            + "VALUES(?, ?, ?, ?, ?, 'BORROWED', 'IN_PERSON')";
+                    try (PreparedStatement ps = c.prepareStatement(insertBrSql)) {
+                        ps.setLong(1, userId);
+                        ps.setLong(2, bookId);
+                        ps.setInt(3, copyId);
+                        ps.setDate(4, java.sql.Date.valueOf(borrowDate));
+                        ps.setDate(5, java.sql.Date.valueOf(dueDate));
+                        ps.executeUpdate();
+                    }
+
+                    // 4. Cập nhật trạng thái sách vật lý
+                    try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                        ps.setInt(1, copyId);
+                        ps.executeUpdate();
+                    }
+
+                    // 5. Trừ số lượng kho
+                    try (PreparedStatement ps = c.prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ?")) {
+                        ps.setLong(1, bookId);
+                        ps.executeUpdate();
+                    }
+                }
+
+                c.commit(); // Hoàn tất thành công cho TẤT CẢ mã vạch
+            } catch (Exception ex) {
+                c.rollback(); // Có lỗi ở bất kỳ cuốn nào thì hoàn tác toàn bộ
+                throw ex;
+            }
+        }
+    }
+
+    // 2. Lọc nâng cao (Hỗ trợ tham số method từ Header)
+    public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
         List<BorrowRecord> list = new ArrayList<>();
+
+        // Đã khôi phục ĐẦY ĐỦ các cột: user_email, book_author, book_isbn... để khớp với mapOne
         StringBuilder sql = new StringBuilder("SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
-            + "br.status, br.fine_amount, br.borrow_method, "
-            + "u.email AS user_email, u.full_name AS user_full_name, "
-            + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image "
-            + "FROM borrow_records br "
-            + "JOIN [User] u ON br.user_id = u.user_id "
-            + "JOIN Book bk ON br.book_id = bk.book_id WHERE 1=1 ");
+                + "br.status, br.fine_amount, br.borrow_method, "
+                + "u.email AS user_email, u.full_name AS user_full_name, "
+                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image "
+                + "FROM borrow_records br "
+                + "JOIN [User] u ON br.user_id = u.user_id "
+                + "JOIN Book bk ON br.book_id = bk.book_id WHERE 1=1 ");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (u.full_name LIKE ? OR bk.title LIKE ?) ");
         }
         if (status != null && !status.trim().isEmpty()) {
             sql.append("AND br.status = ? ");
+        }
+        if (method != null && !method.trim().isEmpty()) {
+            sql.append("AND br.borrow_method = ? ");
         }
         sql.append("ORDER BY br.id DESC");
 
@@ -215,10 +289,12 @@ public class LibrarianBorrowService {
             if (status != null && !status.trim().isEmpty()) {
                 ps.setString(idx++, status);
             }
+            if (method != null && !method.trim().isEmpty()) {
+                ps.setString(idx++, method);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Tận dụng logic map dữ liệu của bạn
                     list.add(borrowDAO.mapOne(rs));
                 }
             }
