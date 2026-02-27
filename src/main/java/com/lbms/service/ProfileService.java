@@ -21,22 +21,36 @@ public class ProfileService {
         return userDAO.findById(userId);
     }
 
-    public void updateProfile(long userId,
+    public void updateProfile(Long userId,
             String fullName,
             String phone,
             String address) throws Exception {
 
-        String sql = "UPDATE [User] SET full_name = ?, phone = ?, address = ? WHERE user_id = ?";
-
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setString(1, fullName);
-            ps.setString(2, phone);
-            ps.setString(3, address);
-            ps.setLong(4, userId);
-
-            ps.executeUpdate();
+        // validate cơ bản
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Họ tên không được để trống.");
         }
+
+        // Trim phone
+        if (phone != null) {
+            phone = phone.trim();
+        }
+
+        // Validate phone format
+        if (phone == null || phone.isEmpty()) {
+            throw new IllegalArgumentException("Số điện thoại không được để trống.");
+        }
+
+        if (!phone.matches("\\d{10}")) {
+            throw new IllegalArgumentException("Số điện thoại phải đúng 10 số.");
+        }
+
+        // 🔥 CHECK TRÙNG PHONE - ngoại trừ số điện thoại hiện tại của user
+        if (userDAO.isPhoneExists(phone, userId)) {
+            throw new IllegalArgumentException("Số điện thoại này đã được sử dụng. Vui lòng nhập số khác.");
+        }
+
+        userDAO.updateProfile(userId, fullName, phone, address);
     }
 
     // Change password

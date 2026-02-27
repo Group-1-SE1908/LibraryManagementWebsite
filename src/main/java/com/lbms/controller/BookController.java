@@ -4,6 +4,7 @@ import com.lbms.model.Book;
 import com.lbms.model.Category;
 import com.lbms.service.BookService;
 import com.lbms.dao.CategoryDAO;
+import com.lbms.dao.CommentDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -31,11 +32,13 @@ import java.util.logging.Logger;
 public class BookController extends HttpServlet {
     private BookService bookService;
     private CategoryDAO categoryDAO;
+    private CommentDAO commentDAO;
 
     @Override
     public void init() {
         this.bookService = new BookService();
         this.categoryDAO = new CategoryDAO();
+        this.commentDAO = new CommentDAO();
     }
 
     @Override
@@ -149,6 +152,15 @@ public class BookController extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
         Book book = bookService.findById(id);
         req.setAttribute("book", book);
+        
+        // Load comments for the book
+        try {
+            req.setAttribute("comments", commentDAO.getCommentsByBook(id));
+        } catch (Exception e) {
+            Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
+            req.setAttribute("comments", new java.util.ArrayList<>());
+        }
+        
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);
     }
 
