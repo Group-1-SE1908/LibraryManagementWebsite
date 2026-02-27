@@ -75,4 +75,10 @@
     <url-pattern>*.ico</url-pattern>
   </servlet-mapping>
 
+  <!-- Allow uploads directory to be served as static files -->
+  <servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>/uploads/*</url-pattern>
+  </servlet-mapping>
+
 </web-app>

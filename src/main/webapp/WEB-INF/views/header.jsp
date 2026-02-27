@@ -109,14 +109,22 @@
                     .user-avatar {
                         width: 32px;
                         height: 32px;
-                        background: white;
-                        color: var(--primary-color);
+                        background: linear-gradient(135deg, var(--primary-color), #60a5fa);
+                        color: white;
                         border-radius: 50%;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-weight: bold;
                         font-size: 14px;
+                        object-fit: cover;
+                        flex-shrink: 0;
+                    }
+
+                    .user-avatar img {
+                        width: 100%;
+                        height: 100%;
+                        border-radius: 50%;
                         object-fit: cover;
                     }
 
@@ -228,13 +236,15 @@
                                 <c:when test="${not empty sessionScope.currentUser}">
                                     <div class="user-profile" id="userProfileBtn" onclick="toggleUserDropdown(event)">
                                         <c:choose>
-                                            <c:when test="${not empty sessionScope.currentUser.avatar}">
+                                            <c:when test="${not empty sessionScope.currentUser.avatar && sessionScope.currentUser.avatar != 'null'}">
                                                 <img class="user-avatar"
-                                                    src="${pageContext.request.contextPath}/uploads/${sessionScope.currentUser.avatar}"
-                                                    alt="Avatar">
+                                                    src="${pageContext.request.contextPath}/${sessionScope.currentUser.avatar}"
+                                                    alt="Avatar"
+                                                    onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">
+                                                <div class="user-avatar user-avatar-initial" style="display:none;">${userInitial}</div>
                                             </c:when>
                                             <c:otherwise>
-                                                <div class="user-avatar">${userInitial}</div>
+                                                <div class="user-avatar user-avatar-initial">${userInitial}</div>
                                             </c:otherwise>
                                         </c:choose>
                                         <span class="user-name">${userName}</span>

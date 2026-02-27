@@ -179,6 +179,19 @@
                 background:#fdecea;
                 color:#b02a37;
             }
+
+            #phoneError {
+                display: block;
+                margin-top: 5px;
+                font-size: 13px;
+                color: #dc3545;
+                font-weight: 500;
+            }
+
+            input#phoneInput.phone-error {
+                border-color: #dc3545 !important;
+                background-color: #fff5f5;
+            }
         </style>
     </head>
 
@@ -193,9 +206,17 @@
                 
 
                 <c:if test="${not empty flash}">
-                    <div class="message ${flashType}">
+                    <div class="message ${flashType}" id="flashMessage">
                         ${flash}
                     </div>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const flashMsg = document.getElementById('flashMessage');
+                            if (flashMsg && flashMsg.classList.contains('error')) {
+                                flashMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        });
+                    </script>
                 </c:if>
 
                 <div class="tabs">
@@ -216,9 +237,10 @@
 
                             <c:choose>
                                 <c:when test="${not empty user.avatar}">
-                                    <img src="${pageContext.request.contextPath}/uploads/${user.avatar}?v=${timestamp}"
+                                    <img src="${pageContext.request.contextPath}/${user.avatar}?v=${timestamp}"
                                          id="previewAvatar"
-                                         onclick="document.getElementById('avatarUpload').click();">
+                                         onclick="document.getElementById('avatarUpload').click();"
+                                         onerror="this.src='https://i.pravatar.cc/150?img=3'">
                                 </c:when>
                                 <c:otherwise>
                                     <img src="https://i.pravatar.cc/150?img=3"
@@ -241,12 +263,13 @@
 
                     </div>
                     <!-- UPDATE PROFILE FORM -->
-                    <form method="post" action="${pageContext.request.contextPath}/profile">
+                    <form method="post" action="${pageContext.request.contextPath}/profile" id="profileForm">
 
                         <div class="form-group">
                             <label>Họ tên</label>
                             <input type="text"
                                    name="fullName"
+                                   id="fullName"
                                    value="${user.fullName}"
                                    maxlength="100"
                                    required>
@@ -263,10 +286,13 @@
                             <label>Số điện thoại</label>
                             <input type="text"
                                    name="phone"
+                                   id="phoneInput"
                                    value="${user.phone}"
                                    pattern="[0-9]{10}"
                                    title="Số điện thoại phải đúng 10 số"
+                                   placeholder="Nhập 10 chữ số"
                                    required>
+                            <small id="phoneError" style="color: #dc3545; display: none;"></small>
                         </div>
 
                         <div class="form-group">
@@ -349,6 +375,49 @@
                 }
                 reader.readAsDataURL(event.target.files[0]);
             }
+
+            // Phone validation
+            document.addEventListener("DOMContentLoaded", function() {
+                const phoneInput = document.getElementById('phoneInput');
+                const phoneError = document.getElementById('phoneError');
+                const profileForm = document.getElementById('profileForm');
+
+                if (phoneInput) {
+                    // Real-time validation - chỉ kiểm tra format
+                    phoneInput.addEventListener('input', function() {
+                        const phone = this.value.trim();
+                        
+                        // Clear error message
+                        phoneError.textContent = '';
+                        phoneInput.classList.remove('phone-error');
+                        
+                        // Check format
+                        if (phone && phone.length > 0 && !/^\d{10}$/.test(phone)) {
+                            phoneError.textContent = 'Số điện thoại phải đúng 10 chữ số';
+                            phoneInput.classList.add('phone-error');
+                        }
+                    });
+
+                    // Form submit validation
+                    profileForm.addEventListener('submit', function(e) {
+                        const phone = phoneInput.value.trim();
+                        
+                        // Validate format
+                        if (!phone || !/^\d{10}$/.test(phone)) {
+                            e.preventDefault();
+                            phoneError.textContent = 'Số điện thoại phải đúng 10 chữ số';
+                            phoneInput.classList.add('phone-error');
+                            phoneInput.focus();
+                            phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            return false;
+                        }
+
+                        // Format hợp lệ, cho phép submit form bình thường
+                        // Server sẽ check trùng phone và trả về flash message error nếu cần
+                        return true;
+                    });
+                }
+            });
         </script>
 
         <!-- POPUP ĐỔI MẬT KHẨU -->
