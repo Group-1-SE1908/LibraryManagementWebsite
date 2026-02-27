@@ -36,6 +36,8 @@
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        
         <script>
             $(document).ready(function () {
                 // Biến thẻ select thường thành ô tìm kiếm thông minh
@@ -46,5 +48,22 @@
                 });
             });
         </script>
+        
+
+        <c:if test="${not empty sessionScope.flash}">
+            <input type="hidden" id="errorData" value="<c:out value='${sessionScope.flash}'/>">
+            <script>
+                    const msg = document.getElementById('errorData').value;
+                    if (msg) {
+                        Swal.fire({
+                            icon: msg.includes('thành công') ? 'success' : 'error',
+                            title: msg.includes('thành công') ? 'Thành công' : 'Lỗi hệ thống',
+                            text: msg,
+                            confirmButtonColor: '#0b57d0'
+                        });
+                    }
+            </script>
+            <c:remove var="flash" scope="session" />
+        </c:if>
     </body>
 </html>
