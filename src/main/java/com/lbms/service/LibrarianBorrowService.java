@@ -191,10 +191,26 @@ public class LibrarianBorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1. Kiểm tra giới hạn mượn (Ví dụ: Tối đa 3 cuốn đang mượn)
+                // kiểm tra ID User có hợp lệ không
+                String checkUserSql = "SELECT status, full_name FROM [User] WHERE user_id = ?";
+                try (PreparedStatement ps = c.prepareStatement(checkUserSql)) {
+                    ps.setLong(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            String uStatus = rs.getString("status");
+                            if ("INACTIVE".equalsIgnoreCase(uStatus) || "BANNED".equalsIgnoreCase(uStatus)) {
+                                throw new IllegalArgumentException("Tài khoản độc giả (" + rs.getString("full_name") + ") đang bị khóa, không thể mượn sách.");
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Không tìm thấy độc giả nào có ID là: " + userId);
+                        }
+                    }
+                }
+
+                // 1. Kiểm tra giới hạn mượn (Ví dụ: Tối đa 5 cuốn đang mượn)
                 int currentBorrowed = borrowDAO.countActiveBorrows(userId);
-                if (currentBorrowed + barcodes.size() > 3) {
-                    throw new IllegalArgumentException("Độc giả này sẽ vượt quá giới hạn mượn (Tối đa 3 cuốn). Đang mượn: " + currentBorrowed);
+                if (currentBorrowed + barcodes.size() > 5) {
+                    throw new IllegalArgumentException("Độc giả này sẽ vượt quá giới hạn mượn (Tối đa 5 cuốn). Đang mượn: " + currentBorrowed);
                 }
 
                 java.time.LocalDate borrowDate = java.time.LocalDate.now();
@@ -245,6 +261,7 @@ public class LibrarianBorrowService {
                         ps.setLong(1, bookId);
                         ps.executeUpdate();
                     }
+
                 }
 
                 c.commit(); // Hoàn tất thành công cho TẤT CẢ mã vạch

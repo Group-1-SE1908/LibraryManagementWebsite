@@ -67,6 +67,40 @@
                 background: #f1f5f9;
                 color: #475569;
             }
+
+            
+            .table-card {
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .table-bordered {
+                width: 100%;
+                border-collapse: collapse; 
+            }
+
+            .table-bordered th, .table-bordered td {
+                border: 1px solid #cbd5e1; 
+                padding: 12px 15px;
+                text-align: left;
+            }
+
+            .table-bordered thead th {
+                background-color: #f8fafc;
+                color: #475569;
+                font-weight: 700;
+                border-bottom: 2px solid #cbd5e1;
+            }
+
+            
+            .table-bordered tbody tr:nth-child(even) {
+                background-color: #f1f5f9;
+            }
+
+            .table-bordered tbody tr:hover {
+                background-color: #e2e8f0; 
+            }
         </style>
     </head>
     <body>
@@ -97,79 +131,78 @@
             </form>
 
             <c:if test="${not empty sessionScope.flash}">
+                <input type="hidden" id="serverFlashMessage" value="<c:out value='${sessionScope.flash}' />">
                 <script>
                     document.addEventListener("DOMContentLoaded", function () {
-                        // Lấy nội dung thông báo từ server
-                        const flashMessage = "${sessionScope.flash}";
+                        const flashMsg = document.getElementById('serverFlashMessage').value;
+                        if (flashMsg) {
+                            const isError = flashMsg.toLowerCase().startsWith("lỗi") || flashMsg.toLowerCase().startsWith("truy cập");
 
-                        // Tự động nhận diện lỗi: Nếu câu bắt đầu bằng chữ "Lỗi" hoặc "Truy cập" thì hiện icon đỏ (error)
-                        const isError = flashMessage.toLowerCase().startsWith("lỗi") || flashMessage.toLowerCase().startsWith("truy cập");
-
-                        Swal.fire({
-                            icon: isError ? 'error' : 'success',
-                            title: isError ? 'Opps! Có lỗi xảy ra' : 'Thành công!',
-                            text: flashMessage,
-                            confirmButtonColor: '#0b57d0',
-                            confirmButtonText: 'Đóng'
-                        });
+                            Swal.fire({
+                                icon: isError ? 'error' : 'success',
+                                title: isError ? 'Thao tác thất bại' : 'Thành công!',
+                                text: flashMsg,
+                                confirmButtonColor: '#0b57d0'
+                            });
+                        }
                     });
                 </script>
                 <c:remove var="flash" scope="session" />
             </c:if>
 
-            <div class="table-card" style="background:white; border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm);">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+            <div class="table-card" style="border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm); border: 1px solid #cbd5e1;">
+                <table class="table-bordered">
+                    <thead>
                         <tr>
-                            <th style="padding:15px; text-align:left;">ID</th>
-                            <th style="padding:15px; text-align:left;">Người mượn</th>
-                            <th style="padding:15px; text-align:left;">Thông tin sách</th>
-                            <th style="padding:15px; text-align:left;">Ngày mượn</th>
-                            <th style="padding:15px; text-align:left;">Hẹn trả</th>
-                            <th style="padding:15px; text-align:left;">Trạng thái</th>
-                            <th style="padding:15px; text-align:center;">Thao tác</th>
+                            <th style="text-align:center; width: 5%;">ID</th>
+                            <th style="width: 20%;">Người mượn</th>
+                            <th style="width: 25%;">Thông tin sách</th>
+                            <th style="width: 12%;">Ngày mượn</th>
+                            <th style="width: 12%;">Hẹn trả</th>
+                            <th style="text-align:center; width: 12%;">Trạng thái</th>
+                            <th style="text-align:center; width: 14%;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:forEach items="${records}" var="r">
                             <tr>
-                                <td>#${r.id}</td>
+                                <td style="text-align:center; font-weight:bold; color:#64748b;">#${r.id}</td>
                                 <td>
-                                    <div style="font-weight:600;">${r.user.fullName}</div>
-                                    <div style="font-size:11px; color:gray;">${r.user.email}</div>
+                                    <div style="font-weight:600; color:#0f172a;">${r.user.fullName}</div>
+                                    <div style="font-size:12px; color:#64748b;">${r.user.email}</div>
                                 </td>
-                                <td>${r.book.title}</td>
+                                <td>
+                                    <div style="font-weight:600; color:#0f172a;">${r.book.title}</div>
+                                </td>
 
-                                <td>${not empty r.borrowDate ? r.borrowDate : '---'}</td>
-                                <td style="color: #ef4444; font-weight: bold;">${not empty r.dueDate ? r.dueDate : '---'}</td>
+                                <td>${not empty r.borrowDate ? r.borrowDate : '<span style="color:#94a3b8">---</span>'}</td>
+                                <td style="color: #ef4444; font-weight: 700;">${not empty r.dueDate ? r.dueDate : '<span style="color:#94a3b8">---</span>'}</td>
 
-                                <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+                                <td style="text-align:center;">
+                                    <span class="status-badge status-${r.status}">${r.status}</span>
+                                </td>
 
                                 <td style="text-align:center;">
                                     <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                                         <a href="${pageContext.request.contextPath}/borrowlibrary/detail?id=${r.id}" class="btn" style="width:80px;">Chi tiết</a>
 
                                         <c:if test="${r.status == 'REQUESTED'}">
-                                            <div id="box-${r.id}" style="display:none; margin: 10px 0; border: 1px solid #0b57d0; padding: 5px; border-radius: 5px;">
-                                                <input type="text" id="bc-input-${r.id}" placeholder="Mã vạch..." style="width:100px;">
-                                                <button onclick="confirmApprove(${r.id})" class="btn primary" style="padding: 2px 10px;">OK</button>
+                                            <div id="box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #0b57d0; padding: 5px; border-radius: 5px; background:#f8fafc;">
+                                                <input type="text" id="bc-input-${r.id}" placeholder="Mã vạch..." style="width:90px; margin-bottom:5px;">
+                                                <button onclick="confirmApprove(${r.id})" class="btn primary" style="padding: 2px 10px; width:100%;">OK</button>
                                             </div>
                                             <button id="btn-show-${r.id}" onclick="showInput(${r.id})" class="btn primary" style="width:80px;">Duyệt</button>
 
-                                            <form action="${pageContext.request.contextPath}/borrowlibrary/reject" method="post" style="display:inline; margin:0;">
-                                                <input type="hidden" name="id" value="${r.id}">
-                                                <button type="submit" class="btn-reject" onclick="return confirm('Từ chối yêu cầu này?')">Từ chối</button>
-                                            </form>
                                             <form action="${pageContext.request.contextPath}/borrowlibrary/reject" method="post" style="display:inline; margin:0;" onsubmit="confirmReject(event, this)">
                                                 <input type="hidden" name="id" value="${r.id}">
                                                 <button type="submit" class="btn-reject" style="width:80px;">Từ chối</button>
-                                            </form>    
+                                            </form>
                                         </c:if>
 
                                         <c:if test="${r.status == 'BORROWED'}">
-                                            <div id="return-box-${r.id}" style="display:none; margin: 10px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px;">
-                                                <input type="text" id="ret-bc-${r.id}" placeholder="Quét mã trả..." style="width:100px;">
-                                                <button onclick="submitReturn(${r.id})" class="btn success" style="padding: 2px 10px; background:#10b981; color:white; border:none;">Xác nhận trả</button>
+                                            <div id="return-box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px; background:#ecfdf5;">
+                                                <input type="text" id="ret-bc-${r.id}" placeholder="Quét mã trả..." style="width:90px; margin-bottom:5px;">
+                                                <button onclick="submitReturn(${r.id})" class="btn success" style="padding: 2px 10px; background:#10b981; color:white; border:none; width:100%;">Xác nhận</button>
                                             </div>
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn success" style="background:#10b981; color:white; border:none; width:80px;">Trả sách</button>
                                         </c:if>

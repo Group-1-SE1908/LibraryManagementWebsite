@@ -3,10 +3,12 @@
         <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
             <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
-                <c:set var="roleName" value="${sessionScope.currentUser.role.name}" />
+                <c:set var="currentUser" value="${sessionScope.currentUser}" />
+                <c:set var="roleName"
+                    value="${not empty currentUser && not empty currentUser.role ? currentUser.role.name : ''}" />
                 <c:set var="isAdmin" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
                 <c:set var="userName"
-                    value="${not empty sessionScope.currentUser.fullName ? sessionScope.currentUser.fullName : 'Guest'}" />
+                    value="${not empty currentUser && not empty currentUser.fullName ? currentUser.fullName : 'Guest'}" />
                 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
 
                 <style>
@@ -233,15 +235,17 @@
                             </a>
 
                             <c:choose>
-                                <c:when test="${not empty sessionScope.currentUser}">
+                                <c:when test="${not empty currentUser}">
                                     <div class="user-profile" id="userProfileBtn" onclick="toggleUserDropdown(event)">
                                         <c:choose>
-                                            <c:when test="${not empty sessionScope.currentUser.avatar && sessionScope.currentUser.avatar != 'null'}">
+                                            <c:when
+                                                test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
                                                 <img class="user-avatar"
-                                                    src="${pageContext.request.contextPath}/${sessionScope.currentUser.avatar}"
+                                                    src="${pageContext.request.contextPath}/${currentUser.avatar}"
                                                     alt="Avatar"
                                                     onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">
-                                                <div class="user-avatar user-avatar-initial" style="display:none;">${userInitial}</div>
+                                                <div class="user-avatar user-avatar-initial" style="display:none;">
+                                                    ${userInitial}</div>
                                             </c:when>
                                             <c:otherwise>
                                                 <div class="user-avatar user-avatar-initial">${userInitial}</div>
