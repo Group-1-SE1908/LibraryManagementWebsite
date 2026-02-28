@@ -1162,8 +1162,8 @@ footer {
 }
 
 .overlay {
-    background: var(--success-color);
-    background: linear-gradient(135deg, var(--success-color) 0%, #0a7a6e 100%);
+    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0945a8 100%);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: 0 0;
@@ -1234,8 +1234,8 @@ footer {
 
 .auth-container button {
     border-radius: 20px;
-    border: 1px solid var(--success-color);
-    background-color: var(--success-color);
+    border: 1px solid var(--primary-color);
+    background-color: var(--primary-color);
     color: #FFFFFF;
     font-size: 12px;
     font-weight: bold;
@@ -1247,8 +1247,8 @@ footer {
 }
 
 .auth-container button:hover:not(.ghost) {
-    background-color: #0a7a6e;
-    border-color: #0a7a6e;
+    background-color: #0945a8;
+    border-color: #0945a8;
 }
 
 .auth-container button:active {
