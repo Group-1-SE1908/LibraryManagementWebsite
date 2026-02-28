@@ -10,13 +10,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class CommentDAO {
 
     // Phương thức để thêm comment
     public void insertComment(Comment c) throws Exception {
 
-        String sql = "INSERT INTO Comment(book_id, user_id, content, rating, created_at, status) VALUES (?, ?, ?, ?, GETDATE(), 'VISIBLE')";
+        String sql = "INSERT INTO Comment(book_id, user_id, content, rating, created_at, status) "
+                + "VALUES (?, ?, ?, ?, GETDATE(), 'VISIBLE')";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -35,13 +35,11 @@ public class CommentDAO {
 
         List<Comment> list = new ArrayList<>();
 
-        String sql = """
-                    SELECT c.*, u.full_name, u.avatar
-                    FROM Comment c
-                    JOIN [User] u ON c.user_id = u.user_id
-                    WHERE c.book_id = ? AND c.status = 'VISIBLE'
-                    ORDER BY c.created_at DESC
-                """;
+        String sql = "SELECT c.*, u.full_name, u.avatar "
+                + "FROM Comment c "
+                + "JOIN [User] u ON c.user_id = u.user_id "
+                + "WHERE c.book_id = ? AND c.status = 'VISIBLE' "
+                + "ORDER BY c.created_at DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -85,7 +83,8 @@ public class CommentDAO {
             throw new RuntimeException(e);
         }
     }
-// Phương thức để xóa comment
+
+    // Phương thức để xóa comment
     public boolean deleteComment(long commentId, int userId, boolean isAdmin) throws Exception {
 
         String sql;
@@ -109,4 +108,3 @@ public class CommentDAO {
         }
     }
 }
-
