@@ -131,7 +131,7 @@ public class LibrarianBorrowController extends HttpServlet {
             }
         } catch (Exception ex) {
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+            resp.sendRedirect(req.getContextPath() + "/borrowlibrary/inperson_form");
         }
     }
 
