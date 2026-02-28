@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;   
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -215,6 +215,23 @@ public class UserDAO {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public List<User> findByRoleName(String roleName) throws SQLException {
+        String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
+                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
+                + "WHERE r.role_name = ?";
+        List<User> list = new ArrayList<>();
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapUser(rs));
+                }
+            }
+        }
+        return list;
     }
 
     private User mapUser(ResultSet rs) throws SQLException {

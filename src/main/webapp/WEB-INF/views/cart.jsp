@@ -21,6 +21,14 @@
     </c:forEach>
 </c:if>
 
+    <c:set var="currentUser" value="${sessionScope.currentUser}" />
+    <c:set var="userFullName" value="${currentUser.fullName}" />
+    <c:set var="userPhone" value="${currentUser.phone}" />
+    <c:set var="userEmail" value="${currentUser.email}" />
+    <c:set var="userAddress" value="${currentUser.address}" />
+    <c:set var="borrowDetailsVisible" value="${not empty param.cartError}" />
+    <c:url value="/checkout" var="checkoutUrlValue" />
+
 <main class="cart-page">
     <c:if test="${itemCount > 0}">
         <section class="cart-hero">
@@ -30,8 +38,6 @@
             <p class="hero-subtitle">Gửi yêu cầu mượn ngay khi bạn sẵn sàng. Chúng tôi sẽ giữ kho sách và hỗ trợ gia hạn nếu cần.</p>
             <div class="hero-actions">
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục khám phá</a>
-                <a href="${pageContext.request.contextPath}/borrow" class="btn secondary">Tạo yêu cầu mượn</a>
-                <a href="${pageContext.request.contextPath}/borrow/request" class="btn primary">Mượn sách</a>
             </div>
         </div>
         <div class="hero-summary">
@@ -109,15 +115,182 @@
                     <span>Tổng số lượng</span>
                     <strong>${totalQuantity}</strong>
                 </div>
-                <button type="button" class="btn secondary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/borrow'">Tạo yêu cầu mượn</button>
-                <button type="button" class="btn primary" style="margin-bottom: 10px;" onclick="window.location='${pageContext.request.contextPath}/borrow/request'">Mượn sách</button>
+                <form class="borrow-form" method="post" action="${pageContext.request.contextPath}/cart/checkout">
+                    <div class="borrow-form-heading">
+                        <p class="label">Chọn phương thức mượn</p>
+                        <small>Mượn nhanh theo nhu cầu của bạn</small>
+                    </div>
+                    <div class="borrow-methods">
+                        <label class="borrow-chip">
+                            <input type="radio" name="borrowMethod" value="ONLINE" checked />
+                            <div class="chip-content">
+                                <span>Online</span>
+                                <small>Lấy xác nhận từ xa, thư viện đang xử lý</small>
+                            </div>
+                        </label>
+                        <label class="borrow-chip">
+                            <input type="radio" name="borrowMethod" value="IN_PERSON" />
+                            <div class="chip-content">
+                                <span>Tại chỗ</span>
+                                <small>Tới thư viện nhận sách trực tiếp</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="borrow-details${borrowDetailsVisible ? ' borrow-details--visible' : ''}" data-borrow-details data-auto-show="${borrowDetailsVisible}">
+                        <div class="borrow-details-heading">
+                            <p class="label">Thông tin thủ thư cần kiểm tra</p>
+                            <small>Điền đầy đủ để thủ thư có thể liên hệ và xác thực ngay.</small>
+                        </div>
+                        <div class="borrow-details-grid">
+                            <label class="form-group">
+                                <span>Tên người mượn</span>
+                                <input type="text" name="contactName" placeholder="Ví dụ: Nguyễn Văn A" disabled required value="${userFullName != null ? userFullName : ''}" />
+                            </label>
+                            <label class="form-group">
+                                <span>Số điện thoại</span>
+                                <input type="tel" name="contactPhone" placeholder="Ví dụ: 0912345678" disabled required value="${userPhone != null ? userPhone : ''}" />
+                            </label>
+                            <label class="form-group">
+                                <span>Email liên hệ</span>
+                                <input type="email" name="contactEmail" placeholder="Ví dụ: ban@mail.com" disabled required value="${userEmail != null ? userEmail : ''}" />
+                            </label>
+                            <label class="form-group">
+                                <span>Thời gian mượn</span>
+                                <select name="borrowDuration" disabled required>
+                                    <option value="7">7 ngày</option>
+                                    <option value="14">14 ngày</option>
+                                </select>
+                            </label>
+                            <label class="form-group online-row" data-online-dependent>
+                                <span>Địa chỉ nhận sách</span>
+                                <input type="text" name="deliveryAddress" placeholder="Ví dụ: 123 Nguyễn Huệ" disabled required value="${userAddress != null ? userAddress : ''}" />
+                                <small>Thư viện sẽ gửi sách đến địa chỉ này khi bạn chọn online.</small>
+                            </label>
+                            <label class="form-group pickup-row" data-pickup-dependent>
+                                <span>Ngày đến lấy sách</span>
+                                <input type="date" name="pickupDate" disabled required />
+                                <small>Chỉ cần khi bạn chọn mượn tại chỗ.</small>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="button" class="btn primary" data-open-confirm>Mượn ngay</button>
+                </form>
                 <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục xem sách</a>
             </aside>
         </section>
     </c:if>
 </main>
 
+<div class="confirm-overlay" hidden data-confirm-overlay>
+    <div class="confirm-dialog">
+        <h3>Xác nhận mượn sách</h3>
+        <p>Bạn đang chọn phương thức <strong data-confirm-method></strong>. Hãy xác nhận trước khi gửi yêu cầu.</p>
+        <div class="confirm-actions">
+            <button type="button" class="btn secondary" data-confirm-cancel>Hủy</button>
+            <button type="button" class="btn primary" data-confirm-submit>Mượn</button>
+        </div>
+    </div>
+</div>
+
 <jsp:include page="/WEB-INF/views/footer.jsp" />
+
+<script>
+    (function() {
+        const detailPanel = document.querySelector('[data-borrow-details]');
+        if (!detailPanel) {
+            return;
+        }
+        const detailInputs = Array.from(detailPanel.querySelectorAll('input'));
+        const pickupDependents = detailPanel.querySelectorAll('[data-pickup-dependent]');
+        const onlineDependents = detailPanel.querySelectorAll('[data-online-dependent]');
+        const pickupInputs = detailPanel.querySelectorAll('input[name="pickupDate"]');
+        const deliveryInputs = detailPanel.querySelectorAll('input[name="deliveryAddress"]');
+        const confirmOverlay = document.querySelector('[data-confirm-overlay]');
+        const confirmMethodLabel = confirmOverlay?.querySelector('[data-confirm-method]');
+        const confirmSubmit = confirmOverlay?.querySelector('[data-confirm-submit]');
+        const confirmCancel = confirmOverlay?.querySelector('[data-confirm-cancel]');
+        const openConfirmButton = document.querySelector('[data-open-confirm]');
+        const borrowForm = document.querySelector('.borrow-form');
+        const updateMethodDependents = () => {
+            const selected = document.querySelector('input[name="borrowMethod"]:checked');
+            const isInPerson = selected && selected.value === 'IN_PERSON';
+            const isOnline = selected && selected.value === 'ONLINE';
+            pickupDependents.forEach(node => node.classList.toggle('pickup-row--visible', isInPerson));
+            onlineDependents.forEach(node => node.classList.toggle('online-row--visible', isOnline));
+            if (!detailPanel.classList.contains('borrow-details--visible')) {
+                return;
+            }
+            pickupInputs.forEach(input => {
+                input.required = isInPerson;
+                input.disabled = !isInPerson;
+            });
+            deliveryInputs.forEach(input => {
+                input.required = isOnline;
+                input.disabled = !isOnline;
+            });
+        };
+        const showDetails = () => {
+            detailPanel.classList.add('borrow-details--visible');
+            detailInputs.forEach(input => {
+                input.disabled = false;
+            });
+            updateMethodDependents();
+        };
+        const radios = document.querySelectorAll('input[name="borrowMethod"]');
+        radios.forEach(radio => {
+            const handler = () => showDetails();
+            radio.addEventListener('change', handler);
+            radio.addEventListener('focus', handler);
+        });
+        updateMethodDependents();
+        if (detailPanel.dataset.autoShow === 'true') {
+            showDetails();
+        }
+
+        const closeConfirmOverlay = () => {
+            if (!confirmOverlay) {
+                return;
+            }
+            confirmOverlay.hidden = true;
+            document.body.classList.remove('modal-open');
+        };
+
+        const openConfirmOverlay = () => {
+            if (!confirmOverlay) {
+                return;
+            }
+            const selected = document.querySelector('input[name="borrowMethod"]:checked');
+            const methodLabel = selected && selected.value === 'IN_PERSON' ? 'Tại chỗ' : 'Online';
+            if (confirmMethodLabel) {
+                confirmMethodLabel.textContent = methodLabel;
+            }
+            confirmOverlay.hidden = false;
+            document.body.classList.add('modal-open');
+        };
+
+        openConfirmButton?.addEventListener('click', (event) => {
+            event.preventDefault();
+            openConfirmOverlay();
+        });
+
+        confirmSubmit?.addEventListener('click', () => {
+            closeConfirmOverlay();
+            borrowForm?.submit();
+        });
+
+        confirmCancel?.addEventListener('click', closeConfirmOverlay);
+        confirmOverlay?.addEventListener('click', (event) => {
+            if (event.target === confirmOverlay) {
+                closeConfirmOverlay();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && confirmOverlay && !confirmOverlay.hidden) {
+                closeConfirmOverlay();
+            }
+        });
+    })();
+</script>
 
 </body>
 </html>
