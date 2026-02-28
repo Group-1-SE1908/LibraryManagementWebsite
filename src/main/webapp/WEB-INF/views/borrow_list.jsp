@@ -7,216 +7,207 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Quản lý Mượn Trả | LBMS Dashboard</title>
+        <title>Quản lý Mượn Trả Toàn Hệ Thống | LBMS</title>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
         <style>
-            :root {
-                --primary: #0b57d0;
-                --success: #10b981;
-                --danger: #ef4444;
-                --warning: #f59e0b;
-                --bg: #f1f5f9;
-                --text-main: #1e293b;
-            }
-
-            body {
-                background-color: var(--bg);
-                font-family: 'Inter', sans-serif;
-                color: var(--text-main);
-            }
-            .dashboard-container {
-                max-width: 1240px;
-                margin: 0 auto;
-                padding: 30px 15px;
-            }
-
-            .nav-tabs {
-                display: flex;
-                gap: 12px;
+            .filter-bar {
+                background: white;
+                padding: 20px;
+                border-radius: 12px;
                 margin-bottom: 25px;
-                border-bottom: 1px solid #e2e8f0;
-                padding-bottom: 15px;
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                gap: 15px;
+                align-items: flex-end;
             }
-            .tab-link {
-                padding: 10px 20px;
-                border-radius: 8px;
-                text-decoration: none;
-                color: #64748b;
-                font-weight: 600;
-                background: white;
-                border: 1px solid #e2e8f0;
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
             }
-            .tab-link.active {
-                background: var(--primary);
-                color: white;
-                border-color: var(--primary);
-            }
-
-            .table-card {
-                background: white;
-                border-radius: 16px;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-                overflow: hidden;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            th {
-                background: #f8fafc;
-                padding: 18px;
-                text-align: left;
+            .filter-group label {
                 font-size: 12px;
+                font-weight: 700;
                 color: #64748b;
                 text-transform: uppercase;
-                border-bottom: 1px solid #e2e8f0;
             }
-            td {
-                padding: 18px;
-                border-bottom: 1px solid #f1f5f9;
-                vertical-align: middle;
+            .filter-group input, .filter-group select {
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                min-width: 200px;
             }
-
-            .badge {
-                padding: 6px 12px;
-                border-radius: 999px;
+            .btn-reject {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+                padding: 8px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+            .btn-reject:hover {
+                background: #fecaca;
+            }
+            .status-badge {
+                padding: 5px 10px;
+                border-radius: 20px;
                 font-size: 11px;
                 font-weight: 700;
-                text-transform: uppercase;
-                display: inline-block;
-                border: 1px solid transparent;
             }
-            .tag-requested {
-                background: #fff7ed;
-                color: #c2410c;
+            .status-REQUESTED {
+                background: #fef3c7;
+                color: #92400e;
             }
-            .tag-borrowed {
-                background: #f0fdf4;
-                color: #15803d;
+            .status-BORROWED {
+                background: #dcfce7;
+                color: #166534;
             }
-
-            /* Style cho Borrow Method */
-            .method-online {
-                background: #e0f2fe;
-                color: #0369a1;
-                border-color: #bae6fd;
-            }
-            .method-person {
+            .status-REJECTED {
                 background: #f1f5f9;
                 color: #475569;
-                border-color: #e2e8f0;
             }
 
-            .barcode-input {
-                width: 140px;
-                padding: 8px;
+            
+            .table-card {
                 border: 1px solid #cbd5e1;
-                border-radius: 6px;
-                font-size: 13px;
-            }
-            .btn-action {
-                padding: 8px 16px;
                 border-radius: 8px;
-                font-size: 13px;
-                font-weight: 600;
-                cursor: pointer;
-                border: none;
+                overflow: hidden;
             }
-            .btn-approve {
-                background: var(--success);
-                color: white;
+
+            .table-bordered {
+                width: 100%;
+                border-collapse: collapse; 
+            }
+
+            .table-bordered th, .table-bordered td {
+                border: 1px solid #cbd5e1; 
+                padding: 12px 15px;
+                text-align: left;
+            }
+
+            .table-bordered thead th {
+                background-color: #f8fafc;
+                color: #475569;
+                font-weight: 700;
+                border-bottom: 2px solid #cbd5e1;
+            }
+
+            
+            .table-bordered tbody tr:nth-child(even) {
+                background-color: #f1f5f9;
+            }
+
+            .table-bordered tbody tr:hover {
+                background-color: #e2e8f0; 
             }
         </style>
     </head>
     <body>
-        <jsp:include page="header.jsp" />
+        <jsp:include page="header_lib.jsp" />
 
-        <c:set var="isStaff" value="${sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}" />
-
-        <div class="dashboard-container">
-            <div class="page-title" style="margin-bottom: 20px;">
-                <h1>${isStaff ? '🛠️ Quản lý Mượn Trả Toàn Hệ Thống' : '📖 Sách của tôi'}</h1>
+        <div class="container py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>🛠️ Quản lý Mượn Trả</h1>
             </div>
 
-            <div class="nav-tabs">
-                <a href="borrow" 
-                   class="tab-link ${empty param.filter ? 'active' : ''}">
-                    📥 Tất cả
-                </a>
+            <form action="${pageContext.request.contextPath}/borrowlibrary" method="get" class="filter-bar">
+                <div class="filter-group">
+                    <label>Tìm kiếm</label>
+                    <input type="text" name="q" placeholder="Tên user hoặc tên sách..." value="${param.q}">
+                </div>
+                <div class="filter-group">
+                    <label>Trạng thái</label>
+                    <select name="status">
+                        <option value="">-- Tất cả --</option>
+                        <option value="REQUESTED" ${param.status == 'REQUESTED' ? 'selected' : ''}>Chờ duyệt</option>
+                        <option value="BORROWED" ${param.status == 'BORROWED' ? 'selected' : ''}>Đang mượn</option>
+                        <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
+                        <option value="RETURNED" ${param.status == 'RETURNED' ? 'selected' : ''}>Đã trả</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn primary">Áp dụng lọc</button>
+                <a href="${pageContext.request.contextPath}/borrowlibrary" class="btn">Xóa lọc</a>
+            </form>
 
-                <a href="borrow?filter=ONLINE" 
-                   class="tab-link ${param.filter == 'ONLINE' ? 'active' : ''}">
-                    🌐 Yêu cầu Online
-                </a>
+            <c:if test="${not empty sessionScope.flash}">
+                <input type="hidden" id="serverFlashMessage" value="<c:out value='${sessionScope.flash}' />">
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        const flashMsg = document.getElementById('serverFlashMessage').value;
+                        if (flashMsg) {
+                            const isError = flashMsg.toLowerCase().startsWith("lỗi") || flashMsg.toLowerCase().startsWith("truy cập");
 
-                <a href="borrow?filter=OVERDUE" 
-                   class="tab-link tab-link-danger ${param.filter == 'OVERDUE' ? 'active' : ''}">
-                    ⏰ Quá hạn
-                </a>
-            </div>
-
-            <div class="page-title">
-                <h1>${pageTitle}</h1>
-            </div>
-
-            <c:if test="${not empty flash}">
-                <div style="padding:15px; background:#dcfce7; color:#166534; border-radius:10px; margin-bottom:20px;">${flash}</div>
+                            Swal.fire({
+                                icon: isError ? 'error' : 'success',
+                                title: isError ? 'Thao tác thất bại' : 'Thành công!',
+                                text: flashMsg,
+                                confirmButtonColor: '#0b57d0'
+                            });
+                        }
+                    });
+                </script>
+                <c:remove var="flash" scope="session" />
             </c:if>
 
-            <div class="table-card">
-                <table>
+            <div class="table-card" style="border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm); border: 1px solid #cbd5e1;">
+                <table class="table-bordered">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <c:if test="${isStaff}"><th>Người mượn</th></c:if>
-                                <th>Thông tin sách</th>
-                                <th>Hình thức</th>
-                                <th>Thời hạn</th>
-                                <th>Trạng thái</th>
-                            <c:if test="${isStaff}"><th>Thao tác</th></c:if>
-                            </tr>
-                        </thead>
-                        <tbody>
+                            <th style="text-align:center; width: 5%;">ID</th>
+                            <th style="width: 20%;">Người mượn</th>
+                            <th style="width: 25%;">Thông tin sách</th>
+                            <th style="width: 12%;">Ngày mượn</th>
+                            <th style="width: 12%;">Hẹn trả</th>
+                            <th style="text-align:center; width: 12%;">Trạng thái</th>
+                            <th style="text-align:center; width: 14%;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <c:forEach items="${records}" var="r">
                             <tr>
-                                <td><strong>#${r.id}</strong></td>
-                                <c:if test="${isStaff}">
-                                    <td>
-                                        <div style="font-weight:600">${r.user.fullName}</div>
-                                        <div style="font-size:11px; color:#64748b">${r.user.email}</div>
-                                    </td>
-                                </c:if>
+                                <td style="text-align:center; font-weight:bold; color:#64748b;">#${r.id}</td>
                                 <td>
-                                    <div style="font-weight:600">${r.book.title}</div>
-                                    <div style="font-size:11px; color:#64748b">ISBN: ${r.book.isbn}</div>
+                                    <div style="font-weight:600; color:#0f172a;">${r.user.fullName}</div>
+                                    <div style="font-size:12px; color:#64748b;">${r.user.email}</div>
                                 </td>
                                 <td>
-                                    <c:choose>
-                                        <c:when test="${r.borrowMethod == 'ONLINE'}">
-                                            <span class="badge method-online">🌐 Online</span>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="badge method-person">📍 Tại quầy</span>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <div style="font-weight:600; color:#0f172a;">${r.book.title}</div>
                                 </td>
-                                <td>
-                                    <div style="font-size:12px">Hạn: ${not empty r.dueDate ? r.dueDate : '-'}</div>
+
+                                <td>${not empty r.borrowDate ? r.borrowDate : '<span style="color:#94a3b8">---</span>'}</td>
+                                <td style="color: #ef4444; font-weight: 700;">${not empty r.dueDate ? r.dueDate : '<span style="color:#94a3b8">---</span>'}</td>
+
+                                <td style="text-align:center;">
+                                    <span class="status-badge status-${r.status}">${r.status}</span>
                                 </td>
-                                <td>
-                                    <span class="badge tag-${fn:toLowerCase(r.status)}">${r.status}</span>
-                                </td>
-                                <c:if test="${isStaff}">
-                                    <td>
+
+                                <td style="text-align:center;">
+                                    <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                                        <a href="${pageContext.request.contextPath}/borrowlibrary/detail?id=${r.id}" class="btn" style="width:80px;">Chi tiết</a>
+
                                         <c:if test="${r.status == 'REQUESTED'}">
-                                            <div style="display:flex; gap:5px;">
-                                                <input type="text" id="bc_${r.id}" class="barcode-input" placeholder="Quét mã vạch...">
-                                                <button onclick="handleApprove(${r.id})" class="btn-action btn-approve">Duyệt</button>
+                                            <div id="box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #0b57d0; padding: 5px; border-radius: 5px; background:#f8fafc;">
+                                                <input type="text" id="bc-input-${r.id}" placeholder="Mã vạch..." style="width:90px; margin-bottom:5px;">
+                                                <button onclick="confirmApprove(${r.id})" class="btn primary" style="padding: 2px 10px; width:100%;">OK</button>
                                             </div>
+                                            <button id="btn-show-${r.id}" onclick="showInput(${r.id})" class="btn primary" style="width:80px;">Duyệt</button>
+
+                                            <form action="${pageContext.request.contextPath}/borrowlibrary/reject" method="post" style="display:inline; margin:0;" onsubmit="confirmReject(event, this)">
+                                                <input type="hidden" name="id" value="${r.id}">
+                                                <button type="submit" class="btn-reject" style="width:80px;">Từ chối</button>
+                                            </form>
                                         </c:if>
-                                    </td>
-                                </c:if>
+
+                                        <c:if test="${r.status == 'BORROWED'}">
+                                            <div id="return-box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px; background:#ecfdf5;">
+                                                <input type="text" id="ret-bc-${r.id}" placeholder="Quét mã trả..." style="width:90px; margin-bottom:5px;">
+                                                <button onclick="submitReturn(${r.id})" class="btn success" style="padding: 2px 10px; background:#10b981; color:white; border:none; width:100%;">Xác nhận</button>
+                                            </div>
+                                            <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn success" style="background:#10b981; color:white; border:none; width:80px;">Trả sách</button>
+                                        </c:if>
+                                    </div>
+                                </td>
                             </tr>
                         </c:forEach>
                     </tbody>
@@ -225,14 +216,75 @@
         </div>
 
         <script>
-            function handleApprove(id) {
-                const barcode = document.getElementById('bc_' + id).value;
-                if (!barcode || barcode.trim() === "") {
-                    alert("Bạn phải nhập Barcode của cuốn sách vật lý để duyệt!");
+            // 1. Hàm hiển thị ô nhập liệu (Giữ nguyên)
+            function showInput(id) {
+                document.getElementById('box-' + id).style.display = 'block';
+                document.getElementById('btn-show-' + id).style.display = 'none';
+            }
+            function showReturn(id) {
+                document.getElementById('return-box-' + id).style.display = 'block';
+                document.getElementById('btn-ret-show-' + id).style.display = 'none';
+            }
+
+            // 2. Hàm Xác nhận Duyệt sách
+            function confirmApprove(id) {
+                const val = document.getElementById('bc-input-' + id).value;
+                if (!val) {
+                    Swal.fire({icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập Barcode trước khi duyệt!'});
                     return;
                 }
-                window.location.href = "${pageContext.request.contextPath}/borrow/approve?id=" + id + "&barcode=" + encodeURIComponent(barcode);
+                window.location.href = "${pageContext.request.contextPath}/borrowlibrary/approve?id=" + id + "&barcode=" + encodeURIComponent(val);
+            }
+
+            // 3. Hàm Xác nhận Trả sách (Dùng POST form ẩn)
+            function submitReturn(id) {
+                const bc = document.getElementById('ret-bc-' + id).value;
+                if (!bc) {
+                    Swal.fire({icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng quét mã vạch trên sách để nhận trả!'});
+                    return;
+                }
+
+                // Popup hỏi xác nhận trước khi trả
+                Swal.fire({
+                    title: 'Xác nhận nhận trả sách?',
+                    text: "Hệ thống sẽ cập nhật lại số lượng trong kho!",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Đúng, trả sách!',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '${pageContext.request.contextPath}/borrowlibrary/return';
+                        form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+
+            // 4. Hàm Xác nhận Từ chối (Dùng cho nút form submit)
+            function confirmReject(event, formElement) {
+                event.preventDefault(); // Chặn form submit ngay lập tức
+                Swal.fire({
+                    title: 'Từ chối yêu cầu mượn?',
+                    text: "Hành động này sẽ hủy yêu cầu của độc giả!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Đồng ý từ chối',
+                    cancelButtonText: 'Quay lại'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        formElement.submit(); // Chỉ submit nếu bấm Đồng ý
+                    }
+                });
             }
         </script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </body>
 </html>

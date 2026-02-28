@@ -14,7 +14,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter(urlPatterns = {"/books", "/books/*", "/borrow", "/borrow/*", "/shipping", "/shipping/*", "/profile", "/change-password", "/reservations", "/reservations/*"})
+@WebFilter(urlPatterns = { "/borrow", "/borrow/*", "/shipping", "/shipping/*", "/profile", "/change-password",
+        "/reservations", "/reservations/*" })
 public class AuthFilter implements Filter {
 
     @Override

@@ -5,6 +5,16 @@
          version="6.0">
 
   <display-name>LBMS</display-name>
+  
+  <context-param>
+    <param-name>jakarta.servlet.jsp.jstl.fmt.localizationContext</param-name>
+    <param-value>messages</param-value>
+  </context-param>
+  
+  <context-param>
+    <param-name>jakarta.servlet.jsp.jstl.fmt.locale</param-name>
+    <param-value>vi_VN</param-value>
+  </context-param>
 
   <welcome-file-list>
     <welcome-file>index.jsp</welcome-file>
@@ -63,6 +73,12 @@
   <servlet-mapping>
     <servlet-name>default</servlet-name>
     <url-pattern>*.ico</url-pattern>
+  </servlet-mapping>
+
+  <!-- Allow uploads directory to be served as static files -->
+  <servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>/uploads/*</url-pattern>
   </servlet-mapping>
 
 </web-app>
