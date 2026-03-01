@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-    <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-        <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+    <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+        <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
             <!DOCTYPE html>
             <html lang="en">
 
@@ -295,7 +295,7 @@
                                             <div class="avatar-box">
                                                 <c:choose>
                                                     <c:when test="${not empty user.avatar}">
-                                                        <img src="${pageContext.request.contextPath}/uploads/${user.avatar}"
+                                                        <img src="${pageContext.request.contextPath}/${user.avatar}"
                                                             alt="Profile Picture" class="avatar-img"
                                                             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=1E40AF&color=fff';">
                                                     </c:when>

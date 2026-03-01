@@ -2,6 +2,7 @@ package com.lbms.controller;
 
 import com.lbms.model.Book;
 import com.lbms.model.Category;
+import com.lbms.model.User;
 import com.lbms.service.BookService;
 import com.lbms.dao.CategoryDAO;
 import com.lbms.dao.CommentDAO;
@@ -12,6 +13,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 import java.io.File;
@@ -24,10 +26,9 @@ import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = { "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search" })
 
-@MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
-    maxFileSize = 1024 * 1024 * 10,       // 10MB
-    maxRequestSize = 1024 * 1024 * 50     // 50MB
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10, // 10MB
+        maxRequestSize = 1024 * 1024 * 50 // 50MB
 )
 public class BookController extends HttpServlet {
     private BookService bookService;
@@ -63,7 +64,8 @@ public class BookController extends HttpServlet {
                     break;
                 case "/books/delete":
                     int delId = Integer.parseInt(req.getParameter("id"));
-                    bookService.delete(delId);
+                    // Cần userId để ghi log hoạt động xóa sách
+                    bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
                     resp.sendRedirect(req.getContextPath() + "/books");
                     break;
                 default:
@@ -81,19 +83,29 @@ public class BookController extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
 
         try {
-          
+
             String imagePath = uploadImage(req);
 
+            // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
+            HttpSession session = req.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+            long userId = currentUser.getId();
+
+            // 2. THỰC HIỆN THEO PATH
             if ("/books/new".equals(path)) {
                 Book b = readBookFromRequest(req);
-                b.setImage(imagePath); 
-                bookService.create(b);
+                b.setImage(imagePath);
+                bookService.create(b, userId);
             } else if ("/books/edit".equals(path)) {
                 int id = Integer.parseInt(req.getParameter("id"));
                 Book b = readBookFromRequest(req);
                 b.setId(id);
-                b.setImage(imagePath); 
-                bookService.update(b);
+                b.setImage(imagePath);
+                bookService.update(b, userId);
             }
             resp.sendRedirect(req.getContextPath() + "/books");
         } catch (IllegalArgumentException ex) {
@@ -110,26 +122,24 @@ public class BookController extends HttpServlet {
         }
     }
 
-    
     private String uploadImage(HttpServletRequest req) throws IOException, ServletException {
         Part filePart = req.getPart("imageFile"); // Khớp với name="imageFile" trong book_form.jsp
-        
-       
+
         if (filePart == null || filePart.getSize() <= 0) {
             return req.getParameter("currentImage");
         }
 
         String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
         String relativePath = "assets/images/books/" + fileName;
-        
-        
-        String uploadPath = getServletContext().getRealPath("/") + relativePath;
-        
-        File uploadDir = new File(getServletContext().getRealPath("/") + "assets/images/books/");
-        if (!uploadDir.exists()) uploadDir.mkdirs();
 
-        filePart.write(uploadPath); 
-        return relativePath; 
+        String uploadPath = getServletContext().getRealPath("/") + relativePath;
+
+        File uploadDir = new File(getServletContext().getRealPath("/") + "assets/images/books/");
+        if (!uploadDir.exists())
+            uploadDir.mkdirs();
+
+        filePart.write(uploadPath);
+        return relativePath;
     }
 
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
@@ -152,7 +162,7 @@ public class BookController extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
         Book book = bookService.findById(id);
         req.setAttribute("book", book);
-        
+
         // Load comments for the book
         try {
             req.setAttribute("comments", commentDAO.getCommentsByBook(id));
@@ -160,33 +170,33 @@ public class BookController extends HttpServlet {
             Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
             req.setAttribute("comments", new java.util.ArrayList<>());
         }
-        
+
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);
     }
 
     private Book readBookFromRequest(HttpServletRequest req) {
-    Book b = new Book();
-    b.setIsbn(req.getParameter("isbn"));
-    b.setTitle(req.getParameter("title"));
-    b.setAuthor(req.getParameter("author"));
-    
-    String priceStr = req.getParameter("price");
-    if (priceStr != null && !priceStr.isBlank()) {
-        
-        b.setPrice(Double.valueOf(priceStr)); 
-    }
+        Book b = new Book();
+        b.setIsbn(req.getParameter("isbn"));
+        b.setTitle(req.getParameter("title"));
+        b.setAuthor(req.getParameter("author"));
 
-    String qtyStr = req.getParameter("quantity");
-    b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
-    
-    String catIdStr = req.getParameter("categoryId");
-    
-    if (catIdStr != null && !catIdStr.isEmpty()) {
-        b.setCategoryId(Long.valueOf(catIdStr));
-    } else {
-        b.setCategoryId(null); 
+        String priceStr = req.getParameter("price");
+        if (priceStr != null && !priceStr.isBlank()) {
+
+            b.setPrice(Double.valueOf(priceStr));
+        }
+
+        String qtyStr = req.getParameter("quantity");
+        b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
+
+        String catIdStr = req.getParameter("categoryId");
+
+        if (catIdStr != null && !catIdStr.isEmpty()) {
+            b.setCategoryId(Long.valueOf(catIdStr));
+        } else {
+            b.setCategoryId(null);
+        }
+
+        return b;
     }
-    
-    return b;
-}
 }

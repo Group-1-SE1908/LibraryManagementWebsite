@@ -2,29 +2,10 @@
     <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
         <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-
-
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
             <style>
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                    background-color: #f5f5f5;
-                    color: #333;
-                }
-
-                .container {
-                    display: flex;
-                    height: 100vh;
-                }
-
-
+                /* Reset & Base Styles */
                 .sidebar {
                     width: 280px;
                     background: linear-gradient(135deg, #1f3a93 0%, #2c5aa0 100%);
@@ -34,6 +15,7 @@
                     height: 100vh;
                     overflow-y: auto;
                     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
                 }
 
                 .sidebar-header {
@@ -79,7 +61,6 @@
                     transition: all 0.3s ease;
                     margin-bottom: 4px;
                     white-space: nowrap;
-                    overflow: hidden;
                 }
 
                 .sidebar-nav a:hover,
@@ -97,34 +78,14 @@
                     width: 20px;
                     text-align: center;
                 }
-
-
-                .main {
-                    flex: 1;
-                    margin-left: 280px;
-                    display: flex;
-                    flex-direction: column;
-                    height: 100vh;
-                }
-
-                .header {
-                    background: white;
-                    padding: 20px 32px;
-                    display: flex;
-                    justify-content: space-between;
-                    border-bottom: 1px solid #e5e5e5;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                }
-
-                .content {
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 32px;
-                }
             </style>
 
-
             <div class="sidebar">
+                <c:set var="activeUri" value="${requestScope['jakarta.servlet.forward.request_uri']}" />
+                <c:if test="${empty activeUri}">
+                    <c:set var="activeUri" value="${pageContext.request.requestURI}" />
+                </c:if>
+
                 <div class="sidebar-header">
                     <i class="fas fa-book"></i>
                     <h2>LBMS Admin</h2>
@@ -132,50 +93,45 @@
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">MANAGEMENT</div>
-
                     <div class="sidebar-nav">
-                        <c:set var="activeUri" value="${requestScope['jakarta.servlet.forward.request_uri']}" />
-                        <c:if test="${empty activeUri}">
-                            <c:set var="activeUri" value="${pageContext.request.requestURI}" />
-                        </c:if>
+                        <a href="${pageContext.request.contextPath}/admin"
+                            class="${activeUri.endsWith('/admin') || activeUri.endsWith('/admin/') ? 'active' : ''}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Dashboard</span>
+                        </a>
 
-                        <%-- Dashboard --%>
-                            <a href="${pageContext.request.contextPath}/admin"
-                                class="${activeUri.endsWith('/admin') || activeUri.endsWith('/admin/') ? 'active' : ''}">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Dashboard</span>
-                            </a>
+                        <a href="${pageContext.request.contextPath}/admin/users"
+                            class="${fn:contains(activeUri, '/admin/users') ? 'active' : ''}">
+                            <i class="fas fa-users"></i>
+                            <span>User Management</span>
+                        </a>
 
-                            <%-- User Management --%>
-                                <a href="${pageContext.request.contextPath}/admin/users"
-                                    class="${fn:contains(activeUri, '/admin/users') ? 'active' : ''}">
-                                    <i class="fas fa-users"></i>
-                                    <span>User Management</span>
-                                </a>
+                        <a href="${pageContext.request.contextPath}/admin/books"
+                            class="${fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
+                            <i class="fas fa-book-open"></i>
+                            <span>Book Management</span>
+                        </a>
 
-                                <%-- Book Management --%>
-                                    <a href="${pageContext.request.contextPath}/admin/books"
-                                        class="${fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
-                                        <i class="fas fa-book-open"></i>
-                                        <span>Book Management</span>
-                                    </a>
-
-                                    <%-- Categories --%>
-                                        <a href="${pageContext.request.contextPath}/admin/categories"
-                                            class="${fn:contains(activeUri, '/admin/categories') ? 'active' : ''}">
-                                            <i class="fas fa-list"></i>
-                                            <span>Categories</span>
-                                        </a>
+                        <a href="${pageContext.request.contextPath}/admin/categories"
+                            class="${fn:contains(activeUri, '/admin/categories') ? 'active' : ''}">
+                            <i class="fas fa-list"></i>
+                            <span>Categories</span>
+                        </a>
                     </div>
                 </div>
-
-
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">ANALYSIS</div>
                     <div class="sidebar-nav">
-                        <a href="#"><i class="fas fa-chart-bar"></i> Reports</a>
-                        <a href="#"><i class="fas fa-shipping-fast"></i> Shipments</a>
+                        <%-- Mục Activity Log --%>
+                            <a href="${pageContext.request.contextPath}/admin/librarianActivityLog"
+                                class="${fn:contains(activeUri, '/admin/librarianActivityLog') ? 'active' : ''}">
+                                <i class="fas fa-history"></i>
+                                <span>Librarian Activity Log</span>
+                            </a>
+
+                            <a href="#"><i class="fas fa-chart-bar"></i> Reports</a>
+                            <a href="#"><i class="fas fa-shipping-fast"></i> Shipments</a>
                     </div>
                 </div>
 
@@ -188,5 +144,4 @@
                         </a>
                     </div>
                 </div>
-
             </div>

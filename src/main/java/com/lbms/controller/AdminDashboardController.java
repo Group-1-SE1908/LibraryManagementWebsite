@@ -1,5 +1,6 @@
 package com.lbms.controller;
 
+import com.lbms.dao.DashboardDAO;
 import com.lbms.model.User;
 import com.lbms.dao.UserDAO;
 
@@ -10,38 +11,41 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(urlPatterns = { "/admin", "/admin/dashboard" })
 public class AdminDashboardController extends HttpServlet {
-    private UserDAO userDAO;
+    private DashboardDAO dashboardDAO;
 
     @Override
-    public void init() {
-        this.userDAO = new UserDAO();
+    public void init() throws ServletException {
+        dashboardDAO = new DashboardDAO();
+
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         try {
-            List<User> users = new ArrayList<>();
 
-            // Get user data for the user management table
-            try {
-                // Use UserDAO to fetch first 4 users for dashboard
-                users = userDAO.getAllUsers(1, 4, "");
-            } catch (Exception e) {
-                // If there's any error getting users, just use empty list
-                e.printStackTrace();
-            }
+            Map<String, Object> stats = dashboardDAO.getDashboardStats();
 
-            req.setAttribute("users", users);
+            List<Map<String, Object>> topBorrowers = dashboardDAO.getTopBorrowers(5);
 
-            // Forward to dashboard view
-            req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
-        } catch (Exception ex) {
-            throw new ServletException(ex);
+            request.setAttribute("totalBooks", stats.get("totalBooks"));
+            request.setAttribute("activeUsers", stats.get("activeUsers"));
+            request.setAttribute("pendingReturns", stats.get("pendingReturns"));
+            request.setAttribute("totalShipments", stats.get("totalShipments"));
+            request.setAttribute("topBorrowers", topBorrowers);
+
+            request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp")
+                    .forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

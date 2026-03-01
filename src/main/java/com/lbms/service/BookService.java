@@ -25,22 +25,22 @@ public class BookService {
         return bookDAO.findById(id);
     }
 
-    public long create(Book b) throws SQLException {
+    public long create(Book b, long userId) throws SQLException {
         validate(b);
         if (b.getStatus() == null || b.getStatus().isBlank())
             b.setStatus("AVAILABLE");
-        return bookDAO.create(b);
+        return bookDAO.create(b, userId);
     }
 
-    public void update(Book b) throws SQLException {
+    public void update(Book b, long userId) throws SQLException {
         validate(b);
         if (b.getStatus() == null || b.getStatus().isBlank())
             b.setStatus("AVAILABLE");
-        bookDAO.update(b);
+        bookDAO.update(b, userId);
     }
 
-    public void delete(long id) throws SQLException {
-        bookDAO.delete(id);
+    public void delete(long id, long userId) throws SQLException {
+        bookDAO.delete(id, userId);
     }
 
     private void validate(Book b) {
