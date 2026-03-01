@@ -108,7 +108,7 @@
     <jsp:include page="header.jsp" />
 
     <div class="comments-container">
-        <h1>Comments for Book ID: ${bookId}</h1>
+        <h1>Bình Luận Cho Sách ID: ${bookId}</h1>
 
         <c:choose>
             <c:when test="${not empty comments}">
@@ -149,7 +149,7 @@
             </c:when>
             <c:otherwise>
                 <div class="no-comments">
-                    <p>No comments yet.</p>
+                    <p>Chưa có bình luận nào.</p>
                 </div>
             </c:otherwise>
         </c:choose>

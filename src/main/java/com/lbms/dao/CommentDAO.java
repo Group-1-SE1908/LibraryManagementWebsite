@@ -84,6 +84,33 @@ public class CommentDAO {
         }
     }
 
+    //Phương thức để edit comment (với quyền admin)
+    public boolean updateComment(Comment c, boolean isAdmin) throws Exception {
+        String sql;
+        
+        if (isAdmin) {
+            sql = "UPDATE Comment SET content = ?, rating = ?, updated_at = GETDATE() WHERE comment_id = ?";
+        } else {
+            sql = "UPDATE Comment SET content = ?, rating = ?, updated_at = GETDATE() WHERE comment_id = ? AND user_id = ?";
+        }
+        
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, c.getContent());
+            ps.setInt(2, c.getRating());
+            ps.setLong(3, c.getCommentId());
+            
+            if (!isAdmin) {
+                ps.setInt(4, c.getUserId());
+            }
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // Phương thức để xóa comment
     public boolean deleteComment(long commentId, int userId, boolean isAdmin) throws Exception {
 
