@@ -78,22 +78,36 @@ public class LibrarianBorrowController extends HttpServlet {
             String path = req.getServletPath();
 
             if ("/borrowlibrary/approve".equals(path)) {
-                long id = Long.parseLong(req.getParameter("id"));
+                String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
+
+                // Kiểm tra dữ liệu để tránh lỗi "For input string: ''"
+                if (idStr == null || idStr.isBlank() || barcode == null || barcode.isBlank()) {
+                    throw new IllegalArgumentException("Thiếu ID phiếu mượn hoặc mã vạch sách.");
+                }
+
+                long id = Long.parseLong(idStr);
+                // GỌI SERVICE CỦA LIBRARIAN
                 libService.approveRequest(id, barcode);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
             } else if ("/borrowlibrary/return".equals(path)) {
-                long id = Long.parseLong(req.getParameter("id"));
+                String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
-                libService.returnBook(id, barcode);
+                if (idStr == null || idStr.isBlank()) {
+                    throw new IllegalArgumentException("ID không hợp lệ.");
+                }
+
+                libService.returnBook(Long.parseLong(idStr), barcode);
                 req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
-
             } else if ("/borrowlibrary/reject".equals(path)) {
-                long id = Long.parseLong(req.getParameter("id"));
-                libService.rejectRequest(id);
-                req.getSession().setAttribute("flash", "Đã từ chối yêu cầu #" + id);
+                String idStr = req.getParameter("id");
+                if (idStr == null || idStr.isBlank()) {
+                    throw new IllegalArgumentException("ID không hợp lệ.");
+                }
 
+                libService.rejectRequest(Long.parseLong(idStr));
+                req.getSession().setAttribute("flash", "Đã từ chối yêu cầu.");
             } else if ("/borrowlibrary/inperson".equals(path)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
                 String rawBarcodes = req.getParameter("barcodes");

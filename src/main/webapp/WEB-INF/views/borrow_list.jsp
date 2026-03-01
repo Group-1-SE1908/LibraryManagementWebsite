@@ -68,7 +68,7 @@
                 color: #475569;
             }
 
-            
+
             .table-card {
                 border: 1px solid #cbd5e1;
                 border-radius: 8px;
@@ -77,11 +77,11 @@
 
             .table-bordered {
                 width: 100%;
-                border-collapse: collapse; 
+                border-collapse: collapse;
             }
 
             .table-bordered th, .table-bordered td {
-                border: 1px solid #cbd5e1; 
+                border: 1px solid #cbd5e1;
                 padding: 12px 15px;
                 text-align: left;
             }
@@ -93,13 +93,13 @@
                 border-bottom: 2px solid #cbd5e1;
             }
 
-            
+
             .table-bordered tbody tr:nth-child(even) {
                 background-color: #f1f5f9;
             }
 
             .table-bordered tbody tr:hover {
-                background-color: #e2e8f0; 
+                background-color: #e2e8f0;
             }
         </style>
     </head>
@@ -227,13 +227,36 @@
             }
 
             // 2. Hàm Xác nhận Duyệt sách
+
+            // Thay thế đoạn script cũ tại borrow_list.jsp [cite: 310-317]
             function confirmApprove(id) {
-                const val = document.getElementById('bc-input-' + id).value;
-                if (!val) {
-                    Swal.fire({icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập Barcode trước khi duyệt!'});
+                const barcodeVal = document.getElementById('bc-input-' + id).value;
+                if (!barcodeVal) {
+                    Swal.fire({icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập mã vạch sách!'});
                     return;
                 }
-                window.location.href = "${pageContext.request.contextPath}/borrowlibrary/approve?id=" + id + "&barcode=" + encodeURIComponent(val);
+
+                Swal.fire({
+                    title: 'Xác nhận duyệt?',
+                    text: "Hệ thống sẽ ghi nhận sách đã được cho mượn.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0b57d0',
+                    confirmButtonText: 'Đồng ý duyệt'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '${pageContext.request.contextPath}/borrowlibrary/approve';
+
+                        // SỬA TẠI ĐÂY: Sử dụng cộng chuỗi để giữ nguyên biến JavaScript
+                        form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
+                                '<input type="hidden" name="barcode" value="' + barcodeVal + '">';
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
             }
 
             // 3. Hàm Xác nhận Trả sách (Dùng POST form ẩn)
