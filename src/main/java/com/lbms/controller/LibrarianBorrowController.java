@@ -13,7 +13,8 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject", "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson"})
+@WebServlet(urlPatterns = { "/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject",
+        "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson" })
 public class LibrarianBorrowController extends HttpServlet {
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
@@ -77,6 +78,15 @@ public class LibrarianBorrowController extends HttpServlet {
             requireStaff(req);
             String path = req.getServletPath();
 
+            // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
+            HttpSession session = req.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+            long staffId = currentUser.getId();
+
             if ("/borrowlibrary/approve".equals(path)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
@@ -88,7 +98,7 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 long id = Long.parseLong(idStr);
                 // GỌI SERVICE CỦA LIBRARIAN
-                libService.approveRequest(id, barcode);
+                libService.approveRequest(id, barcode, staffId);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
             } else if ("/borrowlibrary/return".equals(path)) {
@@ -106,7 +116,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("ID không hợp lệ.");
                 }
 
-                libService.rejectRequest(Long.parseLong(idStr));
+                libService.rejectRequest(Long.parseLong(idStr), staffId);
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu.");
             } else if ("/borrowlibrary/inperson".equals(path)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
@@ -127,7 +137,8 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 // Gọi hàm mượn nhiều cuốn
                 libService.borrowMultipleInPerson(userId, validBarcodes);
-                req.getSession().setAttribute("flash", "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
+                req.getSession().setAttribute("flash",
+                        "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
                 resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
                 return;

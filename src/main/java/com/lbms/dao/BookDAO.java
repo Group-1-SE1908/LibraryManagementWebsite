@@ -97,7 +97,7 @@ public class BookDAO {
                 if (rs.next()) {
                     long newId = rs.getLong(1);
                     // Ghi log hoạt động sau khi tạo sách mới
-                    logDAO.addActivityLog((int) userId, "Đã thêm sách mới: " + b.getTitle());
+                    logDAO.addActivityLog((int) userId, "Thêm sách mới: " + b.getTitle() + " [ID:" + newId + "]");
                     return newId;
                 }
             }
@@ -126,7 +126,7 @@ public class BookDAO {
             // Lấy tên sách trước khi cập nhật để log
             int rowAffected = ps.executeUpdate();
             if (rowAffected > 0) {
-                logDAO.addActivityLog((int) userId, "Đã cập nhật sách: " + b.getTitle() + " (ID: " + b.getId() + ")");
+                logDAO.addActivityLog((int) userId, "Cập nhật sách: " + b.getTitle() + " [ID:" + b.getId() + "]");
             }
         }
     }
@@ -141,7 +141,7 @@ public class BookDAO {
             // Kiểm tra để ghi vào log
             int rowAffected = ps.executeUpdate();
             if (rowAffected > 0) {
-                logDAO.addActivityLog((int) userId, "Đã xóa sách ID: " + id + " (Tiêu đề: " + bookTitle + ")");
+                logDAO.addActivityLog((int) userId, "Xóa sách: " + bookTitle + " [ID:" + id + "]");
             }
         }
     }

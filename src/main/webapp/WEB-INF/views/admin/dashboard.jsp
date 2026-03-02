@@ -472,8 +472,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- User Management Section -->
-                                <!-- Thay thế phần User Management Section trong JSP của bạn -->
+                                =
                                 <div class="section">
                                     <div class="section-header">
                                         <div>
@@ -507,10 +506,7 @@
                                                                 <div class="user-avatar-sm">
                                                                     <c:choose>
                                                                         <c:when test="${not empty user.fullName}">
-                                                                            ${fn:substring(user.fullName, 0,
-                                                                            1)}${fn:substring(user.fullName,
-                                                                            fn:indexOf(user.fullName, ' ') + 1,
-                                                                            fn:indexOf(user.fullName, ' ') + 2)}
+                                                                            ${user.fullName.substring(0,1).toUpperCase()}
                                                                         </c:when>
                                                                         <c:otherwise>U</c:otherwise>
                                                                     </c:choose>
