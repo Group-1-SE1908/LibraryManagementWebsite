@@ -47,10 +47,10 @@ public class BorrowController extends HttpServlet {
                 case "/borrow/approve":
                     requireStaff(req);
                     long id = Long.parseLong(req.getParameter("id"));
-                    String barcode = req.getParameter("barcode"); // Lấy barcode từ form
+                    String barcode = req.getParameter("barcode"); // Láº¥y barcode tá»« form
 
                     if (barcode == null || barcode.trim().isEmpty()) {
-                        req.getSession().setAttribute("flash", "Vui lòng nhập Barcode để duyệt sách");
+                        req.getSession().setAttribute("flash", "Vui lÃ²ng nháº­p Barcode Ä‘á»ƒ duyá»‡t sÃ¡ch");
                         resp.sendRedirect(req.getContextPath() + "/borrow");
                         return;
                     }
@@ -68,7 +68,7 @@ public class BorrowController extends HttpServlet {
                     requireStaff(req);
                     long returnId = Long.parseLong(req.getParameter("id"));
                     BigDecimal fine = borrowService.returnBook(returnId);
-                    req.getSession().setAttribute("flash", "Trả sách thành công. Phạt: " + fine + " VND");
+                    req.getSession().setAttribute("flash", "Tráº£ sÃ¡ch thÃ nh cÃ´ng. Pháº¡t: " + fine + " VND");
                     resp.sendRedirect(req.getContextPath() + "/borrow");
                     break;
                 case "/history":
@@ -79,7 +79,7 @@ public class BorrowController extends HttpServlet {
                     requireStaff(req);
                     List<BorrowRecord> overdueRecords = borrowDAO.listOverdue();
                     req.setAttribute("records", overdueRecords);
-                    req.setAttribute("isOverduePage", true); // Để đánh dấu trên giao diện
+                    req.setAttribute("isOverduePage", true); // Äá»ƒ Ä‘Ã¡nh dáº¥u trÃªn giao diá»‡n
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
                     break;
                 default:
@@ -120,29 +120,29 @@ public class BorrowController extends HttpServlet {
         }
     }
 
-    // Cập nhật hàm handleList trong BorrowController.java
+    // Cáº­p nháº­t hÃ m handleList trong BorrowController.java
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         boolean isStaff = isStaff(currentUser);
 
         List<BorrowRecord> records;
-        String filter = req.getParameter("filter"); // Lấy tham số từ URL
+        String filter = req.getParameter("filter"); // Láº¥y tham sá»‘ tá»« URL
 
         if (isStaff) {
             if ("OVERDUE".equals(filter)) {
                 records = borrowDAO.listOverdue();
-                req.setAttribute("pageTitle", "⏰ Danh sách sách quá hạn");
+                req.setAttribute("pageTitle", "â° Danh sÃ¡ch sÃ¡ch quÃ¡ háº¡n");
             } else if ("ONLINE".equals(filter)) {
-                // GỌI HÀM MỚI TẠO ĐỂ LỌC RIÊNG ONLINE
+                // Gá»ŒI HÃ€M Má»šI Táº O Äá»‚ Lá»ŒC RIÃŠNG ONLINE
                 records = borrowDAO.listByMethod("ONLINE");
-                req.setAttribute("pageTitle", "🌐 Danh sách yêu cầu Online");
+                req.setAttribute("pageTitle", "ðŸŒ Danh sÃ¡ch yÃªu cáº§u Online");
             } else {
                 records = borrowDAO.listAll();
-                req.setAttribute("pageTitle", "🛠️ Quản lý mượn trả toàn hệ thống");
+                req.setAttribute("pageTitle", "ðŸ› ï¸ Quáº£n lÃ½ mÆ°á»£n tráº£ toÃ n há»‡ thá»‘ng");
             }
         } else {
             records = borrowDAO.listByUser(currentUser.getId());
-            req.setAttribute("pageTitle", "📖 Lịch sử mượn sách của tôi");
+            req.setAttribute("pageTitle", "ðŸ“– Lá»‹ch sá»­ mÆ°á»£n sÃ¡ch cá»§a tÃ´i");
         }
 
         req.setAttribute("records", records);
@@ -161,14 +161,14 @@ public class BorrowController extends HttpServlet {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         String bookIdStr = req.getParameter("bookId");
         if (bookIdStr == null || bookIdStr.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng chọn sách");
+            throw new IllegalArgumentException("Vui lÃ²ng chá»n sÃ¡ch");
         }
 
         long bookId = Long.parseLong(bookIdStr);
 
         borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE");
 
-        req.getSession().setAttribute("flash", "Gửi yêu cầu mượn thành công (chờ thủ thư duyệt)");
+        req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng (chá» thá»§ thÆ° duyá»‡t)");
         resp.sendRedirect(req.getContextPath() + "/borrow");
     }
 
@@ -194,7 +194,7 @@ public class BorrowController extends HttpServlet {
     private void requireStaff(HttpServletRequest req) {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (!isStaff(currentUser)) {
-            throw new IllegalArgumentException("Bạn không có quyền thực hiện thao tác này");
+            throw new IllegalArgumentException("Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c nÃ y");
         }
     }
 

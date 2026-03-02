@@ -34,15 +34,15 @@ public class BorrowService {
     public long requestBorrow(long userId, long bookId, String method) throws SQLException {
         Book b = bookDAO.findById(bookId);
         if (b == null) {
-            throw new IllegalArgumentException("Sách không tồn tại");
+            throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
         }
         if (b.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Sách đã hết");
+            throw new IllegalArgumentException("SÃ¡ch Ä‘Ã£ háº¿t");
         }
 
         int active = borrowDAO.countActiveBorrows(userId);
         if (active >= MAX_ACTIVE_BORROWS) {
-            throw new IllegalArgumentException("Bạn đã mượn tối đa " + MAX_ACTIVE_BORROWS + " sách");
+            throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
         }
 
         
@@ -53,7 +53,7 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1. Tìm bản sao sách (BookCopy) và khóa hàng (SQL Server syntax)
+                // 1. TÃ¬m báº£n sao sÃ¡ch (BookCopy) vÃ  khÃ³a hÃ ng (SQL Server syntax)
                 long copyId = -1;
                 String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
                 try (PreparedStatement ps = c.prepareStatement(findCopySql)) {
@@ -62,18 +62,18 @@ public class BorrowService {
                         if (rs.next()) {
                             copyId = rs.getLong("copy_id");
                         } else {
-                            throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã được mượn!");
+                            throw new IllegalArgumentException("MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
                         }
                     }
                 }
 
-                // 2. Cập nhật trạng thái bản sao sách
+                // 2. Cáº­p nháº­t tráº¡ng thÃ¡i báº£n sao sÃ¡ch
                 try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setLong(1, copyId);
                     ps.executeUpdate();
                 }
 
-                // 3. Cập nhật phiếu mượn (status, copy_id, ngày mượn, hạn trả)
+                // 3. Cáº­p nháº­t phiáº¿u mÆ°á»£n (status, copy_id, ngÃ y mÆ°á»£n, háº¡n tráº£)
                 LocalDate today = LocalDate.now();
                 LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 String updateBrSql = "UPDATE borrow_records SET status='BORROWED', borrow_date=?, due_date=?, copy_id=? WHERE id=?";
@@ -102,10 +102,10 @@ public class BorrowService {
     public void reject(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
         if (br == null) {
-            throw new IllegalArgumentException("Yêu cầu không tồn tại");
+            throw new IllegalArgumentException("YÃªu cáº§u khÃ´ng tá»“n táº¡i");
         }
         if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Trạng thái không hợp lệ để từ chối");
+            throw new IllegalArgumentException("Tráº¡ng thÃ¡i khÃ´ng há»£p lá»‡ Ä‘á»ƒ tá»« chá»‘i");
         }
         borrowDAO.updateStatus(borrowId, "REJECTED");
     }
@@ -113,10 +113,10 @@ public class BorrowService {
     public BigDecimal returnBook(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
         if (br == null) {
-            throw new IllegalArgumentException("Phiếu mượn không tồn tại");
+            throw new IllegalArgumentException("Phiáº¿u mÆ°á»£n khÃ´ng tá»“n táº¡i");
         }
         if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Chỉ có thể trả khi đang BORROWED");
+            throw new IllegalArgumentException("Chá»‰ cÃ³ thá»ƒ tráº£ khi Ä‘ang BORROWED");
         }
 
         LocalDate today = LocalDate.now();
@@ -168,13 +168,13 @@ public class BorrowService {
         }
         return FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
     }
-    // Thêm vào BorrowService.java
+    // ThÃªm vÃ o BorrowService.java
 
     public void borrowInPerson(long userId, long bookId, String barcode) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1. Kiểm tra BookCopy và lấy copyId (Giống logic approve)
+                // 1. Kiá»ƒm tra BookCopy vÃ  láº¥y copyId (Giá»‘ng logic approve)
                 long copyId = -1;
                 String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
                 try (PreparedStatement ps = c.prepareStatement(findCopySql)) {
@@ -183,12 +183,12 @@ public class BorrowService {
                         if (rs.next()) {
                             copyId = rs.getLong("copy_id");
                         } else {
-                            throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã được mượn!");
+                            throw new IllegalArgumentException("MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
                         }
                     }
                 }
 
-                // 2. Tạo bản ghi borrow_records mới trực tiếp ở trạng thái BORROWED
+                // 2. Táº¡o báº£n ghi borrow_records má»›i trá»±c tiáº¿p á»Ÿ tráº¡ng thÃ¡i BORROWED
                 LocalDate today = LocalDate.now();
                 LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 String insertSql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, status, borrow_method, copy_id) "
@@ -202,7 +202,7 @@ public class BorrowService {
                     ps.executeUpdate();
                 }
 
-                // 3. Cập nhật trạng thái BookCopy thành BORROWED
+                // 3. Cáº­p nháº­t tráº¡ng thÃ¡i BookCopy thÃ nh BORROWED
                 try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setLong(1, copyId);
                     ps.executeUpdate();

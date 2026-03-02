@@ -20,15 +20,46 @@ import com.lbms.util.DBConnection;
 public class BorrowDAO {
 
     static {
-        ensureBorrowMethodColumn();
+        ensureRequiredColumns();
+    }
+
+    private static void ensureRequiredColumns() {
+        try (Connection c = DBConnection.getConnection()) {
+            // Check and add borrow_method
+            if (!columnExists(c, "borrow_records", "borrow_method")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD borrow_method VARCHAR(20) NULL;");
+                }
+            }
+            // Check and add copy_id
+            if (!columnExists(c, "borrow_records", "copy_id")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD copy_id INT NULL;");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€œng bÃ¡Â»â„¢ schema borrow_records", e);
+        }
+    }
+
+    private static boolean columnExists(Connection c, String tableName, String columnName) throws SQLException {
+        String checkSql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=? AND COLUMN_NAME=?";
+        try (PreparedStatement ps = c.prepareStatement(checkSql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     public long createRequest(long userId, long bookId, String method) throws SQLException {
-        // Thêm cột borrow_method vào câu lệnh INSERT
+        // ThÃƒÂªm cÃ¡Â»â„¢t borrow_method vÃƒÂ o cÃƒÂ¢u lÃ¡Â»â€¡nh INSERT
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
                 + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
 
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
@@ -44,7 +75,9 @@ public class BorrowDAO {
 
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -155,46 +188,34 @@ public class BorrowDAO {
             bc.setCopyId((int) cid);
             br.setBookCopy(bc);
         }
-        
+
         return br;
     }
 
     public List<BorrowRecord> listOverdue() throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
 
-    // Thêm vào BorrowDAO.java
+    // ThÃƒÂªm vÃƒÂ o BorrowDAO.java
     public List<BorrowRecord> listByMethod(String method) throws SQLException {
-        // baseSelect() đã bao gồm các cột cần thiết và JOIN bảng
+        // baseSelect() Ã„â€˜ÃƒÂ£ bao gÃ¡Â»â€œm cÃƒÂ¡c cÃ¡Â»â„¢t cÃ¡ÂºÂ§n thiÃ¡ÂºÂ¿t vÃƒÂ  JOIN bÃ¡ÂºÂ£ng
         String sql = baseSelect() + " WHERE br.borrow_method = ? ORDER BY br.id DESC";
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, method); // "ONLINE" hoặc "IN_PERSON"
+            ps.setString(1, method); // "ONLINE" hoÃ¡ÂºÂ·c "IN_PERSON"
             try (ResultSet rs = ps.executeQuery()) {
                 List<BorrowRecord> out = new ArrayList<>();
                 while (rs.next()) {
-                    out.add(mapOne(rs)); // mapOne đã được cập nhật map cột borrow_method
+                    out.add(mapOne(rs)); // mapOne Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t map cÃ¡Â»â„¢t borrow_method
                 }
                 return out;
             }
-        }
-    }
-
-    private static void ensureBorrowMethodColumn() {
-        String checkSql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='borrow_records' AND COLUMN_NAME='borrow_method'";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(checkSql); ResultSet rs = ps.executeQuery()) {
-
-            if (!rs.next()) {
-                try (Statement stmt = c.createStatement()) {
-                    stmt.executeUpdate("ALTER TABLE borrow_records ADD borrow_method VARCHAR(20) NULL;");
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Không thể đồng bộ schema borrow_records", e);
         }
     }
 }
