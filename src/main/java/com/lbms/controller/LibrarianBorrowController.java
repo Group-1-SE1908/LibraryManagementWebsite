@@ -1,6 +1,7 @@
 package com.lbms.controller;
 
 import com.lbms.dao.BorrowDAO;
+import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
@@ -19,45 +20,54 @@ public class LibrarianBorrowController extends HttpServlet {
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
     private final BorrowDAO borrowDAO = new BorrowDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            // 1. Kiểm tra quyền
+
             requireStaff(req);
+
+            HttpSession session = req.getSession();
+            Object flash = session.getAttribute("flash");
+            if (flash != null) {
+                req.setAttribute("flash", flash); // Đưa vào Request scope
+                session.removeAttribute("flash"); // Xóa khỏi Session ngay lập tức
+            }
 
             String path = req.getServletPath();
 
             // 2. Điều hướng giao diện
             if ("/borrowlibrary/detail".equals(path)) {
                 long id = Long.parseLong(req.getParameter("id"));
-                BorrowRecord record = borrowDAO.findById(id);
+                // Sử dụng libDAO để lấy chi tiết (đã bao gồm JOIN các bảng cần thiết)
+                BorrowRecord record = libDAO.findById(id);
                 if (record != null) {
                     record.setUser(userDAO.findById(record.getUser().getId()));
                 }
                 req.setAttribute("record", record);
-                req.getRequestDispatcher("/WEB-INF/views/borrow_detail.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_detail.jsp").forward(req, resp);
 
             } else if ("/borrowlibrary/inperson".equals(path)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
-                req.getRequestDispatcher("/WEB-INF/views/borrow_inperson.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
             } else {
-                // Xử lý trang Danh sách /borrowlibrary mặc định + Lọc
+
                 String methodFilter = req.getParameter("filter");
                 String q = req.getParameter("q");
                 String status = req.getParameter("status");
 
                 List<BorrowRecord> list;
                 if ("OVERDUE".equals(methodFilter)) {
-                    list = borrowDAO.listOverdue();
+                    list = libDAO.listOverdue();
                 } else {
                     list = libService.searchBorrowings(q, status, methodFilter);
                 }
 
                 req.setAttribute("records", list);
-                req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
             }
 
         } catch (IllegalArgumentException ex) {
@@ -95,7 +105,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
                 if (idStr == null || idStr.isBlank()) {
-                    throw new IllegalArgumentException("ID không hợp lệ.");
+                    throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }
 
                 libService.returnBook(Long.parseLong(idStr), barcode);

@@ -13,8 +13,9 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebServlet(urlPatterns = { "/login", "/register", "/logout" })
+@WebServlet(urlPatterns = {"/login", "/register", "/logout"})
 public class AuthController extends HttpServlet {
+
     private AuthService authService;
     private CartService cartService;
 
@@ -89,8 +90,15 @@ public class AuthController extends HttpServlet {
         session.setAttribute("currentUser", user);
 
         String role = user.getRole() == null ? null : user.getRole().getName();
+
+        // THÊM DÒNG NÀY ĐỂ KIỂM TRA
+        System.out.println(">>> LOGIN SUCCESS: " + email + " | Role: [" + role + "]");
+
         if ("ADMIN".equalsIgnoreCase(role)) {
             resp.sendRedirect(req.getContextPath() + "/admin/users");
+        } else if ("LIBRARIAN".equalsIgnoreCase(role)) {
+
+            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
         } else {
             resp.sendRedirect(req.getContextPath() + "/books");
         }

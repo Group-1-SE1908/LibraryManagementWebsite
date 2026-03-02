@@ -14,6 +14,7 @@ import com.lbms.model.Book;
 import com.lbms.util.DBConnection;
 
 public class BookDAO {
+
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
 
     public List<Book> search(String q) throws SQLException {
@@ -78,18 +79,23 @@ public class BookDAO {
     public long create(Book b, long userId) throws SQLException {
         String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
-            if (b.getCategoryId() != null)
+            if (b.getCategoryId() != null) {
                 ps.setLong(3, b.getCategoryId());
-            else
+            } else {
                 ps.setNull(3, Types.INTEGER);
+            }
             ps.setBigDecimal(4, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
             ps.setInt(5, b.getQuantity());
-            ps.setString(6, b.getIsbn());
+            //ps.setString(6, b.getIsbn());
+            String isbn = b.getIsbn();
+            if (isbn != null && !isbn.isBlank() && !isbn.startsWith("LIB-")) {
+                isbn = "ISBN-" + isbn;
+            }
+            ps.setString(6, isbn);
             ps.setString(7, b.getImage()); // Lưu đường dẫn ảnh
 
             ps.executeUpdate();
@@ -117,7 +123,12 @@ public class BookDAO {
             ps.setString(5, b.getImage());
 
             if (b.getCategoryId() != null && b.getCategoryId() > 0) {
-                ps.setLong(6, b.getCategoryId());
+                //ps.setLong(6, b.getCategoryId());
+                String isbn = b.getIsbn();
+                if (isbn != null && !isbn.isBlank() && !isbn.startsWith("LIB-")) {
+                    isbn = "ISBN-" + isbn;
+                }
+                ps.setString(6, isbn);
             } else {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }

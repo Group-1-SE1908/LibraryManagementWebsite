@@ -104,7 +104,7 @@
         </style>
     </head>
     <body>
-        <jsp:include page="header_lib.jsp" />
+        <%@ include file="/WEB-INF/views/admin/library/header_lib.jsp" %>
 
         <div class="container py-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -129,26 +129,26 @@
                 <button type="submit" class="btn primary">Áp dụng lọc</button>
                 <a href="${pageContext.request.contextPath}/borrowlibrary" class="btn">Xóa lọc</a>
             </form>
-
-            <c:if test="${not empty sessionScope.flash}">
-                <input type="hidden" id="serverFlashMessage" value="<c:out value='${sessionScope.flash}' />">
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <c:if test="${not empty flash}">
                 <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const flashMsg = document.getElementById('serverFlashMessage').value;
-                        if (flashMsg) {
-                            const isError = flashMsg.toLowerCase().startsWith("lỗi") || flashMsg.toLowerCase().startsWith("truy cập");
-
-                            Swal.fire({
-                                icon: isError ? 'error' : 'success',
-                                title: isError ? 'Thao tác thất bại' : 'Thành công!',
-                                text: flashMsg,
-                                confirmButtonColor: '#0b57d0'
-                            });
-                        }
+                    Swal.fire({
+                        icon: '${fn:contains(flash, "thành công") ? "success" : "error"}',
+                        title: '${fn:contains(flash, "thành công") ? "Thành công" : "Lỗi"}',
+                        text: '<c:out value="${flash}"/>',
+                        confirmButtonColor: '#0b57d0'
                     });
                 </script>
-                <c:remove var="flash" scope="session" />
             </c:if>
+
+            <script>
+
+                window.onpageshow = function (event) {
+                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                        window.location.reload();
+                    }
+                };
+            </script>
 
             <div class="table-card" style="border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm); border: 1px solid #cbd5e1;">
                 <table class="table-bordered">
