@@ -14,17 +14,15 @@ public class DashboardDAO {
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
 
-        String query = """
-                    SELECT
-                        (SELECT COUNT(*) FROM Book) as totalBooks,
-                        (SELECT COUNT(*) FROM [User] WHERE status = 'ACTIVE') as activeUsers,
-                        (SELECT COUNT(*) FROM borrow_records
-                         WHERE status IN ('BORROWED', 'OVERDUE')
-                         AND return_date IS NULL) as pendingReturns,
-                        (SELECT COUNT(*) FROM borrow_records
-                         WHERE borrow_method = 'DELIVERY'
-                         AND borrow_date >= DATEADD(MONTH, -1, GETDATE())) as totalShipments
-                """;
+        String query = "SELECT\n"
+                + "    (SELECT COUNT(*) FROM Book) as totalBooks,\n"
+                + "    (SELECT COUNT(*) FROM [User] WHERE status = 'ACTIVE') as activeUsers,\n"
+                + "    (SELECT COUNT(*) FROM borrow_records\n"
+                + "     WHERE status IN ('BORROWED', 'OVERDUE')\n"
+                + "     AND return_date IS NULL) as pendingReturns,\n"
+                + "    (SELECT COUNT(*) FROM borrow_records\n"
+                + "     WHERE borrow_method = 'DELIVERY'\n"
+                + "     AND borrow_date >= DATEADD(MONTH, -1, GETDATE())) as totalShipments";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
@@ -51,23 +49,21 @@ public class DashboardDAO {
     public List<Map<String, Object>> getTopBorrowers(int limit) {
         List<Map<String, Object>> topBorrowers = new ArrayList<>();
 
-        String query = """
-                    SELECT TOP(?)
-                        u.user_id,
-                        u.full_name,
-                        u.email,
-                        u.phone,
-                        u.address,
-                        u.status,
-                        r.role_name,
-                        COUNT(DISTINCT br.id) as totalBorrows,
-                        MAX(br.borrow_date) as lastBorrowDate
-                    FROM [User] u
-                    LEFT JOIN [Role] r ON u.role_id = r.role_id
-                    LEFT JOIN borrow_records br ON u.user_id = br.user_id
-                    GROUP BY u.user_id, u.full_name, u.email, u.phone, u.address, u.status, r.role_name
-                    ORDER BY totalBorrows DESC
-                """;
+        String query = "SELECT TOP(?)\n"
+                + "    u.user_id,\n"
+                + "    u.full_name,\n"
+                + "    u.email,\n"
+                + "    u.phone,\n"
+                + "    u.address,\n"
+                + "    u.status,\n"
+                + "    r.role_name,\n"
+                + "    COUNT(DISTINCT br.id) as totalBorrows,\n"
+                + "    MAX(br.borrow_date) as lastBorrowDate\n"
+                + "FROM [User] u\n"
+                + "LEFT JOIN [Role] r ON u.role_id = r.role_id\n"
+                + "LEFT JOIN borrow_records br ON u.user_id = br.user_id\n"
+                + "GROUP BY u.user_id, u.full_name, u.email, u.phone, u.address, u.status, r.role_name\n"
+                + "ORDER BY totalBorrows DESC";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(query)) {
