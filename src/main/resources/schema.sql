@@ -258,4 +258,84 @@ END;
 ALTER TABLE [user]
 ADD avatar VARCHAR(255);
 
+CREATE TABLE [LibrarianActivityLog] (
+    [log_id] INT IDENTITY(1,1) PRIMARY KEY,
+    [user_id] INT NOT NULL, -- Khóa ngoại liên kết tới bảng User
+    [action] NVARCHAR(255) NOT NULL, -- Hành động thực hiện
+    [timestamp] DATETIME DEFAULT GETDATE(), -- Thời gian thực hiện
+    CONSTRAINT FK_ActivityLog_User FOREIGN KEY ([user_id]) REFERENCES [User]([user_id])
+);
+
+-- 1. Tạo bảng BookCopy
+CREATE TABLE BookCopy (
+    copy_id INT IDENTITY(1,1) PRIMARY KEY,
+    book_id INT NOT NULL,
+    barcode VARCHAR(30) UNIQUE,
+    status VARCHAR(20) DEFAULT 'AVAILABLE', -- AVAILABLE, BORROWED, LOST, DAMAGED
+    condition VARCHAR(20) DEFAULT 'NEW',
+    created_at DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_BookCopy_Book
+        FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE CASCADE
+);
+GO
+
+-- 2. Thêm copy_id vào bảng borrow_records (Thay vì borrow)
+ALTER TABLE borrow_records
+ADD copy_id INT NULL;
+GO
+
+ALTER TABLE borrow_records
+ADD CONSTRAINT FK_Borrow_Copy
+FOREIGN KEY (copy_id) REFERENCES BookCopy(copy_id);
+GO
+
+-- 3. Tạo Trigger tự động sinh copy khi thêm sách mới
+CREATE TRIGGER trg_AfterInsert_Book
+ON Book
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @book_id INT;
+    DECLARE @quantity INT;
+    DECLARE @new_copy_id INT;
+    DECLARE @i INT;
+
+    DECLARE book_cursor CURSOR FOR
+    SELECT book_id, quantity
+    FROM inserted;
+
+    OPEN book_cursor;
+    FETCH NEXT FROM book_cursor INTO @book_id, @quantity;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @i = 1;
+
+        WHILE @i <= @quantity
+        BEGIN
+            -- Thêm mới 1 bản copy
+            INSERT INTO BookCopy (book_id)
+            VALUES (@book_id);
+            
+            SET @new_copy_id = SCOPE_IDENTITY();
+
+            -- Cập nhật lại barcode
+            UPDATE BookCopy
+            SET barcode = 'LIB-' + RIGHT('000000' + CAST(@new_copy_id AS VARCHAR), 6)
+            WHERE copy_id = @new_copy_id;
+
+            SET @i = @i + 1;
+        END
+
+        FETCH NEXT FROM book_cursor INTO @book_id, @quantity;
+    END
+
+    CLOSE book_cursor;
+    DEALLOCATE book_cursor;
+END;
+GO
+
 PRINT '--- CÀI ĐẶT DATABASE LIBRARYDB HOÀN TẤT VÀ THÀNH CÔNG ---';
