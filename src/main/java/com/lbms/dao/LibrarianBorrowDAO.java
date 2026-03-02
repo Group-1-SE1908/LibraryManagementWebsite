@@ -20,15 +20,14 @@ public class LibrarianBorrowDAO {
                 + "br.status, br.fine_amount, br.borrow_method, "
                 + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
-                + "bc.barcode AS book_barcode " 
+                + "bc.barcode AS book_barcode "
                 + "FROM borrow_records br "
                 + "JOIN [User] u ON br.user_id = u.user_id "
                 + "JOIN Book bk ON br.book_id = bk.book_id "
-                + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id"; 
+                + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
     }
 
     // --- CÁC PHƯƠNG THỨC SAO CHÉP TỪ BorrowDAO VÀ TỐI ƯU ---
-
     public long createRequest(long userId, long bookId, String method) throws SQLException {
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
                 + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
@@ -120,19 +119,30 @@ public class LibrarianBorrowDAO {
     // --- LOGIC TÌM KIẾM TỔNG HỢP CHO THỦ THƯ ---
     public List<BorrowRecord> searchBorrowings(String q, String status, String method) throws SQLException {
         StringBuilder sql = new StringBuilder(baseSelect() + " WHERE 1=1 ");
-        if (q != null && !q.isBlank()) sql.append("AND (u.full_name LIKE ? OR bk.title LIKE ?) ");
-        if (status != null && !status.isBlank()) sql.append("AND br.status = ? ");
-        if (method != null && !method.isBlank()) sql.append("AND br.borrow_method = ? ");
+        if (q != null && !q.isBlank()) {
+            sql.append("AND (u.full_name LIKE ? OR bk.title LIKE ?) ");
+        }
+        if (status != null && !status.isBlank()) {
+            sql.append("AND br.status = ? ");
+        }
+        if (method != null && !method.isBlank()) {
+            sql.append("AND br.borrow_method = ? ");
+        }
         sql.append("ORDER BY br.id DESC");
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
             int idx = 1;
             if (q != null && !q.isBlank()) {
                 String like = "%" + q.trim() + "%";
-                ps.setString(idx++, like); ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
             }
-            if (status != null && !status.isBlank()) ps.setString(idx++, status);
-            if (method != null && !method.isBlank()) ps.setString(idx++, method);
+            if (status != null && !status.isBlank()) {
+                ps.setString(idx++, status);
+            }
+            if (method != null && !method.isBlank()) {
+                ps.setString(idx++, method);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
@@ -141,7 +151,6 @@ public class LibrarianBorrowDAO {
     }
 
     // --- ÁNH XẠ DỮ LIỆU (MAPPER) ---
-
     private List<BorrowRecord> mapList(ResultSet rs) throws SQLException {
         List<BorrowRecord> out = new ArrayList<>();
         while (rs.next()) {
@@ -199,4 +208,40 @@ public class LibrarianBorrowDAO {
             throw new RuntimeException("Không thể đồng bộ schema", e);
         }
     }
+
+    public UserBorrowingSummary getUserSummary(long userId) throws SQLException {
+        String sql = "SELECT "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND status = 'RECEIVED') as current_borrowed, "
+                + "(SELECT CASE WHEN EXISTS (SELECT 1 FROM borrow_records WHERE user_id = ? AND status = 'RECEIVED' AND due_date < GETDATE()) THEN 1 ELSE 0 END) as has_overdue, "
+                + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE user_id = ? AND is_paid = 0) as unpaid_fines, "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            for (int i = 1; i <= 5; i++) {
+                ps.setLong(i, userId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                UserBorrowingSummary s = new UserBorrowingSummary();
+                if (rs.next()) {
+                    s.setCurrentBorrowed(rs.getInt("current_borrowed"));
+                    s.setHasOverdue(rs.getInt("has_overdue") == 1);
+                    s.setUnpaidFines(rs.getBigDecimal("unpaid_fines"));
+                    s.setTotalHistory(rs.getInt("total_history"));
+                    s.setOverdueCount(rs.getInt("overdue_count"));
+                }
+                return s;
+            }
+        }
+    }
+
+    public void rejectRequest(long id, String reason) throws SQLException {
+        String sql = "UPDATE borrow_records SET status = 'REJECTED', reject_reason = ? WHERE id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        }
+    }
+
 }

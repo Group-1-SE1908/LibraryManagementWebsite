@@ -206,6 +206,12 @@
                                             </div>
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn success" style="background:#10b981; color:white; border:none; width:80px;">Trả sách</button>
                                         </c:if>
+                                        <c:if test="${r.status == 'APPROVED'}">
+                                            <form action="${pageContext.request.contextPath}/borrowlibrary/receive" method="post" style="display:inline;">
+                                                <input type="hidden" name="id" value="${r.id}">
+                                                <button type="submit" class="btn success" style="width:80px; background:#0b57d0; color:white; border:none;">Nhận sách</button>
+                                            </form>
+                                        </c:if>
                                     </div>
                                 </td>
                             </tr>
@@ -304,6 +310,31 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         formElement.submit(); // Chỉ submit nếu bấm Đồng ý
+                    }
+                });
+            }
+            function confirmReject(event, formElement) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Lý do từ chối?',
+                    input: 'text',
+                    inputPlaceholder: 'Nhập lý do tại đây...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Xác nhận từ chối',
+                    cancelButtonText: 'Quay lại',
+                    inputValidator: (value) => {
+                        if (!value)
+                            return 'Bạn phải nhập lý do từ chối!'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'reason';
+                        input.value = result.value;
+                        formElement.appendChild(input);
+                        formElement.submit();
                     }
                 });
             }

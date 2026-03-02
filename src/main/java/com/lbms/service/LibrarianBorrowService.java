@@ -88,10 +88,12 @@ public class LibrarianBorrowService {
 
     public void approveRequest(long borrowId, String barcode) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false);
+            c.setAutoCommit(false); // Bắt đầu Transaction để đảm bảo tính toàn vẹn dữ liệu
             try {
                 int copyId = -1;
                 long bookIdFromCopy = -1;
+
+                // 1. Kiểm tra mã vạch (Barcode) có tồn tại và đang sẵn sàng (AVAILABLE) không
                 String checkCopy = "SELECT copy_id, book_id FROM BookCopy WHERE barcode = ? AND status = 'AVAILABLE'";
                 try (PreparedStatement ps = c.prepareStatement(checkCopy)) {
                     ps.setString(1, barcode);
@@ -100,55 +102,74 @@ public class LibrarianBorrowService {
                             copyId = rs.getInt("copy_id");
                             bookIdFromCopy = rs.getLong("book_id");
                         } else {
-                            throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã bị mượn/hỏng.");
+                            throw new IllegalArgumentException("Mã vạch không hợp lệ, sách đã bị mượn hoặc không tồn tại.");
                         }
                     }
                 }
 
+                // 2. Kiểm tra xem cuốn sách này có đúng là đầu sách mà người dùng đã yêu cầu không
                 String checkBr = "SELECT book_id FROM borrow_records WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(checkBr)) {
                     ps.setLong(1, borrowId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             if (rs.getLong("book_id") != bookIdFromCopy) {
-                                throw new IllegalArgumentException("Mã vạch này thuộc về đầu sách khác, không phải cuốn người dùng yêu cầu.");
+                                throw new IllegalArgumentException("Mã vạch này thuộc về đầu sách khác, không đúng với yêu cầu của độc giả.");
                             }
+                        } else {
+                            throw new IllegalArgumentException("Không tìm thấy phiếu yêu cầu mượn này.");
                         }
                     }
                 }
 
+                // 3. Cập nhật trạng thái bản sao sách (BookCopy) thành 'BORROWED' để giữ chỗ
                 try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setInt(1, copyId);
                     ps.executeUpdate();
                 }
 
-                LocalDate borrowDate = LocalDate.now();
-                LocalDate dueDate = borrowDate.plusDays(14);
-                String updateBr = "UPDATE borrow_records SET status = 'BORROWED', borrow_date = ?, due_date = ?, copy_id = ? WHERE id = ?";
+                // 4. Cập nhật phiếu mượn: Chuyển sang APPROVED, gán copy_id (Chưa set ngày mượn vì khách chưa đến lấy)
+                String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
-                    ps.setDate(1, java.sql.Date.valueOf(borrowDate));
-                    ps.setDate(2, java.sql.Date.valueOf(dueDate));
-                    ps.setInt(3, copyId);
-                    ps.setLong(4, borrowId);
+                    ps.setInt(1, copyId);
+                    ps.setLong(2, borrowId);
                     ps.executeUpdate();
                 }
 
+                // 5. Trừ số lượng sách trong kho (Bảng Book)
                 try (PreparedStatement ps = c.prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
                     ps.setLong(1, bookIdFromCopy);
-                    ps.executeUpdate();
+                    int rowsAffected = ps.executeUpdate();
+                    if (rowsAffected == 0) {
+                        throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
+                    }
                 }
 
-                c.commit();
+                c.commit(); // Hoàn tất mọi thay đổi
             } catch (Exception e) {
-                c.rollback();
+                c.rollback(); // Nếu có bất kỳ lỗi nào, hủy bỏ toàn bộ các thay đổi trên
                 throw e;
             }
         }
     }
 
-    public void rejectRequest(long borrowId) throws SQLException {
-        // Sử dụng hàm updateStatus đã được copy sang libDAO
-        libDAO.updateStatus(borrowId, "REJECTED");
+    public void confirmReceive(long borrowId) throws SQLException {
+    LocalDate borrowDate = LocalDate.now();
+    LocalDate dueDate = borrowDate.plusDays(7); 
+    
+    // Cập nhật trạng thái sang RECEIVED (Thay cho BORROWED cũ để phân biệt việc đã cầm sách)
+    String sql = "UPDATE borrow_records SET status = 'RECEIVED', borrow_date = ?, due_date = ? WHERE id = ?";
+    try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setDate(1, java.sql.Date.valueOf(borrowDate));
+        ps.setDate(2, java.sql.Date.valueOf(dueDate));
+        ps.setLong(3, borrowId);
+        ps.executeUpdate();
+    }
+}
+
+    public void rejectRequest(long borrowId, String reason) throws SQLException {
+
+        libDAO.rejectRequest(borrowId, reason);
     }
 
     public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
@@ -180,7 +201,9 @@ public class LibrarianBorrowService {
                 LocalDate dueDate = borrowDate.plusDays(14);
 
                 for (String barcode : barcodes) {
-                    if (barcode.trim().isEmpty()) continue;
+                    if (barcode.trim().isEmpty()) {
+                        continue;
+                    }
 
                     int copyId = -1;
                     long bookId = -1;
@@ -230,7 +253,7 @@ public class LibrarianBorrowService {
         // Logic tìm kiếm đã được tối ưu trong LibrarianBorrowDAO
         return libDAO.searchBorrowings(keyword, status, method);
     }
-    
+
     // Hàm bổ sung để lấy chi tiết phiếu mượn qua DAO mới
     public BorrowRecord getDetail(long id) throws SQLException {
         return libDAO.findById(id);
