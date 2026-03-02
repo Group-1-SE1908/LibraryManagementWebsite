@@ -26,8 +26,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = { "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout" })
+@WebServlet(urlPatterns = {"/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout"})
 public class CartController extends HttpServlet {
+
     private CartService cartService;
     private BorrowService borrowService;
     private UserDAO userDAO;
@@ -138,7 +139,13 @@ public class CartController extends HttpServlet {
         String formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         LocalDate pickupDate = null;
         String formattedPickupDate = null;
-        String deliveryAddress = null;
+        String deliveryAddress = req.getParameter("deliveryAddress");
+        if (deliveryAddress != null && !deliveryAddress.isBlank()) {
+            userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(), deliveryAddress);
+            // Cập nhật lại đối tượng trong session để hiển thị ngay mà không cần logout
+            currentUser.setAddress(deliveryAddress);
+            req.getSession().setAttribute("currentUser", currentUser);
+        }
         if (METHOD_IN_PERSON.equals(method)) {
             pickupDate = parsePickupDateParam(req, "pickupDate");
             formattedPickupDate = pickupDate.format(DISPLAY_DATE_FORMAT);

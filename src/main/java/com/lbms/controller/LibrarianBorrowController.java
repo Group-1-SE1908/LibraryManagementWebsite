@@ -15,7 +15,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject", "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson","/borrowlibrary/receive"})
+@WebServlet(urlPatterns = {"/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject", "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson", "/borrowlibrary/receive"})
 public class LibrarianBorrowController extends HttpServlet {
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
@@ -44,9 +44,15 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 BorrowRecord record = libDAO.findById(id);
                 if (record != null) {
-                    record.setUser(userDAO.findById(record.getUser().getId()));
-                    UserBorrowingSummary stats = libDAO.getUserSummary(record.getUser().getId());
-//                    req.setAttribute("record", record);
+//                    record.setUser(userDAO.findById(record.getUser().getId()));
+//                    UserBorrowingSummary stats = libDAO.getUserSummary(record.getUser().getId());
+                    ////                    req.setAttribute("record", record);
+//                    req.setAttribute("stats", stats);
+                    User detailedUser = userDAO.findById(record.getUser().getId());
+                    record.setUser(detailedUser);
+
+                    // Lấy thống kê 8 chỉ số
+                    UserBorrowingSummary stats = libDAO.getUserSummary(detailedUser.getId());
                     req.setAttribute("stats", stats);
                 }
                 req.setAttribute("record", record);
@@ -95,19 +101,18 @@ public class LibrarianBorrowController extends HttpServlet {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
 
-               
                 if (idStr == null || idStr.isBlank() || barcode == null || barcode.isBlank()) {
                     throw new IllegalArgumentException("Thiếu ID phiếu mượn hoặc mã vạch sách.");
                 }
 
                 long id = Long.parseLong(idStr);
-                
+
                 libService.approveRequest(id, barcode);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
             } else if ("/borrowlibrary/return".equals(path)) {
                 String idStr = req.getParameter("id");
-                String barcode = req.getParameter("barcode");
+                String barcode = req.getParameter("barcode").trim();
                 if (idStr == null || idStr.isBlank()) {
                     throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }

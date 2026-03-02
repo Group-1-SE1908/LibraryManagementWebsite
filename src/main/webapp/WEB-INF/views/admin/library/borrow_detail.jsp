@@ -134,7 +134,16 @@
                                     <button onclick="handleApprove()" class="btn btn-success w-100 py-2">Xác nhận cho mượn</button>
                                 </div>
                             </c:when>
-                            <c:when test="${record.status == 'BORROWED'}">
+                            <c:when test="${record.status == 'APPROVED'}">
+                                <div class="action-zone text-center" style="background: #eef2ff; border-color: #4f46e5;">
+                                    <p class="small text-muted mb-3">Độc giả đã đến lấy sách?</p>
+                                    <form action="${pageContext.request.contextPath}/borrowlibrary/receive" method="post">
+                                        <input type="hidden" name="id" value="${record.id}">
+                                        <button type="submit" class="btn btn-primary w-100 py-2">Xác nhận đã nhận sách</button>
+                                    </form>
+                                </div>
+                            </c:when>
+                            <c:when test="${record.status == 'RECEIVED' || record.status == 'BORROWED'}">
                                 <div class="action-zone text-center" style="background: #fffbeb;">
                                     <p class="small text-muted mb-3">Nhận lại sách từ độc giả</p>
                                     <input type="text" id="bcReturn" class="form-control mb-3 text-center fw-bold" placeholder="Quét mã trả sách...">

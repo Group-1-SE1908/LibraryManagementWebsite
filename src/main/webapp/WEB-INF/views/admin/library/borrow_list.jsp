@@ -132,10 +132,24 @@
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <c:if test="${not empty flash}">
                 <script>
+                    // Xác định loại icon dựa trên nội dung thông báo
+                    let iconType = 'error';
+                    let titleText = 'Lỗi';
+
+                    const flashMsg = '<c:out value="${flash}"/>';
+
+                    if (flashMsg.includes('thành công') || flashMsg.includes('Đã nhận trả')) {
+                        iconType = 'success';
+                        titleText = 'Thành công';
+                    } else if (flashMsg.includes('từ chối')) {
+                        iconType = 'info'; // Chuyển sang màu xanh dương cho hành động từ chối
+                        titleText = 'Thông báo';
+                    }
+
                     Swal.fire({
-                        icon: '${fn:contains(flash, "thành công") ? "success" : "error"}',
-                        title: '${fn:contains(flash, "thành công") ? "Thành công" : "Lỗi"}',
-                        text: '<c:out value="${flash}"/>',
+                        icon: iconType,
+                        title: titleText,
+                        text: flashMsg,
                         confirmButtonColor: '#0b57d0'
                     });
                 </script>
@@ -199,7 +213,7 @@
                                             </form>
                                         </c:if>
 
-                                        <c:if test="${r.status == 'BORROWED'}">
+                                        <c:if test="${r.status == 'RECEIVED' || r.status == 'BORROWED'}">
                                             <div id="return-box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px; background:#ecfdf5;">
                                                 <input type="text" id="ret-bc-${r.id}" placeholder="Quét mã trả..." style="width:90px; margin-bottom:5px;">
                                                 <button onclick="submitReturn(${r.id})" class="btn success" style="padding: 2px 10px; background:#10b981; color:white; border:none; width:100%;">Xác nhận</button>
