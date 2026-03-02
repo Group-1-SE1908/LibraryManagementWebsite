@@ -24,8 +24,8 @@
                             display: flex;
                             justify-content: center;
                             align-items: center;
-                            background: linear-gradient(135deg, #f0f4f8 0%, #e8eef6 100%);
-                            padding: 2rem 1rem;
+                            background: radial-gradient(circle at top left, #e0e7ff, #f8fafc 50%, #f1f5f9);
+                            padding: 3rem 1rem;
                         }
                     </style>
                 </head>
@@ -34,15 +34,24 @@
                     <%@ include file="header.jsp" %>
 
                         <main>
-                            <div class="auth-container" id="container">
+                            <div class="auth-container right-panel-active" id="container">
                                 <!-- Sign Up Form (Left side - Visible by default) -->
                                 <div class="form-container form-signup">
                                     <form method="post" action="${pageContext.request.contextPath}/register">
                                         <h1>Đăng ký</h1>
-                                        <span>hoặc sử dụng email để đăng ký</span>
-                                        <input type="text" name="fullName" placeholder="Họ tên" required />
-                                        <input type="email" name="email" placeholder="Email" required />
-                                        <input type="password" name="password" placeholder="Mật khẩu" required />
+                                        <span>Khám phá kho tri thức khổng lồ ngay hôm nay</span>
+                                        <div class="input-group">
+                                            <i class="fas fa-user"></i>
+                                            <input type="text" name="fullName" placeholder="Họ tên" required />
+                                        </div>
+                                        <div class="input-group">
+                                            <i class="fas fa-envelope"></i>
+                                            <input type="email" name="email" placeholder="Email" required />
+                                        </div>
+                                        <div class="input-group">
+                                            <i class="fas fa-lock"></i>
+                                            <input type="password" name="password" placeholder="Mật khẩu" required />
+                                        </div>
                                         <button type="submit" class="btn-submit">Tạo tài khoản</button>
                                     </form>
                                 </div>
@@ -51,12 +60,22 @@
                                 <div class="form-container form-signin">
                                     <form method="post" action="${pageContext.request.contextPath}/login">
                                         <h1>Đăng nhập</h1>
-                                        <span>hoặc điền thông tin bên dưới</span>
+                                        <span>Chào mừng bạn quay trở lại với LBMS</span>
                                         <c:if test="${not empty error}">
-                                            <p style="color: #ea868f; margin: 10px 0; font-size: 14px;">${error}</p>
+                                            <p
+                                                style="color: #ef4444; margin: 10px 0; font-size: 14px; background: #fee2e2; padding: 10px; border-radius: 8px; width: 100%;">
+                                                <i class="fas fa-exclamation-circle"
+                                                    style="margin-right: 5px;"></i>${error}
+                                            </p>
                                         </c:if>
-                                        <input type="email" name="email" placeholder="Email" required />
-                                        <input type="password" name="password" placeholder="Mật khẩu" required />
+                                        <div class="input-group">
+                                            <i class="fas fa-envelope"></i>
+                                            <input type="email" name="email" placeholder="Email" required />
+                                        </div>
+                                        <div class="input-group">
+                                            <i class="fas fa-lock"></i>
+                                            <input type="password" name="password" placeholder="Mật khẩu" required />
+                                        </div>
                                         <a href="${pageContext.request.contextPath}/reset-password"
                                             class="forgot-password">Quên mật
                                             khẩu?</a>
@@ -91,8 +110,8 @@
                                 const signInButton = document.getElementById('signIn');
                                 const container = document.getElementById('container');
 
-                                // Default: Đăng ký form on the left
-                                // Click Đăng nhập: form slides to the right
+                                // Default: Đăng nhập form đang hiển thị
+                                // Click Đăng nhập: form vẫn giữ nguyên, Click Đăng ký sẽ trượt sang trái
                                 signInButton.addEventListener('click', () => {
                                     container.classList.add('right-panel-active');
                                 });
