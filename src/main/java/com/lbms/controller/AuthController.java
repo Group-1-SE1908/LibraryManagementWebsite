@@ -98,7 +98,7 @@ public class AuthController extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/admin/users");
         } else if ("LIBRARIAN".equalsIgnoreCase(role)) {
 
-            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+            resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
         } else {
             resp.sendRedirect(req.getContextPath() + "/books");
         }
