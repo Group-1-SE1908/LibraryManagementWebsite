@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = {"/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout"})
+@WebServlet(urlPatterns = { "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout" })
 public class CartController extends HttpServlet {
 
     private CartService cartService;
@@ -143,7 +143,8 @@ public class CartController extends HttpServlet {
         ShippingDetails shippingDetails = null;
         String deliveryAddress = req.getParameter("deliveryAddress");
         if (deliveryAddress != null && !deliveryAddress.isBlank()) {
-            userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(), deliveryAddress);
+            userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(),
+                    deliveryAddress);
             // Cập nhật lại đối tượng trong session để hiển thị ngay mà không cần logout
             currentUser.setAddress(deliveryAddress);
             req.getSession().setAttribute("currentUser", currentUser);
