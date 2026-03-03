@@ -190,6 +190,12 @@
                     📚 Kho sách
                 </a>
             </li>
+            <li>
+                <div style="position:relative">
+                    <a href="${pageContext.request.contextPath}/admin/feedback?action=list">💬 Phản hồi về sách</a>
+                    <!-- small submenu indicator could be enhanced later -->
+                </div>
+            </li>
 
         </ul>
 

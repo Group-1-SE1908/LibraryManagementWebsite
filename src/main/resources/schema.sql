@@ -104,7 +104,7 @@ CREATE TABLE borrow_records (
     due_date DATE NULL,     -- Ng�y ph?i tr?
     return_date DATE NULL,  -- Ng�y th?c t? tr?
     status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED', -- REQUESTED, APPROVED, BORROWED, RETURNED, REJECTED, OVERDUE
-    fine_amount DECIMAL(10,2) DEFAULT 0, -- Ti?n ph?t
+    fine_amount DECIMAL(10,2) DEFAULT 0, -- Ti�n ph�t
     is_paid BIT DEFAULT 0, -- 0 = chua thanh toan, 1 = da thanh toan
     borrow_method VARCHAR(20) NULL, -- Ghi l?i h�nh th?c mu?n
     created_at DATETIME DEFAULT GETDATE(),
@@ -161,14 +161,47 @@ CREATE TABLE CartItem (
 );
 GO
 
--- B?ng 11: Nh?t k� ho?t d?ng (LibrarianActivityLog)
+-- B?ng 11: Nh?t k� ho�t d?ng (LibrarianActivityLog)
 CREATE TABLE [LibrarianActivityLog] (
     [log_id] INT IDENTITY(1,1) PRIMARY KEY,
     [user_id] INT NOT NULL, -- Kh�a ngo?i li�n k?t t?i b?ng User
-    [action] NVARCHAR(255) NOT NULL, -- H�nh d?ng th?c hi?n
-    [timestamp] DATETIME DEFAULT GETDATE(), -- Th?i gian th?c hi?n
+    [action] NVARCHAR(255) NOT NULL, -- H�nh d?ng th?c hi�n
+    [timestamp] DATETIME DEFAULT GETDATE(), -- Th?i gian th?c hi�n
     CONSTRAINT FK_ActivityLog_User FOREIGN KEY ([user_id]) REFERENCES [User]([user_id])
 );
+GO
+
+-- B?ng Comment (nếu chưa có) - hệ thống sử dụng Comment table trong ứng dụng
+-- (lưu ý: nếu đã có trong database, bỏ qua phần tạo này)
+IF OBJECT_ID('Comment', 'U') IS NULL
+BEGIN
+    CREATE TABLE Comment (
+        comment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+        book_id INT NOT NULL,
+        user_id INT NOT NULL,
+        content NVARCHAR(MAX) NOT NULL,
+        rating INT DEFAULT 5,
+        status NVARCHAR(20) DEFAULT 'VISIBLE',
+        created_at DATETIME DEFAULT GETDATE(),
+        updated_at DATETIME NULL,
+        deleted_at DATETIME NULL
+    );
+END
+GO
+
+-- Bảng lưu các phản hồi của thủ thư đối với comment (nếu chưa có)
+IF OBJECT_ID('CommentReply', 'U') IS NULL
+BEGIN
+    CREATE TABLE CommentReply (
+        comment_reply_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+        comment_id BIGINT NOT NULL,
+        admin_id INT NOT NULL,
+        content NVARCHAR(MAX) NOT NULL,
+        created_at DATETIME DEFAULT GETDATE(),
+        CONSTRAINT FK_CommentReply_Comment FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
+        CONSTRAINT FK_CommentReply_Admin FOREIGN KEY (admin_id) REFERENCES [User](user_id) ON DELETE SET NULL
+    );
+END
 GO
 
 -- =============================================

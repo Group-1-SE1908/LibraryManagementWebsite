@@ -102,6 +102,36 @@
             padding: 40px;
             color: #6b7280;
         }
+
+        .comment-reply-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .comment-reply {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid #0b57d0;
+        }
+
+        .reply-admin-badge {
+            background: #0b57d0;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .reply-time {
+            color: #9ca3af;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -143,6 +173,24 @@
                             </div>
 
                             <p class="comment-content">${comment.content}</p>
+
+                            <!-- Hiển thị phản hồi của thủ thư (nếu có) -->
+                            <c:if test="${comment.hasReply}">
+                                <div class="comment-reply-section">
+                                    <div style="font-size: 13px; color: #374151; margin-bottom: 8px; font-weight: 500;">
+                                        <span class="reply-admin-badge">Phản hồi từ thủ thư</span>
+                                    </div>
+                                    <c:forEach var="reply" items="${comment.replies}">
+                                        <div class="comment-reply">
+                                            <div style="font-weight: 500; color: #1f2937;">
+                                                Quản lý thư viện
+                                                <span class="reply-time">• <fmt:formatDate value="${reply.createdAt}" type="both" dateStyle="medium" timeStyle="short"/></span>
+                                            </div>
+                                            <p style="margin: 8px 0 0 0; color: #4b5563; line-height: 1.5;">${reply.content}</p>
+                                        </div>
+                                    </c:forEach>
+                                </div>
+                            </c:if>
                         </div>
                     </c:forEach>
                 </div>

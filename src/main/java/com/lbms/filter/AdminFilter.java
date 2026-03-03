@@ -31,7 +31,10 @@ public class AdminFilter implements Filter {
         }
 
         String role = currentUser.getRole() == null ? null : currentUser.getRole().getName();
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+        // Allow both ADMIN and LIBRARIAN to access /admin/* pages
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(role);
+        if (!(isAdmin || isLibrarian)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

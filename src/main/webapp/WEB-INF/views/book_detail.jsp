@@ -1,5 +1,7 @@
 <%@ page import="com.lbms.model.Comment" %>
+<%@ page import="com.lbms.dao.CommentReplyDAO" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Collections" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -630,24 +632,38 @@
 
     <!-- Danh Sách Bình Luận -->
     <%
-        // Lấy bình luận từ request attribute nếu có, hoặc tạo mới từ DAO
         List<Comment> comments = (List<com.lbms.model.Comment>) request.getAttribute("comments");
         if (comments == null) {
             try {
                 com.lbms.dao.CommentDAO commentDAO = new com.lbms.dao.CommentDAO();
                 comments = commentDAO.getCommentsByBook(Integer.parseInt(request.getParameter("id")));
             } catch (Exception e) {
+                e.printStackTrace();
                 comments = new java.util.ArrayList<>();
             }
         }
+
+// Load replies cho TẤT CẢ trường hợp - đặt NGOÀI if
+        try {
+            com.lbms.dao.CommentReplyDAO replyDAO = new com.lbms.dao.CommentReplyDAO();
+            for (com.lbms.model.Comment comment : comments) {
+                java.util.List<com.lbms.model.CommentReply> replies = replyDAO.findByCommentId(comment.getCommentId());
+                comment.setReplies(replies);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         request.setAttribute("comments", comments);
     %>
 
     <c:choose>
         <c:when test="${not empty comments}">
             <div class="comments-list">
+
                 <c:forEach var="comment" items="${comments}">
                     <div class="comment-card">
+
                         <div class="comment-header">
                             <div class="comment-user-info">
                                 <div class="comment-avatar">
@@ -662,16 +678,21 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
+
                                 <div class="comment-meta">
                                     <span class="comment-user">${comment.fullName}</span>
                                     <span class="comment-date">
-                                                            <fmt:formatDate value="${comment.createdAt}" type="date"
-                                                                            dateStyle="medium"/>
-                                                        </span>
+                                    <fmt:formatDate value="${comment.createdAt}"
+                                                    type="date"
+                                                    dateStyle="medium"/>
+                                </span>
                                 </div>
                             </div>
+
                             <div class="comment-actions">
-                                <c:if test="${sessionScope.currentUser.id == comment.userId || sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
+                                <c:if test="${sessionScope.currentUser.id == comment.userId
+                                         || sessionScope.currentUser.role.name == 'ADMIN'
+                                         || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
                                     <button type="button"
                                             class="btn-action"
                                             data-id="${comment.commentId}"
@@ -681,6 +702,7 @@
                                             onclick="openEditForm(this)">
                                         Sửa
                                     </button>
+
                                     <button type="button"
                                             class="delete-btn"
                                             data-id="${comment.commentId}"
@@ -699,17 +721,39 @@
                         </div>
 
                         <p class="comment-content">${comment.content}</p>
+
+                        <!-- Hiển thị phản hồi từ thủ thư (nếu có) -->
+                        <c:if test="${not empty comment.replies}">
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                                <c:forEach var="reply" items="${comment.replies}">
+                                    <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 3px solid #0b57d0;">
+                                        <div style="font-weight: 500; color: #1f2937;">
+                                            <strong>Phản hồi từ thủ thư</strong>
+                                            <span style="color: #9ca3af; font-size: 12px;">
+                                        • <fmt:formatDate value="${reply.createdAt}" type="both" dateStyle="medium"
+                                                          timeStyle="short"/>
+                                    </span>
+                                        </div>
+                                        <p style="margin: 8px 0 0 0; color: #4b5563; line-height: 1.5;">${reply.content}</p>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:if>
                     </div>
                 </c:forEach>
+
             </div>
+            <!-- comments-list -->
         </c:when>
+
         <c:otherwise>
             <div class="no-comments">
                 <p>Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!</p>
             </div>
         </c:otherwise>
     </c:choose>
-</div>
+
+</div> <!-- detail-page -->
 
 <script>
     function openEditForm(button) {
@@ -760,7 +804,7 @@
         var ratingInput = modal.querySelector('input[name="rating"][value="' + rating + '"]');
         if (ratingInput) ratingInput.checked = true;
 
-        modal.addEventListener("click", function(e) {
+        modal.addEventListener("click", function (e) {
             if (e.target === modal) modal.remove();
         });
     }
@@ -815,11 +859,11 @@
 
         document.body.appendChild(overlay);
 
-        overlay.querySelector("#cancelDeleteBtn").onclick = function() {
+        overlay.querySelector("#cancelDeleteBtn").onclick = function () {
             overlay.remove();
         };
 
-        overlay.addEventListener("click", function(e) {
+        overlay.addEventListener("click", function (e) {
             if (e.target === overlay) overlay.remove();
         });
     }

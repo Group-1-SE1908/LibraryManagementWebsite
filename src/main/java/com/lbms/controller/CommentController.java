@@ -5,6 +5,7 @@
 package com.lbms.controller;
 
 import com.lbms.dao.CommentDAO;
+import com.lbms.dao.CommentReplyDAO;
 import com.lbms.model.Comment;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
@@ -27,10 +28,12 @@ import java.util.logging.Logger;
 @WebServlet(name = "CommentController", urlPatterns = {"/comment"})
 public class CommentController extends HttpServlet {
     private CommentDAO commentDAO;
+    private CommentReplyDAO replyDAO;
 
     @Override
     public void init() {
         this.commentDAO = new CommentDAO();
+        this.replyDAO = new CommentReplyDAO();
     }
 
     @Override
@@ -81,6 +84,11 @@ public class CommentController extends HttpServlet {
             throws Exception {
         int bookId = Integer.parseInt(request.getParameter("bookId"));
         List<Comment> comments = commentDAO.getCommentsByBook(bookId);
+        
+        // Load replies cho mỗi comment
+        for (Comment comment : comments) {
+            comment.setReplies(replyDAO.findByCommentId(comment.getCommentId()));
+        }
 
         request.setAttribute("comments", comments);
         request.setAttribute("bookId", bookId);
