@@ -2,8 +2,10 @@ package com.lbms.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class BorrowRecord {
+
     private long id;
     private User user;
     private Book book;
@@ -12,10 +14,13 @@ public class BorrowRecord {
     private LocalDate returnDate;
     private String status;
     private BigDecimal fineAmount;
-    private BookCopy bookCopy; 
+    private BookCopy bookCopy;
     private String borrowMethod;
+    private String rejectReason;
+    private boolean isPaid;
 
-    public BorrowRecord() {}
+    public BorrowRecord() {
+    }
 
     public long getId() {
         return id;
@@ -53,6 +58,39 @@ public class BorrowRecord {
         return dueDate;
     }
 
+    public long getOverdueDays() {
+        if (dueDate == null) {
+            return 0L;
+        }
+        LocalDate reference = returnDate != null ? returnDate : LocalDate.now();
+        long delta = ChronoUnit.DAYS.between(dueDate, reference);
+        return Math.max(delta, 0L);
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
+    }
+
+    public boolean isIsPaid() {
+        return isPaid;
+    }
+
+    public void setIsPaid(boolean isPaid) {
+        this.isPaid = isPaid;
+    }
+
+    public boolean isPaid() {
+        return isPaid;
+    }
+
+    public void setPaid(boolean paid) {
+        this.isPaid = paid;
+    }
+
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
@@ -80,9 +118,20 @@ public class BorrowRecord {
     public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
-    public BookCopy getBookCopy() { return bookCopy; }
-    public void setBookCopy(BookCopy bookCopy) { this.bookCopy = bookCopy; }
 
-    public String getBorrowMethod() { return borrowMethod; }
-    public void setBorrowMethod(String borrowMethod) { this.borrowMethod = borrowMethod; }
+    public BookCopy getBookCopy() {
+        return bookCopy;
+    }
+
+    public void setBookCopy(BookCopy bookCopy) {
+        this.bookCopy = bookCopy;
+    }
+
+    public String getBorrowMethod() {
+        return borrowMethod;
+    }
+
+    public void setBorrowMethod(String borrowMethod) {
+        this.borrowMethod = borrowMethod;
+    }
 }

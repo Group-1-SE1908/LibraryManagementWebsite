@@ -37,6 +37,12 @@ public class BorrowDAO {
                     stmt.executeUpdate("ALTER TABLE borrow_records ADD copy_id INT NULL;");
                 }
             }
+            // Check and add is_paid
+            if (!columnExists(c, "borrow_records", "is_paid")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD is_paid BIT NOT NULL DEFAULT 0;");
+                }
+            }
         } catch (SQLException e) {
             throw new RuntimeException("KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€œng bÃ¡Â»â„¢ schema borrow_records", e);
         }
@@ -137,7 +143,7 @@ public class BorrowDAO {
 
     private String baseSelect() {
         return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
-                + "br.status, br.fine_amount, br.borrow_method, "
+                + "br.status, br.fine_amount, br.is_paid, br.borrow_method, "
                 + "u.email AS user_email, u.full_name AS user_full_name, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image "
                 + "FROM borrow_records br "
@@ -181,6 +187,7 @@ public class BorrowDAO {
 
         br.setStatus(rs.getString("status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
+        br.setPaid(rs.getBoolean("is_paid"));
         br.setBorrowMethod(rs.getString("borrow_method"));
         long cid = rs.getLong("copy_id");
         if (cid > 0) {
@@ -203,8 +210,40 @@ public class BorrowDAO {
     }
 
     // ThÃƒÂªm vÃƒÂ o BorrowDAO.java
+
+    public List<BorrowRecord> listUnpaidFinesByUser(long userId) throws SQLException {
+        String sql = baseSelect()
+                + " WHERE br.user_id = ? AND br.fine_amount > 0 AND br.is_paid = 0 ORDER BY br.due_date ASC";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return mapList(rs);
+            }
+        }
+    }
+
+    public List<BorrowRecord> listFineHistoryByUser(long userId) throws SQLException {
+        String sql = baseSelect()
+                + " WHERE br.user_id = ? AND br.fine_amount > 0 ORDER BY br.return_date DESC, br.id DESC";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return mapList(rs);
+            }
+        }
+    }
+
+    public void markFinePaid(long id) throws SQLException {
+        String sql = "UPDATE borrow_records SET is_paid = 1 WHERE id = ? AND fine_amount > 0";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        }
+    }
+
     public List<BorrowRecord> listByMethod(String method) throws SQLException {
-        // baseSelect() Ã„â€˜ÃƒÂ£ bao gÃ¡Â»â€œm cÃƒÂ¡c cÃ¡Â»â„¢t cÃ¡ÂºÂ§n thiÃ¡ÂºÂ¿t vÃƒÂ  JOIN bÃ¡ÂºÂ£ng
+        // baseSelect() Ã„â€˜ÃƒÂ£ bao gÃ¡Â»â€œm cÃƒÂ¡c cÃ¡Â»â„¢t cÃ¡ÂºÂ§n thiÃ¡ÂºÂ¿t
+        // vÃƒÂ  JOIN bÃ¡ÂºÂ£ng
         String sql = baseSelect() + " WHERE br.borrow_method = ? ORDER BY br.id DESC";
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -212,7 +251,8 @@ public class BorrowDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 List<BorrowRecord> out = new ArrayList<>();
                 while (rs.next()) {
-                    out.add(mapOne(rs)); // mapOne Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t map cÃ¡Â»â„¢t borrow_method
+                    out.add(mapOne(rs)); // mapOne Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t map cÃ¡Â»â„¢t
+                                         // borrow_method
                 }
                 return out;
             }

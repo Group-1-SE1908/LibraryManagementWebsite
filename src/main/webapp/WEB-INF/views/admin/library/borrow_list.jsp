@@ -104,7 +104,7 @@
         </style>
     </head>
     <body>
-        <jsp:include page="header_lib.jsp" />
+        <%@ include file="/WEB-INF/views/admin/library/header_lib.jsp" %>
 
         <div class="container py-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -129,26 +129,40 @@
                 <button type="submit" class="btn primary">Áp dụng lọc</button>
                 <a href="${pageContext.request.contextPath}/borrowlibrary" class="btn">Xóa lọc</a>
             </form>
-
-            <c:if test="${not empty sessionScope.flash}">
-                <input type="hidden" id="serverFlashMessage" value="<c:out value='${sessionScope.flash}' />">
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <c:if test="${not empty flash}">
                 <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const flashMsg = document.getElementById('serverFlashMessage').value;
-                        if (flashMsg) {
-                            const isError = flashMsg.toLowerCase().startsWith("lỗi") || flashMsg.toLowerCase().startsWith("truy cập");
+                    // Xác định loại icon dựa trên nội dung thông báo
+                    let iconType = 'error';
+                    let titleText = 'Lỗi';
 
-                            Swal.fire({
-                                icon: isError ? 'error' : 'success',
-                                title: isError ? 'Thao tác thất bại' : 'Thành công!',
-                                text: flashMsg,
-                                confirmButtonColor: '#0b57d0'
-                            });
-                        }
+                    const flashMsg = '<c:out value="${flash}"/>';
+
+                    if (flashMsg.includes('thành công') || flashMsg.includes('Đã nhận trả')) {
+                        iconType = 'success';
+                        titleText = 'Thành công';
+                    } else if (flashMsg.includes('từ chối')) {
+                        iconType = 'info'; // Chuyển sang màu xanh dương cho hành động từ chối
+                        titleText = 'Thông báo';
+                    }
+
+                    Swal.fire({
+                        icon: iconType,
+                        title: titleText,
+                        text: flashMsg,
+                        confirmButtonColor: '#0b57d0'
                     });
                 </script>
-                <c:remove var="flash" scope="session" />
             </c:if>
+
+            <script>
+
+                window.onpageshow = function (event) {
+                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                        window.location.reload();
+                    }
+                };
+            </script>
 
             <div class="table-card" style="border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm); border: 1px solid #cbd5e1;">
                 <table class="table-bordered">
@@ -199,12 +213,18 @@
                                             </form>
                                         </c:if>
 
-                                        <c:if test="${r.status == 'BORROWED'}">
+                                        <c:if test="${r.status == 'RECEIVED' || r.status == 'BORROWED'}">
                                             <div id="return-box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px; background:#ecfdf5;">
                                                 <input type="text" id="ret-bc-${r.id}" placeholder="Quét mã trả..." style="width:90px; margin-bottom:5px;">
                                                 <button onclick="submitReturn(${r.id})" class="btn success" style="padding: 2px 10px; background:#10b981; color:white; border:none; width:100%;">Xác nhận</button>
                                             </div>
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn success" style="background:#10b981; color:white; border:none; width:80px;">Trả sách</button>
+                                        </c:if>
+                                        <c:if test="${r.status == 'APPROVED'}">
+                                            <form action="${pageContext.request.contextPath}/borrowlibrary/receive" method="post" style="display:inline;">
+                                                <input type="hidden" name="id" value="${r.id}">
+                                                <button type="submit" class="btn success" style="width:80px; background:#0b57d0; color:white; border:none;">Nhận sách</button>
+                                            </form>
                                         </c:if>
                                     </div>
                                 </td>
@@ -304,6 +324,31 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         formElement.submit(); // Chỉ submit nếu bấm Đồng ý
+                    }
+                });
+            }
+            function confirmReject(event, formElement) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Lý do từ chối?',
+                    input: 'text',
+                    inputPlaceholder: 'Nhập lý do tại đây...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Xác nhận từ chối',
+                    cancelButtonText: 'Quay lại',
+                    inputValidator: (value) => {
+                        if (!value)
+                            return 'Bạn phải nhập lý do từ chối!'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'reason';
+                        input.value = result.value;
+                        formElement.appendChild(input);
+                        formElement.submit();
                     }
                 });
             }
