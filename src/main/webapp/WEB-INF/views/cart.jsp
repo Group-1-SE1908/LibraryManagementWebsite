@@ -116,6 +116,8 @@
                     <strong>${totalQuantity}</strong>
                 </div>
                 <form class="borrow-form" method="post" action="${pageContext.request.contextPath}/cart/checkout">
+                    <input type="hidden" name="contactName" value="${userFullName}" />
+                    <input type="hidden" name="contactPhone" value="${userPhone}" />
                     <input type="hidden" name="shippingRecipient" data-shipping-hidden="recipient" />
                     <input type="hidden" name="shippingPhone" data-shipping-hidden="phone" />
                     <input type="hidden" name="shippingStreet" data-shipping-hidden="street" />
@@ -150,14 +152,6 @@
                         </div>
                         <div class="borrow-details-grid">
                             <label class="form-group">
-                                <span>Tên người mượn</span>
-                                <input type="text" name="contactName" placeholder="Ví dụ: Nguyễn Văn A" disabled required value="${userFullName != null ? userFullName : ''}" />
-                            </label>
-                            <label class="form-group">
-                                <span>Số điện thoại</span>
-                                <input type="tel" name="contactPhone" placeholder="Ví dụ: 0912345678" disabled required value="${userPhone != null ? userPhone : ''}" />
-                            </label>
-                            <label class="form-group">
                                 <span>Email liên hệ</span>
                                 <input type="email" name="contactEmail" placeholder="Ví dụ: ban@mail.com" disabled required value="${userEmail != null ? userEmail : ''}" />
                             </label>
@@ -183,7 +177,10 @@
     </c:if>
 </main>
 
-<div class="shipping-overlay" hidden data-shipping-overlay>
+<div class="shipping-overlay" hidden data-shipping-overlay
+    data-profile-recipient="${not empty userFullName ? fn:escapeXml(userFullName) : ''}"
+    data-profile-phone="${not empty userPhone ? fn:escapeXml(userPhone) : ''}"
+    data-profile-street="${not empty userAddress ? fn:escapeXml(userAddress) : ''}">
     <div class="shipping-dialog">
         <div class="shipping-header">
             <p class="label">Thông tin giao sách</p>
@@ -279,6 +276,24 @@
         const shippingDistrictSelect = shippingFieldMap.district;
         const shippingWardSelect = shippingFieldMap.ward;
 
+        const profileDefaults = {
+            recipient: (shippingOverlay?.dataset.profileRecipient || '').trim(),
+            phone: (shippingOverlay?.dataset.profilePhone || '').trim(),
+            street: (shippingOverlay?.dataset.profileStreet || '').trim()
+        };
+
+        const applyProfileDefaults = () => {
+            Object.entries(profileDefaults).forEach(([key, value]) => {
+                if (!value) return;
+                const field = shippingFieldMap[key];
+                if (!field) return;
+                // Chỉ điền nếu ô đó đang trống
+                if (!field.value.trim()) {
+                    field.value = value;
+                }
+            });
+        };
+
         if (shippingOverlay && shippingOverlay.parentElement !== document.body) {
             document.body.appendChild(shippingOverlay);
         }
@@ -360,6 +375,10 @@
                     field.value = hidden.value;
                 }
             });
+            
+            // Áp dụng thông tin từ profile cho các ô còn trống
+            applyProfileDefaults();
+
             if (!shippingCitySelect) {
                 return;
             }

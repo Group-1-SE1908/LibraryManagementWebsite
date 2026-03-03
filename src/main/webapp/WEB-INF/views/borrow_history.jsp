@@ -555,6 +555,11 @@
                                                     href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả
                                                     sách & Thanh toán</a>
                                             </c:if>
+                                            <c:if test="${fn:toUpperCase(r.status) == 'REQUESTED'}">
+                                                <button class="btn danger" type="button" 
+                                                    onclick="confirmCancel(${r.id})"
+                                                    style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer;">Hủy yêu cầu</button>
+                                            </c:if>
                                         </div>
                                     </article>
                                 </c:forEach>
@@ -684,6 +689,12 @@
                             }
                         });
                     })();
+
+                    function confirmCancel(id) {
+                        if (confirm('Bạn có chắc chắn muốn hủy yêu cầu mượn này không?')) {
+                            window.location.href = '${pageContext.request.contextPath}/borrow/cancel?id=' + id;
+                        }
+                    }
                 </script>
                 <jsp:include page="footer.jsp" />
             </body>

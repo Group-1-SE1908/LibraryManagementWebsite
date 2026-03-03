@@ -18,7 +18,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
+@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
+        "/borrow/return",
         "/history" })
 public class BorrowController extends HttpServlet {
 
@@ -64,6 +65,17 @@ public class BorrowController extends HttpServlet {
                     long rejectId = Long.parseLong(req.getParameter("id"));
                     borrowService.reject(rejectId);
                     resp.sendRedirect(req.getContextPath() + "/borrow");
+                    break;
+                case "/borrow/cancel":
+                    User user = (User) req.getSession().getAttribute("currentUser");
+                    if (user == null) {
+                        resp.sendRedirect(req.getContextPath() + "/login");
+                        return;
+                    }
+                    long cancelId = Long.parseLong(req.getParameter("id"));
+                    borrowService.cancelRequest(cancelId, user.getId());
+                    req.getSession().setAttribute("flash", "Đã hủy yêu cầu thành công");
+                    resp.sendRedirect(req.getContextPath() + "/history");
                     break;
                 case "/borrow/return":
                     requireStaff(req);

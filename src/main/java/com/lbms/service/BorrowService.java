@@ -112,6 +112,20 @@ public class BorrowService {
         borrowDAO.updateStatus(borrowId, "REJECTED");
     }
 
+    public void cancelRequest(long borrowId, long userId) throws SQLException {
+        BorrowRecord br = borrowDAO.findById(borrowId);
+        if (br == null) {
+            throw new IllegalArgumentException("Yêu cầu không tồn tại");
+        }
+        if (br.getUser().getId() != userId) {
+            throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
+        }
+        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
+            throw new IllegalArgumentException("Chỉ có thể hủy yêu cầu khi đang chờ duyệt");
+        }
+        borrowDAO.updateStatus(borrowId, "CANCELLED");
+    }
+
     public BigDecimal returnBook(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
         if (br == null) {

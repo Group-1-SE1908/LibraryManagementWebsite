@@ -132,9 +132,24 @@ public class CartController extends HttpServlet {
     private void handleBorrowRequestFromCart(HttpServletRequest req, HttpServletResponse resp, User currentUser)
             throws Exception {
         String method = parseBorrowMethod(req.getParameter("borrowMethod"));
-        String contactName = requireTextParam(req, "contactName", "họ tên để thủ thư liên hệ");
-        String contactPhone = requireTextParam(req, "contactPhone", "số điện thoại");
-        String contactEmail = requireTextParam(req, "contactEmail", "email liên hệ");
+
+        // Mặc định lấy từ thông tin User cho các trường ẩn
+        String contactName = currentUser.getFullName();
+        String contactPhone = currentUser.getPhone();
+        String contactEmail = currentUser.getEmail();
+
+        // Nếu là yêu cầu có form (ví dụ tại chỗ) thì mới lấy từ form hoặc ghi đè
+        String formName = req.getParameter("contactName");
+        String formPhone = req.getParameter("contactPhone");
+        String formEmail = req.getParameter("contactEmail");
+
+        if (formName != null && !formName.isBlank())
+            contactName = formName;
+        if (formPhone != null && !formPhone.isBlank())
+            contactPhone = formPhone;
+        if (formEmail != null && !formEmail.isBlank())
+            contactEmail = formEmail;
+
         int borrowDays = parseIntParam(req, "borrowDuration", 7);
         LocalDate returnDate = LocalDate.now().plusDays(borrowDays);
         String formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
