@@ -164,24 +164,24 @@
 
 <header class="admin-header">
     <div class="container">
-        <a href="${pageContext.request.contextPath}/borrowlibrary" class="admin-logo">
+        <a href="${pageContext.request.contextPath}/staff/borrowlibrary" class="admin-logo">
             LBMS <span>STAFF</span>
         </a>
 
         <ul class="admin-nav">
             <li>
-                <a href="${pageContext.request.contextPath}/borrowlibrary">
+                <a href="${pageContext.request.contextPath}/staff/borrowlibrary">
                     📦 Quản lý mượn trả
                 </a>
             </li>
             <li>
-                <a href="${pageContext.request.contextPath}/borrowlibrary?filter=ONLINE">🌐 Yêu cầu trực tuyến</a>
+                <a href="${pageContext.request.contextPath}/staff/borrowlibrary?filter=ONLINE">🌐 Yêu cầu trực tuyến</a>
             </li>
             <li>
-                <a href="${pageContext.request.contextPath}/borrowlibrary/inperson">➕ Mượn tại quầy</a>
+                <a href="${pageContext.request.contextPath}/staff/borrowlibrary/inperson">➕ Mượn tại quầy</a>
             </li>
             <li>
-                <a href="${pageContext.request.contextPath}/borrowlibrary?filter=OVERDUE">
+                <a href="${pageContext.request.contextPath}/staff/borrowlibrary?filter=OVERDUE">
                     ⏰ Quá hạn <span class="badge-count">!</span>
                 </a>
             </li>

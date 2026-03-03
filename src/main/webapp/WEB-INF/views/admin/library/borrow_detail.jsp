@@ -97,7 +97,7 @@
         <div class="container py-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="d-flex align-items-center">
-                    <a href="${pageContext.request.contextPath}/borrowlibrary" class="btn btn-sm btn-outline-secondary me-3">← Quay lại</a>
+                    <a href="${pageContext.request.contextPath}/staff/borrowlibrary" class="btn btn-sm btn-outline-secondary me-3">← Quay lại</a>
                     <h2 class="mb-0 fw-bold">Chi tiết phiếu mượn <span class="text-primary">#${record.id}</span></h2>
                 </div>
                 <span class="status-badge status-${record.status} px-3 py-2 fs-6">${record.status}</span>
@@ -293,14 +293,14 @@
                                                 const bc = document.getElementById('bcApprove').value;
                                                 if (!bc)
                                                     return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
-                                                submitPOST('/borrowlibrary/approve', bc);
+                                                submitPOST('/staff/borrowlibrary/approve', bc);
                                             }
 
                                             function handleReturn() {
                                                 const bc = document.getElementById('bcReturn').value;
                                                 if (!bc)
                                                     return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
-                                                submitPOST('/borrowlibrary/return', bc);
+                                                submitPOST('/staff/borrowlibrary/return', bc);
                                             }
 
                                             function submitPOST(path, bc) {

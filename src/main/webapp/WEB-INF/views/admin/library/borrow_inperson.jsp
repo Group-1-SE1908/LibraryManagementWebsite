@@ -13,7 +13,7 @@
             <div class="card p-4" style="background:white; border-radius:12px; box-shadow: var(--shadow-sm);">
                 <h2 class="mb-4">📋 Cho mượn tại quầy</h2>
 
-                <form action="${pageContext.request.contextPath}/borrowlibrary/inperson" method="post">
+                <form action="${pageContext.request.contextPath}/staff/borrowlibrary/inperson" method="post">
                     <div class="mb-4">
                         <label class="form-label">1. ID Người mượn</label>
                         <input type="number" name="userId" class="form-control" required placeholder="Nhập mã số độc giả...">

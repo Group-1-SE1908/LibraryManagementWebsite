@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    <jsp:include page="header.jsp" />
+    <jsp:include page="header_lib.jsp" />
 
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -89,7 +89,7 @@
                             </div>
 
                             <div class="mt-5 d-flex justify-content-between">
-                                <a href="${pageContext.request.contextPath}/books" class="btn btn-outline-secondary">Hủy bỏ</a>
+                                <a href="${pageContext.request.contextPath}/staff/borrowlibrary" class="btn btn-outline-secondary">Hủy bỏ</a>
                                 <button type="submit" class="btn btn-primary px-5">Lưu thông tin</button>
                             </div>
                         </form>

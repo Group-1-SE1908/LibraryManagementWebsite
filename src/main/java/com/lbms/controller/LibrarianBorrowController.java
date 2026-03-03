@@ -15,8 +15,15 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = { "/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject",
-        "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson", "/borrowlibrary/receive" })
+@WebServlet(urlPatterns = {
+    "/staff/borrowlibrary",
+    "/staff/borrowlibrary/approve",
+    "/staff/borrowlibrary/reject",
+    "/staff/borrowlibrary/return",
+    "/staff/borrowlibrary/detail",
+    "/staff/borrowlibrary/inperson",
+    "/staff/borrowlibrary/receive"
+})
 public class LibrarianBorrowController extends HttpServlet {
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
@@ -40,7 +47,7 @@ public class LibrarianBorrowController extends HttpServlet {
             String path = req.getServletPath();
 
             // 2. Điều hướng giao diện
-            if ("/borrowlibrary/detail".equals(path)) {
+            if ("/staff/borrowlibrary/detail".equals(path)) {
                 long id = Long.parseLong(req.getParameter("id"));
 
                 BorrowRecord record = libDAO.findById(id);
@@ -59,7 +66,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("record", record);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_detail.jsp").forward(req, resp);
 
-            } else if ("/borrowlibrary/inperson".equals(path)) {
+            } else if ("/staff/borrowlibrary/inperson".equals(path)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
@@ -107,7 +114,7 @@ public class LibrarianBorrowController extends HttpServlet {
             }
             long staffId = currentUser.getId();
 
-            if ("/borrowlibrary/approve".equals(path)) {
+            if ("/staff/borrowlibrary/approve".equals(path)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
 
@@ -120,7 +127,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 libService.approveRequest(id, barcode, staffId);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
-            } else if ("/borrowlibrary/return".equals(path)) {
+            } else if ("/staff/borrowlibrary/return".equals(path)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode").trim();
                 if (idStr == null || idStr.isBlank()) {
@@ -129,17 +136,17 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 libService.returnBook(Long.parseLong(idStr), barcode);
                 req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
-            } else if ("/borrowlibrary/receive".equals(path)) {
+            } else if ("/staff/borrowlibrary/receive".equals(path)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 libService.confirmReceive(id);
                 req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành công.");
-            } else if ("/borrowlibrary/reject".equals(path)) {
+            } else if ("/staff/borrowlibrary/reject".equals(path)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 String reason = req.getParameter("reason"); // Lấy lý do từ form
                 libService.rejectRequest(id, reason, staffId);
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu. Lý do: " + reason);
 
-            } else if ("/borrowlibrary/inperson".equals(path)) {
+            } else if ("/staff/borrowlibrary/inperson".equals(path)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
                 String rawBarcodes = req.getParameter("barcodes");
 
@@ -161,23 +168,23 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash",
                         "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
-                resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
                 return;
             }
 
-            resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+            resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
 
         } catch (IllegalArgumentException ex) {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
             req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
             if ("/borrowlibrary/inperson".equals(req.getServletPath())) {
-                resp.sendRedirect(req.getContextPath() + "/borrowlibrary/inperson");
+                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary/inperson");
             } else {
-                resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
+                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
             }
         } catch (Exception ex) {
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/borrowlibrary/inperson_form");
+            resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary/inperson_form");
         }
     }
 

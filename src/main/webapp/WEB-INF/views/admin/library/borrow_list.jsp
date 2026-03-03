@@ -111,7 +111,7 @@
                 <h1>🛠️ Quản lý Mượn Trả</h1>
             </div>
 
-            <form action="${pageContext.request.contextPath}/borrowlibrary" method="get" class="filter-bar">
+            <form action="${pageContext.request.contextPath}/staff/borrowlibrary" method="get" class="filter-bar">
                 <div class="filter-group">
                     <label>Tìm kiếm</label>
                     <input type="text" name="q" placeholder="Tên user hoặc tên sách..." value="${param.q}">
@@ -127,7 +127,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn primary">Áp dụng lọc</button>
-                <a href="${pageContext.request.contextPath}/borrowlibrary" class="btn">Xóa lọc</a>
+                <a href="${pageContext.request.contextPath}/staff/borrowlibrary" class="btn">Xóa lọc</a>
             </form>
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <c:if test="${not empty flash}">
@@ -198,7 +198,7 @@
 
                                 <td style="text-align:center;">
                                     <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                                        <a href="${pageContext.request.contextPath}/borrowlibrary/detail?id=${r.id}" class="btn" style="width:80px;">Chi tiết</a>
+                                        <a href="${pageContext.request.contextPath}/staff/borrowlibrary/detail?id=${r.id}" class="btn" style="width:80px;">Chi tiết</a>
 
                                         <c:if test="${r.status == 'REQUESTED'}">
                                             <div id="box-${r.id}" style="display:none; margin: 5px 0; border: 1px solid #0b57d0; padding: 5px; border-radius: 5px; background:#f8fafc;">
@@ -207,7 +207,7 @@
                                             </div>
                                             <button id="btn-show-${r.id}" onclick="showInput(${r.id})" class="btn primary" style="width:80px;">Duyệt</button>
 
-                                            <form action="${pageContext.request.contextPath}/borrowlibrary/reject" method="post" style="display:inline; margin:0;" onsubmit="confirmReject(event, this)">
+                                            <form action="${pageContext.request.contextPath}/staff/borrowlibrary/reject" method="post" style="display:inline; margin:0;" onsubmit="confirmReject(event, this)">
                                                 <input type="hidden" name="id" value="${r.id}">
                                                 <button type="submit" class="btn-reject" style="width:80px;">Từ chối</button>
                                             </form>
@@ -221,7 +221,7 @@
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn success" style="background:#10b981; color:white; border:none; width:80px;">Trả sách</button>
                                         </c:if>
                                         <c:if test="${r.status == 'APPROVED'}">
-                                            <form action="${pageContext.request.contextPath}/borrowlibrary/receive" method="post" style="display:inline;">
+                                            <form action="${pageContext.request.contextPath}/staff/borrowlibrary/receive" method="post" style="display:inline;">
                                                 <input type="hidden" name="id" value="${r.id}">
                                                 <button type="submit" class="btn success" style="width:80px; background:#0b57d0; color:white; border:none;">Nhận sách</button>
                                             </form>
@@ -267,7 +267,7 @@
                     if (result.isConfirmed) {
                         const form = document.createElement('form');
                         form.method = 'POST';
-                        form.action = '${pageContext.request.contextPath}/borrowlibrary/approve';
+                        form.action = '${pageContext.request.contextPath}/staff/borrowlibrary/approve';
 
                         // SỬA TẠI ĐÂY: Sử dụng cộng chuỗi để giữ nguyên biến JavaScript
                         form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
@@ -301,7 +301,7 @@
                     if (result.isConfirmed) {
                         const form = document.createElement('form');
                         form.method = 'POST';
-                        form.action = '${pageContext.request.contextPath}/borrowlibrary/return';
+                        form.action = '${pageContext.request.contextPath}/staff/borrowlibrary/return';
                         form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
                         document.body.appendChild(form);
                         form.submit();
