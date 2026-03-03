@@ -34,7 +34,12 @@ public class LibrarianActivityLogController extends HttpServlet {
             throws ServletException, IOException {
 
         List<LibrarianActivityLog> logs = activityLogDAO.getAllActivityLogs();
+        String filterType = request.getParameter("type");
+        if (filterType != null && !filterType.isEmpty()) {
+            logs = activityLogDAO.getActivityLogsFiltered(filterType);
+        }
         request.setAttribute("activityLogs", logs);
+        request.setAttribute("filterType", filterType);
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/admin/librarianActivityLog.jsp");
         dispatcher.forward(request, response);

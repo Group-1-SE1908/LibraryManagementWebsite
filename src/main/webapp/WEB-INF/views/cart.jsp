@@ -116,6 +116,13 @@
                     <strong>${totalQuantity}</strong>
                 </div>
                 <form class="borrow-form" method="post" action="${pageContext.request.contextPath}/cart/checkout">
+                    <input type="hidden" name="shippingRecipient" data-shipping-hidden="recipient" />
+                    <input type="hidden" name="shippingPhone" data-shipping-hidden="phone" />
+                    <input type="hidden" name="shippingStreet" data-shipping-hidden="street" />
+                    <input type="hidden" name="shippingResidence" data-shipping-hidden="residence" />
+                    <input type="hidden" name="shippingCity" data-shipping-hidden="city" />
+                    <input type="hidden" name="shippingDistrict" data-shipping-hidden="district" />
+                    <input type="hidden" name="shippingWard" data-shipping-hidden="ward" />
                     <div class="borrow-form-heading">
                         <p class="label">Chọn phương thức mượn</p>
                         <small>Mượn nhanh theo nhu cầu của bạn</small>
@@ -161,11 +168,6 @@
                                     <option value="14">14 ngày</option>
                                 </select>
                             </label>
-                            <label class="form-group online-row" data-online-dependent>
-                                <span>Địa chỉ nhận sách</span>
-                                <input type="text" name="deliveryAddress" placeholder="Ví dụ: 123 Nguyễn Huệ" disabled required value="${userAddress != null ? userAddress : ''}" />
-                                <small>Thư viện sẽ gửi sách đến địa chỉ này khi bạn chọn online.</small>
-                            </label>
                             <label class="form-group pickup-row" data-pickup-dependent>
                                 <span>Ngày đến lấy sách</span>
                                 <input type="date" name="pickupDate" disabled required />
@@ -180,6 +182,57 @@
         </section>
     </c:if>
 </main>
+
+<div class="shipping-overlay" hidden data-shipping-overlay>
+    <div class="shipping-dialog">
+        <div class="shipping-header">
+            <p class="label">Thông tin giao sách</p>
+            <h3>Checkout cùng Giao Hàng Tiết Kiệm</h3>
+            <p>Điền đầy đủ tỉnh/thành, quận/huyện, phường/xã để hệ thống có thể lập đơn tự động.</p>
+        </div>
+        <div class="shipping-form-grid">
+            <label class="form-group">
+                <span>Tên người nhận</span>
+                <input type="text" data-shipping-field="recipient" placeholder="Ví dụ: Nguyễn Thị Hoa" required />
+            </label>
+            <label class="form-group">
+                <span>Số điện thoại</span>
+                <input type="tel" inputmode="tel" data-shipping-field="phone" placeholder="0901234567" required />
+            </label>
+            <label class="form-group">
+                <span>Tên đường / số nhà</span>
+                <input type="text" data-shipping-field="street" placeholder="118/2/14 Lê Văn Thọ" required />
+            </label>
+            <label class="form-group">
+                <span>Khối / căn hộ <span class="optional-label">(Tùy chọn)</span></span>
+                <input type="text" data-shipping-field="residence" placeholder="Tầng 4, Chung cư Phúc Nguyên" />
+            </label>
+            <label class="form-group">
+                <span>Tỉnh / Thành phố</span>
+                <select data-shipping-field="city" required>
+                    <option value="">Chọn tỉnh/thành</option>
+                </select>
+            </label>
+            <label class="form-group">
+                <span>Quận / Huyện</span>
+                <select data-shipping-field="district" required>
+                    <option value="">Chọn quận/huyện</option>
+                </select>
+            </label>
+            <label class="form-group">
+                <span>Phường / Xã</span>
+                <select data-shipping-field="ward" required>
+                    <option value="">Chọn phường/xã</option>
+                </select>
+            </label>
+        </div>
+        <p class="shipping-note">Thông tin này sẽ được gửi tới đội vận chuyển để đồng bộ với API Giao Hàng Tiết Kiệm.</p>
+        <div class="shipping-actions">
+            <button type="button" class="btn secondary" data-shipping-cancel>Hủy</button>
+            <button type="button" class="btn primary" data-shipping-submit>Checkout</button>
+        </div>
+    </div>
+</div>
 
 <div class="confirm-overlay" hidden data-confirm-overlay>
     <div class="confirm-dialog">
@@ -202,31 +255,203 @@
         }
         const detailInputs = Array.from(detailPanel.querySelectorAll('input'));
         const pickupDependents = detailPanel.querySelectorAll('[data-pickup-dependent]');
-        const onlineDependents = detailPanel.querySelectorAll('[data-online-dependent]');
         const pickupInputs = detailPanel.querySelectorAll('input[name="pickupDate"]');
-        const deliveryInputs = detailPanel.querySelectorAll('input[name="deliveryAddress"]');
         const confirmOverlay = document.querySelector('[data-confirm-overlay]');
         const confirmMethodLabel = confirmOverlay?.querySelector('[data-confirm-method]');
         const confirmSubmit = confirmOverlay?.querySelector('[data-confirm-submit]');
         const confirmCancel = confirmOverlay?.querySelector('[data-confirm-cancel]');
-        const openConfirmButton = document.querySelector('[data-open-confirm]');
+        const openBorrowButton = document.querySelector('[data-open-confirm]');
         const borrowForm = document.querySelector('.borrow-form');
+        const shippingOverlay = document.querySelector('[data-shipping-overlay]');
+        const shippingFields = shippingOverlay ? Array.from(shippingOverlay.querySelectorAll('[data-shipping-field]')) : [];
+        const shippingHiddenInputs = borrowForm ? Array.from(borrowForm.querySelectorAll('[data-shipping-hidden]')) : [];
+        const shippingFieldMap = shippingFields.reduce((map, field) => {
+            map[field.dataset.shippingField] = field;
+            return map;
+        }, {});
+        const shippingHiddenMap = shippingHiddenInputs.reduce((map, hidden) => {
+            map[hidden.dataset.shippingHidden] = hidden;
+            return map;
+        }, {});
+        const shippingSubmitButton = shippingOverlay?.querySelector('[data-shipping-submit]');
+        const shippingCancelButton = shippingOverlay?.querySelector('[data-shipping-cancel]');
+        const shippingCitySelect = shippingFieldMap.city;
+        const shippingDistrictSelect = shippingFieldMap.district;
+        const shippingWardSelect = shippingFieldMap.ward;
+
+        if (shippingOverlay && shippingOverlay.parentElement !== document.body) {
+            document.body.appendChild(shippingOverlay);
+        }
+        if (shippingOverlay) {
+            shippingOverlay.hidden = true;
+        }
+
+        const locationCatalog = {
+            "Hồ Chí Minh": {
+                "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Tân Định"],
+                "Quận Bình Thạnh": ["Phường 1", "Phường 2", "Phường 3"],
+                "Quận Gò Vấp": ["Phường 1", "Phường 3", "Phường 8"]
+            },
+            "Hà Nội": {
+                "Quận Hoàn Kiếm": ["Phường Hàng Bạc", "Phường Tràng Tiền"],
+                "Quận Đống Đa": ["Phường Ô Chợ Dừa", "Phường Trung Liệt"],
+                "Quận Thanh Xuân": ["Phường Nhân Chính", "Phường Khương Mai"]
+            },
+            "Đà Nẵng": {
+                "Quận Hải Châu": ["Phường Thạch Thang", "Phường Bình Thuận"],
+                "Quận Sơn Trà": ["Phường An Hải Bắc", "Phường Mân Thái"]
+            }
+        };
+
+        const populateCities = () => {
+            if (!shippingCitySelect) {
+                return;
+            }
+            shippingCitySelect.innerHTML = '<option value="">Chọn tỉnh/thành</option>';
+            Object.keys(locationCatalog).forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                shippingCitySelect.appendChild(option);
+            });
+            renderDistricts('');
+            renderWards('', '');
+        };
+
+        const renderDistricts = (city) => {
+            if (!shippingDistrictSelect) {
+                return;
+            }
+            shippingDistrictSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+            const districts = locationCatalog[city];
+            if (districts) {
+                Object.keys(districts).forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    shippingDistrictSelect.appendChild(option);
+                });
+            }
+        };
+
+        const renderWards = (city, district) => {
+            if (!shippingWardSelect) {
+                return;
+            }
+            shippingWardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            const districts = locationCatalog[city];
+            if (districts) {
+                const wards = districts[district];
+                if (Array.isArray(wards)) {
+                    wards.forEach(ward => {
+                        const option = document.createElement('option');
+                        option.value = ward;
+                        option.textContent = ward;
+                        shippingWardSelect.appendChild(option);
+                    });
+                }
+            }
+        };
+
+        const fillShippingOverlay = () => {
+            Object.entries(shippingHiddenMap).forEach(([key, hidden]) => {
+                const field = shippingFieldMap[key];
+                if (field) {
+                    field.value = hidden.value;
+                }
+            });
+            if (!shippingCitySelect) {
+                return;
+            }
+            const storedCity = shippingHiddenMap.city?.value;
+            if (storedCity) {
+                shippingCitySelect.value = storedCity;
+                renderDistricts(storedCity);
+                const storedDistrict = shippingHiddenMap.district?.value;
+                if (storedDistrict && shippingDistrictSelect) {
+                    shippingDistrictSelect.value = storedDistrict;
+                    renderWards(storedCity, storedDistrict);
+                    const storedWard = shippingHiddenMap.ward?.value;
+                    if (storedWard && shippingWardSelect) {
+                        shippingWardSelect.value = storedWard;
+                    }
+                } else {
+                    renderWards(storedCity, '');
+                }
+            } else {
+                renderDistricts('');
+                renderWards('', '');
+            }
+        };
+
+        const syncShippingHidden = () => {
+            Object.entries(shippingFieldMap).forEach(([key, field]) => {
+                const hidden = shippingHiddenMap[key];
+                if (hidden) {
+                    hidden.value = field.value.trim();
+                }
+            });
+        };
+
+        const closeShippingOverlay = () => {
+            if (!shippingOverlay || shippingOverlay.hidden) {
+                return;
+            }
+            shippingOverlay.hidden = true;
+            document.body.classList.remove('modal-open');
+        };
+
+        const showShippingOverlay = () => {
+            if (!shippingOverlay) {
+                openConfirmOverlay();
+                return;
+            }
+            fillShippingOverlay();
+            shippingOverlay.hidden = false;
+            document.body.classList.add('modal-open');
+        };
+
+        const handleShippingSubmit = () => {
+            let valid = true;
+            shippingFields.forEach(field => {
+                if (!field.checkValidity()) {
+                    field.reportValidity();
+                    valid = false;
+                }
+            });
+            if (!valid) {
+                return;
+            }
+            syncShippingHidden();
+            closeShippingOverlay();
+            borrowForm?.submit();
+        };
+
+        shippingOverlay?.addEventListener('click', event => {
+            if (event.target === shippingOverlay) {
+                closeShippingOverlay();
+            }
+        });
+        shippingCancelButton?.addEventListener('click', closeShippingOverlay);
+        shippingSubmitButton?.addEventListener('click', handleShippingSubmit);
+        shippingCitySelect?.addEventListener('change', () => {
+            renderDistricts(shippingCitySelect.value);
+            renderWards(shippingCitySelect.value, '');
+        });
+        shippingDistrictSelect?.addEventListener('change', () => {
+            renderWards(shippingCitySelect.value, shippingDistrictSelect.value);
+        });
+
         const updateMethodDependents = () => {
             const selected = document.querySelector('input[name="borrowMethod"]:checked');
             const isInPerson = selected && selected.value === 'IN_PERSON';
-            const isOnline = selected && selected.value === 'ONLINE';
             pickupDependents.forEach(node => node.classList.toggle('pickup-row--visible', isInPerson));
-            onlineDependents.forEach(node => node.classList.toggle('online-row--visible', isOnline));
             if (!detailPanel.classList.contains('borrow-details--visible')) {
                 return;
             }
             pickupInputs.forEach(input => {
                 input.required = isInPerson;
                 input.disabled = !isInPerson;
-            });
-            deliveryInputs.forEach(input => {
-                input.required = isOnline;
-                input.disabled = !isOnline;
             });
         };
         const showDetails = () => {
@@ -248,7 +473,7 @@
         }
 
         const closeConfirmOverlay = () => {
-            if (!confirmOverlay) {
+            if (!confirmOverlay || confirmOverlay.hidden) {
                 return;
             }
             confirmOverlay.hidden = true;
@@ -268,9 +493,18 @@
             document.body.classList.add('modal-open');
         };
 
-        openConfirmButton?.addEventListener('click', (event) => {
-            event.preventDefault();
+        const openBorrowModal = () => {
+            const selected = document.querySelector('input[name="borrowMethod"]:checked');
+            if (selected && selected.value === 'ONLINE' && shippingOverlay) {
+                showShippingOverlay();
+                return;
+            }
             openConfirmOverlay();
+        };
+
+        openBorrowButton?.addEventListener('click', event => {
+            event.preventDefault();
+            openBorrowModal();
         });
 
         confirmSubmit?.addEventListener('click', () => {
@@ -279,16 +513,22 @@
         });
 
         confirmCancel?.addEventListener('click', closeConfirmOverlay);
-        confirmOverlay?.addEventListener('click', (event) => {
+        confirmOverlay?.addEventListener('click', event => {
             if (event.target === confirmOverlay) {
                 closeConfirmOverlay();
             }
         });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && confirmOverlay && !confirmOverlay.hidden) {
-                closeConfirmOverlay();
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                if (shippingOverlay && !shippingOverlay.hidden) {
+                    closeShippingOverlay();
+                } else {
+                    closeConfirmOverlay();
+                }
             }
         });
+
+        populateCities();
     })();
 </script>
 

@@ -15,7 +15,8 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject", "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson", "/borrowlibrary/receive"})
+@WebServlet(urlPatterns = { "/borrowlibrary", "/borrowlibrary/approve", "/borrowlibrary/reject",
+        "/borrowlibrary/return", "/borrowlibrary/detail", "/borrowlibrary/inperson", "/borrowlibrary/receive" })
 public class LibrarianBorrowController extends HttpServlet {
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
@@ -44,10 +45,10 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 BorrowRecord record = libDAO.findById(id);
                 if (record != null) {
-//                    record.setUser(userDAO.findById(record.getUser().getId()));
-//                    UserBorrowingSummary stats = libDAO.getUserSummary(record.getUser().getId());
-                    ////                    req.setAttribute("record", record);
-//                    req.setAttribute("stats", stats);
+                    // record.setUser(userDAO.findById(record.getUser().getId()));
+                    // UserBorrowingSummary stats = libDAO.getUserSummary(record.getUser().getId());
+                    //// req.setAttribute("record", record);
+                    // req.setAttribute("stats", stats);
                     User detailedUser = userDAO.findById(record.getUser().getId());
                     record.setUser(detailedUser);
 
@@ -97,6 +98,15 @@ public class LibrarianBorrowController extends HttpServlet {
             requireStaff(req);
             String path = req.getServletPath();
 
+            // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
+            HttpSession session = req.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
+                return;
+            }
+            long staffId = currentUser.getId();
+
             if ("/borrowlibrary/approve".equals(path)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
@@ -107,7 +117,7 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 long id = Long.parseLong(idStr);
 
-                libService.approveRequest(id, barcode);
+                libService.approveRequest(id, barcode, staffId);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
             } else if ("/borrowlibrary/return".equals(path)) {
@@ -126,7 +136,7 @@ public class LibrarianBorrowController extends HttpServlet {
             } else if ("/borrowlibrary/reject".equals(path)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 String reason = req.getParameter("reason"); // Lấy lý do từ form
-                libService.rejectRequest(id, reason);
+                libService.rejectRequest(id, reason, staffId);
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu. Lý do: " + reason);
 
             } else if ("/borrowlibrary/inperson".equals(path)) {
@@ -148,7 +158,8 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 // Gọi hàm mượn nhiều cuốn
                 libService.borrowMultipleInPerson(userId, validBarcodes);
-                req.getSession().setAttribute("flash", "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
+                req.getSession().setAttribute("flash",
+                        "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
                 resp.sendRedirect(req.getContextPath() + "/borrowlibrary");
                 return;

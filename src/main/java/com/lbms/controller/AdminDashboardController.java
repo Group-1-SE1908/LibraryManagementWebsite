@@ -1,8 +1,6 @@
 package com.lbms.controller;
 
 import com.lbms.dao.DashboardDAO;
-import com.lbms.model.User;
-import com.lbms.dao.UserDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

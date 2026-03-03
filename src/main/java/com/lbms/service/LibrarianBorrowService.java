@@ -8,10 +8,12 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.lbms.dao.LibrarianActivityLogDAO;
 
 public class LibrarianBorrowService {
 
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
+    private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
 
     public void returnBook(long borrowId, String inputBarcode) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
@@ -86,10 +88,25 @@ public class LibrarianBorrowService {
         }
     }
 
-    public void approveRequest(long borrowId, String barcode) throws SQLException {
+    public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false); // Bắt đầu Transaction để đảm bảo tính toàn vẹn dữ liệu
             try {
+                // Lấy thông tin chi tiết phiếu mượn để ghi log
+                String bookTitle = "N/A";
+                String userName = "N/A";
+                String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br " +
+                        "JOIN Book b ON br.book_id = b.book_id " +
+                        "JOIN [User] u ON br.user_id = u.user_id WHERE br.id = ?";
+                try (PreparedStatement psInfo = c.prepareStatement(sqlInfo)) {
+                    psInfo.setLong(1, borrowId);
+                    try (ResultSet rs = psInfo.executeQuery()) {
+                        if (rs.next()) {
+                            bookTitle = rs.getString("title");
+                            userName = rs.getString("full_name");
+                        }
+                    }
+                }
                 int copyId = -1;
                 long bookIdFromCopy = -1;
 
@@ -102,19 +119,22 @@ public class LibrarianBorrowService {
                             copyId = rs.getInt("copy_id");
                             bookIdFromCopy = rs.getLong("book_id");
                         } else {
-                            throw new IllegalArgumentException("Mã vạch không hợp lệ, sách đã bị mượn hoặc không tồn tại.");
+                            throw new IllegalArgumentException(
+                                    "Mã vạch không hợp lệ, sách đã bị mượn hoặc không tồn tại.");
                         }
                     }
                 }
 
-                // 2. Kiểm tra xem cuốn sách này có đúng là đầu sách mà người dùng đã yêu cầu không
+                // 2. Kiểm tra xem cuốn sách này có đúng là đầu sách mà người dùng đã yêu cầu
+                // không
                 String checkBr = "SELECT book_id FROM borrow_records WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(checkBr)) {
                     ps.setLong(1, borrowId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             if (rs.getLong("book_id") != bookIdFromCopy) {
-                                throw new IllegalArgumentException("Mã vạch này thuộc về đầu sách khác, không đúng với yêu cầu của độc giả.");
+                                throw new IllegalArgumentException(
+                                        "Mã vạch này thuộc về đầu sách khác, không đúng với yêu cầu của độc giả.");
                             }
                         } else {
                             throw new IllegalArgumentException("Không tìm thấy phiếu yêu cầu mượn này.");
@@ -123,12 +143,14 @@ public class LibrarianBorrowService {
                 }
 
                 // 3. Cập nhật trạng thái bản sao sách (BookCopy) thành 'BORROWED' để giữ chỗ
-                try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                try (PreparedStatement ps = c
+                        .prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setInt(1, copyId);
                     ps.executeUpdate();
                 }
 
-                // 4. Cập nhật phiếu mượn: Chuyển sang APPROVED, gán copy_id (Chưa set ngày mượn vì khách chưa đến lấy)
+                // 4. Cập nhật phiếu mượn: Chuyển sang APPROVED, gán copy_id (Chưa set ngày mượn
+                // vì khách chưa đến lấy)
                 String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
                     ps.setInt(1, copyId);
@@ -137,13 +159,17 @@ public class LibrarianBorrowService {
                 }
 
                 // 5. Trừ số lượng sách trong kho (Bảng Book)
-                try (PreparedStatement ps = c.prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
                     ps.setLong(1, bookIdFromCopy);
                     int rowsAffected = ps.executeUpdate();
                     if (rowsAffected == 0) {
                         throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
                     }
                 }
+                // 6. Ghi log hoạt động duyệt mượn
+                logDAO.addActivityLog((int) staffId,
+                        "Duyệt mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
 
                 c.commit(); // Hoàn tất mọi thay đổi
             } catch (Exception e) {
@@ -154,22 +180,33 @@ public class LibrarianBorrowService {
     }
 
     public void confirmReceive(long borrowId) throws SQLException {
-    LocalDate borrowDate = LocalDate.now();
-    LocalDate dueDate = borrowDate.plusDays(7); 
-    
-    // Cập nhật trạng thái sang RECEIVED (Thay cho BORROWED cũ để phân biệt việc đã cầm sách)
-    String sql = "UPDATE borrow_records SET status = 'RECEIVED', borrow_date = ?, due_date = ? WHERE id = ?";
-    try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-        ps.setDate(1, java.sql.Date.valueOf(borrowDate));
-        ps.setDate(2, java.sql.Date.valueOf(dueDate));
-        ps.setLong(3, borrowId);
-        ps.executeUpdate();
+        LocalDate borrowDate = LocalDate.now();
+        LocalDate dueDate = borrowDate.plusDays(7);
+
+        // Cập nhật trạng thái sang RECEIVED (Thay cho BORROWED cũ để phân biệt việc đã
+        // cầm sách)
+        String sql = "UPDATE borrow_records SET status = 'RECEIVED', borrow_date = ?, due_date = ? WHERE id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setDate(1, java.sql.Date.valueOf(borrowDate));
+            ps.setDate(2, java.sql.Date.valueOf(dueDate));
+            ps.setLong(3, borrowId);
+            ps.executeUpdate();
+        }
     }
-}
 
-    public void rejectRequest(long borrowId, String reason) throws SQLException {
-
+    public void rejectRequest(long borrowId, String reason, long staffId) throws SQLException {
+        BorrowRecord record = libDAO.findById(borrowId);
+        if (record == null) {
+            throw new IllegalArgumentException("Không tìm thấy phiếu mượn với ID: " + borrowId);
+        }
+        String bookTitle = record.getBook().getTitle();
+        String userName = record.getUser().getFullName();
         libDAO.rejectRequest(borrowId, reason);
+        // Ghi log hoạt động từ chối mượn
+        logDAO.addActivityLog((int) staffId,
+
+                "Từ chối mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
+
     }
 
     public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
@@ -183,7 +220,8 @@ public class LibrarianBorrowService {
                         if (rs.next()) {
                             String uStatus = rs.getString("status");
                             if ("INACTIVE".equalsIgnoreCase(uStatus) || "BANNED".equalsIgnoreCase(uStatus)) {
-                                throw new IllegalArgumentException("Tài khoản độc giả (" + rs.getString("full_name") + ") đang bị khóa.");
+                                throw new IllegalArgumentException(
+                                        "Tài khoản độc giả (" + rs.getString("full_name") + ") đang bị khóa.");
                             }
                         } else {
                             throw new IllegalArgumentException("Không tìm thấy độc giả có ID: " + userId);
@@ -194,7 +232,8 @@ public class LibrarianBorrowService {
                 // Gọi hàm countActiveBorrows từ libDAO
                 int currentBorrowed = libDAO.countActiveBorrows(userId);
                 if (currentBorrowed + barcodes.size() > 5) {
-                    throw new IllegalArgumentException("Vượt quá giới hạn mượn (Tối đa 5 cuốn). Đang mượn: " + currentBorrowed);
+                    throw new IllegalArgumentException(
+                            "Vượt quá giới hạn mượn (Tối đa 5 cuốn). Đang mượn: " + currentBorrowed);
                 }
 
                 LocalDate borrowDate = LocalDate.now();
@@ -231,12 +270,14 @@ public class LibrarianBorrowService {
                         ps.executeUpdate();
                     }
 
-                    try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                    try (PreparedStatement ps = c
+                            .prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                         ps.setInt(1, copyId);
                         ps.executeUpdate();
                     }
 
-                    try (PreparedStatement ps = c.prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ?")) {
+                    try (PreparedStatement ps = c
+                            .prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ?")) {
                         ps.setLong(1, bookId);
                         ps.executeUpdate();
                     }

@@ -3,6 +3,7 @@ package com.lbms.controller;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
@@ -17,8 +18,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
-    "/history"})
+@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/return",
+        "/history" })
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -166,7 +167,7 @@ public class BorrowController extends HttpServlet {
 
         long bookId = Long.parseLong(bookIdStr);
 
-        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE");
+        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE", null);
 
         req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng (chá» thá»§ thÆ° duyá»‡t)");
         resp.sendRedirect(req.getContextPath() + "/borrow");
@@ -180,7 +181,20 @@ public class BorrowController extends HttpServlet {
         }
 
         List<BorrowRecord> records = borrowDAO.listByUser(currentUser.getId());
+        String statusFilter = optionalFilter(req.getParameter("status"));
+        List<String> filterStatuses = statusesForFilter(statusFilter);
+        if (!filterStatuses.isEmpty()) {
+            records = records.stream()
+                    .filter(r -> {
+                        String status = r.getStatus();
+                        return status != null && filterStatuses.contains(status.toUpperCase());
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            statusFilter = "all";
+        }
         req.setAttribute("records", records);
+        req.setAttribute("historyStatusFilter", statusFilter);
 
         Object flash = req.getSession().getAttribute("flash");
         if (flash != null) {
@@ -189,6 +203,26 @@ public class BorrowController extends HttpServlet {
         }
 
         req.getRequestDispatcher("/WEB-INF/views/borrow_history.jsp").forward(req, resp);
+    }
+
+    private String optionalFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return "all";
+        }
+        return value.trim().toLowerCase();
+    }
+
+    private List<String> statusesForFilter(String normalized) {
+        switch (normalized) {
+            case "borrowing":
+                return List.of("BORROWED");
+            case "pending":
+                return List.of("REQUESTED", "APPROVED");
+            case "returned":
+                return List.of("RETURNED");
+            default:
+                return List.of();
+        }
     }
 
     private void requireStaff(HttpServletRequest req) {
