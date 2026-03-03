@@ -289,21 +289,21 @@
                 </header>
 
                 <script>
-    <% --Logic đóng / mở menu cá nhân[cite: 64 - 65]--%>
-                        function toggleUserDropdown(event) {
-                            event.stopPropagation();
-                            const dropdown = document.getElementById('userDropdown');
-                            dropdown.classList.toggle('show');
-                        }
+                    // Logic đóng / mở menu cá nhân
+                    function toggleUserDropdown(event) {
+                        event.stopPropagation();
+                        const dropdown = document.getElementById('userDropdown');
+                        dropdown.classList.toggle('show');
+                    }
 
-                        <% --Đóng menu khi click ra ngoài vùng dropdown[cite: 66 - 68]--%>
-                            window.addEventListener('click', function (e) {
-                                const dropdown = document.getElementById('userDropdown');
-                                const profileBtn = document.getElementById('userProfileBtn');
-                                if (dropdown && dropdown.classList.contains('show')) {
-                                    if (!profileBtn || !profileBtn.contains(e.target)) {
-                                        dropdown.classList.remove('show');
-                                    }
-                                }
-                            });
+                    // Đóng menu khi click ra ngoài vùng dropdown
+                    window.addEventListener('click', function (e) {
+                        const dropdown = document.getElementById('userDropdown');
+                        const profileBtn = document.getElementById('userProfileBtn');
+                        if (dropdown && dropdown.classList.contains('show')) {
+                            if (!profileBtn || !profileBtn.contains(e.target)) {
+                                dropdown.classList.remove('show');
+                            }
+                        }
+                    });
                 </script>

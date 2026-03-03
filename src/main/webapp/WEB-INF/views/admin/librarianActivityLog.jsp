@@ -10,7 +10,6 @@
                     <meta charset="UTF-8">
                     <title>LBMS - Librarian Activity Log</title>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
                     <link
                         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
                         rel="stylesheet">
@@ -28,7 +27,6 @@
                             --text-main: #1E293B;
                             --text-muted: #64748B;
                             --sidebar-width: 280px;
-
                             --action-add: #10B981;
                             --action-update: #F59E0B;
                             --action-delete: #EF4444;
@@ -60,7 +58,6 @@
                             box-sizing: border-box;
                         }
 
-                        /* Header Section */
                         .header-flex {
                             display: flex;
                             justify-content: space-between;
@@ -78,19 +75,12 @@
                             color: var(--text-main);
                         }
 
-                        h1 .material-icons {
-                            font-size: 2rem;
-                            color: var(--primary);
-                        }
-
-                        /* Filter Styling */
                         .custom-select {
                             padding: 0.625rem 2.5rem 0.625rem 1rem;
                             border-radius: 10px;
                             border: 1px solid var(--border);
                             font-family: inherit;
                             font-size: 0.875rem;
-                            font-weight: 500;
                             color: var(--text-main);
                             background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") no-repeat right 0.75rem center;
                             background-size: 1rem;
@@ -100,17 +90,13 @@
                             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
                         }
 
-                        .custom-select:hover {
-                            border-color: var(--primary);
-                        }
-
                         .custom-select:focus {
                             outline: none;
                             border-color: var(--primary);
-                            ring: 2px var(--primary-light);
+                            box-shadow: 0 0 0 3px var(--primary-light);
                         }
 
-                        /* Card & Table Styling */
+                        /* --- PHẦN FIX LỖI LỆCH CỘT --- */
                         .card {
                             background: var(--card);
                             border-radius: 16px;
@@ -122,7 +108,42 @@
                         table {
                             width: 100%;
                             border-collapse: collapse;
+                            table-layout: fixed;
+                            /* Cố định layout bảng */
                         }
+
+                        /* Định nghĩa độ rộng cố định cho từng cột */
+                        th:nth-child(1),
+                        td:nth-child(1) {
+                            width: 80px;
+                            text-align: center;
+                        }
+
+                        /* ID */
+                        th:nth-child(2),
+                        td:nth-child(2) {
+                            width: 25%;
+                        }
+
+                        /* Người thực hiện */
+                        th:nth-child(3),
+                        td:nth-child(3) {
+                            width: 140px;
+                        }
+
+                        /* Vai trò */
+                        th:nth-child(4),
+                        td:nth-child(4) {
+                            width: auto;
+                        }
+
+                        /* Thao tác - Cột co giãn */
+                        th:nth-child(5),
+                        td:nth-child(5) {
+                            width: 220px;
+                        }
+
+                        /* Thời gian */
 
                         th {
                             background: #F8FAFC;
@@ -130,7 +151,6 @@
                             font-size: 0.75rem;
                             font-weight: 700;
                             text-transform: uppercase;
-                            letter-spacing: 0.05em;
                             color: var(--text-muted);
                             text-align: left;
                             border-bottom: 1px solid var(--border);
@@ -141,15 +161,11 @@
                             font-size: 0.875rem;
                             border-bottom: 1px solid var(--border);
                             vertical-align: middle;
-                        }
-
-                        tr:last-child td {
-                            border-bottom: none;
+                            word-wrap: break-word;
                         }
 
                         tr:hover {
                             background: #F1F5F9;
-                            transition: background 0.2s;
                         }
 
                         /* User Info */
@@ -160,35 +176,28 @@
                         }
 
                         .avatar {
-                            width: 42px;
-                            height: 42px;
-                            border-radius: 12px;
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 10px;
                             background: var(--primary-light);
                             color: var(--primary);
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             font-weight: 700;
-                            font-size: 1.1rem;
                             flex-shrink: 0;
                             overflow: hidden;
-                            box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.1);
                         }
 
-                        .user-name strong {
-                            display: block;
-                            color: var(--text-main);
-                            font-size: 0.935rem;
-                        }
-
-                        /* Badges */
+                        /* Badge Styling */
                         .badge {
                             padding: 0.35rem 0.75rem;
                             border-radius: 8px;
-                            font-size: 0.75rem;
+                            font-size: 0.725rem;
                             font-weight: 600;
                             display: inline-flex;
                             align-items: center;
+                            gap: 4px;
                         }
 
                         .badge-admin {
@@ -206,12 +215,20 @@
                             color: #475569;
                         }
 
-                        /* Action Text Colors */
-                        .action-text {
-                            font-weight: 600;
+                        /* Fix cột Action */
+                        .action-cell-content {
                             display: flex;
                             align-items: center;
-                            gap: 0.5rem;
+                            justify-content: space-between;
+                            /* Đẩy text sang trái, nút sang phải */
+                            width: 100%;
+                            gap: 10px;
+                        }
+
+                        .action-text-label {
+                            font-weight: 600;
+                            flex: 1;
+                            /* Chiếm tối đa không gian còn lại */
                         }
 
                         .text-add {
@@ -234,27 +251,36 @@
                             color: var(--action-reject);
                         }
 
-                        /* View Button */
                         .btn-view-log {
+                            flex-shrink: 0;
+                            /* Không cho nút bị co lại */
                             display: inline-flex;
                             align-items: center;
-                            padding: 0.4rem 0.8rem;
+                            padding: 0.45rem 0.85rem;
                             background: #F1F5F9;
                             color: var(--text-main);
                             text-decoration: none;
                             border-radius: 8px;
                             font-size: 0.75rem;
                             font-weight: 600;
-                            margin-left: 0.75rem;
                             transition: all 0.2s;
-                            border: 1px solid transparent;
+                            border: 1px solid var(--border);
                         }
 
                         .btn-view-log:hover {
                             background: var(--primary);
                             color: white;
+                            border-color: var(--primary);
                             transform: translateY(-1px);
-                            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+                        }
+
+                        .time-cell {
+                            color: var(--text-muted);
+                            font-weight: 500;
+                            white-space: nowrap;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
                         }
 
                         .back-link {
@@ -265,7 +291,6 @@
                             color: var(--text-muted);
                             text-decoration: none;
                             font-weight: 600;
-                            font-size: 0.875rem;
                             transition: color 0.2s;
                         }
 
@@ -361,60 +386,53 @@
                                                             value="${fn:toUpperCase(log.user.role.name)}" />
                                                         <span
                                                             class="badge ${roleName == 'ADMIN' ? 'badge-admin' : roleName == 'LIBRARIAN' ? 'badge-lib' : 'badge-member'}">
-                                                            <i class="fa-solid fa-shield-halved"
-                                                                style="font-size: 0.65rem; margin-right: 4px;"></i>
+                                                            <i class="fa-solid fa-shield-halved"></i>
                                                             ${log.user.role.name}
                                                         </span>
                                                     </td>
 
-                                                    <td class="action-text">
-                                                        <c:choose>
-                                                            <c:when test="${fn:contains(log.action, '[ID:')}">
-                                                                <c:set var="displayText"
-                                                                    value="${fn:substringBefore(log.action, ' [ID:')}" />
-                                                                <c:set var="targetId"
-                                                                    value="${fn:substringBefore(fn:substringAfter(log.action, '[ID:'), ']')}" />
+                                                    <td>
+                                                        <div class="action-cell-content">
+                                                            <c:choose>
+                                                                <c:when test="${fn:contains(log.action, '[ID:')}">
+                                                                    <c:set var="displayText"
+                                                                        value="${fn:substringBefore(log.action, ' [ID:')}" />
+                                                                    <c:set var="targetId"
+                                                                        value="${fn:substringBefore(fn:substringAfter(log.action, '[ID:'), ']')}" />
 
-                                                                <span
-                                                                    class="${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
-                                                              (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 
-                                                              (fn:containsIgnoreCase(log.action, 'Duyệt') ? 'text-approve' : 
-                                                              (fn:containsIgnoreCase(log.action, 'Từ chối') ? 'text-reject' : 'text-update')))}">
-                                                                    ${displayText}
-                                                                </span>
+                                                                    <span
+                                                                        class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
+                                                                  (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 
+                                                                  (fn:containsIgnoreCase(log.action, 'Duyệt') ? 'text-approve' : 
+                                                                  (fn:containsIgnoreCase(log.action, 'Từ chối') ? 'text-reject' : 'text-update')))}">
+                                                                        ${displayText}
+                                                                    </span>
 
-                                                                <c:choose>
-                                                                    <c:when
-                                                                        test="${fn:containsIgnoreCase(log.action, 'sách')}">
-                                                                        <c:set var="detailUrl"
-                                                                            value="${pageContext.request.contextPath}/books/detail?id=${targetId}" />
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <c:set var="detailUrl"
-                                                                            value="${pageContext.request.contextPath}/borrowlibrary/detail?id=${targetId}" />
-                                                                    </c:otherwise>
-                                                                </c:choose>
-
-                                                                <a href="${detailUrl}" class="btn-view-log">
-                                                                    <i class="fa-solid fa-arrow-up-right-from-square"
-                                                                        style="margin-right: 5px;"></i> View
-                                                                </a>
-                                                            </c:when>
-
-                                                            <c:otherwise>
-                                                                <span
-                                                                    class="${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
-                                                              fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 'text-update'}">
-                                                                    ${log.action}
-                                                                </span>
-                                                            </c:otherwise>
-                                                        </c:choose>
+                                                                    <c:set var="detailUrl"
+                                                                        value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/borrowlibrary/detail?id='}${targetId}" />
+                                                                    <a href="${pageContext.request.contextPath}${detailUrl}"
+                                                                        class="btn-view-log">
+                                                                        <i class="fa-solid fa-arrow-up-right-from-square"
+                                                                            style="margin-right: 5px;"></i> View
+                                                                    </a>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span
+                                                                        class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
+                                                                  fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 'text-update'}">
+                                                                        ${log.action}
+                                                                    </span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </div>
                                                     </td>
-                                                    <td style="color: var(--text-muted); font-weight: 500;">
-                                                        <i class="fa-regular fa-clock"
-                                                            style="margin-right: 5px; font-size: 0.8rem;"></i>
-                                                        <fmt:formatDate value="${log.timestamp}"
-                                                            pattern="dd MMM, yyyy HH:mm" />
+
+                                                    <td>
+                                                        <div class="time-cell">
+                                                            <i class="fa-regular fa-clock"></i>
+                                                            <fmt:formatDate value="${log.timestamp}"
+                                                                pattern="dd/MM/yyyy HH:mm" />
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
