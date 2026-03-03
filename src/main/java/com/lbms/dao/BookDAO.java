@@ -92,7 +92,7 @@ public class BookDAO {
             ps.setInt(5, b.getQuantity());
             //ps.setString(6, b.getIsbn());
             String isbn = b.getIsbn();
-            if (isbn != null && !isbn.isBlank() && !isbn.startsWith("LIB-")) {
+            if (isbn != null && !isbn.isBlank() && !isbn.startsWith("ISBN-")) {
                 isbn = "ISBN-" + isbn;
             }
             ps.setString(6, isbn);
@@ -113,7 +113,7 @@ public class BookDAO {
 
     public void update(Book b, long userId) throws SQLException {
 
-        String sql = "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=? WHERE book_id=?";
+        String sql = "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=? WHERE book_id=?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
@@ -123,17 +123,14 @@ public class BookDAO {
             ps.setString(5, b.getImage());
 
             if (b.getCategoryId() != null && b.getCategoryId() > 0) {
-                //ps.setLong(6, b.getCategoryId());
-                String isbn = b.getIsbn();
-                if (isbn != null && !isbn.isBlank() && !isbn.startsWith("LIB-")) {
-                    isbn = "ISBN-" + isbn;
-                }
-                ps.setString(6, isbn);
+                ps.setLong(6, b.getCategoryId());
             } else {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }
 
-            ps.setLong(7, b.getId());
+           
+            ps.setString(7, b.getIsbn());
+            ps.setLong(8, b.getId());
             // Lấy tên sách trước khi cập nhật để log
             int rowAffected = ps.executeUpdate();
             if (rowAffected > 0) {
