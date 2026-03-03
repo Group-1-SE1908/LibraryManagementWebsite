@@ -4,9 +4,6 @@
             <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
                 <c:set var="currentUser" value="${sessionScope.currentUser}" />
-                <c:set var="roleName"
-                    value="${not empty currentUser && not empty currentUser.role ? currentUser.role.name : ''}" />
-                <c:set var="isAdmin" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
                 <c:set var="userName"
                     value="${not empty currentUser && not empty currentUser.fullName ? currentUser.fullName : 'Guest'}" />
                 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
@@ -205,97 +202,108 @@
 
                 <header>
                     <div class="container">
-                        <a href="${pageContext.request.contextPath}/" class="logo">
-                            📚 LBMS.Portal
-                        </a>
-
-                        <ul class="nav-menu">
-                            <li><a href="${pageContext.request.contextPath}/">
-                                    <fmt:message key="nav.home" />
-                                </a></li>
-                            <li><a href="${pageContext.request.contextPath}/borrow">
-                                    <fmt:message key="nav.my_books" />
-                                </a></li>
-                            <li><a href="${pageContext.request.contextPath}/history">
-                                    <fmt:message key="nav.history" />
-                                </a></li>
-                            <li><a href="${pageContext.request.contextPath}/books">
-                                    <fmt:message key="nav.catalog" />
-                                </a></li>
-                        </ul>
-
-                        <div class="header-right">
-                            <div class="notification-icon">
-                                🔔 <span class="notification-badge">2</span>
-                            </div>
-
-                            <a href="${pageContext.request.contextPath}/cart" class="cart-btn">
-                                🛒
-                                <fmt:message key="nav.cart" />
+                        <%-- Logo dẫn về trang chủ Portal [cite: 38] --%>
+                            <a href="${pageContext.request.contextPath}/" class="logo">
+                                📚 LBMS.Portal
                             </a>
 
-                            <c:choose>
-                                <c:when test="${not empty currentUser}">
-                                    <div class="user-profile" id="userProfileBtn" onclick="toggleUserDropdown(event)">
-                                        <c:choose>
-                                            <c:when
-                                                test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
-                                                <img class="user-avatar"
-                                                    src="${pageContext.request.contextPath}/${currentUser.avatar}"
-                                                    alt="Avatar"
-                                                    onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">
-                                                <div class="user-avatar user-avatar-initial" style="display:none;">
-                                                    ${userInitial}</div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <div class="user-avatar user-avatar-initial">${userInitial}</div>
-                                            </c:otherwise>
-                                        </c:choose>
-                                        <span class="user-name">${userName}</span>
+                            <%-- Menu điều hướng dành cho Độc giả [cite: 39-42] --%>
+                                <ul class="nav-menu">
+                                    <li><a href="${pageContext.request.contextPath}/">
+                                            <fmt:message key="nav.home" />
+                                        </a></li>
+                                    <li><a href="${pageContext.request.contextPath}/borrow">
+                                            <fmt:message key="nav.my_books" />
+                                        </a></li>
+                                    <li><a href="${pageContext.request.contextPath}/history">
+                                            <fmt:message key="nav.history" />
+                                        </a></li>
+                                    <li><a href="${pageContext.request.contextPath}/fines">
+                                            <fmt:message key="nav.fines" />
+                                        </a></li>
+                                    <li><a href="${pageContext.request.contextPath}/books">
+                                            <fmt:message key="nav.catalog" />
+                                        </a></li>
+                                </ul>
 
-                                        <div class="user-dropdown" id="userDropdown">
-                                            <a href="${pageContext.request.contextPath}/profile">👤
-                                                <fmt:message key="nav.profile" />
-                                            </a>
-                                            <c:if test="${isAdmin}">
-                                                <a href="${pageContext.request.contextPath}/borrow">🛠️
-                                                    <fmt:message key="nav.management" />
-                                                </a>
-                                            </c:if>
-                                            <a href="${pageContext.request.contextPath}/logout" class="logout">🚪
-                                                <fmt:message key="nav.logout" />
-                                            </a>
+                                <div class="header-right">
+                                    <%-- Thông báo và Giỏ sách [cite: 43-45] --%>
+                                        <div class="notification-icon">
+                                            🔔 <span class="notification-badge">2</span>
                                         </div>
-                                    </div>
-                                </c:when>
-                                <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/login"
-                                        style="color: white; text-decoration: none; font-weight: 600;">
-                                        <fmt:message key="nav.login" />
-                                    </a>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
+
+                                        <a href="${pageContext.request.contextPath}/cart" class="cart-btn">
+                                            🛒
+                                            <fmt:message key="nav.cart" />
+                                        </a>
+
+                                        <c:choose>
+                                            <%-- Khi đã đăng nhập [cite: 46] --%>
+                                                <c:when test="${not empty currentUser}">
+                                                    <div class="user-profile" id="userProfileBtn"
+                                                        onclick="toggleUserDropdown(event)">
+                                                        <c:choose>
+                                                            <%-- Xử lý hiển thị Avatar hoặc chữ cái đầu tên [cite:
+                                                                47-53] --%>
+                                                                <c:when
+                                                                    test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
+                                                                    <img class="user-avatar"
+                                                                        src="${pageContext.request.contextPath}/${currentUser.avatar}"
+                                                                        alt="Avatar"
+                                                                        onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">
+                                                                    <div class="user-avatar user-avatar-initial"
+                                                                        style="display:none;">${userInitial}</div>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <div class="user-avatar user-avatar-initial">
+                                                                        ${userInitial}</div>
+                                                                </c:otherwise>
+                                                        </c:choose>
+
+                                                        <span class="user-name">${userName}</span>
+
+                                                        <%-- Dropdown Menu: Đã loại bỏ link Quản lý của thủ thư [cite:
+                                                            54-59] --%>
+                                                            <div class="user-dropdown" id="userDropdown">
+                                                                <a href="${pageContext.request.contextPath}/profile">👤
+                                                                    <fmt:message key="nav.profile" />
+                                                                </a>
+                                                                <a href="${pageContext.request.contextPath}/logout"
+                                                                    class="logout">🚪
+                                                                    <fmt:message key="nav.logout" />
+                                                                </a>
+                                                            </div>
+                                                    </div>
+                                                </c:when>
+
+                                                <%-- Khi chưa đăng nhập [cite: 60-63] --%>
+                                                    <c:otherwise>
+                                                        <a href="${pageContext.request.contextPath}/login"
+                                                            style="color: white; text-decoration: none; font-weight: 600;">
+                                                            <fmt:message key="nav.login" />
+                                                        </a>
+                                                    </c:otherwise>
+                                        </c:choose>
+                                </div>
                     </div>
                 </header>
 
                 <script>
-                    function toggleUserDropdown(event) {
-                        // Ngăn chặn sự kiện click lan ra ngoài làm đóng menu ngay lập tức
-                        event.stopPropagation();
-                        const dropdown = document.getElementById('userDropdown');
-                        dropdown.classList.toggle('show');
-                    }
-
-                    // Đóng dropdown khi click vào bất kỳ đâu trên màn hình
-                    window.addEventListener('click', function (e) {
-                        const dropdown = document.getElementById('userDropdown');
-                        const profileBtn = document.getElementById('userProfileBtn');
-
-                        if (dropdown && dropdown.classList.contains('show')) {
-                            if (!profileBtn.contains(e.target)) {
-                                dropdown.classList.remove('show');
-                            }
+    <% --Logic đóng / mở menu cá nhân[cite: 64 - 65]--%>
+                        function toggleUserDropdown(event) {
+                            event.stopPropagation();
+                            const dropdown = document.getElementById('userDropdown');
+                            dropdown.classList.toggle('show');
                         }
-                    });
+
+                        <% --Đóng menu khi click ra ngoài vùng dropdown[cite: 66 - 68]--%>
+                            window.addEventListener('click', function (e) {
+                                const dropdown = document.getElementById('userDropdown');
+                                const profileBtn = document.getElementById('userProfileBtn');
+                                if (dropdown && dropdown.classList.contains('show')) {
+                                    if (!profileBtn || !profileBtn.contains(e.target)) {
+                                        dropdown.classList.remove('show');
+                                    }
+                                }
+                            });
                 </script>

@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter(urlPatterns = {"/books/new", "/books/edit", "/books/delete"})
+@WebFilter(urlPatterns = {"/books/new", "/books/edit", "/books/delete","/borrowlibrary","/borrowlibrary/*"})
 public class RoleFilter implements Filter {
 
     @Override

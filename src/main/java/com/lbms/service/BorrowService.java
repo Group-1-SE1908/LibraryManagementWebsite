@@ -135,7 +135,7 @@ public class BorrowService {
 
                 // mark returned
                 try (var ps = c.prepareStatement(
-                        "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id=?")) {
+                        "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=?, is_paid=0 WHERE id=?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
                     ps.setBigDecimal(2, fine);
                     ps.setLong(3, borrowId);
@@ -169,6 +169,10 @@ public class BorrowService {
             return BigDecimal.ZERO;
         }
         return FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
+    }
+
+    public void markFinePaid(long borrowId) throws SQLException {
+        borrowDAO.markFinePaid(borrowId);
     }
     // ThÃªm vÃ o BorrowService.java
 
