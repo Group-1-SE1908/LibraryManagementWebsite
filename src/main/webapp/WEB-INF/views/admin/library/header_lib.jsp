@@ -4,6 +4,8 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
 <c:set var="user" value="${sessionScope.currentUser}" />
+<c:set var="roleName" value="${not empty user && not empty user.role ? user.role.name : ''}" />
+<c:set var="isStaff" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
 <c:set var="userName" value="${not empty user.fullName ? user.fullName : 'Staff'}" />
 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
 

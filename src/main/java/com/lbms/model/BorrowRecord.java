@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class BorrowRecord {
+
     private long id;
     private User user;
     private Book book;
@@ -12,10 +13,13 @@ public class BorrowRecord {
     private LocalDate returnDate;
     private String status;
     private BigDecimal fineAmount;
-    private BookCopy bookCopy; 
+    private BookCopy bookCopy;
     private String borrowMethod;
+    private String rejectReason;
+    private boolean isPaid;
 
-    public BorrowRecord() {}
+    public BorrowRecord() {
+    }
 
     public long getId() {
         return id;
@@ -53,6 +57,22 @@ public class BorrowRecord {
         return dueDate;
     }
 
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
+    }
+
+    public boolean isIsPaid() {
+        return isPaid;
+    }
+
+    public void setIsPaid(boolean isPaid) {
+        this.isPaid = isPaid;
+    }
+
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
@@ -80,9 +100,20 @@ public class BorrowRecord {
     public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
-    public BookCopy getBookCopy() { return bookCopy; }
-    public void setBookCopy(BookCopy bookCopy) { this.bookCopy = bookCopy; }
 
-    public String getBorrowMethod() { return borrowMethod; }
-    public void setBorrowMethod(String borrowMethod) { this.borrowMethod = borrowMethod; }
+    public BookCopy getBookCopy() {
+        return bookCopy;
+    }
+
+    public void setBookCopy(BookCopy bookCopy) {
+        this.bookCopy = bookCopy;
+    }
+
+    public String getBorrowMethod() {
+        return borrowMethod;
+    }
+
+    public void setBorrowMethod(String borrowMethod) {
+        this.borrowMethod = borrowMethod;
+    }
 }
