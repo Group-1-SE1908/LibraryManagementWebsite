@@ -3,6 +3,7 @@ package com.lbms.controller;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Cart;
 import com.lbms.model.CartItem;
+import com.lbms.model.ShippingDetails;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
 import com.lbms.service.CartService;
@@ -138,12 +139,20 @@ public class CartController extends HttpServlet {
         String formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         LocalDate pickupDate = null;
         String formattedPickupDate = null;
-        String deliveryAddress = null;
+        ShippingDetails shippingDetails = null;
         if (METHOD_IN_PERSON.equals(method)) {
             pickupDate = parsePickupDateParam(req, "pickupDate");
             formattedPickupDate = pickupDate.format(DISPLAY_DATE_FORMAT);
         } else if (METHOD_ONLINE.equals(method)) {
-            deliveryAddress = requireTextParam(req, "deliveryAddress", "địa chỉ nhận sách");
+            String shippingRecipient = requireTextParam(req, "shippingRecipient", "tên người nhận");
+            String shippingRecipientPhone = requireTextParam(req, "shippingPhone", "số điện thoại người nhận");
+            String shippingStreet = requireTextParam(req, "shippingStreet", "tên đường / số nhà");
+            String shippingCity = requireTextParam(req, "shippingCity", "tỉnh/thành phố");
+            String shippingDistrict = requireTextParam(req, "shippingDistrict", "quận/huyện");
+            String shippingWard = requireTextParam(req, "shippingWard", "phường/xã");
+            String shippingResidence = optionalTextParam(req, "shippingResidence");
+            shippingDetails = new ShippingDetails(shippingRecipient, shippingRecipientPhone, shippingStreet,
+                    shippingResidence, shippingWard, shippingDistrict, shippingCity);
         }
         Cart cart = cartService.getCart(currentUser.getId());
         if (cart == null || cart.getItems().isEmpty()) {
@@ -153,20 +162,22 @@ public class CartController extends HttpServlet {
 
         List<CartItem> items = new ArrayList<>(cart.getItems());
         for (CartItem item : items) {
-            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), method);
+            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), method, shippingDetails);
         }
 
         cartService.clearCart(currentUser.getId());
         notifyLibrarians(currentUser, items, method, contactName, contactPhone, contactEmail, formattedReturnDate,
-                formattedPickupDate, deliveryAddress);
+                formattedPickupDate, shippingDetails);
         StringBuilder message = new StringBuilder();
         message.append("Gửi yêu cầu mượn ").append(toMethodLabel(method)).append(" thành công. ");
         message.append("Ngày trả dự kiến ").append(formattedReturnDate).append(". ");
         if (formattedPickupDate != null) {
             message.append("Ngày đến lấy: ").append(formattedPickupDate).append(". ");
         }
-        if (deliveryAddress != null && !deliveryAddress.isBlank()) {
-            message.append("Địa chỉ giao sách: ").append(deliveryAddress).append(". ");
+        if (shippingDetails != null) {
+            message.append("Người nhận: ").append(shippingDetails.getRecipient()).append(". ");
+            message.append("Điện thoại người nhận: ").append(shippingDetails.getPhone()).append(". ");
+            message.append("Địa chỉ giao: ").append(shippingDetails.getFormattedAddress()).append(". ");
         }
         message.append("Thủ thư sẽ phản hồi sớm.");
         redirectWithParam(req, resp, "/cart", "cartSuccess", message.toString());
@@ -188,7 +199,7 @@ public class CartController extends HttpServlet {
 
     private void notifyLibrarians(User currentUser, List<CartItem> items, String method,
             String contactName, String contactPhone, String contactEmail, String returnDateLabel,
-            String pickupDateLabel, String deliveryAddress) {
+            String pickupDateLabel, ShippingDetails shippingDetails) {
         if (items == null || items.isEmpty()) {
             return;
         }
@@ -225,8 +236,11 @@ public class CartController extends HttpServlet {
             if (pickupDateLabel != null && !pickupDateLabel.isBlank()) {
                 body.append("<li><strong>Ngày đến lấy:</strong> ").append(pickupDateLabel).append("</li>");
             }
-            if (deliveryAddress != null && !deliveryAddress.isBlank()) {
-                body.append("<li><strong>Địa chỉ giao sách:</strong> ").append(deliveryAddress).append("</li>");
+            if (shippingDetails != null) {
+                body.append("<li><strong>Người nhận:</strong> ").append(shippingDetails.getRecipient()).append("</li>");
+                body.append("<li><strong>ĐT nhận hàng:</strong> ").append(shippingDetails.getPhone()).append("</li>");
+                body.append("<li><strong>Địa chỉ giao:</strong> ").append(shippingDetails.getFormattedAddress())
+                        .append("</li>");
             }
             body.append("</ul>");
             body.append("<ul>");
@@ -310,6 +324,15 @@ public class CartController extends HttpServlet {
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Giá trị " + name + " không hợp lệ");
         }
+    }
+
+    private String optionalTextParam(HttpServletRequest req, String name) {
+        String value = req.getParameter(name);
+        if (value == null) {
+            return null;
+        }
+        value = value.trim();
+        return value.isEmpty() ? null : value;
     }
 
     private void redirectWithParam(HttpServletRequest req, HttpServletResponse resp, String path, String paramName,

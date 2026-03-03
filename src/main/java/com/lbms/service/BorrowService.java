@@ -14,6 +14,7 @@ import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.ShippingDetails;
 import com.lbms.util.DBConnection;
 
 public class BorrowService {
@@ -30,8 +31,8 @@ public class BorrowService {
         this.bookDAO = new BookDAO();
     }
 
-   
-    public long requestBorrow(long userId, long bookId, String method) throws SQLException {
+    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
+            throws SQLException {
         Book b = bookDAO.findById(bookId);
         if (b == null) {
             throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
@@ -45,8 +46,7 @@ public class BorrowService {
             throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
         }
 
-        
-        return borrowDAO.createRequest(userId, bookId, method);
+        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
     }
 
     public void approve(long borrowId, String barcode) throws SQLException {
@@ -62,13 +62,15 @@ public class BorrowService {
                         if (rs.next()) {
                             copyId = rs.getLong("copy_id");
                         } else {
-                            throw new IllegalArgumentException("MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
+                            throw new IllegalArgumentException(
+                                    "MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
                         }
                     }
                 }
 
                 // 2. Cáº­p nháº­t tráº¡ng thÃ¡i báº£n sao sÃ¡ch
-                try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                try (PreparedStatement ps = c
+                        .prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setLong(1, copyId);
                     ps.executeUpdate();
                 }
@@ -183,12 +185,14 @@ public class BorrowService {
                         if (rs.next()) {
                             copyId = rs.getLong("copy_id");
                         } else {
-                            throw new IllegalArgumentException("MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
+                            throw new IllegalArgumentException(
+                                    "MÃ£ váº¡ch khÃ´ng há»£p lá»‡ hoáº·c sÃ¡ch Ä‘Ã£ Ä‘Æ°á»£c mÆ°á»£n!");
                         }
                     }
                 }
 
-                // 2. Táº¡o báº£n ghi borrow_records má»›i trá»±c tiáº¿p á»Ÿ tráº¡ng thÃ¡i BORROWED
+                // 2. Táº¡o báº£n ghi borrow_records má»›i trá»±c tiáº¿p á»Ÿ tráº¡ng thÃ¡i
+                // BORROWED
                 LocalDate today = LocalDate.now();
                 LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 String insertSql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, status, borrow_method, copy_id) "
@@ -203,7 +207,8 @@ public class BorrowService {
                 }
 
                 // 3. Cáº­p nháº­t tráº¡ng thÃ¡i BookCopy thÃ nh BORROWED
-                try (PreparedStatement ps = c.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                try (PreparedStatement ps = c
+                        .prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setLong(1, copyId);
                     ps.executeUpdate();
                 }

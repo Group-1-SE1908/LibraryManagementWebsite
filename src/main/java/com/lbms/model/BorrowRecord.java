@@ -12,10 +12,12 @@ public class BorrowRecord {
     private LocalDate returnDate;
     private String status;
     private BigDecimal fineAmount;
-    private BookCopy bookCopy; 
+    private BookCopy bookCopy;
     private String borrowMethod;
+    private ShippingDetails shippingDetails;
 
-    public BorrowRecord() {}
+    public BorrowRecord() {
+    }
 
     public long getId() {
         return id;
@@ -80,9 +82,28 @@ public class BorrowRecord {
     public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
-    public BookCopy getBookCopy() { return bookCopy; }
-    public void setBookCopy(BookCopy bookCopy) { this.bookCopy = bookCopy; }
 
-    public String getBorrowMethod() { return borrowMethod; }
-    public void setBorrowMethod(String borrowMethod) { this.borrowMethod = borrowMethod; }
+    public BookCopy getBookCopy() {
+        return bookCopy;
+    }
+
+    public void setBookCopy(BookCopy bookCopy) {
+        this.bookCopy = bookCopy;
+    }
+
+    public String getBorrowMethod() {
+        return borrowMethod;
+    }
+
+    public void setBorrowMethod(String borrowMethod) {
+        this.borrowMethod = borrowMethod;
+    }
+
+    public ShippingDetails getShippingDetails() {
+        return shippingDetails;
+    }
+
+    public void setShippingDetails(ShippingDetails shippingDetails) {
+        this.shippingDetails = shippingDetails;
+    }
 }

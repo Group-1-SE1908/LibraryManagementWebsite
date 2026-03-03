@@ -93,6 +93,35 @@
                         box-shadow: var(--shadow-sm);
                     }
 
+                    .history-filter {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        margin: 0 0 24px;
+                        justify-content: flex-start;
+                    }
+
+                    .history-filter__pill {
+                        border: 1px solid rgba(15, 23, 42, 0.15);
+                        border-radius: 999px;
+                        padding: 8px 18px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        letter-spacing: 0.05em;
+                        text-transform: uppercase;
+                        color: #475569;
+                        transition: all 0.2s ease;
+                        text-decoration: none;
+                        background: #fff;
+                    }
+
+                    .history-filter__pill.is-active {
+                        background: linear-gradient(120deg, #0c6cd0, #2f49f5);
+                        color: white;
+                        border-color: transparent;
+                        box-shadow: 0 15px 40px rgba(15, 23, 42, 0.2);
+                    }
+
                     .history-stack {
                         display: grid;
                         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -274,6 +303,115 @@
                     .history-empty a {
                         text-decoration: none;
                     }
+
+                    .order-modal {
+                        position: fixed;
+                        inset: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 1.5rem;
+                        z-index: 60;
+                        pointer-events: none;
+                    }
+
+                    .order-modal[hidden] {
+                        display: none;
+                    }
+
+                    .order-modal__backdrop {
+                        position: absolute;
+                        inset: 0;
+                        background: rgba(15, 23, 42, 0.55);
+                        backdrop-filter: blur(4px);
+                        pointer-events: all;
+                    }
+
+                    .order-modal__panel {
+                        position: relative;
+                        background: #ffffff;
+                        border-radius: 20px;
+                        padding: 2rem;
+                        width: min(520px, 100%);
+                        box-shadow: 0 35px 80px rgba(15, 23, 42, 0.25);
+                        pointer-events: all;
+                        display: grid;
+                        gap: 16px;
+                    }
+
+                    .order-modal__pill {
+                        font-size: 0.65rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5em;
+                        color: #0d3b94;
+                    }
+
+                    .order-modal__title {
+                        margin: 0;
+                        font-size: 1.5rem;
+                        color: #0f172a;
+                    }
+
+                    .order-modal__method {
+                        margin: 0;
+                        font-weight: 600;
+                        letter-spacing: 0.05em;
+                        color: #475569;
+                    }
+
+                    .order-modal__grid {
+                        display: grid;
+                        gap: 12px;
+                    }
+
+                    .order-modal__row {
+                        border-radius: 12px;
+                        border: 1px solid rgba(15, 23, 42, 0.08);
+                        padding: 12px 14px;
+                        background: #f7f9ff;
+                    }
+
+                    .order-modal__row span {
+                        font-size: 0.7rem;
+                        letter-spacing: 0.3em;
+                        text-transform: uppercase;
+                        color: #475569;
+                    }
+
+                    .order-modal__row strong {
+                        display: block;
+                        margin-top: 6px;
+                        font-size: 1rem;
+                        color: #0f172a;
+                    }
+
+                    .order-modal__row[hidden] {
+                        display: none;
+                    }
+
+                    .order-modal__close {
+                        position: absolute;
+                        top: 12px;
+                        right: 12px;
+                        border: none;
+                        background: rgba(15, 23, 42, 0.08);
+                        border-radius: 50%;
+                        width: 36px;
+                        height: 36px;
+                        font-size: 1.2rem;
+                        line-height: 1;
+                        cursor: pointer;
+                        color: #0f172a;
+                        transition: background 0.2s ease;
+                    }
+
+                    .order-modal__close:hover {
+                        background: rgba(15, 23, 42, 0.15);
+                    }
+
+                    .history-card__actions .js-show-order {
+                        min-width: 180px;
+                    }
                 </style>
             </head>
 
@@ -307,6 +445,18 @@
                     <c:if test="${not empty flash}">
                         <div class="history-notice">${flash}</div>
                     </c:if>
+
+                    <c:set var="historyStatusFilter" value="${historyStatusFilter != null ? historyStatusFilter : 'all'}" />
+                    <div class="history-filter">
+                        <a class="history-filter__pill ${historyStatusFilter == 'all' ? 'is-active' : ''}"
+                            href="${pageContext.request.contextPath}/history">Tất cả</a>
+                        <a class="history-filter__pill ${historyStatusFilter == 'borrowing' ? 'is-active' : ''}"
+                            href="${pageContext.request.contextPath}/history?status=borrowing">Đang mượn</a>
+                        <a class="history-filter__pill ${historyStatusFilter == 'pending' ? 'is-active' : ''}"
+                            href="${pageContext.request.contextPath}/history?status=pending">Đang duyệt</a>
+                        <a class="history-filter__pill ${historyStatusFilter == 'returned' ? 'is-active' : ''}"
+                            href="${pageContext.request.contextPath}/history?status=returned">Đã trả</a>
+                    </div>
 
                     <c:choose>
                         <c:when test="${historyCount > 0}">
@@ -390,10 +540,16 @@
                                             </div>
                                         </div>
 
+                                        <c:set var="methodCode" value="${fn:toUpperCase(r.borrowMethod)}" />
+                                        <c:set var="shipping" value="${r.shippingDetails}" />
                                         <div class="history-card__actions">
-                                            <a class="btn primary"
-                                                href="${pageContext.request.contextPath}/books/detail?id=${r.book.id}">Chi
-                                                tiết sách</a>
+                                            <button class="btn primary js-show-order" type="button"
+                                                data-method="${methodCode}"
+                                                data-recipient="${shipping != null && not empty shipping.recipient ? shipping.recipient : ''}"
+                                                data-shipping-phone="${shipping != null && not empty shipping.phone ? shipping.phone : ''}"
+                                                data-address="${shipping != null && not empty shipping.formattedAddress ? shipping.formattedAddress : ''}"
+                                                data-user-phone="${not empty r.user.phone ? r.user.phone : ''}"
+                                                data-borrow-date="${not empty r.borrowDate ? r.borrowDate : ''}">Xem đơn hàng</button>
                                             <c:if test="${fn:toUpperCase(r.status) == 'BORROWED'}">
                                                 <a class="btn success"
                                                     href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả
@@ -416,6 +572,119 @@
                     </c:choose>
                 </section>
 
+                <div id="order-modal" class="order-modal" hidden aria-hidden="true">
+                    <div class="order-modal__backdrop" data-dismiss="true"></div>
+                    <div class="order-modal__panel" role="dialog" aria-modal="true" aria-labelledby="order-modal-title" tabindex="-1">
+                        <button type="button" class="order-modal__close" aria-label="Đóng chi tiết đơn hàng">×</button>
+                        <p class="order-modal__pill">Thông tin đơn hàng</p>
+                        <h3 id="order-modal-title" class="order-modal__title">Đơn hàng</h3>
+                        <p class="order-modal__method">Chưa chọn đơn hàng</p>
+                        <div class="order-modal__grid">
+                            <div class="order-modal__row" data-field="recipient">
+                                <span>Người nhận</span>
+                                <strong data-value="recipient">Chưa cung cấp</strong>
+                            </div>
+                            <div class="order-modal__row" data-field="shipping-phone">
+                                <span>Điện thoại nhận hàng</span>
+                                <strong data-value="shippingPhone">Chưa cung cấp</strong>
+                            </div>
+                            <div class="order-modal__row" data-field="address">
+                                <span>Địa chỉ giao</span>
+                                <strong data-value="address">Chưa cung cấp</strong>
+                            </div>
+                            <div class="order-modal__row" data-field="contact-phone">
+                                <span>Điện thoại liên hệ</span>
+                                <strong data-value="contactPhone">Chưa cung cấp</strong>
+                            </div>
+                            <div class="order-modal__row" data-field="borrow-date">
+                                <span>Ngày mượn</span>
+                                <strong data-value="borrowDate">Đang chờ</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    (function () {
+                        var modal = document.getElementById('order-modal');
+                        if (!modal) {
+                            return;
+                        }
+                        var modalPanel = modal.querySelector('.order-modal__panel');
+                        var methodLabel = modal.querySelector('.order-modal__method');
+                        var recipientRow = modal.querySelector('[data-field="recipient"]');
+                        var shippingRow = modal.querySelector('[data-field="shipping-phone"]');
+                        var addressRow = modal.querySelector('[data-field="address"]');
+                        var contactRow = modal.querySelector('[data-field="contact-phone"]');
+                        var borrowDateRow = modal.querySelector('[data-field="borrow-date"]');
+                        var recipientValue = modal.querySelector('[data-value="recipient"]');
+                        var shippingValue = modal.querySelector('[data-value="shippingPhone"]');
+                        var addressValue = modal.querySelector('[data-value="address"]');
+                        var contactValue = modal.querySelector('[data-value="contactPhone"]');
+                        var borrowDateValue = modal.querySelector('[data-value="borrowDate"]');
+                        var closeButton = modal.querySelector('.order-modal__close');
+                        function getValue(raw, fallback) {
+                            if (!raw) {
+                                return fallback;
+                            }
+                            var trimmed = raw.trim();
+                            return trimmed.length ? trimmed : fallback;
+                        }
+                        function closeModal() {
+                            modal.hidden = true;
+                            modal.setAttribute('aria-hidden', 'true');
+                        }
+                        function openModal(dataset) {
+                            var method = (dataset.method || '').toUpperCase();
+                            var isOnline = method === 'ONLINE';
+                            methodLabel.textContent = isOnline ? 'Giao hàng' : 'Nhận tại thư viện';
+                            if (isOnline) {
+                                recipientRow.hidden = false;
+                                shippingRow.hidden = false;
+                                addressRow.hidden = false;
+                                contactRow.hidden = true;
+                                borrowDateRow.hidden = true;
+                            } else {
+                                recipientRow.hidden = true;
+                                shippingRow.hidden = true;
+                                addressRow.hidden = true;
+                                contactRow.hidden = false;
+                                borrowDateRow.hidden = false;
+                            }
+                            recipientValue.textContent = getValue(dataset.recipient, 'Chưa cung cấp');
+                            var phoneFallback = getValue(dataset.userPhone, 'Chưa cung cấp');
+                            shippingValue.textContent = getValue(dataset.shippingPhone, phoneFallback);
+                            addressValue.textContent = getValue(dataset.address, 'Chưa cung cấp');
+                            contactValue.textContent = getValue(dataset.userPhone, 'Chưa cung cấp');
+                            borrowDateValue.textContent = getValue(dataset.borrowDate, 'Đang chờ');
+                            modal.hidden = false;
+                            modal.setAttribute('aria-hidden', 'false');
+                            if (modalPanel) {
+                                modalPanel.focus();
+                            }
+                        }
+                        document.addEventListener('click', function (event) {
+                            var trigger = event.target.closest('.js-show-order');
+                            if (!trigger) {
+                                return;
+                            }
+                            event.preventDefault();
+                            openModal(trigger.dataset);
+                        });
+                        if (closeButton) {
+                            closeButton.addEventListener('click', closeModal);
+                        }
+                        modal.addEventListener('click', function (event) {
+                            if (event.target.dataset.dismiss === 'true') {
+                                closeModal();
+                            }
+                        });
+                        document.addEventListener('keydown', function (event) {
+                            if (event.key === 'Escape' && !modal.hidden) {
+                                closeModal();
+                            }
+                        });
+                    })();
+                </script>
                 <jsp:include page="footer.jsp" />
             </body>
 
