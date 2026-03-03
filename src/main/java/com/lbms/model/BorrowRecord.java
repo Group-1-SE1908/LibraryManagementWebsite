@@ -16,6 +16,7 @@ public class BorrowRecord {
     private BigDecimal fineAmount;
     private BookCopy bookCopy;
     private String borrowMethod;
+    private ShippingDetails shippingDetails;
     private String rejectReason;
     private boolean isPaid;
 
@@ -133,5 +134,13 @@ public class BorrowRecord {
 
     public void setBorrowMethod(String borrowMethod) {
         this.borrowMethod = borrowMethod;
+    }
+
+    public ShippingDetails getShippingDetails() {
+        return shippingDetails;
+    }
+
+    public void setShippingDetails(ShippingDetails shippingDetails) {
+        this.shippingDetails = shippingDetails;
     }
 }

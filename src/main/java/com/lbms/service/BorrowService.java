@@ -14,6 +14,7 @@ import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.ShippingDetails;
 import com.lbms.util.DBConnection;
 
 public class BorrowService {
@@ -30,7 +31,8 @@ public class BorrowService {
         this.bookDAO = new BookDAO();
     }
 
-    public long requestBorrow(long userId, long bookId, String method) throws SQLException {
+    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
+            throws SQLException {
         Book b = bookDAO.findById(bookId);
         if (b == null) {
             throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
@@ -44,7 +46,7 @@ public class BorrowService {
             throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
         }
 
-        return borrowDAO.createRequest(userId, bookId, method);
+        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
     }
 
     public void approve(long borrowId, String barcode) throws SQLException {

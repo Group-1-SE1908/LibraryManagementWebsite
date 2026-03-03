@@ -14,6 +14,7 @@ import java.util.List;
 import com.lbms.model.Book;
 import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.ShippingDetails;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
 
@@ -35,6 +36,42 @@ public class BorrowDAO {
             if (!columnExists(c, "borrow_records", "copy_id")) {
                 try (Statement stmt = c.createStatement()) {
                     stmt.executeUpdate("ALTER TABLE borrow_records ADD copy_id INT NULL;");
+                }
+            }
+            // Shipping info columns
+            if (!columnExists(c, "borrow_records", "shipping_recipient")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_recipient NVARCHAR(255) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_phone")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_phone VARCHAR(30) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_street")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_street NVARCHAR(255) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_residence")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_residence NVARCHAR(255) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_ward")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_ward NVARCHAR(255) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_district")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_district NVARCHAR(255) NULL;");
+                }
+            }
+            if (!columnExists(c, "borrow_records", "shipping_city")) {
+                try (Statement stmt = c.createStatement()) {
+                    stmt.executeUpdate("ALTER TABLE borrow_records ADD shipping_city NVARCHAR(255) NULL;");
                 }
             }
             // Check and add is_paid
@@ -59,16 +96,24 @@ public class BorrowDAO {
         }
     }
 
-    public long createRequest(long userId, long bookId, String method) throws SQLException {
-        // ThÃƒÂªm cÃ¡Â»â„¢t borrow_method vÃƒÂ o cÃƒÂ¢u lÃ¡Â»â€¡nh INSERT
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
-                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
+    public long createRequest(long userId, long bookId, String method, ShippingDetails shippingDetails)
+            throws SQLException {
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method, "
+                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, shipping_district, shipping_city) "
+                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
+            ps.setString(4, shippingDetails != null ? shippingDetails.getRecipient() : null);
+            ps.setString(5, shippingDetails != null ? shippingDetails.getPhone() : null);
+            ps.setString(6, shippingDetails != null ? shippingDetails.getStreet() : null);
+            ps.setString(7, shippingDetails != null ? shippingDetails.getResidence() : null);
+            ps.setString(8, shippingDetails != null ? shippingDetails.getWard() : null);
+            ps.setString(9, shippingDetails != null ? shippingDetails.getDistrict() : null);
+            ps.setString(10, shippingDetails != null ? shippingDetails.getCity() : null);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -145,7 +190,9 @@ public class BorrowDAO {
         return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
                 + "br.status, br.fine_amount, br.is_paid, br.borrow_method, "
                 + "u.email AS user_email, u.full_name AS user_full_name, "
-                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image "
+                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
+                + "u.phone AS user_phone, "
+                + "br.shipping_recipient, br.shipping_phone, br.shipping_street, br.shipping_residence, br.shipping_ward, br.shipping_district, br.shipping_city "
                 + "FROM borrow_records br "
                 + "JOIN [User] u ON br.user_id = u.user_id "
                 + "JOIN Book bk ON br.book_id = bk.book_id";
@@ -189,6 +236,28 @@ public class BorrowDAO {
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         br.setPaid(rs.getBoolean("is_paid"));
         br.setBorrowMethod(rs.getString("borrow_method"));
+        ShippingDetails shipping = new ShippingDetails();
+        shipping.setRecipient(rs.getString("shipping_recipient"));
+        shipping.setPhone(rs.getString("shipping_phone"));
+        shipping.setStreet(rs.getString("shipping_street"));
+        shipping.setResidence(rs.getString("shipping_residence"));
+        shipping.setWard(rs.getString("shipping_ward"));
+        shipping.setDistrict(rs.getString("shipping_district"));
+        shipping.setCity(rs.getString("shipping_city"));
+        if ((shipping.getRecipient() != null && !shipping.getRecipient().isBlank())
+                || (shipping.getPhone() != null && !shipping.getPhone().isBlank())
+                || (shipping.getStreet() != null && !shipping.getStreet().isBlank())
+                || (shipping.getResidence() != null && !shipping.getResidence().isBlank())
+                || (shipping.getWard() != null && !shipping.getWard().isBlank())
+                || (shipping.getDistrict() != null && !shipping.getDistrict().isBlank())
+                || (shipping.getCity() != null && !shipping.getCity().isBlank())) {
+            br.setShippingDetails(shipping);
+        }
+
+        String userPhone = rs.getString("user_phone");
+        if (userPhone != null && !userPhone.isBlank()) {
+            br.getUser().setPhone(userPhone);
+        }
         long cid = rs.getLong("copy_id");
         if (cid > 0) {
             BookCopy bc = new BookCopy();
