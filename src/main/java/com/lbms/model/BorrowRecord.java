@@ -2,6 +2,7 @@ package com.lbms.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class BorrowRecord {
 
@@ -57,6 +58,15 @@ public class BorrowRecord {
         return dueDate;
     }
 
+    public long getOverdueDays() {
+        if (dueDate == null) {
+            return 0L;
+        }
+        LocalDate reference = returnDate != null ? returnDate : LocalDate.now();
+        long delta = ChronoUnit.DAYS.between(dueDate, reference);
+        return Math.max(delta, 0L);
+    }
+
     public String getRejectReason() {
         return rejectReason;
     }
@@ -71,6 +81,14 @@ public class BorrowRecord {
 
     public void setIsPaid(boolean isPaid) {
         this.isPaid = isPaid;
+    }
+
+    public boolean isPaid() {
+        return isPaid;
+    }
+
+    public void setPaid(boolean paid) {
+        this.isPaid = paid;
     }
 
     public void setDueDate(LocalDate dueDate) {

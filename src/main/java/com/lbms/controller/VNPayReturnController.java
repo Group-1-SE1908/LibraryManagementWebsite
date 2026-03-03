@@ -22,6 +22,8 @@ import java.util.Map;
 public class VNPayReturnController extends HttpServlet {
 
     private BorrowService borrowService;
+    private static final String MODE_RETURN = "return";
+    private static final String MODE_FINE = "fine";
 
     @Override
     public void init() {
@@ -56,30 +58,52 @@ public class VNPayReturnController extends HttpServlet {
 
             // Check signature
             String signValue = hashAllFields(fields);
+            String vnp_TxnRef = req.getParameter("vnp_TxnRef");
+            long borrowId = -1;
+            String mode = MODE_RETURN;
+            if (vnp_TxnRef != null && !vnp_TxnRef.isEmpty()) {
+                String[] parts = vnp_TxnRef.split("_");
+                if (parts.length > 0 && parts[0] != null && !parts[0].isEmpty()) {
+                    try {
+                        borrowId = Long.parseLong(parts[0]);
+                    } catch (NumberFormatException ignored) {
+                        borrowId = -1;
+                    }
+                }
+                if (parts.length > 1 && parts[1] != null && !parts[1].isEmpty()) {
+                    mode = parts[1];
+                }
+            }
 
             if (signValue.equals(vnp_SecureHash)) {
                 if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
-                    // Payment success
-                    String vnp_TxnRef = req.getParameter("vnp_TxnRef");
-                    if (vnp_TxnRef != null && vnp_TxnRef.contains("_")) {
-                        long borrowId = Long.parseLong(vnp_TxnRef.split("_")[0]);
-                        borrowService.returnBook(borrowId);
-                        req.getSession().setAttribute("flash", "Thanh toán thành công & Trả sách thành công!");
+                    if (borrowId > 0) {
+                        if (MODE_FINE.equals(mode)) {
+                            borrowService.markFinePaid(borrowId);
+                            req.getSession().setAttribute("flash", "Thanh toán phí phạt thành công!");
+                            resp.sendRedirect(req.getContextPath() + "/fines");
+                        } else {
+                            borrowService.returnBook(borrowId);
+                            borrowService.markFinePaid(borrowId);
+                            req.getSession().setAttribute("flash", "Thanh toán thành công & Trả sách thành công!");
+                            resp.sendRedirect(req.getContextPath() + "/history");
+                        }
                     } else {
                         req.getSession().setAttribute("flash",
                                 "Thanh toán thành công nhưng không tìm thấy thông tin phiếu mượn.");
+                        resp.sendRedirect(req.getContextPath() + "/history");
                     }
-                    resp.sendRedirect(req.getContextPath() + "/history");
                 } else {
-                    // Payment failed
-                    String vnp_TxnRef = req.getParameter("vnp_TxnRef");
-                    String borrowIdPart = "";
-                    if (vnp_TxnRef != null && vnp_TxnRef.contains("_")) {
-                        borrowIdPart = "?borrowId=" + vnp_TxnRef.split("_")[0];
+                    String redirect = req.getContextPath() + "/checkout";
+                    if (borrowId > 0) {
+                        redirect += "?borrowId=" + borrowId;
+                        if (MODE_FINE.equals(mode)) {
+                            redirect += "&mode=fine";
+                        }
                     }
                     req.getSession().setAttribute("flash", "Thanh toán thất bại! (Mã lỗi: "
                             + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại.");
-                    resp.sendRedirect(req.getContextPath() + "/checkout" + borrowIdPart);
+                    resp.sendRedirect(redirect);
                 }
             } else {
                 // Invalid signature

@@ -2,6 +2,8 @@
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
         <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
             <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+                <c:set var="mode" value="${mode != null ? mode : 'return'}" />
+                <c:set var="fineMode" value="${mode == 'fine'}" />
 
                 <!DOCTYPE html>
                 <html lang="vi">
@@ -130,9 +132,21 @@
 
                     <main class="checkout-page">
                         <div class="checkout-header">
-                            <h1>Thanh toán phí phạt & Trả sách</h1>
-                            <p>Vui lòng kiểm tra thông tin phiếu mượn và số tiền phạt (nếu có) trước khi xác nhận trả
-                                sách.</p>
+                            <h1>
+                                <c:choose>
+                                    <c:when test="${fineMode}">Thanh toán phí phạt</c:when>
+                                    <c:otherwise>Thanh toán phí phạt &amp; Trả sách</c:otherwise>
+                                </c:choose>
+                            </h1>
+                            <p>
+                                <c:choose>
+                                    <c:when test="${fineMode}">Bạn đang xử lý khoản phí phạt cho phiếu mượn này.
+                                    </c:when>
+                                    <c:otherwise>Vui lòng kiểm tra thông tin phiếu mượn và số tiền phạt (nếu có) trước
+                                        khi xác nhận trả
+                                        sách.</c:otherwise>
+                                </c:choose>
+                            </p>
                         </div>
 
                         <c:if test="${not empty flash}">
@@ -157,6 +171,11 @@
 
                         <aside class="checkout-summary">
                             <h2>Tóm tắt thanh toán</h2>
+                            <c:if test="${fineMode}">
+                                <p class="muted" style="margin-top:6px; margin-bottom:18px; font-size:0.9rem;">
+                                    Phiếu mượn đã trả, chỉ còn khoản phí phạt cần hoàn tất.
+                                </p>
+                            </c:if>
                             <div class="summary-row">
                                 <span>Phiếu mượn</span>
                                 <strong>#${borrowRecord.id}</strong>
@@ -171,8 +190,13 @@
 
                             <form action="${pageContext.request.contextPath}/checkout/process" method="post">
                                 <input type="hidden" name="borrowId" value="${borrowRecord.id}" />
-                                <button type="submit" class="btn primary btn-confirm">Xác nhận trả sách & Thanh
-                                    toán</button>
+                                <input type="hidden" name="mode" value="${mode}" />
+                                <button type="submit" class="btn primary btn-confirm">
+                                    <c:choose>
+                                        <c:when test="${fineMode}">Thanh toán phí phạt</c:when>
+                                        <c:otherwise>Xác nhận trả sách &amp; Thanh toán</c:otherwise>
+                                    </c:choose>
+                                </button>
                             </form>
                             <div style="margin-top: 15px; text-align: center;">
                                 <a href="${pageContext.request.contextPath}/history"
