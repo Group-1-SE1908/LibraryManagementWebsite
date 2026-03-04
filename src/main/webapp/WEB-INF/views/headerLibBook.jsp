@@ -220,6 +220,9 @@
                         </ul>
 
                         <div class="header-right">
+                            <a href="${pageContext.request.contextPath}/cart" class="cart-btn">
+                                🛒 <fmt:message key="nav.cart" />
+                            </a>
 
 
 
