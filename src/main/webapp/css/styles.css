@@ -502,7 +502,7 @@ textarea {
 .catalog-hero {
     background: linear-gradient(135deg, #030f3f 0%, #141b52 55%, #1d2f66 100%);
     color: #f8fbff;
-    padding: 70px 0 40px;
+    padding: 90px 0 80px;
     position: relative;
     overflow: hidden;
 }
@@ -641,13 +641,11 @@ textarea {
 
 .catalog-controls {
     max-width: 1200px;
-    margin: -50px auto 24px;
+    margin: 40px auto 32px;
     padding: 0 16px;
     display: flex;
     flex-direction: column;
     gap: 18px;
-    position: relative;
-    z-index: 2;
 }
 
 .search-panel {
@@ -765,7 +763,8 @@ textarea {
     }
 
     .catalog-controls {
-        margin-top: -40px;
+        margin-top: 32px;
+        gap: 14px;
     }
 
     .search-panel__form {
@@ -1520,6 +1519,7 @@ body.modal-open {
     .shipping-dialog {
         padding: 20px;
     }
+
     .shipping-actions {
         flex-direction: column;
         align-items: stretch;
