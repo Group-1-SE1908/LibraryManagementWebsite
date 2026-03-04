@@ -339,7 +339,7 @@
                             <a href="${pageContext.request.contextPath}/" class="header-logo">
                                 <img src="${pageContext.request.contextPath}/assets/images/logo/logo.png"
                                     alt="LBMS Logo" class="logo-icon" />
-                                <span class="logo-text">LBMS<span>.Portal</span></span>
+                                <span class="logo-text">LBMS</span>
                             </a>
 
                             <%-- Navigation --%>

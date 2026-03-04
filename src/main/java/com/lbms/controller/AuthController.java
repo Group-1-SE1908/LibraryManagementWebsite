@@ -35,9 +35,17 @@ public class AuthController extends HttpServlet {
         String path = req.getServletPath();
         switch (path) {
             case "/login":
+                if (isAuthenticated(req)) {
+                    redirectToHome(req, resp);
+                    return;
+                }
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
                 break;
             case "/register":
+                if (isAuthenticated(req)) {
+                    redirectToHome(req, resp);
+                    return;
+                }
                 req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
                 break;
             case "/verify-email":
@@ -56,6 +64,11 @@ public class AuthController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         req.setCharacterEncoding("UTF-8");
+
+        if (("/login".equals(path) || "/register".equals(path)) && isAuthenticated(req)) {
+            redirectToHome(req, resp);
+            return;
+        }
 
         try {
             switch (path) {
@@ -177,5 +190,14 @@ public class AuthController extends HttpServlet {
             session.invalidate();
         }
         resp.sendRedirect(req.getContextPath() + "/login");
+    }
+
+    private boolean isAuthenticated(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        return session != null && session.getAttribute("currentUser") != null;
+    }
+
+    private void redirectToHome(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.sendRedirect(req.getContextPath() + "/");
     }
 }
