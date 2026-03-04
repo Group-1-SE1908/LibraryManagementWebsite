@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
             <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
@@ -9,152 +9,222 @@
                 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
 
                 <style>
-                    :root {
-                        --primary-color: #0b57d0;
-                        --header-bg: #0b57d0;
-                    }
-
-                    header {
-                        background: var(--header-bg);
-                        padding: 12px 0;
-                        color: white;
-                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                        position: relative;
+                    /* ===== HEADER ===== */
+                    .site-header {
+                        background: #ffffff;
+                        border-bottom: 1px solid #e5e7eb;
+                        position: sticky;
+                        top: 0;
                         z-index: 1100;
+                        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
                     }
 
-                    header .container {
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        max-width: 1200px;
+                    .site-header .header-inner {
+                        max-width: 1280px;
                         margin: 0 auto;
-                        padding: 0 15px;
-                    }
-
-                    .logo {
-                        font-size: 20px;
-                        font-weight: 800;
-                        color: white;
-                        text-decoration: none;
+                        padding: 0 24px;
+                        height: 64px;
                         display: flex;
                         align-items: center;
-                        gap: 8px;
+                        gap: 32px;
                     }
 
-                    .nav-menu {
+                    /* Logo */
+                    .header-logo {
                         display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        text-decoration: none;
+                        flex-shrink: 0;
+                    }
+
+                    .header-logo .logo-icon {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 10px;
+                        display: block;
+                        flex-shrink: 0;
+                        object-fit: contain;
+                    }
+
+                    .header-logo .logo-text {
+                        font-size: 17px;
+                        font-weight: 700;
+                        color: #111827;
+                        letter-spacing: -0.3px;
+                    }
+
+                    .header-logo .logo-text span {
+                        color: #2563eb;
+                    }
+
+                    /* Nav */
+                    .header-nav {
+                        flex: 1;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
                         list-style: none;
-                        gap: 24px;
                         margin: 0;
                         padding: 0;
                     }
 
-                    .nav-menu a {
-                        color: rgba(255, 255, 255, 0.85);
-                        text-decoration: none;
+                    .header-nav li a {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 6px 14px;
+                        border-radius: 8px;
+                        font-size: 14px;
                         font-weight: 500;
-                        font-size: 14px;
-                        transition: 0.2s;
+                        color: #4b5563;
+                        text-decoration: none;
+                        transition: background 0.15s, color 0.15s;
+                        white-space: nowrap;
                     }
 
-                    .nav-menu a:hover,
-                    .nav-menu a.active {
-                        color: white;
+                    .header-nav li a:hover {
+                        background: #f3f4f6;
+                        color: #111827;
                     }
 
-                    .header-right {
-                        display: flex;
-                        align-items: center;
-                        gap: 20px;
+                    .header-nav li a.active {
+                        background: #eff6ff;
+                        color: #2563eb;
                     }
 
-                    .notification-icon {
-                        position: relative;
-                        cursor: pointer;
-                        font-size: 18px;
-                    }
-
-                    .notification-badge {
-                        position: absolute;
-                        top: -5px;
-                        right: -8px;
-                        background: #ea4335;
-                        color: white;
-                        font-size: 10px;
-                        padding: 2px 5px;
-                        border-radius: 10px;
-                        font-weight: bold;
-                    }
-
-                    /* User Profile & Dropdown Area */
-                    .user-profile {
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        padding: 5px 12px;
-                        background: rgba(255, 255, 255, 0.15);
-                        border-radius: 30px;
-                        cursor: pointer;
-                        position: relative;
-                        transition: 0.2s;
-                        user-select: none;
-                    }
-
-                    .user-profile:hover {
-                        background: rgba(255, 255, 255, 0.25);
-                    }
-
-                    .user-avatar {
-                        width: 32px;
-                        height: 32px;
-                        background: linear-gradient(135deg, var(--primary-color), #60a5fa);
-                        color: white;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: bold;
-                        font-size: 14px;
-                        object-fit: cover;
+                    .header-nav li a svg {
+                        width: 15px;
+                        height: 15px;
+                        opacity: 0.7;
                         flex-shrink: 0;
                     }
 
-                    .user-avatar img {
-                        width: 100%;
-                        height: 100%;
-                        border-radius: 50%;
-                        object-fit: cover;
+                    /* Right section */
+                    .header-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        flex-shrink: 0;
+                        margin-left: auto;
                     }
 
-                    .user-name {
+                    /* Login button */
+                    .btn-login {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 8px 18px;
+                        background: #2563eb;
+                        color: #ffffff;
+                        border-radius: 8px;
                         font-size: 14px;
                         font-weight: 600;
+                        text-decoration: none;
+                        transition: background 0.15s;
                     }
 
-                    .user-dropdown {
+                    .btn-login:hover {
+                        background: #1d4ed8;
+                        color: #ffffff;
+                    }
+
+                    /* User profile trigger */
+                    .header-user {
+                        position: relative;
+                    }
+
+                    .header-user-btn {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 5px 10px 5px 5px;
+                        border-radius: 999px;
+                        cursor: pointer;
+                        border: 1.5px solid transparent;
+                        transition: background 0.15s, border-color 0.15s;
+                        user-select: none;
+                        background: transparent;
+                    }
+
+                    .header-user-btn:hover {
+                        background: #f3f4f6;
+                        border-color: #e5e7eb;
+                    }
+
+                    .header-user-btn.open {
+                        background: #eff6ff;
+                        border-color: #bfdbfe;
+                    }
+
+                    .u-avatar {
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #2563eb, #60a5fa);
+                        color: #fff;
+                        font-weight: 700;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                        overflow: hidden;
+                    }
+
+                    .u-avatar img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 50%;
+                    }
+
+                    .u-name {
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #111827;
+                        max-width: 140px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+
+                    .u-chevron {
+                        display: flex;
+                        align-items: center;
+                        color: #9ca3af;
+                        transition: transform 0.2s;
+                        flex-shrink: 0;
+                    }
+
+                    .header-user-btn.open .u-chevron {
+                        transform: rotate(180deg);
+                    }
+
+                    /* Dropdown */
+                    .header-dropdown {
                         display: none;
                         position: absolute;
-                        top: calc(100% + 10px);
+                        top: calc(100% + 8px);
                         right: 0;
-                        background: white;
-                        min-width: 180px;
+                        background: #ffffff;
+                        border: 1px solid #e5e7eb;
                         border-radius: 12px;
-                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                        min-width: 200px;
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
                         overflow: hidden;
                         z-index: 2000;
-                        border: 1px solid #eee;
+                        animation: hDropSlide 0.15s ease-out;
                     }
 
-                    .user-dropdown.show {
+                    .header-dropdown.open {
                         display: block;
-                        animation: slideDown 0.2s ease-out;
                     }
 
-                    @keyframes slideDown {
+                    @keyframes hDropSlide {
                         from {
                             opacity: 0;
-                            transform: translateY(-10px);
+                            transform: translateY(-6px);
                         }
 
                         to {
@@ -163,147 +233,219 @@
                         }
                     }
 
-                    .user-dropdown a {
-                        display: block;
-                        padding: 12px 16px;
-                        color: #444;
-                        text-decoration: none;
+                    .hd-user-info {
+                        padding: 14px 16px 12px;
+                        border-bottom: 1px solid #f3f4f6;
+                    }
+
+                    .hd-user-info .hd-full-name {
                         font-size: 14px;
-                        transition: 0.2s;
+                        font-weight: 600;
+                        color: #111827;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
                     }
 
-                    .user-dropdown a:hover {
-                        background: #f1f5f9;
-                        color: var(--primary-color);
+                    .hd-user-info .hd-role {
+                        font-size: 12px;
+                        color: #6b7280;
+                        margin-top: 2px;
                     }
 
-                    .user-dropdown .logout {
-                        border-top: 1px solid #eee;
-                        color: #dc3545;
+                    .hd-menu {
+                        padding: 6px 0;
                     }
 
-                    .cart-btn {
-                        text-decoration: none;
-                        color: white;
-                        background: rgba(255, 255, 255, 0.2);
-                        padding: 8px 15px;
-                        border-radius: 8px;
-                        font-size: 13px;
+                    .hd-menu a {
                         display: flex;
                         align-items: center;
-                        gap: 5px;
-                        transition: 0.2s;
+                        gap: 10px;
+                        padding: 10px 16px;
+                        font-size: 14px;
+                        color: #374151;
+                        text-decoration: none;
+                        transition: background 0.12s;
                     }
 
-                    .cart-btn:hover {
-                        background: rgba(255, 255, 255, 0.3);
+                    .hd-menu a svg {
+                        width: 16px;
+                        height: 16px;
+                        color: #9ca3af;
+                        flex-shrink: 0;
+                    }
+
+                    .hd-menu a:hover {
+                        background: #f9fafb;
+                        color: #111827;
+                    }
+
+                    .hd-menu a:hover svg {
+                        color: #2563eb;
+                    }
+
+                    .hd-menu .hd-divider {
+                        height: 1px;
+                        background: #f3f4f6;
+                        margin: 4px 0;
+                    }
+
+                    .hd-menu a.hd-logout {
+                        color: #dc2626;
+                    }
+
+                    .hd-menu a.hd-logout svg {
+                        color: #dc2626;
+                    }
+
+                    .hd-menu a.hd-logout:hover {
+                        background: #fef2f2;
                     }
                 </style>
 
-                <header>
-                    <div class="container">
-                        <%-- Logo dẫn về trang chủ Portal [cite: 38] --%>
-                            <a href="${pageContext.request.contextPath}/" class="logo">
-                                📚 LBMS.Portal
+                <header class="site-header">
+                    <div class="header-inner">
+
+                        <%-- Logo --%>
+                            <a href="${pageContext.request.contextPath}/" class="header-logo">
+                                <img src="${pageContext.request.contextPath}/assets/images/logo/logo.png"
+                                    alt="LBMS Logo" class="logo-icon" />
+                                <span class="logo-text">LBMS<span>.Portal</span></span>
                             </a>
 
-                            <%-- Menu điều hướng dành cho Độc giả [cite: 39-42] --%>
-                                <ul class="nav-menu">
-                                    <li><a href="${pageContext.request.contextPath}/">
+                            <%-- Navigation --%>
+                                <ul class="header-nav">
+                                    <li>
+                                        <a href="${pageContext.request.contextPath}/">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                                <polyline points="9 22 9 12 15 12 15 22" />
+                                            </svg>
                                             <fmt:message key="nav.home" />
-                                        </a></li>
-                                    <li><a href="${pageContext.request.contextPath}/borrow">
-                                            <fmt:message key="nav.my_books" />
-                                        </a></li>
-                                    <li><a href="${pageContext.request.contextPath}/history">
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="${pageContext.request.contextPath}/history">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <polyline points="12 6 12 12 16 14" />
+                                            </svg>
                                             <fmt:message key="nav.history" />
-                                        </a></li>
-                                    <li><a href="${pageContext.request.contextPath}/fines">
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="${pageContext.request.contextPath}/fines">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                            </svg>
                                             <fmt:message key="nav.fines" />
-                                        </a></li>
-                                    <li><a href="${pageContext.request.contextPath}/books">
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="${pageContext.request.contextPath}/books">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                            </svg>
                                             <fmt:message key="nav.catalog" />
-                                        </a></li>
+                                        </a>
+                                    </li>
                                 </ul>
 
-                                <div class="header-right">
-                                    <%-- Thông báo và Giỏ sách [cite: 43-45] --%>
-                                        <div class="notification-icon">
-                                            🔔 <span class="notification-badge">2</span>
-                                        </div>
-
-                                        <a href="${pageContext.request.contextPath}/cart" class="cart-btn">
-                                            🛒
-                                            <fmt:message key="nav.cart" />
-                                        </a>
-
+                                <%-- Actions --%>
+                                    <div class="header-actions">
                                         <c:choose>
-                                            <%-- Khi đã đăng nhập [cite: 46] --%>
-                                                <c:when test="${not empty currentUser}">
-                                                    <div class="user-profile" id="userProfileBtn"
-                                                        onclick="toggleUserDropdown(event)">
-                                                        <c:choose>
-                                                            <%-- Xử lý hiển thị Avatar hoặc chữ cái đầu tên [cite:
-                                                                47-53] --%>
-                                                                <c:when
-                                                                    test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
-                                                                    <img class="user-avatar"
-                                                                        src="${pageContext.request.contextPath}/${currentUser.avatar}"
-                                                                        alt="Avatar"
-                                                                        onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">
-                                                                    <div class="user-avatar user-avatar-initial"
-                                                                        style="display:none;">${userInitial}</div>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <div class="user-avatar user-avatar-initial">
-                                                                        ${userInitial}</div>
-                                                                </c:otherwise>
-                                                        </c:choose>
+                                            <c:when test="${not empty currentUser}">
+                                                <%-- User dropdown --%>
+                                                    <div class="header-user" id="headerUserWidget">
+                                                        <div class="header-user-btn" id="headerUserBtn"
+                                                            onclick="toggleHeaderDropdown()">
+                                                            <%-- Avatar --%>
+                                                                <div class="u-avatar">
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
+                                                                            <img src="${pageContext.request.contextPath}/${currentUser.avatar}"
+                                                                                alt="Avatar"
+                                                                                onerror="this.style.display='none'; this.parentElement.innerHTML='${userInitial}';">
+                                                                        </c:when>
+                                                                        <c:otherwise>${userInitial}</c:otherwise>
+                                                                    </c:choose>
+                                                                </div>
 
-                                                        <span class="user-name">${userName}</span>
+                                                                <span class="u-name">${userName}</span>
 
-                                                        <%-- Dropdown Menu: Đã loại bỏ link Quản lý của thủ thư [cite:
-                                                            54-59] --%>
-                                                            <div class="user-dropdown" id="userDropdown">
-                                                                <a href="${pageContext.request.contextPath}/profile">👤
+                                                                <span class="u-chevron">
+                                                                    <svg width="16" height="16" viewBox="0 0 24 24"
+                                                                        fill="none" stroke="currentColor"
+                                                                        stroke-width="2.5">
+                                                                        <polyline points="6 9 12 15 18 9" />
+                                                                    </svg>
+                                                                </span>
+                                                        </div>
+
+                                                        <div class="header-dropdown" id="headerDropdown">
+                                                            <div class="hd-user-info">
+                                                                <div class="hd-full-name">${userName}</div>
+                                                                <div class="hd-role">${currentUser.email}</div>
+                                                            </div>
+                                                            <div class="hd-menu">
+                                                                <a href="${pageContext.request.contextPath}/profile">
+                                                                    <svg viewBox="0 0 24 24" fill="none"
+                                                                        stroke="currentColor" stroke-width="2">
+                                                                        <path
+                                                                            d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                                        <circle cx="12" cy="7" r="4" />
+                                                                    </svg>
                                                                     <fmt:message key="nav.profile" />
                                                                 </a>
+                                                                <div class="hd-divider"></div>
                                                                 <a href="${pageContext.request.contextPath}/logout"
-                                                                    class="logout">🚪
+                                                                    class="hd-logout">
+                                                                    <svg viewBox="0 0 24 24" fill="none"
+                                                                        stroke="currentColor" stroke-width="2">
+                                                                        <path
+                                                                            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                                                        <polyline points="16 17 21 12 16 7" />
+                                                                        <line x1="21" y1="12" x2="9" y2="12" />
+                                                                    </svg>
                                                                     <fmt:message key="nav.logout" />
                                                                 </a>
                                                             </div>
+                                                        </div>
                                                     </div>
-                                                </c:when>
-
-                                                <%-- Khi chưa đăng nhập [cite: 60-63] --%>
-                                                    <c:otherwise>
-                                                        <a href="${pageContext.request.contextPath}/login"
-                                                            style="color: white; text-decoration: none; font-weight: 600;">
-                                                            <fmt:message key="nav.login" />
-                                                        </a>
-                                                    </c:otherwise>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="${pageContext.request.contextPath}/login" class="btn-login">
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2">
+                                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                                        <polyline points="10 17 15 12 10 7" />
+                                                        <line x1="15" y1="12" x2="3" y2="12" />
+                                                    </svg>
+                                                    <fmt:message key="nav.login" />
+                                                </a>
+                                            </c:otherwise>
                                         </c:choose>
-                                </div>
+                                    </div>
+
                     </div>
                 </header>
 
                 <script>
-                    // Logic đóng / mở menu cá nhân
-                    function toggleUserDropdown(event) {
-                        event.stopPropagation();
-                        const dropdown = document.getElementById('userDropdown');
-                        dropdown.classList.toggle('show');
+                    function toggleHeaderDropdown() {
+                        const btn = document.getElementById('headerUserBtn');
+                        const drop = document.getElementById('headerDropdown');
+                        const isOpen = drop.classList.contains('open');
+                        drop.classList.toggle('open', !isOpen);
+                        btn.classList.toggle('open', !isOpen);
                     }
 
-                    // Đóng menu khi click ra ngoài vùng dropdown
-                    window.addEventListener('click', function (e) {
-                        const dropdown = document.getElementById('userDropdown');
-                        const profileBtn = document.getElementById('userProfileBtn');
-                        if (dropdown && dropdown.classList.contains('show')) {
-                            if (!profileBtn || !profileBtn.contains(e.target)) {
-                                dropdown.classList.remove('show');
-                            }
+                    document.addEventListener('click', function (e) {
+                        const widget = document.getElementById('headerUserWidget');
+                        if (widget && !widget.contains(e.target)) {
+                            document.getElementById('headerDropdown')?.classList.remove('open');
+                            document.getElementById('headerUserBtn')?.classList.remove('open');
                         }
                     });
                 </script>

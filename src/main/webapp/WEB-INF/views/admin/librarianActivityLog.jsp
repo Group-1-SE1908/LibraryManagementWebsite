@@ -409,7 +409,7 @@
                                                                     </span>
 
                                                                     <c:set var="detailUrl"
-                                                                        value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/borrowlibrary/detail?id='}${targetId}" />
+                                                                        value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/admin/borrowlibrary/detail?id='}${targetId}" />
                                                                     <a href="${pageContext.request.contextPath}${detailUrl}"
                                                                         class="btn-view-log">
                                                                         <i class="fa-solid fa-arrow-up-right-from-square"

@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lbms.dao.BookDAO;
@@ -34,35 +33,21 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        return requestBorrowCopies(userId, bookId, method, shippingDetails, 1).get(0);
-    }
-
-    public List<Long> requestBorrowCopies(long userId, long bookId, String method,
-            ShippingDetails shippingDetails, int quantity) throws SQLException {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
+        Book b = bookDAO.findById(bookId);
+        if (b == null) {
+            throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
         }
-
-        Book book = bookDAO.findById(bookId);
-        if (book == null) {
-            throw new IllegalArgumentException("Sách không tồn tại");
-        }
-        if (book.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Sách đã hết");
+        if (b.getQuantity() <= 0) {
+            throw new IllegalArgumentException("SÃ¡ch Ä‘Ã£ háº¿t");
         }
 
         int active = borrowDAO.countActiveBorrows(userId);
-        if (active + quantity > MAX_ACTIVE_BORROWS) {
+        if (active >= MAX_ACTIVE_BORROWS) {
             throw new IllegalArgumentException(
-                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
-                            + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
+                    "Báº¡n chá»‰ cÃ³ thá»ƒ mÆ°á»£n tÃ´i Ä‘a " + MAX_ACTIVE_BORROWS + " cuá»©n (bao gÃ´m Ä‘ang chá» duyá»‡t)");
         }
 
-        List<Long> ids = new ArrayList<>(quantity);
-        for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, method, shippingDetails));
-        }
-        return ids;
+        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
     }
 
     public int countActiveBorrows(long userId) throws SQLException {

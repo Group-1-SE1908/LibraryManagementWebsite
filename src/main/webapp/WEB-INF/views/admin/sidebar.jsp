@@ -106,8 +106,8 @@
                             <span>User Management</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/admin/books"
-                            class="${fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary"
+                            class="${fn:contains(activeUri, '/admin/borrowlibrary') || fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
                             <i class="fas fa-book-open"></i>
                             <span>Book Management</span>
                         </a>
