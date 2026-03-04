@@ -12,9 +12,11 @@ import java.util.List;
 
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
+import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.ShippingDetails;
+import com.lbms.model.User;
 import com.lbms.util.DBConnection;
 
 public class BorrowService {
@@ -31,19 +33,58 @@ public class BorrowService {
         this.bookDAO = new BookDAO();
     }
 
-    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
-            throws SQLException {
-        Book b = bookDAO.findById(bookId);
+    private final UserDAO userDAO = new UserDAO();
+
+//    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
+//            throws SQLException {
+//        Book b = bookDAO.findById(bookId);
+//        if (b == null) {
+//            throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
+//        }
+//        if (b.getQuantity() <= 0) {
+//            throw new IllegalArgumentException("SÃ¡ch Ä‘Ã£ háº¿t");
+//        }
+//
+//        int active = borrowDAO.countActiveBorrows(userId);
+//        if (active >= MAX_ACTIVE_BORROWS) {
+//            throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
+//        }
+//
+//        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
+//    }
+    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails) throws SQLException {
+
+        com.lbms.model.Book b = bookDAO.findById(bookId);
         if (b == null) {
-            throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
-        }
-        if (b.getQuantity() <= 0) {
-            throw new IllegalArgumentException("SÃ¡ch Ä‘Ã£ háº¿t");
+            throw new IllegalArgumentException("Sách không tồn tại");
         }
 
+        if (b.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Sách đã hết");
+        }
+
+        int MAX_ACTIVE_BORROWS = 5;
         int active = borrowDAO.countActiveBorrows(userId);
         if (active >= MAX_ACTIVE_BORROWS) {
-            throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
+            throw new IllegalArgumentException("Bạn đã mượn tối đa " + MAX_ACTIVE_BORROWS + " sách");
+        }
+
+        if ("IN_PERSON".equalsIgnoreCase(method) && shippingDetails == null) {
+            com.lbms.model.User currentUser = userDAO.findById(userId);
+            if (currentUser != null) {
+                shippingDetails = new com.lbms.model.ShippingDetails();
+                shippingDetails.setRecipient(currentUser.getFullName());
+                shippingDetails.setPhone(currentUser.getPhone());
+
+                // Lấy địa chỉ mặc định từ hồ sơ User, nếu trống thì để "Nhận tại quầy"
+                String userAddr = currentUser.getAddress();
+                shippingDetails.setStreet((userAddr != null && !userAddr.isBlank()) ? userAddr : "Nhận tại quầy");
+
+                // Khởi tạo các trường khác để tránh lỗi null khi DAO mapping
+                shippingDetails.setCity("");
+                shippingDetails.setDistrict("");
+                shippingDetails.setWard("");
+            }
         }
 
         return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
@@ -53,7 +94,7 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1. TÃ¬m báº£n sao sÃ¡ch (BookCopy) vÃ  khÃ³a hÃ ng (SQL Server syntax)
+
                 long copyId = -1;
                 String findCopySql = "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'";
                 try (PreparedStatement ps = c.prepareStatement(findCopySql)) {

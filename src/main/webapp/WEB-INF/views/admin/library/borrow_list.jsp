@@ -101,6 +101,8 @@
             .table-bordered tbody tr:hover {
                 background-color: #e2e8f0;
             }
+
+
         </style>
     </head>
     <body>
@@ -121,8 +123,9 @@
                     <select name="status">
                         <option value="">-- Tất cả --</option>
                         <option value="REQUESTED" ${param.status == 'REQUESTED' ? 'selected' : ''}>Chờ duyệt</option>
+                        <option value="APPROVED" ${param.status == 'APPROVED' ? 'selected' : ''}>Đã duyệt</option>
+                        <option value="RECEIVED" ${param.status == 'RECEIVED' ? 'selected' : ''}>Độc giả đã lấy</option>
                         <option value="BORROWED" ${param.status == 'BORROWED' ? 'selected' : ''}>Đang mượn</option>
-                        <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
                         <option value="RETURNED" ${param.status == 'RETURNED' ? 'selected' : ''}>Đã trả</option>
                     </select>
                 </div>
@@ -193,7 +196,17 @@
                                 <td style="color: #ef4444; font-weight: 700;">${not empty r.dueDate ? r.dueDate : '<span style="color:#94a3b8">---</span>'}</td>
 
                                 <td style="text-align:center;">
-                                    <span class="status-badge status-${r.status}">${r.status}</span>
+                                    <c:choose>
+                                        <c:when test="${not empty r.status}">
+                                            <%-- Dùng toUpperCase để khớp với class CSS .status-BORROWED... --%>
+                                            <span class="status-badge status-${(r.status)}">
+                                                ${r.status}
+                                            </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span style="color:#94a3b8">N/A</span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
 
                                 <td style="text-align:center;">
