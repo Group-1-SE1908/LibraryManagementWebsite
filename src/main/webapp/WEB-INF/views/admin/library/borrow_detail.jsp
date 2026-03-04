@@ -145,9 +145,17 @@
                                 <div class="label">ISBN: <span class="text-dark">${record.book.isbn}</span></div>
 
                                 <div class="mt-3 p-2 bg-light rounded border border-dashed">
-                                    <div class="label">Mã vạch bản sao mượn</div>
-                                    <div class="fw-bold text-primary fs-5">
-                                        ${not empty record.bookCopy.barcode ? record.bookCopy.barcode : 'Đang chờ gán mã'}
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="label">Mã vạch bản sao</div>
+                                            <div class="fw-bold text-primary fs-5">${not empty record.bookCopy.barcode ? record.bookCopy.barcode : 'Đang chờ gán'}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="label">Tồn kho khả dụng</div>
+                                            <div class="fw-bold ${record.book.quantity > 0 ? 'text-success' : 'text-danger'} fs-5">
+                                                ${record.book.quantity} cuốn
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -195,135 +203,167 @@
                     </div>
                 </div>
             </div>
-
-            
-            </div>
-        </div>
-        <div class="container py-5">
-            <div class="info-card p-4">
-                <h5 class="fw-bold mb-4 text-dark">⚡ Quản lý Quy trình & Thao tác xử lý</h5>
-
-                <div class="row g-4">
-                    <div class="col-md-6 border-end">
-                        <p class="label mb-3">Trạng thái hệ thống</p>
-                        <div class="timeline-2-col">
-                            <div class="timeline-step ${record.status != 'REJECTED' ? 'completed' : ''} ${record.status == 'REQUESTED' ? 'active' : ''}">
-                                <div class="fw-bold">1. Tiếp nhận yêu cầu</div>
-                                <div class="text-muted small">Độc giả đã gửi yêu cầu mượn ${record.borrowMethod}</div>
-                            </div>
-
-                            <div class="timeline-step ${record.status == 'APPROVED' || record.status == 'RECEIVED' || record.status == 'RETURNED' ? 'completed' : ''} ${record.status == 'APPROVED' ? 'active' : ''}">
-                                <div class="fw-bold">2. Phê duyệt & Chuẩn bị</div>
-                                <div class="text-muted small">Thủ thư kiểm tra và gán mã vạch sách</div>
-                            </div>
-
-                            <div class="timeline-step ${record.status == 'RECEIVED' || record.status == 'RETURNED' ? 'completed' : ''} ${record.status == 'RECEIVED' ? 'active' : ''}">
-                                <div class="fw-bold">3. Đang mượn</div>
-                                <div class="text-muted small">Sách đã được bàn giao cho độc giả</div>
-                            </div>
-
-                            <div class="timeline-step ${record.status == 'RETURNED' ? 'completed active' : ''}">
-                                <div class="fw-bold">4. Hoàn tất</div>
-                                <div class="text-muted small">Giao dịch kết thúc, sách đã về kho</div>
-                            </div>
-                        </div>
+            <div class="info-card p-4 mb-4 border-start border-4 border-warning">
+                <h5 class="fw-bold mb-4 text-dark d-flex align-items-center">
+                    <span class="me-2">📍</span> Chi tiết bàn giao sách (${record.borrowMethod})
+                </h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Người nhận thực tế</div>
+                        <div class="value">${not empty record.shippingDetails.recipient ? record.shippingDetails.recipient : record.user.fullName}</div>
                     </div>
-
-                    <div class="col-md-6">
-                        <p class="label mb-3">Hành động cần thực hiện</p>
-                        <div class="action-box">
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Số điện thoại nhận</div>
+                        <div class="value">${not empty record.shippingDetails.phone ? record.shippingDetails.phone : record.user.phone}</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Phương thức lấy sách</div>
+                        <div class="value"><span class="badge bg-secondary">${record.borrowMethod}</span></div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="label">Địa chỉ nhận sách</div>
+                        <div class="value text-primary fs-5">
                             <c:choose>
-                                <%-- CHỜ DUYỆT --%>
-                                <c:when test="${record.status == 'REQUESTED'}">
-                                    <div class="text-center">
-                                        <p class="small text-muted mb-3">Vui lòng nhập Barcode để duyệt mượn</p>
-                                        <input type="text" id="bcApprove" class="form-control mb-3 text-center fw-bold" placeholder="LIB-XXXXXX">
-                                        <div class="d-flex gap-2">
-                                            <button onclick="handleApprove()" class="btn btn-success flex-grow-1">Duyệt mượn</button>
-                                            <button onclick="handleReject()" class="btn btn-outline-danger">Từ chối</button>
-                                        </div>
-                                    </div>
+                                <c:when test="${not empty record.shippingDetails.street}">
+                                    ${record.shippingDetails.formattedAddress}
                                 </c:when>
-
-                                <%-- ĐÃ DUYỆT --%>
-                                <c:when test="${record.status == 'APPROVED'}">
-                                    <div class="text-center">
-                                        <div class="mb-3">Sách: <span class="badge bg-info">${record.bookCopy.barcode}</span></div>
-                                        <button onclick="handleReceive()" class="btn btn-primary w-100 py-2">Xác nhận độc giả đã lấy sách</button>
-                                        <p class="small text-muted mt-2">Chuyển trạng thái sang RECEIVED</p>
-                                    </div>
-                                </c:when>
-
-                                <%-- ĐANG MƯỢN --%>
-                                <c:when test="${record.status == 'RECEIVED' || record.status == 'BORROWED'}">
-                                    <div class="text-center">
-                                        <p class="small text-muted mb-3">Quét mã để nhận lại sách</p>
-                                        <input type="text" id="bcReturn" class="form-control mb-3 text-center fw-bold" placeholder="Quét mã trả sách...">
-                                        <button onclick="handleReturn()" class="btn btn-warning w-100">Xác nhận trả sách</button>
-                                    </div>
-                                </c:when>
-
-                                <%-- BỊ TỪ CHỐI --%>
-                                <c:when test="${record.status == 'REJECTED'}">
-                                    <div class="text-center py-3">
-                                        <div class="fs-1 mb-2">❌</div>
-                                        <h6 class="fw-bold text-danger">Yêu cầu bị từ chối</h6>
-                                        
-                                    </div>
-                                </c:when>
-
-                                <%-- HOÀN TẤT --%>
                                 <c:otherwise>
-                                    <div class="text-center py-3">
-                                        <div class="fs-1 mb-2">✅</div>
-                                        <h6 class="fw-bold text-success">Giao dịch hoàn tất</h6>
-                                        <p class="small text-muted">Sách đã được trả vào kho</p>
-                                    </div>
+                                    <span class="text-muted italic">Nhận trực tiếp tại quầy thư viện</span>
                                 </c:otherwise>
                             </c:choose>
                         </div>
                     </div>
                 </div>
             </div>
+
+
         </div>
+    </div>
+    <div class="container py-5">
+        <div class="info-card p-4">
+            <h5 class="fw-bold mb-4 text-dark">⚡ Quản lý Quy trình & Thao tác xử lý</h5>
 
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script>
-                                            function handleApprove() {
-                                                const bc = document.getElementById('bcApprove').value;
-                                                if (!bc)
-                                                    return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
-                                                submitPOST('/staff/borrowlibrary/approve', bc);
+            <div class="row g-4">
+                <div class="col-md-6 border-end">
+                    <p class="label mb-3">Trạng thái hệ thống</p>
+                    <div class="timeline-2-col">
+                        <div class="timeline-step ${record.status != 'REJECTED' ? 'completed' : ''} ${record.status == 'REQUESTED' ? 'active' : ''}">
+                            <div class="fw-bold">1. Tiếp nhận yêu cầu</div>
+                            <div class="text-muted small">Độc giả đã gửi yêu cầu mượn ${record.borrowMethod}</div>
+                        </div>
+
+                        <div class="timeline-step ${record.status == 'APPROVED' || record.status == 'RECEIVED' || record.status == 'RETURNED' ? 'completed' : ''} ${record.status == 'APPROVED' ? 'active' : ''}">
+                            <div class="fw-bold">2. Phê duyệt & Chuẩn bị</div>
+                            <div class="text-muted small">Thủ thư kiểm tra và gán mã vạch sách</div>
+                        </div>
+
+                        <div class="timeline-step ${record.status == 'RECEIVED' || record.status == 'RETURNED' ? 'completed' : ''} ${record.status == 'RECEIVED' ? 'active' : ''}">
+                            <div class="fw-bold">3. Đang mượn</div>
+                            <div class="text-muted small">Sách đã được bàn giao cho độc giả</div>
+                        </div>
+
+                        <div class="timeline-step ${record.status == 'RETURNED' ? 'completed active' : ''}">
+                            <div class="fw-bold">4. Hoàn tất</div>
+                            <div class="text-muted small">Giao dịch kết thúc, sách đã về kho</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <p class="label mb-3">Hành động cần thực hiện</p>
+                    <div class="action-box">
+                        <c:choose>
+                            <%-- CHỜ DUYỆT --%>
+                            <c:when test="${record.status == 'REQUESTED'}">
+                                <div class="text-center">
+                                    <p class="small text-muted mb-3">Vui lòng nhập Barcode để duyệt mượn</p>
+                                    <input type="text" id="bcApprove" class="form-control mb-3 text-center fw-bold" placeholder="LIB-XXXXXX">
+                                    <div class="d-flex gap-2">
+                                        <button onclick="handleApprove()" class="btn btn-success flex-grow-1">Duyệt mượn</button>
+                                        <button onclick="handleReject()" class="btn btn-outline-danger">Từ chối</button>
+                                    </div>
+                                </div>
+                            </c:when>
+
+                            <%-- ĐÃ DUYỆT --%>
+                            <c:when test="${record.status == 'APPROVED'}">
+                                <div class="text-center">
+                                    <div class="mb-3">Sách: <span class="badge bg-info">${record.bookCopy.barcode}</span></div>
+                                    <button onclick="handleReceive()" class="btn btn-primary w-100 py-2">Xác nhận độc giả đã lấy sách</button>
+                                    <p class="small text-muted mt-2">Chuyển trạng thái sang RECEIVED</p>
+                                </div>
+                            </c:when>
+
+                            <%-- ĐANG MƯỢN --%>
+                            <c:when test="${record.status == 'RECEIVED' || record.status == 'BORROWED'}">
+                                <div class="text-center">
+                                    <p class="small text-muted mb-3">Quét mã để nhận lại sách</p>
+                                    <input type="text" id="bcReturn" class="form-control mb-3 text-center fw-bold" placeholder="Quét mã trả sách...">
+                                    <button onclick="handleReturn()" class="btn btn-warning w-100">Xác nhận trả sách</button>
+                                </div>
+                            </c:when>
+
+                            <%-- BỊ TỪ CHỐI --%>
+                            <c:when test="${record.status == 'REJECTED'}">
+                                <div class="text-center py-3">
+                                    <div class="fs-1 mb-2">❌</div>
+                                    <h6 class="fw-bold text-danger">Yêu cầu bị từ chối</h6>
+
+                                </div>
+                            </c:when>
+
+                            <%-- HOÀN TẤT --%>
+                            <c:otherwise>
+                                <div class="text-center py-3">
+                                    <div class="fs-1 mb-2">✅</div>
+                                    <h6 class="fw-bold text-success">Giao dịch hoàn tất</h6>
+                                    <p class="small text-muted">Sách đã được trả vào kho</p>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+                                        function handleApprove() {
+                                            const bc = document.getElementById('bcApprove').value;
+                                            if (!bc)
+                                                return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
+                                            submitPOST('/staff/borrowlibrary/approve', bc);
+                                        }
+
+                                        function handleReturn() {
+                                            const bc = document.getElementById('bcReturn').value;
+                                            if (!bc)
+                                                return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
+                                            submitPOST('/staff/borrowlibrary/return', bc);
+                                        }
+
+                                        function submitPOST(path, bc) {
+                                            const form = document.createElement('form');
+                                            form.method = 'POST';
+                                            form.action = '${pageContext.request.contextPath}' + path;
+                                            form.innerHTML = '<input type="hidden" name="id" value="${record.id}"><input type="hidden" name="barcode" value="' + bc + '">';
+                                            document.body.appendChild(form);
+                                            form.submit();
+                                        }
+
+                                        function quickCopyBarcode(barcode) {
+                                            const input = document.getElementById('bcReturn') || document.getElementById('bcApprove');
+                                            if (input) {
+                                                input.value = barcode;
+                                                input.focus();
+                                                Swal.fire({
+                                                    toast: true, position: 'top-end', icon: 'success',
+                                                    title: 'Đã copy mã vạch: ' + barcode, showConfirmButton: false, timer: 1500
+                                                });
                                             }
+                                        }
 
-                                            function handleReturn() {
-                                                const bc = document.getElementById('bcReturn').value;
-                                                if (!bc)
-                                                    return Swal.fire('Lỗi', 'Chưa có mã vạch!', 'error');
-                                                submitPOST('/staff/borrowlibrary/return', bc);
-                                            }
-
-                                            function submitPOST(path, bc) {
-                                                const form = document.createElement('form');
-                                                form.method = 'POST';
-                                                form.action = '${pageContext.request.contextPath}' + path;
-                                                form.innerHTML = '<input type="hidden" name="id" value="${record.id}"><input type="hidden" name="barcode" value="' + bc + '">';
-                                                document.body.appendChild(form);
-                                                form.submit();
-                                            }
-
-                                            function quickCopyBarcode(barcode) {
-                                                const input = document.getElementById('bcReturn') || document.getElementById('bcApprove');
-                                                if (input) {
-                                                    input.value = barcode;
-                                                    input.focus();
-                                                    Swal.fire({
-                                                        toast: true, position: 'top-end', icon: 'success',
-                                                        title: 'Đã copy mã vạch: ' + barcode, showConfirmButton: false, timer: 1500
-                                                    });
-                                                }
-                                            }
-
-        </script>
-    </body>
+    </script>
+</body>
 </html>

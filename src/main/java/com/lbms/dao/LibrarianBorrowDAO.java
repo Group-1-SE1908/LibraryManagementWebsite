@@ -14,17 +14,17 @@ public class LibrarianBorrowDAO {
         ensureBorrowMethodColumn();
     }
 
-    // NÂNG CẤP: JOIN thêm bảng [User] để lấy phone/address và BookCopy để lấy barcode
     private String baseSelect() {
         return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
-                + "br.status, br.fine_amount, br.borrow_method, "
-                + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
-                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
-                + "bc.barcode AS book_barcode "
-                + "FROM borrow_records br "
-                + "JOIN [User] u ON br.user_id = u.user_id "
-                + "JOIN Book bk ON br.book_id = bk.book_id "
-                + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
+            + "br.status AS borrow_status, " 
+            + "br.fine_amount, br.borrow_method, "
+            + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
+            + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
+            + "bc.barcode AS book_barcode "
+            + "FROM borrow_records br "
+            + "JOIN [User] u ON br.user_id = u.user_id "
+            + "JOIN Book bk ON br.book_id = bk.book_id "
+            + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
     }
 
     // --- CÁC PHƯƠNG THỨC SAO CHÉP TỪ BorrowDAO VÀ TỐI ƯU ---
@@ -182,7 +182,7 @@ public class LibrarianBorrowDAO {
         br.setBorrowDate(rs.getDate("borrow_date") != null ? rs.getDate("borrow_date").toLocalDate() : null);
         br.setDueDate(rs.getDate("due_date") != null ? rs.getDate("due_date").toLocalDate() : null);
         br.setReturnDate(rs.getDate("return_date") != null ? rs.getDate("return_date").toLocalDate() : null);
-        br.setStatus(rs.getString("status"));
+        br.setStatus(rs.getString("borrow_status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         br.setBorrowMethod(rs.getString("borrow_method"));
 

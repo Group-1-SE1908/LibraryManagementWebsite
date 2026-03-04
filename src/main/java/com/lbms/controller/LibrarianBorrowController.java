@@ -57,10 +57,11 @@ public class LibrarianBorrowController extends HttpServlet {
                     //// req.setAttribute("record", record);
                     // req.setAttribute("stats", stats);
                     User detailedUser = userDAO.findById(record.getUser().getId());
-                    record.setUser(detailedUser);
-
-                    // Lấy thống kê 8 chỉ số
+                    //record.setUser(detailedUser);
                     UserBorrowingSummary stats = libDAO.getUserSummary(detailedUser.getId());
+                    int remaining = 5 - stats.getCurrentBorrowed();
+                    req.setAttribute("remaining", remaining > 0 ? remaining : 0);
+                    req.setAttribute("record", record);
                     req.setAttribute("stats", stats);
                 }
                 req.setAttribute("record", record);
