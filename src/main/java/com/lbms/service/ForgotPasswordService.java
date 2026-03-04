@@ -37,34 +37,41 @@ public class ForgotPasswordService {
         if (u == null)
             return;
 
-        String token = generateToken();
-        String tokenHash = CryptoUtil.sha256Hex(token);
+        String code = generateCode();
+        tokenDAO.invalidateTokensForUser(u.getId());
+        String tokenHash = CryptoUtil.sha256Hex(code);
         Instant expiresAt = Instant.now().plus(AppConfig.RESET_TOKEN_MINUTES, ChronoUnit.MINUTES);
 
         tokenDAO.create(u.getId(), tokenHash, expiresAt);
 
-        String link = AppConfig.APP_BASE_URL + "/reset-password?token=" + token;
         String subject = "LBMS - Đặt lại mật khẩu";
-        String body = "<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p>" +
-                "<p>Nhấn vào link sau để đặt lại mật khẩu (hết hạn sau " + AppConfig.RESET_TOKEN_MINUTES + " phút):</p>"
-                +
-                "<p><a href='" + link + "'>" + link + "</a></p>" +
-                "<p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>";
+        String body = "<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p>"
+                + "<p>Mã xác thực của bạn là <strong>" + code + "</strong> và có hiệu lực trong "
+                + AppConfig.RESET_TOKEN_MINUTES + " phút.</p>"
+                + "<p>Nhập mã này trên trang <a href='" + AppConfig.APP_BASE_URL
+                + "/reset-password'>Đặt lại mật khẩu</a> để tạo mật khẩu mới.</p>"
+                + "<p>Nếu bạn không thực hiện, hãy bỏ qua email này.</p>";
 
         emailService.send(u.getEmail(), subject, body);
     }
 
-    public void resetPassword(String rawToken, String newPassword) throws SQLException {
-        if (rawToken == null || rawToken.isBlank())
-            throw new IllegalArgumentException("Token không hợp lệ");
+    public void resetPassword(String email, String code, String newPassword) throws SQLException {
+        if (email == null || email.isBlank() || code == null || code.isBlank()) {
+            throw new IllegalArgumentException("Email và mã xác thực là bắt buộc");
+        }
         if (newPassword == null || newPassword.isBlank() || newPassword.length() < 6) {
             throw new IllegalArgumentException("Mật khẩu tối thiểu 6 ký tự");
         }
 
-        String tokenHash = CryptoUtil.sha256Hex(rawToken);
+        User user = userDAO.findByEmail(email.trim());
+        if (user == null) {
+            throw new IllegalArgumentException("Email hoặc mã xác thực không hợp lệ");
+        }
+
+        String tokenHash = CryptoUtil.sha256Hex(code.trim());
         Long userId = tokenDAO.findValidUserIdByTokenHash(tokenHash);
-        if (userId == null)
-            throw new IllegalArgumentException("Token không hợp lệ hoặc đã hết hạn");
+        if (userId == null || userId != user.getId())
+            throw new IllegalArgumentException("Email hoặc mã xác thực không hợp lệ");
 
         String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt(10));
 
@@ -98,12 +105,8 @@ public class ForgotPasswordService {
         }
     }
 
-    private String generateToken() {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes)
-            sb.append(String.format("%02x", b));
-        return sb.toString();
+    private String generateCode() {
+        int value = random.nextInt(1_000_000);
+        return String.format("%06d", value);
     }
 }

@@ -2,6 +2,7 @@ package com.lbms.service;
 
 import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
+import com.lbms.model.UserStatus;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.SQLException;
@@ -17,7 +18,7 @@ public class AuthService {
         User u = userDAO.findByEmail(email);
         if (u == null)
             return null;
-        if (!"ACTIVE".equalsIgnoreCase(u.getStatus()))
+        if (!UserStatus.ACTIVE.equalsIgnoreCase(u.getStatus()))
             return null;
         if (!BCrypt.checkpw(password, u.getPasswordHash()))
             return null;
@@ -29,6 +30,6 @@ public class AuthService {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
         String hash = BCrypt.hashpw(password, BCrypt.gensalt(10));
-        return userDAO.createUser(email, hash, fullName, "Member");
+        return userDAO.createUser(email, hash, fullName, "Member", UserStatus.PENDING);
     }
 }

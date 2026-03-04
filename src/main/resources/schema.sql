@@ -140,7 +140,19 @@ CREATE TABLE password_reset_token (
 );
 GO
 
--- B?ng 9: Gi? h�ng (Cart) / Shopping Cart
+-- Bảng 9: Mã xác thực email (Email Verification)
+CREATE TABLE email_verification_token (
+    verification_token_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    code VARCHAR(255) NOT NULL,
+    expired_at DATETIME NOT NULL,
+    used BIT DEFAULT 0,
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Verify_User FOREIGN KEY (user_id) REFERENCES [User](user_id) ON DELETE CASCADE
+);
+GO
+
+-- B?ng 10: Gi? h�ng (Cart) / Shopping Cart
 CREATE TABLE Cart (
     cart_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
@@ -149,7 +161,7 @@ CREATE TABLE Cart (
 );
 GO
 
--- B?ng 10: Chi ti?t gi? h�ng (CartItem) / Cart Items
+-- B?ng 11: Chi ti?t gi? h�ng (CartItem) / Cart Items
 CREATE TABLE CartItem (
     cart_item_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     cart_id BIGINT NOT NULL,
@@ -161,7 +173,7 @@ CREATE TABLE CartItem (
 );
 GO
 
--- B?ng 11: Nh?t k� ho�t d?ng (LibrarianActivityLog)
+-- B?ng 12: Nh?t k� ho?t d?ng (LibrarianActivityLog)
 CREATE TABLE [LibrarianActivityLog] (
     [log_id] INT IDENTITY(1,1) PRIMARY KEY,
     [user_id] INT NOT NULL, -- Kh�a ngo?i li�n k?t t?i b?ng User
@@ -170,7 +182,6 @@ CREATE TABLE [LibrarianActivityLog] (
     CONSTRAINT FK_ActivityLog_User FOREIGN KEY ([user_id]) REFERENCES [User]([user_id])
 );
 GO
-
 -- B?ng Comment (nếu chưa có) - hệ thống sử dụng Comment table trong ứng dụng
 -- (lưu ý: nếu đã có trong database, bỏ qua phần tạo này)
 IF OBJECT_ID('Comment', 'U') IS NULL
@@ -266,9 +277,9 @@ GO
 
 -- 4.2 Users (M?t kh?u m?c d?nh: 123456)
 INSERT INTO [User] (email, password, full_name, status, role_id) VALUES 
-('admin@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Qu?n Tr? Vi�n', 'ACTIVE', 1),
-('lib@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Th? Thu', 'ACTIVE', 2),
-('member@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Nguy?n Van A', 'ACTIVE', 3);
+('admin@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Qu?n Tr? Vi?n', 'ACTIVE', 1),
+('lib@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Th? Thu', 'ACTIVE', 2),
+('member@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Nguy?n Van A', 'ACTIVE', 3);
 GO
 
 -- 4.3 Categories (QUAN TR?NG: Ph?i ch?y c�i n�y tru?c Book)

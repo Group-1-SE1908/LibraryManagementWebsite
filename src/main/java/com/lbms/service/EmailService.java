@@ -22,6 +22,7 @@ public class EmailService {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.ssl.enable", String.valueOf(AppConfig.SMTP_SSL));
         props.put("mail.smtp.host", AppConfig.SMTP_HOST);
         props.put("mail.smtp.port", String.valueOf(AppConfig.SMTP_PORT));
 

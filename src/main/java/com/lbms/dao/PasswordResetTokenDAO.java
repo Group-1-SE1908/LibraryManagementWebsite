@@ -40,4 +40,12 @@ public class PasswordResetTokenDAO {
             ps.executeUpdate();
         }
     }
+
+    public void invalidateTokensForUser(long userId) throws SQLException {
+        String sql = "UPDATE password_reset_token SET used = 1 WHERE user_id = ? AND used = 0";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.executeUpdate();
+        }
+    }
 }
