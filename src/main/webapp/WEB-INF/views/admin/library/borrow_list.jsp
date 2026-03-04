@@ -134,18 +134,34 @@
                         .table-bordered tbody tr:hover {
                             background-color: #e2e8f0;
                         }
+
+                        .admin-main-content {
+                            margin-left: 280px;
+                            min-height: 100vh;
+                            padding: 24px 32px;
+                            box-sizing: border-box;
+                        }
+
+                        @media (max-width: 1024px) {
+                            .admin-main-content {
+                                margin-left: 0;
+                                padding: 16px;
+                            }
+                        }
                     </style>
                 </head>
 
                 <body>
-                    <%@ include file="/WEB-INF/views/admin/library/header_lib.jsp" %>
+                    <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+
+                    <main class="admin-main-content">
 
                         <div class="container py-4">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h1>🛠️ Quản lý Mượn Trả</h1>
                             </div>
 
-                            <form action="${pageContext.request.contextPath}/staff/borrowlibrary" method="get"
+                            <form action="${pageContext.request.contextPath}/admin/borrowlibrary" method="get"
                                 class="filter-bar">
                                 <div class="filter-group">
                                     <label>Tìm kiếm</label>
@@ -169,7 +185,7 @@
                                     </select>
                                 </div>
                                 <button type="submit" class="btn primary">Áp dụng lọc</button>
-                                <a href="${pageContext.request.contextPath}/staff/borrowlibrary" class="btn">Xóa lọc</a>
+                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary" class="btn">Xóa lọc</a>
                             </form>
                             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                             <c:if test="${not empty flash}">
@@ -257,7 +273,7 @@
                                                 <td style="text-align:center;">
                                                     <div
                                                         style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                                                        <a href="${pageContext.request.contextPath}/staff/borrowlibrary/detail?id=${r.id}"
+                                                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}"
                                                             class="btn" style="width:80px;">Chi tiết</a>
 
                                                         <c:if test="${r.status == 'REQUESTED'}">
@@ -274,7 +290,7 @@
                                                                 class="btn primary" style="width:80px;">Duyệt</button>
 
                                                             <form
-                                                                action="${pageContext.request.contextPath}/staff/borrowlibrary/reject"
+                                                                action="${pageContext.request.contextPath}/admin/borrowlibrary/reject"
                                                                 method="post" style="display:inline; margin:0;"
                                                                 onsubmit="confirmReject(event, this)">
                                                                 <input type="hidden" name="id" value="${r.id}">
@@ -302,7 +318,7 @@
                                                         </c:if>
                                                         <c:if test="${r.status == 'APPROVED'}">
                                                             <form
-                                                                action="${pageContext.request.contextPath}/staff/borrowlibrary/receive"
+                                                                action="${pageContext.request.contextPath}/admin/borrowlibrary/receive"
                                                                 method="post" style="display:inline;">
                                                                 <input type="hidden" name="id" value="${r.id}">
                                                                 <button type="submit" class="btn success"
@@ -351,7 +367,7 @@
                                     if (result.isConfirmed) {
                                         const form = document.createElement('form');
                                         form.method = 'POST';
-                                        form.action = '${pageContext.request.contextPath}/staff/borrowlibrary/approve';
+                                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/approve';
 
                                         // SỬA TẠI ĐÂY: Sử dụng cộng chuỗi để giữ nguyên biến JavaScript
                                         form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
@@ -385,7 +401,7 @@
                                     if (result.isConfirmed) {
                                         const form = document.createElement('form');
                                         form.method = 'POST';
-                                        form.action = '${pageContext.request.contextPath}/staff/borrowlibrary/return';
+                                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/return';
                                         form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
                                         document.body.appendChild(form);
                                         form.submit();
@@ -438,6 +454,7 @@
                             }
                         </script>
                         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    </main>
                 </body>
 
                 </html>

@@ -16,15 +16,32 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive"
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/books",
+        "/admin/books/approve",
+        "/admin/books/reject",
+        "/admin/books/return",
+        "/admin/books/detail",
+        "/admin/books/inperson",
+        "/admin/books/receive"
 })
 public class LibrarianBorrowController extends HttpServlet {
+
+    private static final String STAFF_BORROW_BASE = "/staff/borrowlibrary";
+    private static final String ADMIN_BORROW_BASE = "/admin/borrowlibrary";
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
     private final BorrowDAO borrowDAO = new BorrowDAO();
@@ -45,9 +62,10 @@ public class LibrarianBorrowController extends HttpServlet {
             }
 
             String path = req.getServletPath();
+            String action = getAction(path);
 
             // 2. Điều hướng giao diện
-            if ("/staff/borrowlibrary/detail".equals(path)) {
+            if ("detail".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
 
                 BorrowRecord record = libDAO.findById(id);
@@ -57,7 +75,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     //// req.setAttribute("record", record);
                     // req.setAttribute("stats", stats);
                     User detailedUser = userDAO.findById(record.getUser().getId());
-                    //record.setUser(detailedUser);
+                    // record.setUser(detailedUser);
                     UserBorrowingSummary stats = libDAO.getUserSummary(detailedUser.getId());
                     int remaining = 5 - stats.getCurrentBorrowed();
                     req.setAttribute("remaining", remaining > 0 ? remaining : 0);
@@ -67,7 +85,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("record", record);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_detail.jsp").forward(req, resp);
 
-            } else if ("/staff/borrowlibrary/inperson".equals(path)) {
+            } else if ("inperson".equals(action)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
@@ -102,9 +120,12 @@ public class LibrarianBorrowController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String path = req.getServletPath();
+        String action = getAction(path);
+        String redirectBase = resolveRedirectBase(path);
+
         try {
             requireStaff(req);
-            String path = req.getServletPath();
 
             // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
             HttpSession session = req.getSession();
@@ -115,7 +136,7 @@ public class LibrarianBorrowController extends HttpServlet {
             }
             long staffId = currentUser.getId();
 
-            if ("/staff/borrowlibrary/approve".equals(path)) {
+            if ("approve".equals(action)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
 
@@ -128,7 +149,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 libService.approveRequest(id, barcode, staffId);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
 
-            } else if ("/staff/borrowlibrary/return".equals(path)) {
+            } else if ("return".equals(action)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode").trim();
                 if (idStr == null || idStr.isBlank()) {
@@ -137,17 +158,17 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 libService.returnBook(Long.parseLong(idStr), barcode);
                 req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
-            } else if ("/staff/borrowlibrary/receive".equals(path)) {
+            } else if ("receive".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 libService.confirmReceive(id);
                 req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành công.");
-            } else if ("/staff/borrowlibrary/reject".equals(path)) {
+            } else if ("reject".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 String reason = req.getParameter("reason"); // Lấy lý do từ form
                 libService.rejectRequest(id, reason, staffId);
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu. Lý do: " + reason);
 
-            } else if ("/staff/borrowlibrary/inperson".equals(path)) {
+            } else if ("inperson".equals(action)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
                 String rawBarcodes = req.getParameter("barcodes");
 
@@ -169,24 +190,48 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash",
                         "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
-                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+                resp.sendRedirect(req.getContextPath() + redirectBase);
                 return;
             }
 
-            resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+            resp.sendRedirect(req.getContextPath() + redirectBase);
 
         } catch (IllegalArgumentException ex) {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
             req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
-            if ("/borrowlibrary/inperson".equals(req.getServletPath())) {
-                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary/inperson");
+            if ("inperson".equals(action)) {
+                resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
             } else {
-                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+                resp.sendRedirect(req.getContextPath() + redirectBase);
             }
         } catch (Exception ex) {
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary/inperson_form");
+            resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
         }
+    }
+
+    private String getAction(String path) {
+        if (path == null || path.isBlank()) {
+            return "";
+        }
+
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash < 0 || lastSlash == path.length() - 1) {
+            return "";
+        }
+
+        String action = path.substring(lastSlash + 1);
+        if ("borrowlibrary".equals(action) || "books".equals(action)) {
+            return "";
+        }
+        return action;
+    }
+
+    private String resolveRedirectBase(String path) {
+        if (path != null && path.startsWith("/admin/")) {
+            return ADMIN_BORROW_BASE;
+        }
+        return STAFF_BORROW_BASE;
     }
 
     private void requireStaff(HttpServletRequest req) {
