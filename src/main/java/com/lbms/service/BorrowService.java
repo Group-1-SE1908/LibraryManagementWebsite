@@ -52,7 +52,7 @@ public class BorrowService {
 //
 //        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
 //    }
-    public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails) throws SQLException {
+    public long requestBorrow(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails) throws SQLException {
 
         com.lbms.model.Book b = bookDAO.findById(bookId);
         if (b == null) {
@@ -87,7 +87,7 @@ public class BorrowService {
             }
         }
 
-        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
+        return borrowDAO.createRequest(userId, bookId,quantity, method, shippingDetails);
     }
 
     public void approve(long borrowId, String barcode) throws SQLException {
@@ -109,7 +109,7 @@ public class BorrowService {
                     }
                 }
 
-                // 2. Cáº­p nháº­t tráº¡ng thÃ¡i báº£n sao sÃ¡ch
+                
                 try (PreparedStatement ps = c
                         .prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
                     ps.setLong(1, copyId);

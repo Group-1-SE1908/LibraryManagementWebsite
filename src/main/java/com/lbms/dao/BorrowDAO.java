@@ -96,24 +96,27 @@ public class BorrowDAO {
         }
     }
 
-    public long createRequest(long userId, long bookId, String method, ShippingDetails shippingDetails)
+    public long createRequest(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method, "
-                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, shipping_district, shipping_city) "
-                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
+//        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method, "
+//                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, shipping_district, shipping_city) "
+//                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = "INSERT INTO borrow_records (user_id, book_id, quantity, borrow_method, status, "
+                + "shipping_recipient, shipping_phone, shipping_street, shipping_ward, shipping_district, shipping_city) "
+                + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?)";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
-            ps.setString(3, method);
-            ps.setString(4, shippingDetails != null ? shippingDetails.getRecipient() : null);
-            ps.setString(5, shippingDetails != null ? shippingDetails.getPhone() : null);
-            ps.setString(6, shippingDetails != null ? shippingDetails.getStreet() : null);
-            ps.setString(7, shippingDetails != null ? shippingDetails.getResidence() : null);
-            ps.setString(8, shippingDetails != null ? shippingDetails.getWard() : null);
-            ps.setString(9, shippingDetails != null ? shippingDetails.getDistrict() : null);
-            ps.setString(10, shippingDetails != null ? shippingDetails.getCity() : null);
+            ps.setInt(3, quantity);
+            ps.setString(4, method);
+            ps.setString(5, shippingDetails != null ? shippingDetails.getRecipient() : null);
+            ps.setString(6, shippingDetails != null ? shippingDetails.getPhone() : null);
+            ps.setString(7, shippingDetails != null ? shippingDetails.getStreet() : null);
+            ps.setString(8, shippingDetails != null ? shippingDetails.getResidence() : null);
+            ps.setString(9, shippingDetails != null ? shippingDetails.getWard() : null);
+            ps.setString(10, shippingDetails != null ? shippingDetails.getDistrict() : null);
+            ps.setString(11, shippingDetails != null ? shippingDetails.getCity() : null);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -126,9 +129,7 @@ public class BorrowDAO {
 
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -271,15 +272,12 @@ public class BorrowDAO {
     public List<BorrowRecord> listOverdue() throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
 
     // ThÃƒÂªm vÃƒÂ o BorrowDAO.java
-
     public List<BorrowRecord> listUnpaidFinesByUser(long userId) throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.user_id = ? AND br.fine_amount > 0 AND br.is_paid = 0 ORDER BY br.due_date ASC";
@@ -321,7 +319,7 @@ public class BorrowDAO {
                 List<BorrowRecord> out = new ArrayList<>();
                 while (rs.next()) {
                     out.add(mapOne(rs)); // mapOne Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t map cÃ¡Â»â„¢t
-                                         // borrow_method
+                    // borrow_method
                 }
                 return out;
             }

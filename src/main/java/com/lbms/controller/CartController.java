@@ -192,7 +192,8 @@ public class CartController extends HttpServlet {
 
         List<CartItem> items = new ArrayList<>(cart.getItems());
         for (CartItem item : items) {
-            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), method, shippingDetails);
+            int qty = item.getQuantity();
+            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), qty, method, shippingDetails);
         }
 
         cartService.clearCart(currentUser.getId());
