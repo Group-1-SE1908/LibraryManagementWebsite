@@ -19,6 +19,7 @@ public class BorrowRecord {
     private ShippingDetails shippingDetails;
     private String rejectReason;
     private boolean isPaid;
+    private int quantity;
 
     public BorrowRecord() {
     }
@@ -79,6 +80,15 @@ public class BorrowRecord {
     public boolean isIsPaid() {
         return isPaid;
     }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+    
 
     public void setIsPaid(boolean isPaid) {
         this.isPaid = isPaid;

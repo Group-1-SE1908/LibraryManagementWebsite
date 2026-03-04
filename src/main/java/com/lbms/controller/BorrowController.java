@@ -18,9 +18,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
-        "/borrow/return",
-        "/history" })
+@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
+    "/borrow/return",
+    "/history"})
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -170,19 +170,66 @@ public class BorrowController extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/borrow_request.jsp").forward(req, resp);
     }
 
+//    private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+//        User currentUser = (User) req.getSession().getAttribute("currentUser");
+//        String bookIdStr = req.getParameter("bookId");
+//        if (bookIdStr == null || bookIdStr.isBlank()) {
+//            throw new IllegalArgumentException("Vui lÃ²ng chá»n sÃ¡ch");
+//        }
+//
+//        long bookId = Long.parseLong(bookIdStr);
+//        
+//
+//        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE", null);
+//
+//        req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng (chá» thá»§ thÆ° duyá»‡t)");
+//        resp.sendRedirect(req.getContextPath() + "/borrow");
+//    }
     private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
-        String bookIdStr = req.getParameter("bookId");
-        if (bookIdStr == null || bookIdStr.isBlank()) {
-            throw new IllegalArgumentException("Vui lÃ²ng chá»n sÃ¡ch");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
         }
 
-        long bookId = Long.parseLong(bookIdStr);
+        try {
+            // 1. Lấy thông tin từ request
+            long bookId = Long.parseLong(req.getParameter("bookId"));
 
-        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE", null);
+            // Lấy số lượng: mặc định là 1 nếu không có tham số truyền lên
+            String qtyStr = req.getParameter("quantity");
+            int quantity = (qtyStr != null && !qtyStr.isBlank()) ? Integer.parseInt(qtyStr) : 1;
 
-        req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng (chá» thá»§ thÆ° duyá»‡t)");
-        resp.sendRedirect(req.getContextPath() + "/borrow");
+            // Lấy phương thức mượn: mặc định là IN_PERSON
+            String method = req.getParameter("method");
+            if (method == null || method.isBlank()) {
+                method = "IN_PERSON";
+            }
+
+            // 2. Xử lý ShippingDetails nếu mượn Online (Nếu form có gửi lên)
+            com.lbms.model.ShippingDetails sd = null;
+            if ("ONLINE".equalsIgnoreCase(method)) {
+                sd = new com.lbms.model.ShippingDetails();
+                sd.setRecipient(req.getParameter("recipient") != null ? req.getParameter("recipient") : currentUser.getFullName());
+                sd.setPhone(req.getParameter("phone") != null ? req.getParameter("phone") : currentUser.getPhone());
+                sd.setStreet(req.getParameter("address"));
+                // Các trường city/district/ward có thể lấy từ form nếu có
+            }
+
+            // 3. Gọi Service với đầy đủ thông tin (Bao gồm quantity mới thêm)
+            // Lưu ý: Đảm bảo BorrowService.requestBorrow đã được cập nhật signature nhận 'int quantity'
+            borrowService.requestBorrow(currentUser.getId(), bookId, quantity, method, sd);
+
+            req.getSession().setAttribute("flash", "Gửi yêu cầu mượn " + quantity + " cuốn thành công! Vui lòng chờ thủ thư duyệt.");
+            resp.sendRedirect(req.getContextPath() + "/history");
+
+        } catch (NumberFormatException e) {
+            req.getSession().setAttribute("flash", "Lỗi: Dữ liệu không hợp lệ.");
+            resp.sendRedirect(req.getContextPath() + "/borrow/request");
+        } catch (IllegalArgumentException ex) {
+            req.getSession().setAttribute("flash", ex.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/borrow/request");
+        }
     }
 
     private void handleHistory(HttpServletRequest req, HttpServletResponse resp) throws Exception {
