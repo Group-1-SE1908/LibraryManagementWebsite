@@ -191,8 +191,17 @@ public class CartController extends HttpServlet {
         }
 
         List<CartItem> items = new ArrayList<>(cart.getItems());
+        int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
+        int requestedBooks = items.stream().mapToInt(CartItem::getQuantity).sum();
+        if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
+            redirectWithParam(req, resp, "/cart", "cartError",
+                    "Bạn đang có " + currentActiveBorrows + " cuốn đang mượn/đang chờ duyệt, tối đa "
+                            + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
+            return;
+        }
         for (CartItem item : items) {
-            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), method, shippingDetails);
+            borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
+                    item.getQuantity());
         }
 
         cartService.clearCart(currentUser.getId());

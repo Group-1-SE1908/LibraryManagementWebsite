@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.lbms.dao.BookDAO;
@@ -19,7 +20,7 @@ import com.lbms.util.DBConnection;
 
 public class BorrowService {
 
-    public static final int MAX_ACTIVE_BORROWS = 3;
+    public static final int MAX_ACTIVE_BORROWS = 5;
     public static final int LOAN_DAYS = 14;
     public static final BigDecimal FINE_PER_DAY = new BigDecimal("5000");
 
@@ -33,20 +34,39 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        Book b = bookDAO.findById(bookId);
-        if (b == null) {
-            throw new IllegalArgumentException("SÃ¡ch khÃ´ng tá»“n táº¡i");
+        return requestBorrowCopies(userId, bookId, method, shippingDetails, 1).get(0);
+    }
+
+    public List<Long> requestBorrowCopies(long userId, long bookId, String method,
+            ShippingDetails shippingDetails, int quantity) throws SQLException {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
         }
-        if (b.getQuantity() <= 0) {
-            throw new IllegalArgumentException("SÃ¡ch Ä‘Ã£ háº¿t");
+
+        Book book = bookDAO.findById(bookId);
+        if (book == null) {
+            throw new IllegalArgumentException("Sách không tồn tại");
+        }
+        if (book.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Sách đã hết");
         }
 
         int active = borrowDAO.countActiveBorrows(userId);
-        if (active >= MAX_ACTIVE_BORROWS) {
-            throw new IllegalArgumentException("Báº¡n Ä‘Ã£ mÆ°á»£n tá»‘i Ä‘a " + MAX_ACTIVE_BORROWS + " sÃ¡ch");
+        if (active + quantity > MAX_ACTIVE_BORROWS) {
+            throw new IllegalArgumentException(
+                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
+                            + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
         }
 
-        return borrowDAO.createRequest(userId, bookId, method, shippingDetails);
+        List<Long> ids = new ArrayList<>(quantity);
+        for (int i = 0; i < quantity; i++) {
+            ids.add(borrowDAO.createRequest(userId, bookId, method, shippingDetails));
+        }
+        return ids;
+    }
+
+    public int countActiveBorrows(long userId) throws SQLException {
+        return borrowDAO.countActiveBorrows(userId);
     }
 
     public void approve(long borrowId, String barcode) throws SQLException {

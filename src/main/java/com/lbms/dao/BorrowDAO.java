@@ -144,7 +144,7 @@ public class BorrowDAO {
     }
 
     public int countActiveBorrows(long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
+        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED')";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {

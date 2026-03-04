@@ -464,13 +464,12 @@
                                 <c:forEach items="${records}" var="r">
                                     <c:set var="statusClass">
                                         <c:choose>
-                                            <c:when test="${fn:toUpperCase(r.status) == 'BORROWED'}">status-borrowed
+                                            <c:when
+                                                test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED'}">status-borrowed
                                             </c:when>
                                             <c:when test="${fn:toUpperCase(r.status) == 'RETURNED'}">status-returned
                                             </c:when>
-                                            <c:when
-                                                test="${fn:toUpperCase(r.status) == 'REQUESTED' || fn:toUpperCase(r.status) == 'APPROVED'}">
-                                                status-pending</c:when>
+                                            <c:when test="${fn:toUpperCase(r.status) == 'REQUESTED'}">status-pending</c:when>
                                             <c:otherwise>status-muted</c:otherwise>
                                         </c:choose>
                                     </c:set>
