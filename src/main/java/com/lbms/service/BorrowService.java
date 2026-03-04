@@ -38,7 +38,13 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        return requestBorrowCopies(userId, bookId, method, shippingDetails, 1).get(0);
+        return requestBorrow(userId, bookId, 1, method, shippingDetails);
+    }
+
+    public long requestBorrow(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails)
+            throws SQLException {
+        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails, quantity);
+        return ids.isEmpty() ? 0 : ids.get(0);
     }
 
     public List<Long> requestBorrowCopies(long userId, long bookId, String method,
@@ -82,7 +88,7 @@ public class BorrowService {
 
         List<Long> ids = new ArrayList<>(quantity);
         for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, method, shippingDetails));
+            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails));
         }
         return ids;
     }

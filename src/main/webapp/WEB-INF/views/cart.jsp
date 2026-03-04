@@ -194,7 +194,7 @@
             </label>
             <label class="form-group">
                 <span>Số điện thoại</span>
-                <input type="tel" inputmode="tel" data-shipping-field="phone" placeholder="0901234567" required />
+                <input type="tel" inputmode="tel" data-shipping-field="phone" placeholder="0901234567" required pattern="\\d{10,11}" title="Nhập 10 hoặc 11 chữ số" />
             </label>
             <label class="form-group">
                 <span>Tên đường / số nhà</span>

@@ -2,12 +2,14 @@ package com.lbms.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
 import com.lbms.model.Book;
+import com.lbms.model.BorrowHistoryEntry;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
@@ -18,9 +20,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
-    "/borrow/return",
-    "/history"})
+@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
+        "/borrow/return",
+        "/history" })
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -170,21 +172,23 @@ public class BorrowController extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/borrow_request.jsp").forward(req, resp);
     }
 
-//    private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-//        User currentUser = (User) req.getSession().getAttribute("currentUser");
-//        String bookIdStr = req.getParameter("bookId");
-//        if (bookIdStr == null || bookIdStr.isBlank()) {
-//            throw new IllegalArgumentException("Vui lÃ²ng chá»n sÃ¡ch");
-//        }
-//
-//        long bookId = Long.parseLong(bookIdStr);
-//        
-//
-//        borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE", null);
-//
-//        req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng (chá» thá»§ thÆ° duyá»‡t)");
-//        resp.sendRedirect(req.getContextPath() + "/borrow");
-//    }
+    // private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse
+    // resp) throws Exception {
+    // User currentUser = (User) req.getSession().getAttribute("currentUser");
+    // String bookIdStr = req.getParameter("bookId");
+    // if (bookIdStr == null || bookIdStr.isBlank()) {
+    // throw new IllegalArgumentException("Vui lÃ²ng chá»n sÃ¡ch");
+    // }
+    //
+    // long bookId = Long.parseLong(bookIdStr);
+    //
+    //
+    // borrowService.requestBorrow(currentUser.getId(), bookId, "ONLINE", null);
+    //
+    // req.getSession().setAttribute("flash", "Gá»­i yÃªu cáº§u mÆ°á»£n thÃ nh cÃ´ng
+    // (chá» thá»§ thÆ° duyá»‡t)");
+    // resp.sendRedirect(req.getContextPath() + "/borrow");
+    // }
     private void handleRequestSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (currentUser == null) {
@@ -200,6 +204,25 @@ public class BorrowController extends HttpServlet {
             String qtyStr = req.getParameter("quantity");
             int quantity = (qtyStr != null && !qtyStr.isBlank()) ? Integer.parseInt(qtyStr) : 1;
 
+            int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
+            int remainingSlots = BorrowService.MAX_ACTIVE_BORROWS - currentActiveBorrows;
+            if (remainingSlots <= 0) {
+                req.getSession().setAttribute("flash",
+                        "Bạn đang có " + currentActiveBorrows
+                                + " cuốn đang mượn/đang chờ duyệt (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS
+                                + " cuốn). Vui lòng trả sách hoặc hủy yêu cầu trước khi mượn thêm.");
+                resp.sendRedirect(req.getContextPath() + "/borrow/request");
+                return;
+            }
+            if (quantity > remainingSlots) {
+                req.getSession().setAttribute("flash",
+                        "Bạn vừa yêu cầu mượn " + quantity
+                                + " cuốn nhưng chỉ có thể mượn thêm tối đa " + remainingSlots
+                                + " cuốn nữa (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn).");
+                resp.sendRedirect(req.getContextPath() + "/borrow/request");
+                return;
+            }
+
             // Lấy phương thức mượn: mặc định là IN_PERSON
             String method = req.getParameter("method");
             if (method == null || method.isBlank()) {
@@ -210,17 +233,20 @@ public class BorrowController extends HttpServlet {
             com.lbms.model.ShippingDetails sd = null;
             if ("ONLINE".equalsIgnoreCase(method)) {
                 sd = new com.lbms.model.ShippingDetails();
-                sd.setRecipient(req.getParameter("recipient") != null ? req.getParameter("recipient") : currentUser.getFullName());
+                sd.setRecipient(req.getParameter("recipient") != null ? req.getParameter("recipient")
+                        : currentUser.getFullName());
                 sd.setPhone(req.getParameter("phone") != null ? req.getParameter("phone") : currentUser.getPhone());
                 sd.setStreet(req.getParameter("address"));
                 // Các trường city/district/ward có thể lấy từ form nếu có
             }
 
             // 3. Gọi Service với đầy đủ thông tin (Bao gồm quantity mới thêm)
-            // Lưu ý: Đảm bảo BorrowService.requestBorrow đã được cập nhật signature nhận 'int quantity'
+            // Lưu ý: Đảm bảo BorrowService.requestBorrow đã được cập nhật signature nhận
+            // 'int quantity'
             borrowService.requestBorrow(currentUser.getId(), bookId, quantity, method, sd);
 
-            req.getSession().setAttribute("flash", "Gửi yêu cầu mượn " + quantity + " cuốn thành công! Vui lòng chờ thủ thư duyệt.");
+            req.getSession().setAttribute("flash",
+                    "Gửi yêu cầu mượn " + quantity + " cuốn thành công! Vui lòng chờ thủ thư duyệt.");
             resp.sendRedirect(req.getContextPath() + "/history");
 
         } catch (NumberFormatException e) {
@@ -252,8 +278,23 @@ public class BorrowController extends HttpServlet {
         } else {
             statusFilter = "all";
         }
+
+        int historyTotalCopies = records.stream()
+                .mapToInt(r -> Math.max(1, r.getQuantity()))
+                .sum();
+
+        List<BorrowHistoryEntry> historyEntries = new ArrayList<>();
+        for (BorrowRecord record : records) {
+            int copies = Math.max(1, record.getQuantity());
+            for (int copyIndex = 1; copyIndex <= copies; copyIndex++) {
+                historyEntries.add(new BorrowHistoryEntry(record, copyIndex, copies));
+            }
+        }
+
         req.setAttribute("records", records);
         req.setAttribute("historyStatusFilter", statusFilter);
+        req.setAttribute("historyTotalCopies", historyTotalCopies);
+        req.setAttribute("historyEntries", historyEntries);
 
         Object flash = req.getSession().getAttribute("flash");
         if (flash != null) {

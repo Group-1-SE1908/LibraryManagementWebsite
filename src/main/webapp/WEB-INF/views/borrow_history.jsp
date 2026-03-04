@@ -160,6 +160,14 @@
                         gap: 20px;
                     }
 
+                    .copy-badge {
+                        font-size: 0.75rem;
+                        letter-spacing: 0.3em;
+                        text-transform: uppercase;
+                        margin-top: 6px;
+                        color: rgba(255, 255, 255, 0.9);
+                    }
+
                     .history-card__poster {
                         position: relative;
                         height: 220px;
@@ -431,8 +439,8 @@
                         <div class="history-hero-card">
                             <h3>Giao dịch gần đây</h3>
                             <div class="hero-stat">
-                                <c:set var="historyCount" value="${records != null ? records.size() : 0}" />
-                                <span>${historyCount}</span>
+                                <c:set var="historyTotalCopies" value="${historyTotalCopies != null ? historyTotalCopies : 0}" />
+                                <span>${historyTotalCopies}</span>
                                 <small style="font-size:0.9rem; color:rgba(255,255,255,0.85);">phiếu ghi lại</small>
                             </div>
                             <p style="margin-top:12px; color:rgba(255,255,255,0.8);">Bấm vào từng dòng để xem chi tiết
@@ -459,9 +467,10 @@
                     </div>
 
                     <c:choose>
-                        <c:when test="${historyCount > 0}">
+                        <c:when test="${historyTotalCopies > 0}">
                             <div class="history-stack">
-                                <c:forEach items="${records}" var="r">
+                                <c:forEach items="${historyEntries}" var="entry">
+                                    <c:set var="r" value="${entry.record}" />
                                     <c:set var="statusClass">
                                         <c:choose>
                                             <c:when
@@ -473,12 +482,17 @@
                                             <c:otherwise>status-muted</c:otherwise>
                                         </c:choose>
                                     </c:set>
-                                    <article class="history-card">
+                                    <c:set var="methodCode" value="${fn:toUpperCase(r.borrowMethod)}" />
+                                    <c:set var="shipping" value="${r.shippingDetails}" />
+                                    <article class="history-card" data-copy-index="${entry.copyIndex}" data-copy-count="${entry.copyCount}">
                                         <div class="history-card__banner">
                                             <div>
                                                 <p class="history-card__eyebrow">Phiếu #${r.id}</p>
                                                 <h2>${r.book.title}</h2>
                                                 <p class="muted">${r.book.author}</p>
+                                                <c:if test="${entry.copyCount > 1}">
+                                                    <p class="copy-badge">Bản sao ${entry.copyIndex}/${entry.copyCount}</p>
+                                                </c:if>
                                             </div>
                                             <span class="status-pill ${statusClass}">${r.status}</span>
                                         </div>
@@ -539,8 +553,6 @@
                                             </div>
                                         </div>
 
-                                        <c:set var="methodCode" value="${fn:toUpperCase(r.borrowMethod)}" />
-                                        <c:set var="shipping" value="${r.shippingDetails}" />
                                         <div class="history-card__actions">
                                             <button class="btn primary js-show-order" type="button"
                                                 data-method="${methodCode}"
@@ -548,7 +560,8 @@
                                                 data-shipping-phone="${shipping != null && not empty shipping.phone ? shipping.phone : ''}"
                                                 data-address="${shipping != null && not empty shipping.formattedAddress ? shipping.formattedAddress : ''}"
                                                 data-user-phone="${not empty r.user.phone ? r.user.phone : ''}"
-                                                data-borrow-date="${not empty r.borrowDate ? r.borrowDate : ''}">Xem đơn hàng</button>
+                                                data-borrow-date="${not empty r.borrowDate ? r.borrowDate : ''}"
+                                                data-copy-index="${entry.copyIndex}">Xem đơn hàng</button>
                                             <c:if test="${fn:toUpperCase(r.status) == 'BORROWED'}">
                                                 <a class="btn success"
                                                     href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả

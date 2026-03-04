@@ -176,7 +176,8 @@ public class CartController extends HttpServlet {
             String shippingDistrict = requireTextParam(req, "shippingDistrict", "quận/huyện");
             String shippingWard = requireTextParam(req, "shippingWard", "phường/xã");
             String shippingResidence = optionalTextParam(req, "shippingResidence");
-            shippingDetails = new ShippingDetails(shippingRecipient, shippingRecipientPhone, shippingStreet,
+            shippingDetails = new ShippingDetails(shippingRecipient, normalizePhoneDigits(shippingRecipientPhone),
+                    shippingStreet,
                     shippingResidence, shippingWard, shippingDistrict, shippingCity);
             returnDate = LocalDate.now().plusDays(borrowDays);
         }
@@ -372,6 +373,17 @@ public class CartController extends HttpServlet {
         }
         value = value.trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private String normalizePhoneDigits(String raw) {
+        if (raw == null) {
+            throw new IllegalArgumentException("Số điện thoại người nhận là bắt buộc");
+        }
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.length() < 10 || digits.length() > 11) {
+            throw new IllegalArgumentException("Số điện thoại người nhận phải là 10 hoặc 11 chữ số");
+        }
+        return digits;
     }
 
     private void redirectWithParam(HttpServletRequest req, HttpServletResponse resp, String path, String paramName,
