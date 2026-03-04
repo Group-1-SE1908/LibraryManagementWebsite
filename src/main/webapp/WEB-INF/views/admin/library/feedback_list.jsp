@@ -152,7 +152,7 @@
 
 <body>
 
-<jsp:include page="/WEB-INF/views/admin/library/header_lib.jsp"/>
+<jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
 
 <main>
     <div class="container-page">
