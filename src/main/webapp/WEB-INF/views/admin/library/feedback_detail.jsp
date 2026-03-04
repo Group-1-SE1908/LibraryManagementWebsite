@@ -151,7 +151,7 @@
     </style>
 </head>
 <body>
-<jsp:include page="/WEB-INF/views/admin/library/header_lib.jsp"/>
+<jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
 
 <main class="main-content">
     <div class="container-page">

@@ -118,7 +118,7 @@
     </head>
 
     <body class="bg-light">
-        <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+        <jsp:include page="/WEB-INF/views/admin//library/librarian_sidebar.jsp" />
 
         <main class="admin-main-content">
 
