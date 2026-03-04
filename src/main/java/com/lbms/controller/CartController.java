@@ -151,10 +151,10 @@ public class CartController extends HttpServlet {
             contactEmail = formEmail;
 
         int borrowDays = parseIntParam(req, "borrowDuration", 7);
-        LocalDate returnDate = LocalDate.now().plusDays(borrowDays);
-        String formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         LocalDate pickupDate = null;
         String formattedPickupDate = null;
+        LocalDate returnDate = null;
+        String formattedReturnDate;
         ShippingDetails shippingDetails = null;
         String deliveryAddress = req.getParameter("deliveryAddress");
         if (deliveryAddress != null && !deliveryAddress.isBlank()) {
@@ -167,6 +167,7 @@ public class CartController extends HttpServlet {
         if (METHOD_IN_PERSON.equals(method)) {
             pickupDate = parsePickupDateParam(req, "pickupDate");
             formattedPickupDate = pickupDate.format(DISPLAY_DATE_FORMAT);
+            returnDate = pickupDate.plusDays(borrowDays);
         } else if (METHOD_ONLINE.equals(method)) {
             String shippingRecipient = requireTextParam(req, "shippingRecipient", "tên người nhận");
             String shippingRecipientPhone = requireTextParam(req, "shippingPhone", "số điện thoại người nhận");
@@ -177,7 +178,12 @@ public class CartController extends HttpServlet {
             String shippingResidence = optionalTextParam(req, "shippingResidence");
             shippingDetails = new ShippingDetails(shippingRecipient, shippingRecipientPhone, shippingStreet,
                     shippingResidence, shippingWard, shippingDistrict, shippingCity);
+            returnDate = LocalDate.now().plusDays(borrowDays);
         }
+        if (returnDate == null) {
+            returnDate = LocalDate.now().plusDays(borrowDays);
+        }
+        formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         Cart cart = cartService.getCart(currentUser.getId());
         if (cart == null || cart.getItems().isEmpty()) {
             redirectWithParam(req, resp, "/cart", "cartError", "Giỏ hàng trống");
