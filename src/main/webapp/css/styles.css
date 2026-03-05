@@ -72,6 +72,62 @@ body {
     flex-wrap: wrap;
     justify-content: space-between;
 }
+.history-card__actions {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.history-card__action {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.history-card__action .btn {
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    min-height: 44px;
+    width: 100%;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-card__action .btn:hover {
+    transform: translateY(-2px) scale(1.01);
+}
+
+.history-card__action .btn.secondary {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    color: #0f172a;
+    box-shadow: inset 0 0 0 1px transparent;
+}
+
+.history-card__action .btn.secondary:hover {
+    background: #f8fafc;
+}
+
+.history-card__action .btn.primary {
+    background: linear-gradient(130deg, #0d6efd, #2563eb);
+    border: none;
+    color: white;
+}
+
+.history-card__action .btn.primary:hover {
+    box-shadow: 0 18px 40px rgba(13, 110, 253, 0.35);
+}
+
+.history-card__action .btn.danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border: none;
+    color: white;
+}
+
 
 .brand-block {
     display: flex;
@@ -375,6 +431,18 @@ body {
     color: white;
 }
 
+.btn.btn-outline {
+    background: #ffffff;
+    border: 1px solid rgba(15, 76, 255, 0.25);
+    color: #0f4cff;
+    box-shadow: 0 8px 28px rgba(15, 76, 255, 0.2);
+}
+
+.btn.btn-outline:hover {
+    background: #f4f7ff;
+    box-shadow: 0 14px 36px rgba(15, 76, 255, 0.3);
+}
+
 .btn.primary:hover {
     background-color: #0a45b8;
     box-shadow: 0 6px 12px rgba(11, 87, 208, 0.3);
@@ -397,6 +465,28 @@ body {
 
 .btn.danger:hover {
     background-color: #b91c1c;
+}
+
+.btn.ghost {
+    background: transparent;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    color: var(--text-dark);
+}
+
+.btn.ghost:hover {
+    background: rgba(15, 23, 42, 0.08);
+    box-shadow: none;
+}
+
+.btn.secondary {
+    background-color: white;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    color: var(--text-dark);
+}
+
+.btn.secondary:hover {
+    background-color: var(--light-bg);
+    box-shadow: none;
 }
 
 .btn.small {

@@ -13,9 +13,11 @@ import java.util.List;
 
 import com.lbms.dao.BookDAO;
 import com.lbms.dao.BorrowDAO;
+import com.lbms.dao.RenewalRequestDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.RenewalRequest;
 import com.lbms.model.ShippingDetails;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
@@ -28,11 +30,13 @@ public class BorrowService {
 
     private final BorrowDAO borrowDAO;
     private final BookDAO bookDAO;
+    private final RenewalRequestDAO renewalRequestDAO;
     private final UserDAO userDAO;
 
     public BorrowService() {
         this.borrowDAO = new BorrowDAO();
         this.bookDAO = new BookDAO();
+        this.renewalRequestDAO = new RenewalRequestDAO();
         this.userDAO = new UserDAO();
     }
 
@@ -157,6 +161,25 @@ public class BorrowService {
         borrowDAO.updateStatus(borrowId, "REJECTED");
     }
 
+    public void cancelRenewalRequest(long userId, long borrowId) throws SQLException {
+        BorrowRecord br = borrowDAO.findById(borrowId);
+        if (br == null) {
+            throw new IllegalArgumentException("Phiếu mượn không tồn tại");
+        }
+        if (br.getUser() == null || br.getUser().getId() != userId) {
+            throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
+        }
+        if (!"RENEWAL_REQUESTED".equalsIgnoreCase(br.getStatus())) {
+            throw new IllegalArgumentException("Chỉ có thể hủy khi đang chờ duyệt gia hạn");
+        }
+        if (!renewalRequestDAO.existsPendingForBorrow(borrowId)) {
+            throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn đang xử lý");
+        }
+
+        renewalRequestDAO.cancelPendingForBorrow(borrowId);
+        borrowDAO.updateStatus(borrowId, "BORROWED");
+    }
+
     public void cancelRequest(long borrowId, long userId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
         if (br == null) {
@@ -215,6 +238,43 @@ public class BorrowService {
         }
 
         return fine;
+    }
+
+    public long requestRenewal(long userId, long borrowId, String reason, String contactName,
+            String contactPhone, String contactEmail) throws SQLException {
+        String cleanReason = reason != null ? reason.trim() : "";
+        if (cleanReason.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng mô tả lý do gia hạn");
+        }
+
+        BorrowRecord br = borrowDAO.findById(borrowId);
+        if (br == null) {
+            throw new IllegalArgumentException("Phiếu mượn không tồn tại");
+        }
+        if (br.getUser() == null || br.getUser().getId() != userId) {
+            throw new IllegalArgumentException("Bạn không có quyền gửi yêu cầu này");
+        }
+        if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
+            throw new IllegalArgumentException("Chỉ có thể gia hạn khi sách đang mượn");
+        }
+        if (renewalRequestDAO.existsPendingForBorrow(borrowId)) {
+            throw new IllegalArgumentException("Bạn đã gửi yêu cầu gia hạn trước đó, vui lòng chờ duyệt");
+        }
+
+        String finalContactName = (contactName != null && !contactName.isBlank()) ? contactName.trim()
+                : (br.getUser().getFullName() != null ? br.getUser().getFullName() : "");
+        String finalContactPhone = (contactPhone != null && !contactPhone.isBlank()) ? contactPhone.trim()
+                : (br.getUser().getPhone() != null ? br.getUser().getPhone() : "");
+        String finalContactEmail = (contactEmail != null && !contactEmail.isBlank()) ? contactEmail.trim()
+                : (br.getUser().getEmail() != null ? br.getUser().getEmail() : "");
+
+        borrowDAO.updateStatus(borrowId, "RENEWAL_REQUESTED");
+        return renewalRequestDAO.createRequest(borrowId, userId, cleanReason, finalContactName, finalContactPhone,
+                finalContactEmail);
+    }
+
+    public List<RenewalRequest> getRenewalRequestsForBorrow(long borrowId) throws SQLException {
+        return renewalRequestDAO.listByBorrowId(borrowId);
     }
 
     public BigDecimal calculateFine(LocalDate dueDate, LocalDate returnDate) {

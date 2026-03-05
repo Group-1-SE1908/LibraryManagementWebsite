@@ -115,6 +115,22 @@ CREATE TABLE borrow_records (
 );
 GO
 
+-- Bảng 13: Yêu cầu gia hạn sách
+CREATE TABLE renewal_requests (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    borrow_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    reason NVARCHAR(1024) NOT NULL,
+    contact_name NVARCHAR(255) NULL,
+    contact_phone VARCHAR(30) NULL,
+    contact_email VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    requested_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Renewal_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id) ON DELETE CASCADE,
+    CONSTRAINT FK_Renewal_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+);
+GO
+
 -- Bảng 7: Đặt trước sách (Reservations)
 CREATE TABLE reservations (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,

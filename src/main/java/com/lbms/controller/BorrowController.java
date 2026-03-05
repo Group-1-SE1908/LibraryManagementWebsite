@@ -3,7 +3,9 @@ package com.lbms.controller;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.lbms.dao.BookDAO;
@@ -11,6 +13,7 @@ import com.lbms.dao.BorrowDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowHistoryEntry;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
 
@@ -22,6 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
         "/borrow/return",
+        "/borrow/renew",
+        "/borrow/renew/cancel",
         "/history" })
 public class BorrowController extends HttpServlet {
 
@@ -119,16 +124,15 @@ public class BorrowController extends HttpServlet {
                 case "/borrow/request":
                     handleRequestSubmit(req, resp);
                     break;
+                case "/borrow/renew":
+                    handleRenewalSubmit(req, resp);
+                    break;
+                case "/borrow/renew/cancel":
+                    handleRenewalCancel(req, resp);
+                    break;
                 default:
                     resp.sendError(405);
                     break;
-            }
-        } catch (IllegalArgumentException ex) {
-            req.setAttribute("error", ex.getMessage());
-            try {
-                handleRequestForm(req, resp);
-            } catch (Exception e) {
-                throw new ServletException(e);
             }
         } catch (Exception ex) {
             throw new ServletException(ex);
@@ -291,10 +295,19 @@ public class BorrowController extends HttpServlet {
             }
         }
 
+        Map<Long, List<RenewalRequest>> renewalHistory = new HashMap<>();
+        for (BorrowRecord record : records) {
+            List<RenewalRequest> requests = borrowService.getRenewalRequestsForBorrow(record.getId());
+            if (requests != null && !requests.isEmpty()) {
+                renewalHistory.put(record.getId(), requests);
+            }
+        }
+
         req.setAttribute("records", records);
         req.setAttribute("historyStatusFilter", statusFilter);
         req.setAttribute("historyTotalCopies", historyTotalCopies);
         req.setAttribute("historyEntries", historyEntries);
+        req.setAttribute("renewalHistory", renewalHistory);
 
         Object flash = req.getSession().getAttribute("flash");
         if (flash != null) {
@@ -303,6 +316,78 @@ public class BorrowController extends HttpServlet {
         }
 
         req.getRequestDispatcher("/WEB-INF/views/borrow_history.jsp").forward(req, resp);
+    }
+
+    private void handleRenewalSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        String borrowIdParam = req.getParameter("borrowId");
+        if (borrowIdParam == null || borrowIdParam.isBlank()) {
+            req.getSession().setAttribute("flash", "Không có hồ sơ gia hạn hợp lệ");
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
+        long borrowId;
+        try {
+            borrowId = Long.parseLong(borrowIdParam);
+        } catch (NumberFormatException ex) {
+            req.getSession().setAttribute("flash", "ID hồ sơ không hợp lệ");
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
+        String reason = req.getParameter("reason");
+        String contactName = req.getParameter("contactName");
+        String contactPhone = req.getParameter("contactPhone");
+        String contactEmail = req.getParameter("contactEmail");
+
+        try {
+            borrowService.requestRenewal(currentUser.getId(), borrowId, reason, contactName, contactPhone,
+                    contactEmail);
+            req.getSession().setAttribute("flash", "Yêu cầu gia hạn đã gửi thủ thư. Hãy chờ phê duyệt.");
+        } catch (IllegalArgumentException ex) {
+            req.getSession().setAttribute("flash", ex.getMessage());
+        }
+
+        resp.sendRedirect(req.getContextPath() + "/history");
+    }
+
+    private void handleRenewalCancel(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        String borrowIdParam = req.getParameter("borrowId");
+        if (borrowIdParam == null || borrowIdParam.isBlank()) {
+            req.getSession().setAttribute("flash", "Không có hồ sơ gia hạn hợp lệ");
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
+        long borrowId;
+        try {
+            borrowId = Long.parseLong(borrowIdParam);
+        } catch (NumberFormatException ex) {
+            req.getSession().setAttribute("flash", "ID hồ sơ không hợp lệ");
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
+        try {
+            borrowService.cancelRenewalRequest(currentUser.getId(), borrowId);
+            req.getSession().setAttribute("flash", "Yêu cầu gia hạn đã bị hủy");
+        } catch (IllegalArgumentException ex) {
+            req.getSession().setAttribute("flash", ex.getMessage());
+        }
+
+        resp.sendRedirect(req.getContextPath() + "/history");
     }
 
     private String optionalFilter(String value) {
@@ -317,7 +402,7 @@ public class BorrowController extends HttpServlet {
             case "borrowing":
                 return List.of("BORROWED", "APPROVED");
             case "pending":
-                return List.of("REQUESTED");
+                return List.of("REQUESTED", "RENEWAL_REQUESTED");
             case "returned":
                 return List.of("RETURNED");
             default:
