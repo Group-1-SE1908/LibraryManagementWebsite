@@ -57,7 +57,7 @@ public class BookController extends HttpServlet {
                 case "/books/new":
                     req.setAttribute("mode", "create");
                     req.setAttribute("categories", categoryDAO.listAll());
-                    req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
+                    req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
                     break;
                 case "/books/edit":
                     handleEditForm(req, resp);
@@ -116,7 +116,7 @@ public class BookController extends HttpServlet {
             } catch (SQLException ex1) {
                 Logger.getLogger(BookController.class.getName()).log(Level.SEVERE, null, ex1);
             }
-            req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
@@ -155,7 +155,7 @@ public class BookController extends HttpServlet {
         req.setAttribute("book", b);
         req.setAttribute("mode", "edit");
         req.setAttribute("categories", categoryDAO.listAll());
-        req.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
     }
 
     private void handleDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {

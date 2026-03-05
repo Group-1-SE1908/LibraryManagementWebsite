@@ -1,6 +1,8 @@
 package com.lbms.model;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Comment {
     // Thuộc tính của các thành phần trong comment
@@ -16,6 +18,8 @@ public class Comment {
     //Thuộc tính của name và avatar để hiển thị thông tin;
     private String fullName;
     private String avatar;
+    // Danh sách replies từ thủ thư
+    private List<CommentReply>replies =new ArrayList<>();
 
     public long getCommentId() {
         return commentId;
@@ -101,7 +105,20 @@ public class Comment {
         return userId;
     }
 
+
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+
+    public List<CommentReply> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<CommentReply> replies) {
+        this.replies = replies;
+    }
+
+    public boolean isHasReply() {
+        return replies != null && !replies.isEmpty();
     }
 }

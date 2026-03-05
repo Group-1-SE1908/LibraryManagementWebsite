@@ -157,8 +157,8 @@
                             <span>Quản lý người dùng</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/admin/books"
-                            class="${fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary"
+                            class="${fn:contains(activeUri, '/admin/borrowlibrary') || fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
                             <i class="fas fa-book-open"></i>
                             <span>Quản lý sách</span>
                         </a>

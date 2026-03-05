@@ -27,7 +27,7 @@ public class ForgotPasswordController extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/views/forgot_password.jsp").forward(req, resp);
                 break;
             case "/reset-password":
-                req.setAttribute("token", req.getParameter("token"));
+                req.setAttribute("email", req.getParameter("email"));
                 req.getRequestDispatcher("/WEB-INF/views/reset_password.jsp").forward(req, resp);
                 break;
             default:
@@ -47,7 +47,11 @@ public class ForgotPasswordController extends HttpServlet {
                     handleForgot(req, resp);
                     break;
                 case "/reset-password":
-                    handleReset(req, resp);
+                    if ("send-code".equalsIgnoreCase(req.getParameter("action"))) {
+                        handleSendResetCode(req, resp);
+                    } else {
+                        handleReset(req, resp);
+                    }
                     break;
                 default:
                     resp.sendError(405);
@@ -58,7 +62,7 @@ public class ForgotPasswordController extends HttpServlet {
             if ("/forgot-password".equals(path)) {
                 req.getRequestDispatcher("/WEB-INF/views/forgot_password.jsp").forward(req, resp);
             } else {
-                req.setAttribute("token", req.getParameter("token"));
+                req.setAttribute("email", req.getParameter("email"));
                 req.getRequestDispatcher("/WEB-INF/views/reset_password.jsp").forward(req, resp);
             }
         } catch (Exception ex) {
@@ -72,12 +76,22 @@ public class ForgotPasswordController extends HttpServlet {
         // luôn trả về thông báo chung để tránh lộ email có tồn tại hay không
         forgotPasswordService.requestReset(email);
 
-        req.setAttribute("message", "Nếu email tồn tại trong hệ thống, link đặt lại mật khẩu đã được gửi.");
+        req.setAttribute("message", "Nếu email tồn tại trong hệ thống, mã xác thực đã được gửi.");
         req.getRequestDispatcher("/WEB-INF/views/forgot_password.jsp").forward(req, resp);
     }
 
+    private void handleSendResetCode(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        String email = req.getParameter("email");
+        forgotPasswordService.requestReset(email);
+        req.setAttribute("email", email);
+        req.setAttribute("message",
+                "Nếu email tồn tại, mã xác thực đã được gửi. Kiểm tra hộp thư và nhập mã bên dưới.");
+        req.getRequestDispatcher("/WEB-INF/views/reset_password.jsp").forward(req, resp);
+    }
+
     private void handleReset(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        String token = req.getParameter("token");
+        String email = req.getParameter("email");
+        String code = req.getParameter("code");
         String newPassword = req.getParameter("password");
         String confirm = req.getParameter("confirm");
 
@@ -85,7 +99,7 @@ public class ForgotPasswordController extends HttpServlet {
             throw new IllegalArgumentException("Xác nhận mật khẩu không khớp");
         }
 
-        forgotPasswordService.resetPassword(token, newPassword);
+        forgotPasswordService.resetPassword(email, code, newPassword);
         resp.sendRedirect(req.getContextPath() + "/login");
     }
 }

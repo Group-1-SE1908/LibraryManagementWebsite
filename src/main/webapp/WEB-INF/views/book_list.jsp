@@ -16,7 +16,21 @@
                 </head>
 
                 <body>
-                    <jsp:include page="header.jsp" />
+
+                    <c:set var="user" value="${sessionScope.currentUser}" />
+                    <c:set var="isStaff" value="${user.role.name == 'LIBRARIAN'}" />
+
+                    <c:choose>
+                        <c:when test="${isStaff}">
+
+                            <jsp:include page="headerLibBook.jsp" />
+                        </c:when>
+                        <c:otherwise>
+
+                            <jsp:include page="header.jsp" />
+                        </c:otherwise>
+                    </c:choose>
+
 
                     <c:set var="user" value="${sessionScope.currentUser}" />
                     <c:set var="isStaff" value="${user.role.name == 'ADMIN' || user.role.name == 'LIBRARIAN'}" />

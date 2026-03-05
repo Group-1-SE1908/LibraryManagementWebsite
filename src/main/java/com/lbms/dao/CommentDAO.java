@@ -111,6 +111,54 @@ public class CommentDAO {
         }
     }
 
+    // Lấy danh sách toàn bộ comment (dùng cho admin) - chỉ lấy VISIBLE
+    public List<Comment> listAllComments() throws Exception {
+        List<Comment> list = new ArrayList<>();
+        String sql = "SELECT c.*, u.full_name, u.avatar FROM Comment c JOIN [User] u ON c.user_id = u.user_id WHERE c.status = 'VISIBLE' ORDER BY c.created_at DESC";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Comment c = new Comment();
+                    c.setCommentId(rs.getLong("comment_id"));
+                    c.setBookId(rs.getInt("book_id"));
+                    c.setUserId(rs.getInt("user_id"));
+                    c.setContent(rs.getString("content"));
+                    c.setRating(rs.getInt("rating"));
+                    c.setCreatedAt(rs.getTimestamp("created_at"));
+                    c.setFullName(rs.getString("full_name"));
+                    c.setAvatar(rs.getString("avatar"));
+                    c.setStatus(rs.getString("status"));
+                    list.add(c);
+                }
+            }
+        }
+        return list;
+    }
+
+    // Tìm comment theo id
+    public Comment findById(long commentId) throws Exception {
+        String sql = "SELECT c.*, u.full_name, u.avatar FROM Comment c JOIN [User] u ON c.user_id = u.user_id WHERE c.comment_id = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, commentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Comment c = new Comment();
+                    c.setCommentId(rs.getLong("comment_id"));
+                    c.setBookId(rs.getInt("book_id"));
+                    c.setUserId(rs.getInt("user_id"));
+                    c.setContent(rs.getString("content"));
+                    c.setRating(rs.getInt("rating"));
+                    c.setCreatedAt(rs.getTimestamp("created_at"));
+                    c.setFullName(rs.getString("full_name"));
+                    c.setAvatar(rs.getString("avatar"));
+                    c.setStatus(rs.getString("status"));
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
     // Phương thức để xóa comment
     public boolean deleteComment(long commentId, int userId, boolean isAdmin) throws Exception {
 

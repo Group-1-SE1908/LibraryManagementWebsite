@@ -132,14 +132,29 @@ public class CartController extends HttpServlet {
     private void handleBorrowRequestFromCart(HttpServletRequest req, HttpServletResponse resp, User currentUser)
             throws Exception {
         String method = parseBorrowMethod(req.getParameter("borrowMethod"));
-        String contactName = requireTextParam(req, "contactName", "họ tên để thủ thư liên hệ");
-        String contactPhone = requireTextParam(req, "contactPhone", "số điện thoại");
-        String contactEmail = requireTextParam(req, "contactEmail", "email liên hệ");
+
+        // Mặc định lấy từ thông tin User cho các trường ẩn
+        String contactName = currentUser.getFullName();
+        String contactPhone = currentUser.getPhone();
+        String contactEmail = currentUser.getEmail();
+
+        // Nếu là yêu cầu có form (ví dụ tại chỗ) thì mới lấy từ form hoặc ghi đè
+        String formName = req.getParameter("contactName");
+        String formPhone = req.getParameter("contactPhone");
+        String formEmail = req.getParameter("contactEmail");
+
+        if (formName != null && !formName.isBlank())
+            contactName = formName;
+        if (formPhone != null && !formPhone.isBlank())
+            contactPhone = formPhone;
+        if (formEmail != null && !formEmail.isBlank())
+            contactEmail = formEmail;
+
         int borrowDays = parseIntParam(req, "borrowDuration", 7);
-        LocalDate returnDate = LocalDate.now().plusDays(borrowDays);
-        String formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         LocalDate pickupDate = null;
         String formattedPickupDate = null;
+        LocalDate returnDate = null;
+        String formattedReturnDate;
         ShippingDetails shippingDetails = null;
         String deliveryAddress = req.getParameter("deliveryAddress");
         if (deliveryAddress != null && !deliveryAddress.isBlank()) {
@@ -152,6 +167,7 @@ public class CartController extends HttpServlet {
         if (METHOD_IN_PERSON.equals(method)) {
             pickupDate = parsePickupDateParam(req, "pickupDate");
             formattedPickupDate = pickupDate.format(DISPLAY_DATE_FORMAT);
+            returnDate = pickupDate.plusDays(borrowDays);
         } else if (METHOD_ONLINE.equals(method)) {
             String shippingRecipient = requireTextParam(req, "shippingRecipient", "tên người nhận");
             String shippingRecipientPhone = requireTextParam(req, "shippingPhone", "số điện thoại người nhận");
@@ -160,9 +176,15 @@ public class CartController extends HttpServlet {
             String shippingDistrict = requireTextParam(req, "shippingDistrict", "quận/huyện");
             String shippingWard = requireTextParam(req, "shippingWard", "phường/xã");
             String shippingResidence = optionalTextParam(req, "shippingResidence");
-            shippingDetails = new ShippingDetails(shippingRecipient, shippingRecipientPhone, shippingStreet,
+            shippingDetails = new ShippingDetails(shippingRecipient, normalizePhoneDigits(shippingRecipientPhone),
+                    shippingStreet,
                     shippingResidence, shippingWard, shippingDistrict, shippingCity);
+            returnDate = LocalDate.now().plusDays(borrowDays);
         }
+        if (returnDate == null) {
+            returnDate = LocalDate.now().plusDays(borrowDays);
+        }
+        formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
         Cart cart = cartService.getCart(currentUser.getId());
         if (cart == null || cart.getItems().isEmpty()) {
             redirectWithParam(req, resp, "/cart", "cartError", "Giỏ hàng trống");
@@ -170,8 +192,17 @@ public class CartController extends HttpServlet {
         }
 
         List<CartItem> items = new ArrayList<>(cart.getItems());
+        int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
+        int requestedBooks = items.stream().mapToInt(CartItem::getQuantity).sum();
+        if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
+            redirectWithParam(req, resp, "/cart", "cartError",
+                    "Bạn đang có " + currentActiveBorrows + " cuốn đang mượn/đang chờ duyệt, tối đa "
+                            + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
+            return;
+        }
         for (CartItem item : items) {
-            borrowService.requestBorrow(currentUser.getId(), item.getBookId(), method, shippingDetails);
+            borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
+                    item.getQuantity());
         }
 
         cartService.clearCart(currentUser.getId());
@@ -342,6 +373,17 @@ public class CartController extends HttpServlet {
         }
         value = value.trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private String normalizePhoneDigits(String raw) {
+        if (raw == null) {
+            throw new IllegalArgumentException("Số điện thoại người nhận là bắt buộc");
+        }
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.length() < 10 || digits.length() > 11) {
+            throw new IllegalArgumentException("Số điện thoại người nhận phải là 10 hoặc 11 chữ số");
+        }
+        return digits;
     }
 
     private void redirectWithParam(HttpServletRequest req, HttpServletResponse resp, String path, String paramName,

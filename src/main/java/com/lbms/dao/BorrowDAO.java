@@ -96,24 +96,31 @@ public class BorrowDAO {
         }
     }
 
-    public long createRequest(long userId, long bookId, String method, ShippingDetails shippingDetails)
+    public long createRequest(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method, "
-                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, shipping_district, shipping_city) "
-                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
+        // String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date,
+        // return_date, status, borrow_method, "
+        // + "shipping_recipient, shipping_phone, shipping_street, shipping_residence,
+        // shipping_ward, shipping_district, shipping_city) "
+        // + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        String sql = "INSERT INTO borrow_records (user_id, book_id, quantity, borrow_method, status, "
+                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, "
+                + "shipping_district, shipping_city) "
+                + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?)";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
-            ps.setString(3, method);
-            ps.setString(4, shippingDetails != null ? shippingDetails.getRecipient() : null);
-            ps.setString(5, shippingDetails != null ? shippingDetails.getPhone() : null);
-            ps.setString(6, shippingDetails != null ? shippingDetails.getStreet() : null);
-            ps.setString(7, shippingDetails != null ? shippingDetails.getResidence() : null);
-            ps.setString(8, shippingDetails != null ? shippingDetails.getWard() : null);
-            ps.setString(9, shippingDetails != null ? shippingDetails.getDistrict() : null);
-            ps.setString(10, shippingDetails != null ? shippingDetails.getCity() : null);
+            ps.setInt(3, quantity);
+            ps.setString(4, method);
+            ps.setString(5, shippingDetails != null ? shippingDetails.getRecipient() : null);
+            ps.setString(6, shippingDetails != null ? shippingDetails.getPhone() : null);
+            ps.setString(7, shippingDetails != null ? shippingDetails.getStreet() : null);
+            ps.setString(8, shippingDetails != null ? shippingDetails.getResidence() : null);
+            ps.setString(9, shippingDetails != null ? shippingDetails.getWard() : null);
+            ps.setString(10, shippingDetails != null ? shippingDetails.getDistrict() : null);
+            ps.setString(11, shippingDetails != null ? shippingDetails.getCity() : null);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -144,14 +151,18 @@ public class BorrowDAO {
     }
 
     public int countActiveBorrows(long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
+        String sql = "SELECT SUM(CASE WHEN quantity IS NULL OR quantity <= 0 THEN 1 ELSE quantity END) AS c "
+                + "FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED')";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getInt("c");
+                if (rs.next()) {
+                    int total = rs.getInt("c");
+                    return rs.wasNull() ? 0 : total;
+                }
             }
         }
+        return 0;
     }
 
     public BorrowRecord findById(long id) throws SQLException {
@@ -187,7 +198,7 @@ public class BorrowDAO {
     }
 
     private String baseSelect() {
-        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
+        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.quantity, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
                 + "br.status, br.fine_amount, br.is_paid, br.borrow_method, "
                 + "u.email AS user_email, u.full_name AS user_full_name, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
@@ -233,6 +244,7 @@ public class BorrowDAO {
         br.setDueDate(dd == null ? null : dd.toLocalDate());
 
         br.setStatus(rs.getString("status"));
+        br.setQuantity(rs.getInt("quantity"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         br.setPaid(rs.getBoolean("is_paid"));
         br.setBorrowMethod(rs.getString("borrow_method"));
@@ -279,7 +291,6 @@ public class BorrowDAO {
     }
 
     // ThÃƒÂªm vÃƒÂ o BorrowDAO.java
-
     public List<BorrowRecord> listUnpaidFinesByUser(long userId) throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.user_id = ? AND br.fine_amount > 0 AND br.is_paid = 0 ORDER BY br.due_date ASC";
@@ -321,7 +332,7 @@ public class BorrowDAO {
                 List<BorrowRecord> out = new ArrayList<>();
                 while (rs.next()) {
                     out.add(mapOne(rs)); // mapOne Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t map cÃ¡Â»â„¢t
-                                         // borrow_method
+                    // borrow_method
                 }
                 return out;
             }

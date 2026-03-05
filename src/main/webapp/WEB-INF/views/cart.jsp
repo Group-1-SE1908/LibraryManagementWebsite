@@ -116,6 +116,8 @@
                     <strong>${totalQuantity}</strong>
                 </div>
                 <form class="borrow-form" method="post" action="${pageContext.request.contextPath}/cart/checkout">
+                    <input type="hidden" name="contactName" value="${userFullName}" />
+                    <input type="hidden" name="contactPhone" value="${userPhone}" />
                     <input type="hidden" name="shippingRecipient" data-shipping-hidden="recipient" />
                     <input type="hidden" name="shippingPhone" data-shipping-hidden="phone" />
                     <input type="hidden" name="shippingStreet" data-shipping-hidden="street" />
@@ -150,14 +152,6 @@
                         </div>
                         <div class="borrow-details-grid">
                             <label class="form-group">
-                                <span>Tên người mượn</span>
-                                <input type="text" name="contactName" placeholder="Ví dụ: Nguyễn Văn A" disabled required value="${userFullName != null ? userFullName : ''}" />
-                            </label>
-                            <label class="form-group">
-                                <span>Số điện thoại</span>
-                                <input type="tel" name="contactPhone" placeholder="Ví dụ: 0912345678" disabled required value="${userPhone != null ? userPhone : ''}" />
-                            </label>
-                            <label class="form-group">
                                 <span>Email liên hệ</span>
                                 <input type="email" name="contactEmail" placeholder="Ví dụ: ban@mail.com" disabled required value="${userEmail != null ? userEmail : ''}" />
                             </label>
@@ -183,7 +177,10 @@
     </c:if>
 </main>
 
-<div class="shipping-overlay" hidden data-shipping-overlay>
+<div class="shipping-overlay" hidden data-shipping-overlay
+    data-profile-recipient="${not empty userFullName ? fn:escapeXml(userFullName) : ''}"
+    data-profile-phone="${not empty userPhone ? fn:escapeXml(userPhone) : ''}"
+    data-profile-street="${not empty userAddress ? fn:escapeXml(userAddress) : ''}">
     <div class="shipping-dialog">
         <div class="shipping-header">
             <p class="label">Thông tin giao sách</p>
@@ -197,7 +194,7 @@
             </label>
             <label class="form-group">
                 <span>Số điện thoại</span>
-                <input type="tel" inputmode="tel" data-shipping-field="phone" placeholder="0901234567" required />
+                <input type="tel" inputmode="tel" data-shipping-field="phone" placeholder="0901234567" required pattern="[0-9]{10,11}" title="Nhập 10 hoặc 11 chữ số" />
             </label>
             <label class="form-group">
                 <span>Tên đường / số nhà</span>
@@ -209,19 +206,19 @@
             </label>
             <label class="form-group">
                 <span>Tỉnh / Thành phố</span>
-                <select data-shipping-field="city" required>
+                <select id="province" data-shipping-field="city" required>
                     <option value="">Chọn tỉnh/thành</option>
                 </select>
             </label>
             <label class="form-group">
                 <span>Quận / Huyện</span>
-                <select data-shipping-field="district" required>
+                <select id="district" data-shipping-field="district" required>
                     <option value="">Chọn quận/huyện</option>
                 </select>
             </label>
             <label class="form-group">
                 <span>Phường / Xã</span>
-                <select data-shipping-field="ward" required>
+                <select id="ward" data-shipping-field="ward" required>
                     <option value="">Chọn phường/xã</option>
                 </select>
             </label>
@@ -279,6 +276,24 @@
         const shippingDistrictSelect = shippingFieldMap.district;
         const shippingWardSelect = shippingFieldMap.ward;
 
+        const profileDefaults = {
+            recipient: (shippingOverlay?.dataset.profileRecipient || '').trim(),
+            phone: (shippingOverlay?.dataset.profilePhone || '').trim(),
+            street: (shippingOverlay?.dataset.profileStreet || '').trim()
+        };
+
+        const applyProfileDefaults = () => {
+            Object.entries(profileDefaults).forEach(([key, value]) => {
+                if (!value) return;
+                const field = shippingFieldMap[key];
+                if (!field) return;
+                // Chỉ điền nếu ô đó đang trống
+                if (!field.value.trim()) {
+                    field.value = value;
+                }
+            });
+        };
+
         if (shippingOverlay && shippingOverlay.parentElement !== document.body) {
             document.body.appendChild(shippingOverlay);
         }
@@ -286,32 +301,54 @@
             shippingOverlay.hidden = true;
         }
 
-        const locationCatalog = {
-            "Hồ Chí Minh": {
-                "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Tân Định"],
-                "Quận Bình Thạnh": ["Phường 1", "Phường 2", "Phường 3"],
-                "Quận Gò Vấp": ["Phường 1", "Phường 3", "Phường 8"]
-            },
-            "Hà Nội": {
-                "Quận Hoàn Kiếm": ["Phường Hàng Bạc", "Phường Tràng Tiền"],
-                "Quận Đống Đa": ["Phường Ô Chợ Dừa", "Phường Trung Liệt"],
-                "Quận Thanh Xuân": ["Phường Nhân Chính", "Phường Khương Mai"]
-            },
-            "Đà Nẵng": {
-                "Quận Hải Châu": ["Phường Thạch Thang", "Phường Bình Thuận"],
-                "Quận Sơn Trà": ["Phường An Hải Bắc", "Phường Mân Thái"]
+        const PROVINCE_API_URL = 'https://provinces.open-api.vn/api/?depth=3';
+        const locationCatalog = new Map();
+        let locationDataReady = false;
+        let locationDataPromise;
+
+        const resetSelect = (select, placeholder) => {
+            if (!select) {
+                return;
             }
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+        };
+
+        const buildLocationCatalog = (provinces = []) => {
+            locationCatalog.clear();
+            if (!Array.isArray(provinces)) {
+                return;
+            }
+            provinces.forEach(province => {
+                if (!province || !province.name) {
+                    return;
+                }
+                const districts = new Map();
+                (province.districts || []).forEach(district => {
+                    if (!district || !district.name) {
+                        return;
+                    }
+                    const wards = Array.isArray(district.wards)
+                            ? district.wards.map(ward => ward.name).filter(Boolean)
+                            : [];
+                    districts.set(district.name, wards);
+                });
+                locationCatalog.set(province.name, { districts });
+            });
+            locationDataReady = locationCatalog.size > 0;
         };
 
         const populateCities = () => {
             if (!shippingCitySelect) {
                 return;
             }
-            shippingCitySelect.innerHTML = '<option value="">Chọn tỉnh/thành</option>';
-            Object.keys(locationCatalog).forEach(city => {
+            resetSelect(shippingCitySelect, 'Chọn tỉnh/thành');
+            if (!locationDataReady) {
+                return;
+            }
+            locationCatalog.forEach((value, name) => {
                 const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
+                option.value = name;
+                option.textContent = name;
                 shippingCitySelect.appendChild(option);
             });
             renderDistricts('');
@@ -322,35 +359,72 @@
             if (!shippingDistrictSelect) {
                 return;
             }
-            shippingDistrictSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-            const districts = locationCatalog[city];
-            if (districts) {
-                Object.keys(districts).forEach(district => {
-                    const option = document.createElement('option');
-                    option.value = district;
-                    option.textContent = district;
-                    shippingDistrictSelect.appendChild(option);
-                });
+            resetSelect(shippingDistrictSelect, 'Chọn quận/huyện');
+            resetSelect(shippingWardSelect, 'Chọn phường/xã');
+            if (!locationDataReady || !city) {
+                return;
             }
+            const province = locationCatalog.get(city);
+            if (!province) {
+                return;
+            }
+            province.districts.forEach((wards, districtName) => {
+                const option = document.createElement('option');
+                option.value = districtName;
+                option.textContent = districtName;
+                shippingDistrictSelect.appendChild(option);
+            });
         };
 
         const renderWards = (city, district) => {
             if (!shippingWardSelect) {
                 return;
             }
-            shippingWardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-            const districts = locationCatalog[city];
-            if (districts) {
-                const wards = districts[district];
-                if (Array.isArray(wards)) {
-                    wards.forEach(ward => {
-                        const option = document.createElement('option');
-                        option.value = ward;
-                        option.textContent = ward;
-                        shippingWardSelect.appendChild(option);
-                    });
-                }
+            resetSelect(shippingWardSelect, 'Chọn phường/xã');
+            if (!locationDataReady || !city || !district) {
+                return;
             }
+            const province = locationCatalog.get(city);
+            const wardList = province?.districts.get(district);
+            if (!Array.isArray(wardList)) {
+                return;
+            }
+            wardList.forEach(ward => {
+                const option = document.createElement('option');
+                option.value = ward;
+                option.textContent = ward;
+                shippingWardSelect.appendChild(option);
+            });
+        };
+
+        const fetchLocationCatalog = () => {
+            if (locationDataPromise) {
+                return locationDataPromise;
+            }
+            locationDataPromise = fetch(PROVINCE_API_URL)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Không thể tải dữ liệu tỉnh thành');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        buildLocationCatalog(data);
+                        if (locationDataReady) {
+                            populateCities();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Không tải được danh sách tỉnh/thành:', error);
+                    });
+            return locationDataPromise;
+        };
+
+        const ensureLocationData = () => {
+            if (locationDataReady) {
+                return Promise.resolve();
+            }
+            return fetchLocationCatalog();
         };
 
         const fillShippingOverlay = () => {
@@ -360,28 +434,34 @@
                     field.value = hidden.value;
                 }
             });
-            if (!shippingCitySelect) {
-                return;
-            }
-            const storedCity = shippingHiddenMap.city?.value;
-            if (storedCity) {
-                shippingCitySelect.value = storedCity;
-                renderDistricts(storedCity);
-                const storedDistrict = shippingHiddenMap.district?.value;
-                if (storedDistrict && shippingDistrictSelect) {
-                    shippingDistrictSelect.value = storedDistrict;
-                    renderWards(storedCity, storedDistrict);
-                    const storedWard = shippingHiddenMap.ward?.value;
-                    if (storedWard && shippingWardSelect) {
-                        shippingWardSelect.value = storedWard;
+            
+            // Áp dụng thông tin từ profile cho các ô còn trống
+            applyProfileDefaults();
+
+            ensureLocationData().then(() => {
+                if (!shippingCitySelect) {
+                    return;
+                }
+                const storedCity = shippingHiddenMap.city?.value;
+                if (storedCity) {
+                    shippingCitySelect.value = storedCity;
+                    renderDistricts(storedCity);
+                    const storedDistrict = shippingHiddenMap.district?.value;
+                    if (storedDistrict && shippingDistrictSelect) {
+                        shippingDistrictSelect.value = storedDistrict;
+                        renderWards(storedCity, storedDistrict);
+                        const storedWard = shippingHiddenMap.ward?.value;
+                        if (storedWard && shippingWardSelect) {
+                            shippingWardSelect.value = storedWard;
+                        }
+                    } else {
+                        renderWards(storedCity, '');
                     }
                 } else {
-                    renderWards(storedCity, '');
+                    renderDistricts('');
+                    renderWards('', '');
                 }
-            } else {
-                renderDistricts('');
-                renderWards('', '');
-            }
+            });
         };
 
         const syncShippingHidden = () => {
@@ -528,7 +608,7 @@
             }
         });
 
-        populateCities();
+        fetchLocationCatalog();
     })();
 </script>
 

@@ -33,5 +33,8 @@ nb-configuration.xml
 .DS_Store
 Thumbs.db
 
+# Local environment variables
+.env
+
 # Agent
 .github/

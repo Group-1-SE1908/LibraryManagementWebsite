@@ -1,16 +1,16 @@
 /*
 ===========================================================================
- PROJECT: LIBRARY MANAGEMENT SYSTEM (LBMS)
- DATABASE: LibraryDB
- TYPE: SQL SERVER
- UPDATED: T�ch h?p Computed Column cho Availability (T? d?ng t�nh to�n)
+PROJECT: LIBRARY MANAGEMENT SYSTEM (LBMS)
+DATABASE: LibraryDB
+TYPE: SQL SERVER
+UPDATED: Tích hợp Computed Column cho Availability (Tự động tính toán)
 ===========================================================================
 */
 
 USE master;
 GO
 
--- 1. X�A DB CU N?U T?N T?I (�? t?o m?i s?ch s?)
+-- 1. XÓA DATABASE CŨ NẾU TỒN TẠI
 IF EXISTS (SELECT * FROM sys.databases WHERE name = 'LibraryDB')
 BEGIN
     ALTER DATABASE LibraryDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
@@ -25,21 +25,21 @@ USE LibraryDB;
 GO
 
 -- =============================================
--- 2. T?O C�C B?NG (TABLES)
+-- 2. TẠO CÁC BẢNG (TABLES)
 -- =============================================
 
--- B?ng 1: Ph�n quy?n (Role)
+-- Bảng 1: Phân quyền (Role)
 CREATE TABLE Role (
     role_id INT IDENTITY(1,1) PRIMARY KEY,
     role_name NVARCHAR(50) NOT NULL UNIQUE
 );
 GO
 
--- B?ng 2: Ngu?i d�ng (User)
+-- Bảng 2: Người dùng (User)
 CREATE TABLE [User] (
     user_id INT IDENTITY(1,1) PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL, -- M?t kh?u (n�n m� h�a MD5/BCrypt)
+    password VARCHAR(255) NOT NULL,
     full_name NVARCHAR(100) NULL,
     phone VARCHAR(20) NULL,
     address NVARCHAR(255) NULL,
@@ -51,14 +51,14 @@ CREATE TABLE [User] (
 );
 GO
 
--- B?ng 3: Th? lo?i s�ch (Category)
+-- Bảng 3: Thể loại sách (Category)
 CREATE TABLE Category (
     category_id INT IDENTITY(1,1) PRIMARY KEY,
     category_name NVARCHAR(100) NOT NULL UNIQUE
 );
 GO
 
--- B?ng 4: S�ch (Book) - T�CH H?P C?T T? �?NG
+-- Bảng 4: Sách (Book)
 CREATE TABLE Book (
     book_id INT IDENTITY(1,1) PRIMARY KEY,
     title NVARCHAR(255) NOT NULL,
@@ -66,21 +66,21 @@ CREATE TABLE Book (
     category_id INT,
     
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
-    quantity INT NOT NULL DEFAULT 0,    -- S? lu?ng t?n kho
-    isbn VARCHAR(50) NOT NULL UNIQUE,   -- M� s�ch (ISBN)
-    image NVARCHAR(500) NULL,           -- �u?ng d?n ?nh (assets/images/...)
+    quantity INT NOT NULL DEFAULT 0,
+    isbn VARCHAR(50) NOT NULL UNIQUE,
+    image NVARCHAR(500) NULL,
     
-    -- --- C?T T? �?NG (COMPUTED COLUMN) ---
-    -- T? d?ng tr? v? 1 n?u quantity > 0, ngu?c l?i l� 0.
-    -- Kh�ng c?n Insert/Update v�o c?t n�y.
+    -- Computed Column: Tự động xác định còn sách hay không
     availability AS (CASE WHEN quantity > 0 THEN 1 ELSE 0 END),
-    
+
     created_at DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Book_Category FOREIGN KEY (category_id) REFERENCES Category(category_id) ON DELETE SET NULL
+    CONSTRAINT FK_Book_Category 
+        FOREIGN KEY (category_id) REFERENCES Category(category_id)
+        ON DELETE SET NULL
 );
 GO
 
--- B?ng 5: B?n sao s�ch (BookCopy)
+-- Bảng 5: Bản sao sách (BookCopy)
 CREATE TABLE BookCopy (
     copy_id INT IDENTITY(1,1) PRIMARY KEY,
     book_id INT NOT NULL,
@@ -94,19 +94,19 @@ CREATE TABLE BookCopy (
 );
 GO
 
--- B?ng 6: Qu?n l� Mu?n Tr? (Borrow Records)
+-- Bảng 6: Quản lý mượn trả (Borrow Records)
 CREATE TABLE borrow_records (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
     copy_id INT NULL,
     borrow_date DATE NULL,
-    due_date DATE NULL,     -- Ng�y ph?i tr?
-    return_date DATE NULL,  -- Ng�y th?c t? tr?
-    status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED', -- REQUESTED, APPROVED, BORROWED, RETURNED, REJECTED, OVERDUE
-    fine_amount DECIMAL(10,2) DEFAULT 0, -- Ti?n ph?t
-    is_paid BIT DEFAULT 0, -- 0 = chua thanh toan, 1 = da thanh toan
-    borrow_method VARCHAR(20) NULL, -- Ghi l?i h�nh th?c mu?n
+    due_date DATE NULL,
+    return_date DATE NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'REQUESTED',
+    fine_amount DECIMAL(10,2) DEFAULT 0,
+    is_paid BIT DEFAULT 0,
+    borrow_method VARCHAR(20) NULL,
     created_at DATETIME DEFAULT GETDATE(),
     
     CONSTRAINT FK_Borrow_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
@@ -115,7 +115,23 @@ CREATE TABLE borrow_records (
 );
 GO
 
--- B?ng 7: �?t tru?c s�ch (Reservations)
+-- Bảng 13: Yêu cầu gia hạn sách
+CREATE TABLE renewal_requests (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    borrow_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    reason NVARCHAR(1024) NOT NULL,
+    contact_name NVARCHAR(255) NULL,
+    contact_phone VARCHAR(30) NULL,
+    contact_email VARCHAR(255) NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    requested_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Renewal_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id) ON DELETE CASCADE,
+    CONSTRAINT FK_Renewal_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+);
+GO
+
+-- Bảng 7: Đặt trước sách (Reservations)
 CREATE TABLE reservations (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
@@ -128,7 +144,7 @@ CREATE TABLE reservations (
 );
 GO
 
--- B?ng 8: Qu�n m?t kh?u (Password Reset)
+-- Bảng 8: Reset mật khẩu
 CREATE TABLE password_reset_token (
     token_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
@@ -140,7 +156,19 @@ CREATE TABLE password_reset_token (
 );
 GO
 
--- B?ng 9: Gi? h�ng (Cart) / Shopping Cart
+-- Bảng 9: Xác thực email
+CREATE TABLE email_verification_token (
+    verification_token_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    code VARCHAR(255) NOT NULL,
+    expired_at DATETIME NOT NULL,
+    used BIT DEFAULT 0,
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Verify_User FOREIGN KEY (user_id) REFERENCES [User](user_id) ON DELETE CASCADE
+);
+GO
+
+-- Bảng 10: Giỏ hàng
 CREATE TABLE Cart (
     cart_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
@@ -149,7 +177,7 @@ CREATE TABLE Cart (
 );
 GO
 
--- B?ng 10: Chi ti?t gi? h�ng (CartItem) / Cart Items
+-- Bảng 11: Chi tiết giỏ hàng
 CREATE TABLE CartItem (
     cart_item_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     cart_id BIGINT NOT NULL,
@@ -161,21 +189,50 @@ CREATE TABLE CartItem (
 );
 GO
 
--- B?ng 11: Nh?t k� ho?t d?ng (LibrarianActivityLog)
-CREATE TABLE [LibrarianActivityLog] (
-    [log_id] INT IDENTITY(1,1) PRIMARY KEY,
-    [user_id] INT NOT NULL, -- Kh�a ngo?i li�n k?t t?i b?ng User
-    [action] NVARCHAR(255) NOT NULL, -- H�nh d?ng th?c hi?n
-    [timestamp] DATETIME DEFAULT GETDATE(), -- Th?i gian th?c hi?n
-    CONSTRAINT FK_ActivityLog_User FOREIGN KEY ([user_id]) REFERENCES [User]([user_id])
+-- Bảng 12: Nhật ký hoạt động thủ thư
+CREATE TABLE LibrarianActivityLog (
+    log_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    action NVARCHAR(255) NOT NULL,
+    timestamp DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_ActivityLog_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+);
+GO
+
+-- Bảng Comment
+CREATE TABLE Comment (
+    comment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    book_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content NVARCHAR(MAX) NOT NULL,
+    rating INT DEFAULT 5,
+    status NVARCHAR(20) DEFAULT 'VISIBLE',
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME NULL,
+    deleted_at DATETIME NULL
+);
+GO
+
+-- Bảng phản hồi comment
+CREATE TABLE CommentReply (
+    comment_reply_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    comment_id BIGINT NOT NULL,
+    admin_id INT NULL,
+    content NVARCHAR(MAX) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_CommentReply_Comment 
+        FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
+
+    CONSTRAINT FK_CommentReply_Admin 
+        FOREIGN KEY (admin_id) REFERENCES [User](user_id) ON DELETE SET NULL
 );
 GO
 
 -- =============================================
--- 3. TRIGGERS
+-- 3. TRIGGER TẠO BOOK COPY
 -- =============================================
 
--- Trigger t? d?ng sinh copy khi th�m s�ch m?i
 CREATE TRIGGER trg_AfterInsert_Book
 ON Book
 AFTER INSERT
@@ -189,8 +246,7 @@ BEGIN
     DECLARE @i INT;
 
     DECLARE book_cursor CURSOR FOR
-    SELECT book_id, quantity
-    FROM inserted;
+    SELECT book_id, quantity FROM inserted;
 
     OPEN book_cursor;
     FETCH NEXT FROM book_cursor INTO @book_id, @quantity;
@@ -201,13 +257,11 @@ BEGIN
 
         WHILE @i <= @quantity
         BEGIN
-            -- Th�m m?i 1 b?n copy
             INSERT INTO BookCopy (book_id)
             VALUES (@book_id);
             
             SET @new_copy_id = SCOPE_IDENTITY();
 
-            -- C?p nh?t l?i barcode
             UPDATE BookCopy
             SET barcode = 'LIB-' + RIGHT('000000' + CAST(@new_copy_id AS VARCHAR), 6)
             WHERE copy_id = @new_copy_id;
@@ -224,43 +278,45 @@ END;
 GO
 
 -- =============================================
--- 4. N?P D? LI?U M?U (SEED DATA)
+-- 4. SEED DATA
 -- =============================================
 
--- 4.1 Roles
-INSERT INTO Role (role_name) VALUES ('ADMIN'), ('LIBRARIAN'), ('MEMBER');
+-- Roles
+INSERT INTO Role (role_name) VALUES 
+('ADMIN'),
+('LIBRARIAN'),
+('MEMBER');
 GO
 
--- 4.2 Users (M?t kh?u m?c d?nh: 123456)
+-- Users (password: 123456)
 INSERT INTO [User] (email, password, full_name, status, role_id) VALUES 
-('admin@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Qu?n Tr? Vi�n', 'ACTIVE', 1),
-('lib@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Th? Thu', 'ACTIVE', 2),
-('member@library.com', '/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Nguy?n Van A', 'ACTIVE', 3);
+('admin@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Quản Trị Viên', 'ACTIVE', 1),
+('lib@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Thủ Thư', 'ACTIVE', 2),
+('member@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Nguyễn Văn A', 'ACTIVE', 3);
 GO
 
--- 4.3 Categories (QUAN TR?NG: Ph?i ch?y c�i n�y tru?c Book)
+-- Categories
 INSERT INTO Category (category_name) VALUES 
-(N'C�ng ngh? th�ng tin'), 
-(N'Van h?c Vi?t Nam'), 
-(N'K? nang s?ng'), 
-(N'Gi�o tr�nh THPT');
+(N'Công nghệ thông tin'),
+(N'Văn học Việt Nam'),
+(N'Kỹ năng sống'),
+(N'Giáo trình THPT');
 GO
 
--- 4.4 Books 
--- Luu �: KH�NG INSERT c?t availability, SQL t? t�nh.
+-- Books
 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) VALUES 
-(N'L?p tr�nh Java co b?n', N'Nguy?n Van Minh', 1, 150000, 10, 'ISBN-001', 'assets/images/books/java.jpg'),
-(N'H?c SQL trong 30 ng�y', N'Tr?n Ho�ng', 1, 120000, 0, 'ISBN-002', 'assets/images/books/sql.jpg'), -- S? lu?ng 0 -> Availability t? = 0
-(N'T?t d�n', N'Ng� T?t T?', 2, 60000, 8, 'ISBN-003', 'assets/images/books/tatden.jpg'),
-(N'L�o H?c', N'Nam Cao', 2, 55000, 3, 'ISBN-004', 'assets/images/books/laohac.jpg'),
-(N'�?c nh�n t�m', N'Dale Carnegie', 3, 90000, 20, 'ISBN-005', 'assets/images/books/dacnhantam.jpg'),
-(N'To�n l?p 12', N'B? GD&�T', 4, 25000, 50, 'ISBN-006', 'assets/images/books/toan12.jpg'),
-(N'Ng? van l?p 12', N'B? GD&�T', 4, 24000, 50, 'ISBN-007', 'assets/images/books/van12.jpg');
+(N'Lập trình Java cơ bản', N'Nguyễn Văn Minh', 1, 150000, 10, 'ISBN-001', 'assets/images/books/java.jpg'),
+(N'Học SQL trong 30 ngày', N'Trần Hoàng', 1, 120000, 0, 'ISBN-002', 'assets/images/books/sql.jpg'),
+(N'Tắt đèn', N'Ngô Tất Tố', 2, 60000, 8, 'ISBN-003', 'assets/images/books/tatden.jpg'),
+(N'Lão Hạc', N'Nam Cao', 2, 55000, 3, 'ISBN-004', 'assets/images/books/laohac.jpg'),
+(N'Đắc nhân tâm', N'Dale Carnegie', 3, 90000, 20, 'ISBN-005', 'assets/images/books/dacnhantam.jpg'),
+(N'Toán lớp 12', N'Bộ GD&ĐT', 4, 25000, 50, 'ISBN-006', 'assets/images/books/toan12.jpg'),
+(N'Ngữ văn lớp 12', N'Bộ GD&ĐT', 4, 24000, 50, 'ISBN-007', 'assets/images/books/van12.jpg');
 GO
 
--- 4.5 Mu?n s�ch m?u
+-- Borrow sample
 INSERT INTO borrow_records (user_id, book_id, borrow_date, due_date, status) VALUES
-(3, 1, GETDATE(), DATEADD(DAY, 14, GETDATE()), 'BORROWED'); -- �ang mu?n
+(3, 1, GETDATE(), DATEADD(DAY, 14, GETDATE()), 'BORROWED');
 GO
 
-PRINT '--- C�I �?T DATABASE LIBRARYDB HO�N T?T V� TH�NH C�NG ---';
+PRINT '--- CÀI ĐẶT DATABASE LIBRARYDB HOÀN TẤT ---';
