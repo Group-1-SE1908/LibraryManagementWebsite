@@ -16,27 +16,27 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
-        "/staff/borrowlibrary",
-        "/staff/borrowlibrary/approve",
-        "/staff/borrowlibrary/reject",
-        "/staff/borrowlibrary/return",
-        "/staff/borrowlibrary/detail",
-        "/staff/borrowlibrary/inperson",
-        "/staff/borrowlibrary/receive",
-        "/admin/borrowlibrary",
-        "/admin/borrowlibrary/approve",
-        "/admin/borrowlibrary/reject",
-        "/admin/borrowlibrary/return",
-        "/admin/borrowlibrary/detail",
-        "/admin/borrowlibrary/inperson",
-        "/admin/borrowlibrary/receive",
-        "/admin/books",
-        "/admin/books/approve",
-        "/admin/books/reject",
-        "/admin/books/return",
-        "/admin/books/detail",
-        "/admin/books/inperson",
-        "/admin/books/receive"
+    "/staff/borrowlibrary",
+    "/staff/borrowlibrary/approve",
+    "/staff/borrowlibrary/reject",
+    "/staff/borrowlibrary/return",
+    "/staff/borrowlibrary/detail",
+    "/staff/borrowlibrary/inperson",
+    "/staff/borrowlibrary/receive",
+    "/admin/borrowlibrary",
+    "/admin/borrowlibrary/approve",
+    "/admin/borrowlibrary/reject",
+    "/admin/borrowlibrary/return",
+    "/admin/borrowlibrary/detail",
+    "/admin/borrowlibrary/inperson",
+    "/admin/borrowlibrary/receive",
+    "/admin/books",
+    "/admin/books/approve",
+    "/admin/books/reject",
+    "/admin/books/return",
+    "/admin/books/detail",
+    "/admin/books/inperson",
+    "/admin/books/receive"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -103,7 +103,17 @@ public class LibrarianBorrowController extends HttpServlet {
                     list = libService.searchBorrowings(q, status, methodFilter);
                 }
 
-                req.setAttribute("records", list);
+                java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
+                for (BorrowRecord br : list) {
+                    // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị lỗi gộp
+                    String gc = br.getGroupCode();
+                    if (gc == null || gc.isBlank()) {
+                        gc = "DON-LE-" + br.getId();
+                    }
+                    groupedRecords.computeIfAbsent(gc, k -> new java.util.ArrayList<>()).add(br);
+                }
+
+                req.setAttribute("groupedRecords", groupedRecords);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
             }
 
@@ -112,9 +122,15 @@ public class LibrarianBorrowController extends HttpServlet {
             req.getSession().setAttribute("flash", "Truy cập bị từ chối: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/");
         } catch (Exception ex) {
-            // SỬA LỖI LẶP TRANG: Nếu lỗi DB, không thể load danh sách thì đẩy về trang chủ
-            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/");
+
+//            ex.printStackTrace();
+//            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
+//            resp.sendRedirect(req.getContextPath() + "/");
+            resp.setContentType("text/html;charset=UTF-8");
+            resp.getWriter().print("<h1 style='color:red;'>LỖI RỒI: " + ex.getMessage() + "</h1>");
+            resp.getWriter().print("<p>Chi tiết lỗi (StackTrace):</p><pre>");
+            ex.printStackTrace(resp.getWriter());
+            resp.getWriter().print("</pre>");
         }
     }
 

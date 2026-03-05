@@ -139,29 +139,70 @@
 
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
-                        <div class="info-card p-4">
-                            <h5 class="fw-bold mb-4 text-primary d-flex align-items-center">
-                                <span class="me-2">👤</span> Thông tin Độc giả
+                        <div class="info-card p-4 mb-4 border-start border-4 border-info">
+                            <h5 class="fw-bold mb-4 text-dark d-flex align-items-center">
+                                <span class="me-2">📍</span> Chi tiết địa chỉ & Bàn giao (${record.borrowMethod})
                             </h5>
                             <div class="row">
-                                <div class="col-sm-6 mb-3">
-                                    <div class="label">Họ tên</div>
-                                    <div class="value">${record.user.fullName}</div>
+                                <div class="col-md-4 border-end">
+                                    <div class="mb-3">
+                                        <div class="label">Người nhận thực tế</div>
+                                        <div class="value text-primary">
+                                            ${not empty record.shippingDetails.recipient ? record.shippingDetails.recipient : record.user.fullName}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="label">Số điện thoại nhận hàng</div>
+                                        <div class="value">
+                                            ${not empty record.shippingDetails.phone ? record.shippingDetails.phone : record.user.phone}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="label">Phương thức nhận</div>
+                                        <span class="badge ${record.borrowMethod == 'ONLINE' ? 'bg-primary' : 'bg-secondary'}">
+                                            ${record.borrowMethod == 'ONLINE' ? 'Giao hàng tận nơi' : 'Nhận tại thư viện'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="col-sm-6 mb-3">
-                                    <div class="label">Mã độc giả</div>
-                                    <div class="value">#${record.user.id}</div>
-                                </div>
-                                <div class="col-sm-12 mb-3">
-                                    <div class="label">Liên hệ</div>
-                                    <div class="value">${record.user.email} <span class="text-muted mx-2">|</span>
-                                        ${record.user.phone}</div>
-                                </div>
-                                <div class="col-sm-12">
-                                    <div class="label">Địa chỉ (Hồ sơ)</div>
-                                    <div class="value text-muted">${not empty record.user.address ?
-                                                                    record.user.address
-                                                                    : 'Chưa cập nhật địa chỉ'}</div>
+
+                                <div class="col-md-8">
+                                    <div class="label">Địa chỉ bàn giao chi tiết</div>
+                                    <c:choose>
+                                        <c:when test="${record.borrowMethod == 'ONLINE'}">
+                                            <div class="row mt-2">
+                                                <div class="col-sm-12 mb-2">
+                                                    <div class="p-2 bg-light rounded border border-dashed">
+                                                        <span class="text-muted small">Địa chỉ đầy đủ:</span><br>
+                                                        <strong class="text-dark">${record.shippingDetails.formattedAddress}</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 mb-2">
+                                                    <div class="label" style="font-size: 10px;">Số nhà / Đường</div>
+                                                    <div class="value" style="font-size: 13px;">${record.shippingDetails.street}</div>
+                                                </div>
+                                                <div class="col-sm-6 mb-2">
+                                                    <div class="label" style="font-size: 10px;">Phường / Xã</div>
+                                                    <div class="value" style="font-size: 13px;">${record.shippingDetails.ward}</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <div class="label" style="font-size: 10px;">Quận / Huyện</div>
+                                                    <div class="value" style="font-size: 13px;">${record.shippingDetails.district}</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <div class="label" style="font-size: 10px;">Tỉnh / Thành phố</div>
+                                                    <div class="value" style="font-size: 13px;">${record.shippingDetails.city}</div>
+                                                </div>
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="h-100 d-flex align-items-center justify-content-center bg-light rounded border border-dashed p-4">
+                                                <div class="text-center">
+                                                    <span class="fs-2">🏛️</span>
+                                                    <p class="text-muted mb-0 mt-2">Độc giả sẽ đến nhận trực tiếp tại quầy thư viện</p>
+                                                </div>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
                         </div>
@@ -220,7 +261,7 @@
                         </div>
                         <div class="col-md-3 border-end">
                             <div class="label">Lượt còn lại</div>
-                            <div class="value fs-4 text-success">${stats.remaining}</div>
+                            <div class="value fs-4 text-success">${remaining}</div>
                             <small class="text-muted">Có thể mượn thêm</small>
                         </div>
                         <div class="col-md-3 border-end">

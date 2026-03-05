@@ -8,12 +8,13 @@ public class ShippingDetails {
     private String ward;
     private String district;
     private String city;
+    
 
     public ShippingDetails() {
     }
 
     public ShippingDetails(String recipient, String phone, String street, String residence, String ward,
-            String district, String city) {
+            String district, String city ) {
         this.recipient = recipient;
         this.phone = phone;
         this.street = street;
@@ -21,6 +22,7 @@ public class ShippingDetails {
         this.ward = ward;
         this.district = district;
         this.city = city;
+       
     }
 
     public String getRecipient() {
@@ -78,6 +80,9 @@ public class ShippingDetails {
     public void setCity(String city) {
         this.city = city;
     }
+
+    
+    
 
     public String getFormattedAddress() {
         StringBuilder builder = new StringBuilder();

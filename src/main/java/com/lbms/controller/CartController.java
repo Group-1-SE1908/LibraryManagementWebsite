@@ -201,8 +201,9 @@ public class CartController extends HttpServlet {
             return;
         }
         for (CartItem item : items) {
+            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
             borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
-                    item.getQuantity());
+                    item.getQuantity(),groupCode);
         }
 
         cartService.clearCart(currentUser.getId());

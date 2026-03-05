@@ -20,6 +20,7 @@ public class BorrowRecord {
     private String rejectReason;
     private boolean isPaid;
     private int quantity;
+    private String groupCode;
 
     public BorrowRecord() {
     }
@@ -79,6 +80,14 @@ public class BorrowRecord {
 
     public boolean isIsPaid() {
         return isPaid;
+    }
+
+    public String getGroupCode() {
+        return groupCode;
+    }
+
+    public void setGroupCode(String groupCode) {
+        this.groupCode = groupCode;
     }
 
     public int getQuantity() {
