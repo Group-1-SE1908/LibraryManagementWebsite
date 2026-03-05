@@ -4,12 +4,13 @@
             <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
                 <!DOCTYPE html>
-                <html lang="en">
+                <html lang="vi">
 
                 <head>
                     <meta charset="UTF-8">
-                    <title>LBMS - Librarian Activity Log</title>
+                    <title>LBMS - Nhật ký hoạt động Thủ thư</title>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
                     <link
                         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
                         rel="stylesheet">
@@ -42,12 +43,15 @@
                             color: var(--text-main);
                         }
 
+                        /* Layout */
                         .main-content {
                             flex: 1;
                             margin-left: var(--sidebar-width);
                             min-height: 100vh;
                             display: flex;
                             flex-direction: column;
+                            width: calc(100% - var(--sidebar-width));
+                            /* Đảm bảo không tràn màn hình */
                         }
 
                         .content-container {
@@ -63,6 +67,9 @@
                             justify-content: space-between;
                             align-items: center;
                             margin-bottom: 2rem;
+                            flex-wrap: wrap;
+                            /* Cho phép rớt dòng khi quá hẹp */
+                            gap: 1rem;
                         }
 
                         h1 {
@@ -72,9 +79,9 @@
                             font-size: 1.875rem;
                             font-weight: 700;
                             margin: 0;
-                            color: var(--text-main);
                         }
 
+                        /* Filter */
                         .custom-select {
                             padding: 0.625rem 2.5rem 0.625rem 1rem;
                             border-radius: 10px;
@@ -90,60 +97,56 @@
                             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
                         }
 
-                        .custom-select:focus {
-                            outline: none;
-                            border-color: var(--primary);
-                            box-shadow: 0 0 0 3px var(--primary-light);
-                        }
-
-                        /* --- PHẦN FIX LỖI LỆCH CỘT --- */
+                        /* Table Design */
                         .card {
                             background: var(--card);
                             border-radius: 16px;
                             border: 1px solid var(--border);
                             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
                             overflow: hidden;
+                            /* Cắt các góc bo tròn */
+                        }
+
+                        .table-responsive {
+                            width: 100%;
+                            overflow-x: auto;
+                            /* Tạo scroll ngang cho riêng bảng */
+                            -webkit-overflow-scrolling: touch;
                         }
 
                         table {
                             width: 100%;
                             border-collapse: collapse;
-                            table-layout: fixed;
-                            /* Cố định layout bảng */
+                            min-width: 900px;
+                            /* Đảm bảo bảng không bị ép quá nhỏ gây vỡ nội dung */
                         }
 
-                        /* Định nghĩa độ rộng cố định cho từng cột */
+                        /* Column Widths */
                         th:nth-child(1),
                         td:nth-child(1) {
                             width: 80px;
                             text-align: center;
                         }
 
-                        /* ID */
                         th:nth-child(2),
                         td:nth-child(2) {
-                            width: 25%;
+                            width: 220px;
                         }
 
-                        /* Người thực hiện */
                         th:nth-child(3),
                         td:nth-child(3) {
                             width: 140px;
                         }
 
-                        /* Vai trò */
                         th:nth-child(4),
                         td:nth-child(4) {
                             width: auto;
                         }
 
-                        /* Thao tác - Cột co giãn */
                         th:nth-child(5),
                         td:nth-child(5) {
-                            width: 220px;
+                            width: 180px;
                         }
-
-                        /* Thời gian */
 
                         th {
                             background: #F8FAFC;
@@ -168,16 +171,16 @@
                             background: #F1F5F9;
                         }
 
-                        /* User Info */
+                        /* User Info & Badges */
                         .user-info {
                             display: flex;
                             align-items: center;
-                            gap: 1rem;
+                            gap: 0.75rem;
                         }
 
                         .avatar {
-                            width: 40px;
-                            height: 40px;
+                            width: 36px;
+                            height: 36px;
                             border-radius: 10px;
                             background: var(--primary-light);
                             color: var(--primary);
@@ -189,7 +192,6 @@
                             overflow: hidden;
                         }
 
-                        /* Badge Styling */
                         .badge {
                             padding: 0.35rem 0.75rem;
                             border-radius: 8px;
@@ -198,6 +200,7 @@
                             display: inline-flex;
                             align-items: center;
                             gap: 4px;
+                            white-space: nowrap;
                         }
 
                         .badge-admin {
@@ -215,20 +218,16 @@
                             color: #475569;
                         }
 
-                        /* Fix cột Action */
+                        /* Action Column */
                         .action-cell-content {
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
-                            /* Đẩy text sang trái, nút sang phải */
-                            width: 100%;
                             gap: 10px;
                         }
 
                         .action-text-label {
                             font-weight: 600;
-                            flex: 1;
-                            /* Chiếm tối đa không gian còn lại */
                         }
 
                         .text-add {
@@ -252,8 +251,6 @@
                         }
 
                         .btn-view-log {
-                            flex-shrink: 0;
-                            /* Không cho nút bị co lại */
                             display: inline-flex;
                             align-items: center;
                             padding: 0.45rem 0.85rem;
@@ -265,6 +262,7 @@
                             font-weight: 600;
                             transition: all 0.2s;
                             border: 1px solid var(--border);
+                            white-space: nowrap;
                         }
 
                         .btn-view-log:hover {
@@ -294,19 +292,30 @@
                             transition: color 0.2s;
                         }
 
-                        .back-link:hover {
-                            color: var(--primary);
-                        }
-
+                        /* Responsive Breakpoints */
                         @media (max-width: 1024px) {
                             .main-content {
                                 margin-left: 0;
+                                width: 100%;
+                            }
+
+                            .content-container {
+                                padding: 1.5rem;
                             }
 
                             .header-flex {
                                 flex-direction: column;
                                 align-items: flex-start;
-                                gap: 1rem;
+                            }
+                        }
+
+                        @media (max-width: 640px) {
+                            h1 {
+                                font-size: 1.5rem;
+                            }
+
+                            .content-container {
+                                padding: 1rem;
                             }
                         }
                     </style>
@@ -320,19 +329,18 @@
                             <div class="header-flex">
                                 <h1>
                                     <span class="material-icons">history_toggle_off</span>
-                                    Librarian Activity Log
+                                    Nhật ký hoạt động
                                 </h1>
 
                                 <div class="filter-container">
                                     <form action="${pageContext.request.contextPath}/admin/librarianActivityLog"
                                         method="GET" id="filterForm">
-                                        <select name="type" class="custom-select"
-                                            onchange="document.getElementById('filterForm').submit()">
+                                        <select name="type" class="custom-select" onchange="this.form.submit()">
                                             <option value="">Tất cả nhật ký</option>
                                             <option value="BOOK" ${filterType=='BOOK' ? 'selected' : '' }>📦 Quản lý
                                                 Sách</option>
-                                            <option value="BORROW" ${filterType=='BORROW' ? 'selected' : '' }>📋
-                                                Duyệt/Từ chối mượn</option>
+                                            <option value="BORROW" ${filterType=='BORROW' ? 'selected' : '' }>📋 Duyệt
+                                                mượn</option>
                                         </select>
                                     </form>
                                 </div>
@@ -355,26 +363,26 @@
                                                 <tr>
                                                     <td
                                                         style="font-family: monospace; font-weight: 600; color: var(--text-muted);">
-                                                        #${log.logId}</td>
+                                                        #${log.logId}
+                                                    </td>
                                                     <td>
                                                         <div class="user-info">
                                                             <div class="avatar">
                                                                 <c:choose>
                                                                     <c:when test="${not empty log.user.avatar}">
                                                                         <img src="${pageContext.request.contextPath}/${log.user.avatar}"
-                                                                            alt="Avatar"
+                                                                            alt="Avt"
                                                                             style="width:100%; height:100%; object-fit:cover;">
                                                                     </c:when>
                                                                     <c:otherwise>
-                                                                        ${fn:toUpperCase(fn:substring(log.user.fullName,
-                                                                        0, 1))}
+                                                                        <span>${fn:toUpperCase(fn:substring(log.user.fullName,
+                                                                            0, 1))}</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </div>
                                                             <div class="user-details">
-                                                                <div class="user-name">
-                                                                    <strong>${log.user.fullName}</strong>
-                                                                </div>
+                                                                <div style="font-weight: 700; line-height: 1.2;">
+                                                                    ${log.user.fullName}</div>
                                                                 <div
                                                                     style="font-size: 0.75rem; color: var(--text-muted);">
                                                                     ${log.user.email}</div>
@@ -385,12 +393,11 @@
                                                         <c:set var="roleName"
                                                             value="${fn:toUpperCase(log.user.role.name)}" />
                                                         <span
-                                                            class="badge ${roleName == 'ADMIN' ? 'badge-admin' : roleName == 'LIBRARIAN' ? 'badge-lib' : 'badge-member'}">
+                                                            class="badge ${roleName == 'ADMIN' ? 'badge-admin' : (roleName == 'LIBRARIAN' ? 'badge-lib' : 'badge-member')}">
                                                             <i class="fa-solid fa-shield-halved"></i>
                                                             ${log.user.role.name}
                                                         </span>
                                                     </td>
-
                                                     <td>
                                                         <div class="action-cell-content">
                                                             <c:choose>
@@ -402,9 +409,9 @@
 
                                                                     <span
                                                                         class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
-                                                                  (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 
-                                                                  (fn:containsIgnoreCase(log.action, 'Duyệt') ? 'text-approve' : 
-                                                                  (fn:containsIgnoreCase(log.action, 'Từ chối') ? 'text-reject' : 'text-update')))}">
+                                                        (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 
+                                                        (fn:containsIgnoreCase(log.action, 'Duyệt') ? 'text-approve' : 
+                                                        (fn:containsIgnoreCase(log.action, 'Từ chối') ? 'text-reject' : 'text-update')))}">
                                                                         ${displayText}
                                                                     </span>
 
@@ -412,21 +419,20 @@
                                                                         value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/borrowlibrary/detail?id='}${targetId}" />
                                                                     <a href="${pageContext.request.contextPath}${detailUrl}"
                                                                         class="btn-view-log">
-                                                                        <i class="fa-solid fa-arrow-up-right-from-square"
-                                                                            style="margin-right: 5px;"></i> View
+                                                                        <i
+                                                                            class="fa-solid fa-arrow-up-right-from-square"></i>
                                                                     </a>
                                                                 </c:when>
                                                                 <c:otherwise>
                                                                     <span
                                                                         class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
-                                                                  fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 'text-update'}">
+                                                        (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 'text-update')}">
                                                                         ${log.action}
                                                                     </span>
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </div>
                                                     </td>
-
                                                     <td>
                                                         <div class="time-cell">
                                                             <i class="fa-regular fa-clock"></i>

@@ -294,14 +294,19 @@
                                         <div class="avatar-container">
                                             <div class="avatar-box">
                                                 <c:choose>
+
                                                     <c:when test="${not empty user.avatar}">
                                                         <img src="${pageContext.request.contextPath}/${user.avatar}"
                                                             alt="Profile Picture" class="avatar-img"
-                                                            onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=1E40AF&color=fff';">
+                                                            style="width:100%; height:100%; object-fit:cover;">
                                                     </c:when>
+
+
                                                     <c:otherwise>
-                                                        <span class="material-icons"
-                                                            style="font-size: 4rem;">account_circle</span>
+                                                        <span
+                                                            style="font-weight:600; color:#4B5563; font-size: 3.5rem;">
+                                                            ${user.fullName.substring(0,1).toUpperCase()}
+                                                        </span>
                                                     </c:otherwise>
                                                 </c:choose>
                                             </div>
