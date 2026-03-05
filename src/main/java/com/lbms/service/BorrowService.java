@@ -47,7 +47,8 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails)
             throws SQLException {
-        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails, quantity);
+        String groupCode = "REQ-" + System.currentTimeMillis() + "-" + userId;
+        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails, quantity,groupCode);
         return ids.isEmpty() ? 0 : ids.get(0);
     }
 
@@ -96,6 +97,64 @@ public class BorrowService {
         }
         return ids;
     }
+    
+    public List<Long> requestBorrowCopies(long userId, long bookId, String method,
+            ShippingDetails shippingDetails, int quantity,String groupCode) throws SQLException {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
+        }
+
+        Book book = bookDAO.findById(bookId);
+        if (book == null) {
+            throw new IllegalArgumentException("Sách không tồn tại");
+        }
+        if (book.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Sách đã hết");
+        }
+        if (quantity > book.getQuantity()) {
+            throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang có");
+        }
+
+        int active = borrowDAO.countActiveBorrows(userId);
+        if (active + quantity > MAX_ACTIVE_BORROWS) {
+            throw new IllegalArgumentException(
+                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
+                            + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
+        }
+
+        if ("IN_PERSON".equalsIgnoreCase(method) && shippingDetails == null) {
+            User currentUser = userDAO.findById(userId);
+            if (currentUser != null) {
+                shippingDetails = new ShippingDetails();
+                shippingDetails.setRecipient(currentUser.getFullName());
+                shippingDetails.setPhone(currentUser.getPhone());
+
+                String userAddr = currentUser.getAddress();
+                shippingDetails.setStreet((userAddr != null && !userAddr.isBlank()) ? userAddr : "Nhận tại quầy");
+                shippingDetails.setCity("");
+                shippingDetails.setDistrict("");
+                shippingDetails.setWard("");
+            }
+        }
+
+        List<Long> ids = new ArrayList<>(quantity);
+        for (int i = 0; i < quantity; i++) {
+            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails,groupCode));
+        }
+        return ids;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     public int countActiveBorrows(long userId) throws SQLException {
         return borrowDAO.countActiveBorrows(userId);

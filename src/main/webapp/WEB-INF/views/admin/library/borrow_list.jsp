@@ -1,460 +1,452 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-    <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-        <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-            <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
-                <!DOCTYPE html>
-                <html lang="vi">
+<!DOCTYPE html>
+<html lang="vi">
 
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Quản lý Mượn Trả Toàn Hệ Thống | LBMS</title>
-                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
-                    <style>
-                        .filter-bar {
-                            background: white;
-                            padding: 20px;
-                            border-radius: 12px;
-                            margin-bottom: 25px;
-                            box-shadow: var(--shadow-sm);
-                            display: flex;
-                            gap: 15px;
-                            align-items: flex-end;
-                        }
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Mượn Trả Toàn Hệ Thống | LBMS</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* ================= BỘ LỌC (FILTER BAR) ================= */
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            border: 1px solid #e2e8f0;
+        }
 
-                        .filter-group {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 5px;
-                        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-                        .filter-group label {
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: #64748b;
-                            text-transform: uppercase;
-                        }
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+        }
 
-                        .filter-group input,
-                        .filter-group select {
-                            padding: 10px;
-                            border: 1px solid #e2e8f0;
-                            border-radius: 8px;
-                            min-width: 200px;
-                        }
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            min-width: 200px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
 
-                        .btn-reject {
-                            background: #fee2e2;
-                            color: #991b1b;
-                            border: 1px solid #fecaca;
-                            padding: 8px 12px;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            transition: 0.2s;
-                        }
+        /* ================= BADGE TRẠNG THÁI ================= */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-REQUESTED { background: #fef3c7; color: #92400e; }
+        .status-APPROVED { background: #dbeafe; color: #1d4ed8; }
+        .status-RECEIVED { background: #ccfbf1; color: #0f766e; }
+        .status-BORROWED { background: #dcfce7; color: #166534; }
+        .status-RETURNED { background: #e2e8f0; color: #334155; }
+        .status-REJECTED { background: #f1f5f9; color: #475569; }
 
-                        .btn-reject:hover {
-                            background: #fecaca;
-                        }
+        /* ================= GIAO DIỆN CARD CHO ĐƠN MƯỢN ================= */
+        .order-card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+        }
 
-                        .status-badge {
-                            position: static;
-                            top: auto;
-                            right: auto;
-                            z-index: auto;
-                            display: inline-block;
-                            padding: 5px 10px;
-                            border-radius: 20px;
-                            font-size: 11px;
-                            font-weight: 700;
-                            text-transform: uppercase;
-                        }
+        .order-header {
+            background: #f8fafc;
+            padding: 15px 25px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-                        .status-REQUESTED {
-                            background: #fef3c7;
-                            color: #92400e;
-                        }
+        .order-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
-                        .status-APPROVED {
-                            background: #dbeafe;
-                            color: #1d4ed8;
-                        }
+        .order-header-info .order-id {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 16px;
+        }
 
-                        .status-RECEIVED {
-                            background: #ccfbf1;
-                            color: #0f766e;
-                        }
+        .order-header-info .user-meta {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+        }
 
-                        .status-BORROWED {
-                            background: #dcfce7;
-                            color: #166534;
-                        }
+        .book-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 25px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s;
+        }
 
-                        .status-RETURNED {
-                            background: #e2e8f0;
-                            color: #334155;
-                        }
+        .book-item-row:hover {
+            background-color: #f8fafc;
+        }
 
-                        .status-REJECTED {
-                            background: #f1f5f9;
-                            color: #475569;
-                        }
+        .book-item-row:last-child {
+            border-bottom: none;
+        }
 
+        .book-info {
+            flex: 1;
+        }
 
-                        .table-card {
-                            border: 1px solid #cbd5e1;
-                            border-radius: 8px;
-                            overflow: hidden;
-                        }
+        .book-info .book-title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
 
-                        .table-bordered {
-                            width: 100%;
-                            border-collapse: collapse;
-                        }
+        .book-info .book-meta {
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            gap: 20px;
+        }
 
-                        .table-bordered th,
-                        .table-bordered td {
-                            border: 1px solid #cbd5e1;
-                            padding: 12px 15px;
-                            text-align: left;
-                        }
+        .book-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            justify-content: flex-end;
+        }
 
-                        .table-bordered thead th {
-                            background-color: #f8fafc;
-                            color: #475569;
-                            font-weight: 700;
-                            border-bottom: 2px solid #cbd5e1;
-                        }
+        /* ================= NÚT BẤM HIỆN ĐẠI ================= */
+        .btn-modern {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-modern.primary { background: #0b57d0; color: white; }
+        .btn-modern.primary:hover { background: #0842a0; box-shadow: 0 2px 4px rgba(11,87,208,0.3); }
+        .btn-modern.success { background: #10b981; color: white; }
+        .btn-modern.success:hover { background: #059669; box-shadow: 0 2px 4px rgba(16,185,129,0.3); }
+        .btn-modern.danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .btn-modern.danger:hover { background: #fecaca; }
+        .btn-modern.secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .btn-modern.secondary:hover { background: #e2e8f0; }
 
+        /* Bố cục trang chung */
+        .admin-main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            padding: 24px 32px;
+            box-sizing: border-box;
+            background-color: #f4f7f6;
+        }
 
-                        .table-bordered tbody tr:nth-child(even) {
-                            background-color: #f1f5f9;
-                        }
+        @media (max-width: 1024px) {
+            .admin-main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
 
-                        .table-bordered tbody tr:hover {
-                            background-color: #e2e8f0;
-                        }
+<body>
+    <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
 
-                        .admin-main-content {
-                            margin-left: 280px;
-                            min-height: 100vh;
-                            padding: 24px 32px;
-                            box-sizing: border-box;
-                        }
+    <main class="admin-main-content">
+        <div class="container py-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 style="color: #0f172a; font-weight: 800;">🛠️ Quản lý Mượn Trả</h1>
+            </div>
 
-                        @media (max-width: 1024px) {
-                            .admin-main-content {
-                                margin-left: 0;
-                                padding: 16px;
-                            }
-                        }
-                    </style>
-                </head>
+            <form action="${pageContext.request.contextPath}/admin/borrowlibrary" method="get" class="filter-bar">
+                <div class="filter-group">
+                    <label>Tìm kiếm</label>
+                    <input type="text" name="q" placeholder="Tên user hoặc tên sách..." value="${param.q}">
+                </div>
+                <div class="filter-group">
+                    <label>Trạng thái</label>
+                    <select name="status">
+                        <option value="">-- Tất cả --</option>
+                        <option value="REQUESTED" ${param.status=='REQUESTED' ? 'selected' : '' }>Chờ duyệt</option>
+                        <option value="APPROVED" ${param.status=='APPROVED' ? 'selected' : '' }>Đã duyệt</option>
+                        <option value="RECEIVED" ${param.status=='RECEIVED' ? 'selected' : '' }>Độc giả đã lấy</option>
+                        <option value="BORROWED" ${param.status=='BORROWED' ? 'selected' : '' }>Đang mượn</option>
+                        <option value="RETURNED" ${param.status=='RETURNED' ? 'selected' : '' }>Đã trả</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-modern primary" style="padding: 10px 20px;">Áp dụng lọc</button>
+                <a href="${pageContext.request.contextPath}/admin/borrowlibrary" class="btn-modern secondary" style="padding: 10px 20px;">Xóa lọc</a>
+            </form>
 
-                <body>
-                    <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+            <c:if test="${not empty flash}">
+                <script>
+                    let iconType = 'error';
+                    let titleText = 'Lỗi';
+                    const flashMsg = '<c:out value="${flash}"/>';
 
-                    <main class="admin-main-content">
+                    if (flashMsg.includes('thành công') || flashMsg.includes('Đã nhận trả')) {
+                        iconType = 'success';
+                        titleText = 'Thành công';
+                    } else if (flashMsg.includes('từ chối')) {
+                        iconType = 'info';
+                        titleText = 'Thông báo';
+                    }
 
-                        <div class="container py-4">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h1>🛠️ Quản lý Mượn Trả</h1>
+                    Swal.fire({
+                        icon: iconType,
+                        title: titleText,
+                        text: flashMsg,
+                        confirmButtonColor: '#0b57d0'
+                    });
+                </script>
+            </c:if>
+
+            <script>
+                window.onpageshow = function (event) {
+                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                        window.location.reload();
+                    }
+                };
+            </script>
+
+            <div class="order-list-container">
+                <c:forEach items="${groupedRecords}" var="entry">
+                    <c:set var="groupCode" value="${entry.key}" />
+                    <c:set var="recordsInGroup" value="${entry.value}" />
+                    <c:set var="firstRecord" value="${recordsInGroup[0]}" />
+
+                    <div class="order-card">
+                        
+                        <div class="order-header">
+                            <div class="order-header-info">
+                                <div class="order-id">Mã đơn: <span style="color: #0ea5e9;">${groupCode}</span></div>
+                                <div class="user-meta">
+                                    👤 ${firstRecord.user.fullName} &nbsp;|&nbsp; 
+                                    📞 ${firstRecord.user.phone} &nbsp;|&nbsp; 
+                                    ✉️ ${firstRecord.user.email}
+                                </div>
                             </div>
-
-                            <form action="${pageContext.request.contextPath}/admin/borrowlibrary" method="get"
-                                class="filter-bar">
-                                <div class="filter-group">
-                                    <label>Tìm kiếm</label>
-                                    <input type="text" name="q" placeholder="Tên user hoặc tên sách..."
-                                        value="${param.q}">
-                                </div>
-                                <div class="filter-group">
-                                    <label>Trạng thái</label>
-                                    <select name="status">
-                                        <option value="">-- Tất cả --</option>
-                                        <option value="REQUESTED" ${param.status=='REQUESTED' ? 'selected' : '' }>Chờ
-                                            duyệt</option>
-                                        <option value="APPROVED" ${param.status=='APPROVED' ? 'selected' : '' }>Đã duyệt
-                                        </option>
-                                        <option value="RECEIVED" ${param.status=='RECEIVED' ? 'selected' : '' }>Độc giả
-                                            đã lấy</option>
-                                        <option value="BORROWED" ${param.status=='BORROWED' ? 'selected' : '' }>Đang
-                                            mượn</option>
-                                        <option value="RETURNED" ${param.status=='RETURNED' ? 'selected' : '' }>Đã trả
-                                        </option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn primary">Áp dụng lọc</button>
-                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary" class="btn">Xóa lọc</a>
-                            </form>
-                            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                            <c:if test="${not empty flash}">
-                                <script>
-                                    // Xác định loại icon dựa trên nội dung thông báo
-                                    let iconType = 'error';
-                                    let titleText = 'Lỗi';
-
-                                    const flashMsg = '<c:out value="${flash}"/>';
-
-                                    if (flashMsg.includes('thành công') || flashMsg.includes('Đã nhận trả')) {
-                                        iconType = 'success';
-                                        titleText = 'Thành công';
-                                    } else if (flashMsg.includes('từ chối')) {
-                                        iconType = 'info'; // Chuyển sang màu xanh dương cho hành động từ chối
-                                        titleText = 'Thông báo';
-                                    }
-
-                                    Swal.fire({
-                                        icon: iconType,
-                                        title: titleText,
-                                        text: flashMsg,
-                                        confirmButtonColor: '#0b57d0'
-                                    });
-                                </script>
-                            </c:if>
-
-                            <script>
-
-                                window.onpageshow = function (event) {
-                                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                                        window.location.reload();
-                                    }
-                                };
-                            </script>
-
-                            <div class="table-card"
-                                style="border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm); border: 1px solid #cbd5e1;">
-                                <table class="table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align:center; width: 5%;">ID</th>
-                                            <th style="width: 20%;">Người mượn</th>
-                                            <th style="width: 25%;">Thông tin sách</th>
-                                            <th style="width: 12%;">Ngày mượn</th>
-                                            <th style="width: 12%;">Hẹn trả</th>
-                                            <th style="text-align:center; width: 12%;">Trạng thái</th>
-                                            <th style="text-align:center; width: 14%;">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${records}" var="r">
-                                            <tr>
-                                                <td style="text-align:center; font-weight:bold; color:#64748b;">#${r.id}
-                                                </td>
-                                                <td>
-                                                    <div style="font-weight:600; color:#0f172a;">${r.user.fullName}
-                                                    </div>
-                                                    <div style="font-size:12px; color:#64748b;">${r.user.email}</div>
-                                                </td>
-                                                <td>
-                                                    <div style="font-weight:600; color:#0f172a;">${r.book.title}</div>
-                                                </td>
-
-                                                <td>${not empty r.borrowDate ? r.borrowDate : '<span
-                                                        style="color:#94a3b8">---</span>'}</td>
-                                                <td style="color: #ef4444; font-weight: 700;">${not empty r.dueDate ?
-                                                    r.dueDate : '<span style="color:#94a3b8">---</span>'}</td>
-
-                                                <td style="text-align:center;">
-                                                    <c:choose>
-                                                        <c:when test="${not empty fn:trim(r.status)}">
-                                                            <c:set var="normalizedStatus"
-                                                                value="${fn:toUpperCase(fn:trim(r.status))}" />
-                                                            <span class="status-badge status-${normalizedStatus}">
-                                                                ${normalizedStatus}
-                                                            </span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span style="color:#94a3b8">N/A</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-
-                                                <td style="text-align:center;">
-                                                    <div
-                                                        style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                                                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}"
-                                                            class="btn" style="width:80px;">Chi tiết</a>
-
-                                                        <c:if test="${r.status == 'REQUESTED'}">
-                                                            <div id="box-${r.id}"
-                                                                style="display:none; margin: 5px 0; border: 1px solid #0b57d0; padding: 5px; border-radius: 5px; background:#f8fafc;">
-                                                                <input type="text" id="bc-input-${r.id}"
-                                                                    placeholder="Mã vạch..."
-                                                                    style="width:90px; margin-bottom:5px;">
-                                                                <button onclick="confirmApprove(${r.id})"
-                                                                    class="btn primary"
-                                                                    style="padding: 2px 10px; width:100%;">OK</button>
-                                                            </div>
-                                                            <button id="btn-show-${r.id}" onclick="showInput(${r.id})"
-                                                                class="btn primary" style="width:80px;">Duyệt</button>
-
-                                                            <form
-                                                                action="${pageContext.request.contextPath}/admin/borrowlibrary/reject"
-                                                                method="post" style="display:inline; margin:0;"
-                                                                onsubmit="confirmReject(event, this)">
-                                                                <input type="hidden" name="id" value="${r.id}">
-                                                                <button type="submit" class="btn-reject"
-                                                                    style="width:80px;">Từ chối</button>
-                                                            </form>
-                                                        </c:if>
-
-                                                        <c:if
-                                                            test="${r.status == 'RECEIVED' || r.status == 'BORROWED'}">
-                                                            <div id="return-box-${r.id}"
-                                                                style="display:none; margin: 5px 0; border: 1px solid #10b981; padding: 5px; border-radius: 5px; background:#ecfdf5;">
-                                                                <input type="text" id="ret-bc-${r.id}"
-                                                                    placeholder="Quét mã trả..."
-                                                                    style="width:90px; margin-bottom:5px;">
-                                                                <button onclick="submitReturn(${r.id})"
-                                                                    class="btn success"
-                                                                    style="padding: 2px 10px; background:#10b981; color:white; border:none; width:100%;">Xác
-                                                                    nhận</button>
-                                                            </div>
-                                                            <button id="btn-ret-show-${r.id}"
-                                                                onclick="showReturn(${r.id})" class="btn success"
-                                                                style="background:#10b981; color:white; border:none; width:80px;">Trả
-                                                                sách</button>
-                                                        </c:if>
-                                                        <c:if test="${r.status == 'APPROVED'}">
-                                                            <form
-                                                                action="${pageContext.request.contextPath}/admin/borrowlibrary/receive"
-                                                                method="post" style="display:inline;">
-                                                                <input type="hidden" name="id" value="${r.id}">
-                                                                <button type="submit" class="btn success"
-                                                                    style="width:80px; background:#0b57d0; color:white; border:none;">Nhận
-                                                                    sách</button>
-                                                            </form>
-                                                        </c:if>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
+                            <div style="text-align: right;">
+                                <c:set var="normalizedStatus" value="${fn:toUpperCase(fn:trim(firstRecord.status))}" />
+                                <span class="status-badge status-${normalizedStatus}" style="font-size: 13px; padding: 6px 14px;">${normalizedStatus}</span>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Tổng cộng: <strong>${fn:length(recordsInGroup)}</strong> cuốn</div>
                             </div>
                         </div>
 
-                        <script>
-                            // 1. Hàm hiển thị ô nhập liệu (Giữ nguyên)
-                            function showInput(id) {
-                                document.getElementById('box-' + id).style.display = 'block';
-                                document.getElementById('btn-show-' + id).style.display = 'none';
-                            }
-                            function showReturn(id) {
-                                document.getElementById('return-box-' + id).style.display = 'block';
-                                document.getElementById('btn-ret-show-' + id).style.display = 'none';
-                            }
+                        <div class="order-body">
+                            <c:forEach items="${recordsInGroup}" var="r">
+                                <div class="book-item-row">
+                                    
+                                    <div class="book-info">
+                                        <div class="book-title">📖 ${r.book.title}</div>
+                                        <div class="book-meta">
+                                            <span><strong>Mã vạch:</strong> <span style="color:#0b57d0;">${not empty r.bookCopy.barcode ? r.bookCopy.barcode : 'Chưa gán'}</span></span>
+                                            <span><strong>Ngày mượn:</strong> ${not empty r.borrowDate ? r.borrowDate : '---'}</span>
+                                            <span><strong>Hẹn trả:</strong> <span style="color:#ef4444;">${not empty r.dueDate ? r.dueDate : '---'}</span></span>
+                                            <span><strong>ID Phiếu:</strong> #${r.id}</span>
+                                            <span>
+                                                <c:set var="itemStatus" value="${fn:toUpperCase(fn:trim(r.status))}" />
+                                                <span class="status-badge status-${itemStatus}" style="font-size: 9px; padding: 3px 6px;">${itemStatus}</span>
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            // 2. Hàm Xác nhận Duyệt sách
+                                    <div class="book-actions">
+                                        <c:if test="${r.status == 'REQUESTED'}">
+                                            <div id="box-${r.id}" style="display:none; gap:5px; align-items:center;">
+                                                <input type="text" id="bc-input-${r.id}" placeholder="Quét mã..." style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; width: 110px; outline:none;">
+                                                <button onclick="confirmApprove(${r.id})" class="btn-modern primary">OK</button>
+                                            </div>
+                                            
+                                            <button id="btn-show-${r.id}" onclick="showInput(${r.id})" class="btn-modern primary">Duyệt sách</button>
 
-                            // Thay thế đoạn script cũ tại borrow_list.jsp [cite: 310-317]
-                            function confirmApprove(id) {
-                                const barcodeVal = document.getElementById('bc-input-' + id).value;
-                                if (!barcodeVal) {
-                                    Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập mã vạch sách!' });
-                                    return;
-                                }
+                                            <form action="${pageContext.request.contextPath}/admin/borrowlibrary/reject" method="post" style="margin:0;" onsubmit="confirmReject(event, this)">
+                                                <input type="hidden" name="id" value="${r.id}">
+                                                <button type="submit" class="btn-modern danger">Từ chối</button>
+                                            </form>
+                                            
+                                            <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Chi tiết</a>
+                                        </c:if>
 
-                                Swal.fire({
-                                    title: 'Xác nhận duyệt?',
-                                    text: "Hệ thống sẽ ghi nhận sách đã được cho mượn.",
-                                    icon: 'question',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#0b57d0',
-                                    confirmButtonText: 'Đồng ý duyệt'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        const form = document.createElement('form');
-                                        form.method = 'POST';
-                                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/approve';
+                                        <c:if test="${r.status == 'RECEIVED' || r.status == 'BORROWED'}">
+                                            <div id="return-box-${r.id}" style="display:none; gap:5px; align-items:center;">
+                                                <input type="text" id="ret-bc-${r.id}" placeholder="Mã trả sách..." style="padding: 6px; border: 1px solid #10b981; border-radius: 4px; width: 110px; outline:none;">
+                                                <button onclick="submitReturn(${r.id})" class="btn-modern success">Xác nhận</button>
+                                            </div>
+                                            <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn-modern success">Nhận trả</button>
+                                            <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Chi tiết</a>
+                                        </c:if>
 
-                                        // SỬA TẠI ĐÂY: Sử dụng cộng chuỗi để giữ nguyên biến JavaScript
-                                        form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
-                                            '<input type="hidden" name="barcode" value="' + barcodeVal + '">';
+                                        <c:if test="${r.status == 'APPROVED'}">
+                                            <form action="${pageContext.request.contextPath}/admin/borrowlibrary/receive" method="post" style="margin:0;">
+                                                <input type="hidden" name="id" value="${r.id}">
+                                                <button type="submit" class="btn-modern primary">Độc giả đã nhận</button>
+                                            </form>
+                                            <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Chi tiết</a>
+                                        </c:if>
+                                        
+                                        <c:if test="${r.status == 'RETURNED' || r.status == 'REJECTED' || r.status == 'OVERDUE'}">
+                                             <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Xem Chi tiết</a>
+                                        </c:if>
+                                    </div>
+                                    
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </div>
+                    </c:forEach>
+                
+                <c:if test="${empty groupedRecords}">
+                    <div style="text-align: center; padding: 40px; background: white; border-radius: 10px; border: 1px dashed #cbd5e1; color: #64748b;">
+                        <h4>Không tìm thấy dữ liệu mượn trả nào.</h4>
+                    </div>
+                </c:if>
+            </div>
 
-                                        document.body.appendChild(form);
-                                        form.submit();
-                                    }
-                                });
-                            }
+        </div>
 
-                            // 3. Hàm Xác nhận Trả sách (Dùng POST form ẩn)
-                            function submitReturn(id) {
-                                const bc = document.getElementById('ret-bc-' + id).value;
-                                if (!bc) {
-                                    Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng quét mã vạch trên sách để nhận trả!' });
-                                    return;
-                                }
+        <script>
+            // 1. Hàm hiển thị ô nhập liệu quét mã
+            function showInput(id) {
+                document.getElementById('box-' + id).style.display = 'flex';
+                document.getElementById('btn-show-' + id).style.display = 'none';
+            }
+            
+            function showReturn(id) {
+                document.getElementById('return-box-' + id).style.display = 'flex';
+                document.getElementById('btn-ret-show-' + id).style.display = 'none';
+            }
 
-                                // Popup hỏi xác nhận trước khi trả
-                                Swal.fire({
-                                    title: 'Xác nhận nhận trả sách?',
-                                    text: "Hệ thống sẽ cập nhật lại số lượng trong kho!",
-                                    icon: 'info',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#10b981',
-                                    cancelButtonColor: '#64748b',
-                                    confirmButtonText: 'Đúng, trả sách!',
-                                    cancelButtonText: 'Hủy'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        const form = document.createElement('form');
-                                        form.method = 'POST';
-                                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/return';
-                                        form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
-                                        document.body.appendChild(form);
-                                        form.submit();
-                                    }
-                                });
-                            }
+            // 2. Hàm Xác nhận Duyệt sách
+            function confirmApprove(id) {
+                const barcodeVal = document.getElementById('bc-input-' + id).value;
+                if (!barcodeVal) {
+                    Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập mã vạch vật lý của sách!' });
+                    return;
+                }
 
-                            // 4. Hàm Xác nhận Từ chối (Dùng cho nút form submit)
-                            function confirmReject(event, formElement) {
-                                event.preventDefault(); // Chặn form submit ngay lập tức
-                                Swal.fire({
-                                    title: 'Từ chối yêu cầu mượn?',
-                                    text: "Hành động này sẽ hủy yêu cầu của độc giả!",
-                                    icon: 'warning',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#ef4444',
-                                    cancelButtonColor: '#64748b',
-                                    confirmButtonText: 'Đồng ý từ chối',
-                                    cancelButtonText: 'Quay lại'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        formElement.submit(); // Chỉ submit nếu bấm Đồng ý
-                                    }
-                                });
-                            }
-                            function confirmReject(event, formElement) {
-                                event.preventDefault();
-                                Swal.fire({
-                                    title: 'Lý do từ chối?',
-                                    input: 'text',
-                                    inputPlaceholder: 'Nhập lý do tại đây...',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#ef4444',
-                                    confirmButtonText: 'Xác nhận từ chối',
-                                    cancelButtonText: 'Quay lại',
-                                    inputValidator: (value) => {
-                                        if (!value)
-                                            return 'Bạn phải nhập lý do từ chối!'
-                                    }
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        const input = document.createElement('input');
-                                        input.type = 'hidden';
-                                        input.name = 'reason';
-                                        input.value = result.value;
-                                        formElement.appendChild(input);
-                                        formElement.submit();
-                                    }
-                                });
-                            }
-                        </script>
-                        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                    </main>
-                </body>
+                Swal.fire({
+                    title: 'Xác nhận duyệt sách?',
+                    text: "Hệ thống sẽ gắn mã vạch này cho phiếu mượn.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0b57d0',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Đồng ý duyệt',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/approve';
+                        form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
+                                         '<input type="hidden" name="barcode" value="' + barcodeVal + '">';
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
 
-                </html>
+            // 3. Hàm Xác nhận Trả sách
+            function submitReturn(id) {
+                const bc = document.getElementById('ret-bc-' + id).value;
+                if (!bc) {
+                    Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng quét lại mã vạch trên sách để xác nhận trả!' });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Xác nhận nhận trả sách?',
+                    text: "Sách sẽ được cộng lại vào kho thư viện.",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Đúng, trả sách!',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/return';
+                        form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+
+            // 4. Hàm Xác nhận Từ chối (Có bắt nhập lý do)
+            function confirmReject(event, formElement) {
+                event.preventDefault(); // Chặn form submit mặc định
+                
+                Swal.fire({
+                    title: 'Lý do từ chối?',
+                    text: 'Vui lòng cho độc giả biết lý do bạn từ chối đơn mượn này:',
+                    input: 'text',
+                    inputPlaceholder: 'Ví dụ: Sách đã hỏng, Độc giả vi phạm nội quy...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Xác nhận từ chối',
+                    cancelButtonText: 'Quay lại',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Bạn phải nhập lý do từ chối!'
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'reason';
+                        input.value = result.value;
+                        formElement.appendChild(input);
+                        formElement.submit(); // Thực thi submit form
+                    }
+                });
+            }
+        </script>
+    </main>
+</body>
+</html>

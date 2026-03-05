@@ -14,12 +14,32 @@ public class LibrarianBorrowDAO {
         ensureBorrowMethodColumn();
     }
 
-    private String baseSelect() {
-        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date,br.quantity AS borrow_qty, "
+//    private String baseSelect() {
+//        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
+//                + "br.quantity AS borrow_qty, " // Số lượng sách trong phiếu mượn này
+//                + "br.status AS borrow_status, "
+//                + "br.fine_amount, br.borrow_method, "
+//                // LẤY CÁC CỘT ĐỊA CHỈ GIAO HÀNG
+//                + "br.receiver_name, br.receiver_phone, br.receiver_address, "
+//                + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
+//                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
+//                + "bk.quantity AS book_qty_stock, " // Tồn kho thực tế của sách
+//                + "bc.barcode AS book_barcode "
+//                + "FROM borrow_records br "
+//                + "JOIN [User] u ON br.user_id = u.user_id "
+//                + "JOIN Book bk ON br.book_id = bk.book_id "
+//                + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
+//    }
+        private String baseSelect() {
+        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
+                + "br.quantity AS borrow_qty, " 
                 + "br.status AS borrow_status, "
-                + "br.fine_amount, br.borrow_method, "
+                + "br.fine_amount, br.borrow_method, br.group_code, " // <--- Thêm br.group_code ở đây
+                // Cột địa chỉ (Tùy theo bảng thực tế của bạn, nếu bạn dùng shipping_recipient thì sửa lại)
+                + "br.shipping_recipient AS receiver_name, br.shipping_phone AS receiver_phone, br.shipping_street AS receiver_address, "
                 + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
+                + "bk.quantity AS book_qty_stock, " // <--- Cột gây ra lỗi vừa nãy
                 + "bc.barcode AS book_barcode "
                 + "FROM borrow_records br "
                 + "JOIN [User] u ON br.user_id = u.user_id "
@@ -28,13 +48,16 @@ public class LibrarianBorrowDAO {
     }
 
     // --- CÁC PHƯƠNG THỨC SAO CHÉP TỪ BorrowDAO VÀ TỐI ƯU ---
-    public long createRequest(long userId, long bookId, String method) throws SQLException {
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
-                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
+    public long createRequest(long userId, long bookId, String method, int qty) throws SQLException {
+//        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, return_date, status, borrow_method) "
+//                + "VALUES(?, ?, GETDATE(), NULL, 'REQUESTED', ?)";
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity) "
+                + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?)";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
+            ps.setInt(4, qty);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 return rs.next() ? rs.getLong(1) : 0;
@@ -163,35 +186,50 @@ public class LibrarianBorrowDAO {
         BorrowRecord br = new BorrowRecord();
         br.setId(rs.getLong("borrowing_id"));
 
+        // 1. Ánh xạ thông tin Người dùng (Chủ tài khoản)
         User u = new User();
         u.setId(rs.getLong("user_id"));
         u.setEmail(rs.getString("user_email"));
         u.setFullName(rs.getString("user_full_name"));
-        u.setPhone(rs.getString("user_phone")); // Nâng cấp
-        u.setAddress(rs.getString("user_address")); // Nâng cấp
+        u.setPhone(rs.getString("user_phone"));
+        u.setAddress(rs.getString("user_address"));
         br.setUser(u);
 
+        // 2. Ánh xạ thông tin Sách và Tồn kho
         Book b = new Book();
         b.setId(rs.getLong("book_id"));
         b.setTitle(rs.getString("book_title"));
         b.setAuthor(rs.getString("book_author"));
         b.setIsbn(rs.getString("book_isbn"));
         b.setImage(rs.getString("book_image"));
+        b.setQuantity(rs.getInt("book_qty_stock")); // Số lượng tồn kho phục vụ hiển thị
         br.setBook(b);
 
+        // 3. Ánh xạ thông tin mượn sách cơ bản
         br.setBorrowDate(rs.getDate("borrow_date") != null ? rs.getDate("borrow_date").toLocalDate() : null);
         br.setDueDate(rs.getDate("due_date") != null ? rs.getDate("due_date").toLocalDate() : null);
         br.setReturnDate(rs.getDate("return_date") != null ? rs.getDate("return_date").toLocalDate() : null);
-        br.setQuantity(rs.getInt("borrow_qty"));
+
+        br.setQuantity(rs.getInt("borrow_qty")); // SỐ LƯỢNG MƯỢN GHI NHẬN TỪ CART
         br.setStatus(rs.getString("borrow_status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
         br.setBorrowMethod(rs.getString("borrow_method"));
+        br.setGroupCode(rs.getString("group_code"));
 
+        // 4. QUAN TRỌNG: ÁNH XẠ THÔNG TIN GIAO HÀNG (Dành cho chức năng GHTK)
+        ShippingDetails sd = new ShippingDetails();
+        sd.setRecipient(rs.getString("receiver_name"));
+        sd.setPhone(rs.getString("receiver_phone"));
+        // Lưu địa chỉ đầy đủ vào street để hiển thị qua getFormattedAddress()
+        sd.setStreet(rs.getString("receiver_address"));
+        br.setShippingDetails(sd);
+
+        // 5. Ánh xạ bản sao sách (Barcode)
         long cid = rs.getLong("copy_id");
         if (cid > 0) {
             BookCopy bc = new BookCopy();
             bc.setCopyId((int) cid);
-            bc.setBarcode(rs.getString("book_barcode")); // Nâng cấp
+            bc.setBarcode(rs.getString("book_barcode"));
             br.setBookCopy(bc);
         }
         return br;

@@ -108,8 +108,7 @@ public class BorrowDAO {
                 + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, "
                 + "shipping_district, shipping_city) "
                 + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setInt(3, quantity);
@@ -121,21 +120,17 @@ public class BorrowDAO {
             ps.setString(9, shippingDetails != null ? shippingDetails.getWard() : null);
             ps.setString(10, shippingDetails != null ? shippingDetails.getDistrict() : null);
             ps.setString(11, shippingDetails != null ? shippingDetails.getCity() : null);
+
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getLong(1);
-                }
-                return 0;
+                return rs.next() ? rs.getLong(1) : 0;
             }
         }
     }
 
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -283,9 +278,7 @@ public class BorrowDAO {
     public List<BorrowRecord> listOverdue() throws SQLException {
         String sql = baseSelect()
                 + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -338,4 +331,31 @@ public class BorrowDAO {
             }
         }
     }
+
+    public long createRequest(long userId, long bookId, int quantity, String method, ShippingDetails shippingDetails, String groupCode) throws SQLException {
+        String sql = "INSERT INTO borrow_records (user_id, book_id, quantity, borrow_method, status, "
+                + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, "
+                + "shipping_district, shipping_city, group_code) " 
+                + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, bookId);
+            ps.setInt(3, quantity);
+            ps.setString(4, method);
+            ps.setString(5, shippingDetails != null ? shippingDetails.getRecipient() : null);
+            ps.setString(6, shippingDetails != null ? shippingDetails.getPhone() : null);
+            ps.setString(7, shippingDetails != null ? shippingDetails.getStreet() : null);
+            ps.setString(8, shippingDetails != null ? shippingDetails.getResidence() : null);
+            ps.setString(9, shippingDetails != null ? shippingDetails.getWard() : null);
+            ps.setString(10, shippingDetails != null ? shippingDetails.getDistrict() : null);
+            ps.setString(11, shippingDetails != null ? shippingDetails.getCity() : null);
+
+            ps.setString(12, groupCode);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+        }
+    }
+
 }
