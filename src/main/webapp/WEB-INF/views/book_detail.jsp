@@ -8,7 +8,6 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -149,7 +148,7 @@
             font-size: 16px;
         }
 
-        /* Comments Section Styles */
+        /* Comments Section */
         .comments-section {
             max-width: 1000px;
             margin: 60px auto;
@@ -225,9 +224,7 @@
             font-size: 24px;
         }
 
-        .star-rating input {
-            display: none;
-        }
+        .star-rating input { display: none; }
 
         .star-rating label {
             cursor: pointer;
@@ -236,13 +233,8 @@
             margin: 0;
         }
 
-        .star-rating label:hover {
-            color: #fbbf24;
-        }
-
-        .star-rating input:checked + label {
-            color: #fbbf24;
-        }
+        .star-rating label:hover { color: #fbbf24; }
+        .star-rating input:checked + label { color: #fbbf24; }
 
         .form-actions {
             display: flex;
@@ -255,7 +247,6 @@
             font-size: 14px;
         }
 
-        /* Comments List */
         .comments-list {
             display: flex;
             flex-direction: column;
@@ -345,13 +336,8 @@
             background-color: rgba(59, 130, 246, 0.1);
         }
 
-        .btn-action.btn-danger {
-            color: #d32f2f;
-        }
-
-        .btn-action.btn-danger:hover {
-            background-color: rgba(211, 47, 47, 0.1);
-        }
+        .btn-action.btn-danger { color: #d32f2f; }
+        .btn-action.btn-danger:hover { background-color: rgba(211, 47, 47, 0.1); }
 
         .comment-rating {
             display: flex;
@@ -360,9 +346,7 @@
             font-size: 14px;
         }
 
-        .star {
-            color: #fbbf24;
-        }
+        .star { color: #fbbf24; }
 
         .comment-content {
             color: var(--text-muted);
@@ -395,89 +379,33 @@
                 flex-direction: column;
                 padding: 20px;
             }
-
-            .book-visual {
-                flex: none;
-                width: 100%;
-            }
-
-            .book-details-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .comment-header {
-                flex-direction: column;
-            }
-
-            .comment-actions {
-                margin-top: 12px;
-            }
+            .book-visual { flex: none; width: 100%; }
+            .book-details-grid { grid-template-columns: 1fr; }
+            .comment-header { flex-direction: column; }
+            .comment-actions { margin-top: 12px; }
         }
 
-        /* Modal star rating styles */
-        .modal-star-group input[type="radio"]:checked + label {
-            color: #fbbf24;
-        }
-
-        .modal-star-group label:hover,
-        .modal-star-group label:hover ~ label {
-            color: #fbbf24;
-        }
-
-        .modal-star-group input {
-            display: none;
-        }
-
-        .modal-star-group label {
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.2s;
-        }
-
-        .modal-star-group input:checked ~ label {
-            color: #fbbf24;
-        }
-
-        .modal-star-group label:hover,
-        .modal-star-group label:hover ~ label {
-            color: #fbbf24;
-        }
-
-        .edit-star-group input {
-            display: none;
-        }
-
+        .edit-star-group input { display: none; }
         .edit-star-group label {
             color: #d1d5db;
             cursor: pointer;
             transition: 0.2s;
         }
-
-        .edit-star-group input:checked ~ label {
-            color: #fbbf24;
-        }
-
+        .edit-star-group input:checked ~ label { color: #fbbf24; }
         .edit-star-group label:hover,
-        .edit-star-group label:hover ~ label {
-            color: #fbbf24;
-        }
+        .edit-star-group label:hover ~ label { color: #fbbf24; }
 
         @keyframes fadeIn {
-            from {
-                transform: scale(0.95);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
+            from { transform: scale(0.95); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
         }
     </style>
 </head>
-
 <body>
+
 <jsp:include page="header.jsp"/>
 
+<%-- ══ BOOK DETAIL ══ --%>
 <div class="detail-page">
     <nav class="breadcrumb">
         <a href="${pageContext.request.contextPath}/books">
@@ -487,24 +415,26 @@
     </nav>
 
     <div class="book-detail-card">
-        <div class="book-visual">
-            <div class="detail-img-placeholder">
 
-            </div>
+        <%-- Cover --%>
+        <div class="book-visual">
+            <div class="detail-img-placeholder"></div>
         </div>
 
+        <%-- Info --%>
         <div class="book-content">
+
             <div class="status-wrapper">
                 <c:choose>
                     <c:when test="${book.quantity > 0}">
-                                            <span class="badge-status badge-available">
-                                                <fmt:message key="status.available"/>
-                                            </span>
+                        <span class="badge-status badge-available">
+                            <fmt:message key="status.available"/>
+                        </span>
                     </c:when>
                     <c:otherwise>
-                                            <span class="badge-status badge-unavailable">
-                                                <fmt:message key="status.out_of_stock"/>
-                                            </span>
+                        <span class="badge-status badge-unavailable">
+                            <fmt:message key="status.out_of_stock"/>
+                        </span>
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -516,49 +446,41 @@
 
             <div class="book-details-grid">
                 <div class="detail-item">
-                                        <span class="detail-label">
-                                            <fmt:message key="book.isbn"/>
-                                        </span>
+                    <span class="detail-label"><fmt:message key="book.isbn"/></span>
                     <span class="detail-value">${book.isbn}</span>
                 </div>
                 <div class="detail-item">
-                                        <span class="detail-label">
-                                            <fmt:message key="book.publisher"/>
-                                        </span>
-                    <span class="detail-value">${not empty book.publisher ? book.publisher :
-                            'Unknown'}</span>
-                </div>
-                <div class="detail-item">
-                                        <span class="detail-label">
-                                            <fmt:message key="book.year"/>
-                                        </span>
-                    <span class="detail-value">${not empty book.publishYear ? book.publishYear :
-                            'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                                        <span class="detail-label">
-                                            <fmt:message key="book.stock"/>
-                                        </span>
+                    <span class="detail-label"><fmt:message key="book.publisher"/></span>
                     <span class="detail-value">
-                                            <fmt:message key="book.copies">
-                                                <fmt:param value="${book.quantity}"/>
-                                            </fmt:message>
-                                        </span>
+                        ${not empty book.publisher ? book.publisher : 'Unknown'}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><fmt:message key="book.year"/></span>
+                    <span class="detail-value">
+                        ${not empty book.publishYear ? book.publishYear : 'N/A'}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><fmt:message key="book.stock"/></span>
+                    <span class="detail-value">
+                        <fmt:message key="book.copies">
+                            <fmt:param value="${book.quantity}"/>
+                        </fmt:message>
+                    </span>
                 </div>
             </div>
 
             <div class="book-description">
                 <p>Explore the fascinating world of this book titled <strong>${book.title}</strong>
-                    by
-                    <strong>${book.author}</strong>. This resource is part of our extensive
-                    collection,
-                    provided to empower students and faculty with the knowledge they need for their
-                    academic pursuits.
+                    by <strong>${book.author}</strong>. This resource is part of our extensive
+                    collection, provided to empower students and faculty with the knowledge they
+                    need for their academic pursuits.
                 </p>
             </div>
 
             <div class="action-footer">
-                <!--                        Button add to cart-->
+                <%-- Còn hàng: thêm vào giỏ --%>
                 <c:if test="${book.quantity > 0}">
                     <form action="${pageContext.request.contextPath}/cart/add" method="post">
                         <input type="hidden" name="bookId" value="${book.id}"/>
@@ -568,19 +490,31 @@
                         </button>
                     </form>
                 </c:if>
+
+                <%-- Hết hàng: đặt trước --%>
+                <c:if test="${book.quantity <= 0}">
+                    <form action="${pageContext.request.contextPath}/reservation" method="post">
+                        <input type="hidden" name="action" value="add"/>
+                        <input type="hidden" name="bookId" value="${book.id}"/>
+                        <button type="submit" class="btn btn-warning">
+                            Đặt trước
+                        </button>
+                    </form>
+                </c:if>
+
                 <a href="${pageContext.request.contextPath}/books" class="btn">
                     <fmt:message key="book.back"/>
                 </a>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- Phần Bình Luận -->
+        </div><%-- /book-content --%>
+    </div><%-- /book-detail-card --%>
+</div><%-- /detail-page --%>
+
+<%-- ══ COMMENTS — nằm NGOÀI detail-page ══ --%>
 <div class="comments-section">
     <h2 class="comments-title">Bình Luận & Đánh Giá</h2>
 
-    <!-- Biểu Mẫu Bình Luận (Chỉ Dành Cho Người Dùng Đã Đăng Nhập) -->
     <c:choose>
         <c:when test="${not empty sessionScope.currentUser}">
             <div class="comment-form-wrapper">
@@ -598,19 +532,15 @@
                     <div class="form-group">
                         <div class="rating-group">
                             <label>Đánh Giá</label>
-                            <div class="star-rating" id="ratingStars">
+                            <div class="star-rating">
                                 <input type="radio" id="star5" name="rating" value="5" required>
                                 <label for="star5">★★★★★</label>
-
                                 <input type="radio" id="star4" name="rating" value="4">
                                 <label for="star4">★★★★☆</label>
-
                                 <input type="radio" id="star3" name="rating" value="3">
                                 <label for="star3">★★★☆☆</label>
-
                                 <input type="radio" id="star2" name="rating" value="2">
                                 <label for="star2">★★☆☆☆</label>
-
                                 <input type="radio" id="star1" name="rating" value="1">
                                 <label for="star1">★☆☆☆☆</label>
                             </div>
@@ -625,12 +555,15 @@
         </c:when>
         <c:otherwise>
             <div class="login-prompt">
-                <p>Vui lòng <a href="${pageContext.request.contextPath}/auth/login">đăng nhập</a> để bình luận.</p>
+                <p>Vui lòng
+                    <a href="${pageContext.request.contextPath}/auth/login">đăng nhập</a>
+                    để bình luận.
+                </p>
             </div>
         </c:otherwise>
     </c:choose>
 
-    <!-- Danh Sách Bình Luận -->
+    <%-- Load comments --%>
     <%
         List<Comment> comments = (List<com.lbms.model.Comment>) request.getAttribute("comments");
         if (comments == null) {
@@ -642,8 +575,6 @@
                 comments = new java.util.ArrayList<>();
             }
         }
-
-// Load replies cho TẤT CẢ trường hợp - đặt NGOÀI if
         try {
             com.lbms.dao.CommentReplyDAO replyDAO = new com.lbms.dao.CommentReplyDAO();
             for (com.lbms.model.Comment comment : comments) {
@@ -653,14 +584,12 @@
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         request.setAttribute("comments", comments);
     %>
 
     <c:choose>
         <c:when test="${not empty comments}">
             <div class="comments-list">
-
                 <c:forEach var="comment" items="${comments}">
                     <div class="comment-card">
 
@@ -678,23 +607,20 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
-
                                 <div class="comment-meta">
                                     <span class="comment-user">${comment.fullName}</span>
                                     <span class="comment-date">
-                                    <fmt:formatDate value="${comment.createdAt}"
-                                                    type="date"
-                                                    dateStyle="medium"/>
-                                </span>
+                                        <fmt:formatDate value="${comment.createdAt}"
+                                                        type="date" dateStyle="medium"/>
+                                    </span>
                                 </div>
                             </div>
 
                             <div class="comment-actions">
                                 <c:if test="${sessionScope.currentUser.id == comment.userId
-                                         || sessionScope.currentUser.role.name == 'ADMIN'
-                                         || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
-                                    <button type="button"
-                                            class="btn-action"
+                                          || sessionScope.currentUser.role.name == 'ADMIN'
+                                          || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
+                                    <button type="button" class="btn-action"
                                             data-id="${comment.commentId}"
                                             data-content="${fn:escapeXml(comment.content)}"
                                             data-rating="${comment.rating}"
@@ -702,11 +628,7 @@
                                             onclick="openEditForm(this)">
                                         Sửa
                                     </button>
-
-                                    <button type="button"
-                                            class="delete-btn"
-                                            data-id="${comment.commentId}"
-                                            data-book="${book.id}"
+                                    <button type="button" class="delete-btn"
                                             onclick="openDeleteConfirm('${comment.commentId}', '${book.id}')">
                                         Xóa
                                     </button>
@@ -722,30 +644,33 @@
 
                         <p class="comment-content">${comment.content}</p>
 
-                        <!-- Hiển thị phản hồi từ thủ thư (nếu có) -->
+                            <%-- Replies --%>
                         <c:if test="${not empty comment.replies}">
-                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #e5e7eb;">
                                 <c:forEach var="reply" items="${comment.replies}">
-                                    <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 3px solid #0b57d0;">
-                                        <div style="font-weight: 500; color: #1f2937;">
+                                    <div style="background:#f3f4f6;padding:12px;border-radius:8px;
+                                                margin-top:10px;border-left:3px solid #0b57d0;">
+                                        <div style="font-weight:500;color:#1f2937;">
                                             <strong>Phản hồi từ thủ thư</strong>
-                                            <span style="color: #9ca3af; font-size: 12px;">
-                                        • <fmt:formatDate value="${reply.createdAt}" type="both" dateStyle="medium"
-                                                          timeStyle="short"/>
-                                    </span>
+                                            <span style="color:#9ca3af;font-size:12px;">
+                                                &bull;
+                                                <fmt:formatDate value="${reply.createdAt}"
+                                                                type="both" dateStyle="medium"
+                                                                timeStyle="short"/>
+                                            </span>
                                         </div>
-                                        <p style="margin: 8px 0 0 0; color: #4b5563; line-height: 1.5;">${reply.content}</p>
+                                        <p style="margin:8px 0 0 0;color:#4b5563;line-height:1.5;">
+                                                ${reply.content}
+                                        </p>
                                     </div>
                                 </c:forEach>
                             </div>
                         </c:if>
-                    </div>
+
+                    </div><%-- /comment-card --%>
                 </c:forEach>
-
-            </div>
-            <!-- comments-list -->
+            </div><%-- /comments-list --%>
         </c:when>
-
         <c:otherwise>
             <div class="no-comments">
                 <p>Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!</p>
@@ -753,117 +678,85 @@
         </c:otherwise>
     </c:choose>
 
-</div> <!-- detail-page -->
+</div><%-- /comments-section --%>
 
 <script>
     function openEditForm(button) {
         var commentId = button.dataset.id;
-        var content = button.dataset.content;
-        var rating = button.dataset.rating;
-        var bookId = button.dataset.bookid;
+        var content   = button.dataset.content;
+        var rating    = button.dataset.rating;
+        var bookId    = button.dataset.bookid;
 
         var modal = document.createElement('div');
-        modal.className = "modal-overlay";
-        modal.style.position = "fixed";
-        modal.style.top = "0";
-        modal.style.left = "0";
-        modal.style.width = "100%";
-        modal.style.height = "100%";
-        modal.style.backgroundColor = "rgba(0,0,0,0.4)";
-        modal.style.display = "flex";
-        modal.style.justifyContent = "center";
-        modal.style.alignItems = "center";
-        modal.style.zIndex = "9999";
+        modal.className = 'modal-overlay';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;' +
+            'background:rgba(0,0,0,0.4);display:flex;justify-content:center;' +
+            'align-items:center;z-index:9999;';
 
         modal.innerHTML =
-            '<div style="background:#fff;width:520px;border-radius:16px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.2);position:relative;">' +
+            '<div style="background:#fff;width:520px;border-radius:16px;padding:30px;' +
+            'box-shadow:0 20px 40px rgba(0,0,0,0.2);position:relative;">' +
             '<h2 style="margin:0 0 20px 0;font-size:22px;font-weight:700;color:#111827;">Chỉnh sửa bình luận</h2>' +
             '<form method="POST" action="${pageContext.request.contextPath}/comment">' +
             '<input type="hidden" name="action" value="update">' +
             '<input type="hidden" name="commentId" value="' + commentId + '">' +
             '<input type="hidden" name="bookId" value="' + bookId + '">' +
-            '<textarea name="content" required style="width:100%;min-height:120px;padding:12px;border-radius:10px;border:1px solid #e5e7eb;font-size:14px;resize:none;outline:none;">' + content + '</textarea>' +
+            '<textarea name="content" required style="width:100%;min-height:120px;padding:12px;' +
+            'border-radius:10px;border:1px solid #e5e7eb;font-size:14px;resize:none;outline:none;">'
+            + content + '</textarea>' +
             '<div style="margin:20px 0 25px 0;">' +
-            '<div class="edit-star-group" style="display:flex;flex-direction:row-reverse;justify-content:flex-end;gap:6px;font-size:30px;">' +
+            '<div class="edit-star-group" style="display:flex;flex-direction:row-reverse;' +
+            'justify-content:flex-end;gap:6px;font-size:30px;">' +
             '<input type="radio" id="edit5-' + commentId + '" name="rating" value="5"><label for="edit5-' + commentId + '">★</label>' +
             '<input type="radio" id="edit4-' + commentId + '" name="rating" value="4"><label for="edit4-' + commentId + '">★</label>' +
             '<input type="radio" id="edit3-' + commentId + '" name="rating" value="3"><label for="edit3-' + commentId + '">★</label>' +
             '<input type="radio" id="edit2-' + commentId + '" name="rating" value="2"><label for="edit2-' + commentId + '">★</label>' +
             '<input type="radio" id="edit1-' + commentId + '" name="rating" value="1"><label for="edit1-' + commentId + '">★</label>' +
-            '</div>' +
-            '</div>' +
+            '</div></div>' +
             '<div style="display:flex;justify-content:flex-end;gap:12px;">' +
-            '<button type="button" onclick="this.closest(\'.modal-overlay\').remove()" style="padding:10px 20px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-weight:600;">Hủy</button>' +
-            '<button type="submit" style="padding:10px 20px;border-radius:8px;border:none;background:#3b82f6;color:white;font-weight:600;cursor:pointer;">Lưu thay đổi</button>' +
-            '</div>' +
-            '</form>' +
-            '</div>';
+            '<button type="button" onclick="this.closest(\'.modal-overlay\').remove()" ' +
+            'style="padding:10px 20px;border-radius:8px;border:1px solid #d1d5db;' +
+            'background:#f9fafb;cursor:pointer;font-weight:600;">Hủy</button>' +
+            '<button type="submit" style="padding:10px 20px;border-radius:8px;border:none;' +
+            'background:#3b82f6;color:white;font-weight:600;cursor:pointer;">Lưu thay đổi</button>' +
+            '</div></form></div>';
 
         document.body.appendChild(modal);
 
         var ratingInput = modal.querySelector('input[name="rating"][value="' + rating + '"]');
         if (ratingInput) ratingInput.checked = true;
 
-        modal.addEventListener("click", function (e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) modal.remove();
         });
     }
 
-    function validateEditForm(form) {
-        var content = form.querySelector('textarea[name="content"]').value.trim();
-        var ratingChecked = form.querySelector('input[name="rating"]:checked');
-
-        if (!content) {
-            alert('Vui long nhap noi dung binh luan');
-            return false;
-        }
-        if (!ratingChecked) {
-            alert('Vui long chon danh gia');
-            return false;
-        }
-        return true;
-    }
-
-    function closeEditForm(commentId) {
-        var modal = document.getElementById('editModal-' + commentId);
-        if (modal) modal.remove();
-    }
-
     function openDeleteConfirm(commentId, bookId) {
-        var overlay = document.createElement("div");
-        overlay.style.position = "fixed";
-        overlay.style.top = "0";
-        overlay.style.left = "0";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.backgroundColor = "rgba(0,0,0,0.4)";
-        overlay.style.display = "flex";
-        overlay.style.justifyContent = "center";
-        overlay.style.alignItems = "center";
-        overlay.style.zIndex = "9999";
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;' +
+            'background:rgba(0,0,0,0.4);display:flex;justify-content:center;' +
+            'align-items:center;z-index:9999;';
 
         overlay.innerHTML =
-            '<div style="background:#fff;width:440px;border-radius:16px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.2);text-align:center;">' +
+            '<div style="background:#fff;width:440px;border-radius:16px;padding:30px;' +
+            'box-shadow:0 20px 40px rgba(0,0,0,0.2);text-align:center;">' +
             '<h2 style="margin:0 0 12px 0;font-size:20px;font-weight:700;color:#111827;">Xác nhận xóa bình luận</h2>' +
-            '<p style="color:#6b7280;margin-bottom:24px;">Bạn có chắc muốn xóa bình luận này không, khi đã xóa sẽ không thể hoàn tác.</p>' +
+            '<p style="color:#6b7280;margin-bottom:24px;">Bạn có chắc muốn xóa bình luận này không?</p>' +
             '<div style="display:flex;justify-content:center;gap:12px;">' +
-            '<button type="button" id="cancelDeleteBtn" style="padding:10px 20px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-weight:600;">Hủy</button>' +
+            '<button type="button" id="cancelDeleteBtn" style="padding:10px 20px;border-radius:8px;' +
+            'border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-weight:600;">Hủy</button>' +
             '<form method="POST" action="${pageContext.request.contextPath}/comment" style="margin:0;">' +
             '<input type="hidden" name="action" value="delete">' +
             '<input type="hidden" name="commentId" value="' + commentId + '">' +
             '<input type="hidden" name="bookId" value="' + bookId + '">' +
-            '<button type="submit" style="padding:10px 20px;border-radius:8px;border:none;background:#ef4444;color:white;font-weight:600;cursor:pointer;">Xóa</button>' +
-            '</form>' +
-            '</div>' +
-            '</div>';
+            '<button type="submit" style="padding:10px 20px;border-radius:8px;border:none;' +
+            'background:#ef4444;color:white;font-weight:600;cursor:pointer;">Xóa</button>' +
+            '</form></div></div>';
 
         document.body.appendChild(overlay);
 
-        overlay.querySelector("#cancelDeleteBtn").onclick = function () {
-            overlay.remove();
-        };
-
-        overlay.addEventListener("click", function (e) {
+        overlay.querySelector('#cancelDeleteBtn').onclick = function () { overlay.remove(); };
+        overlay.addEventListener('click', function (e) {
             if (e.target === overlay) overlay.remove();
         });
     }
@@ -871,5 +764,4 @@
 
 <jsp:include page="footer.jsp"/>
 </body>
-
 </html>

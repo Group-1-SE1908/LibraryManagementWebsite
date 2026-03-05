@@ -232,10 +232,10 @@ public class ProfileController extends HttpServlet {
 
         filePart.write(uploadPath + File.separator + fileName);
 
-        // ✅ Update DB with full path
+        // Update DB with full path
         String avatarPath = "uploads/" + fileName;
         profileService.updateAvatar(currentUser.getId(), avatarPath);
-        // 🔥🔥🔥 QUAN TRỌNG: update luôn object trong session
+        // update luôn object trong session
         currentUser.setAvatar(avatarPath);
         req.getSession().setAttribute("currentUser", currentUser);
 
