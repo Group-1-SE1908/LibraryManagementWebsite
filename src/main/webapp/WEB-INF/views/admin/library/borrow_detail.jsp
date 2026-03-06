@@ -203,6 +203,45 @@
                                             </div>
                                         </c:otherwise>
                                     </c:choose>
+                                    <c:if test="${record.borrowMethod == 'ONLINE' && record.status == 'APPROVED'}">
+                                        <div class="mt-3 text-end">
+                                            <button type="button" class="btn btn-warning fw-bold text-dark" onclick="openGHTKModal('${record.groupCode}')">
+                                                🚀 Giao hàng qua GHTK
+                                            </button>
+                                        </div>
+                                    </c:if>
+
+                                    <div class="modal fade" id="ghtkModal" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-warning text-dark">
+                                                    <h5 class="modal-title fw-bold">Xác nhận tạo đơn GHTK</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p><strong>Người nhận:</strong> ${record.shippingDetails.recipient} - ${record.shippingDetails.phone}</p>
+                                                    <p><strong>Giao tới:</strong> ${record.shippingDetails.formattedAddress}</p>
+                                                    <hr>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Trọng lượng dự kiến:</span>
+                                                        <strong id="ghtkWeight">Đang tính...</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mt-2">
+                                                        <span>Phí giao hàng (GHTK):</span>
+                                                        <strong id="ghtkFee" class="text-danger">Đang tính phí ship...</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <c:set var="userRolePath" value="${sessionScope.currentUser.role.name == 'ADMIN' ? '/admin' : '/staff'}" />
+                                                    <form action="${pageContext.request.contextPath}${userRolePath}/borrowlibrary/ship_confirm" method="POST">
+                                                        <input type="hidden" name="groupCode" id="modalGroupCode" value="">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-warning fw-bold" id="btnConfirmShip" disabled>Chốt đẩy đơn</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -438,6 +477,7 @@
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
                                             function handleApprove() {
                                                 const bc = document.getElementById('bcApprove').value;
@@ -473,6 +513,39 @@
                                                     });
                                                 }
                                             }
+
+                                            function openGHTKModal(groupCode) {
+                                                if (!groupCode) {
+                                                    Swal.fire('Lỗi', 'Phiếu mượn chưa có mã nhóm. Không thể gom đơn!', 'error');
+                                                    return;
+                                                }
+
+                                                // Gắn giá trị groupCode vào form ẩn để lúc submit đẩy lên doPost
+                                                document.getElementById('modalGroupCode').value = groupCode;
+
+                                                const modal = new bootstrap.Modal(document.getElementById('ghtkModal'));
+                                                modal.show();
+
+                                                // Dùng dấu nháy kép bọc ngoặc EL để không bị lỗi JS
+                                                const rolePath = "${sessionScope.currentUser.role.name == 'ADMIN' ? '/admin' : '/staff'}";
+                                                const url = '${pageContext.request.contextPath}' + rolePath + '/borrowlibrary/ship_fee?groupCode=' + groupCode;
+
+                                                fetch(url)
+                                                        .then(response => response.json())
+                                                        .then(data => {
+                                                            // data.totalBooks được tính từ Controller
+                                                            document.getElementById('ghtkWeight').innerText = data.weight + " gram (" + data.totalBooks + " cuốn)";
+                                                            const feeVND = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(data.fee);
+                                                            document.getElementById('ghtkFee').innerText = feeVND;
+
+                                                            document.getElementById('btnConfirmShip').disabled = false;
+                                                        })
+                                                        .catch(error => {
+                                                            document.getElementById('ghtkFee').innerText = "Lỗi kết nối API GHTK";
+                                                            console.error("GHTK Error: ", error);
+                                                        });
+                                            }
+
 
         </script>
     </main>

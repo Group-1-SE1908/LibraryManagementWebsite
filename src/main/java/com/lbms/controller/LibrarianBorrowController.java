@@ -36,7 +36,11 @@ import java.util.List;
     "/admin/books/return",
     "/admin/books/detail",
     "/admin/books/inperson",
-    "/admin/books/receive"
+    "/admin/books/receive",
+    "/staff/borrowlibrary/ship_fee",
+    "/staff/borrowlibrary/ship_confirm",
+    "/admin/borrowlibrary/ship_fee",
+    "/admin/borrowlibrary/ship_confirm"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -90,6 +94,26 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
+            } else if ("ship_fee".equals(action)) {
+                String groupCode = req.getParameter("groupCode");
+                List<BorrowRecord> groupRecords = libDAO.findByGroupCode(groupCode);
+                
+                if (groupRecords == null || groupRecords.isEmpty() || groupRecords.get(0).getShippingDetails() == null) {
+                    resp.setStatus(400); return;
+                }
+                
+                // Gom tổng trọng lượng cả nhóm
+                int totalWeight = 0;
+                for (BorrowRecord br : groupRecords) {
+                    totalWeight += (br.getQuantity() * 500);
+                }
+                
+                long fee = new com.lbms.service.GHTKService().calculateFee(groupRecords.get(0).getShippingDetails(), totalWeight);
+                
+                resp.setContentType("application/json");
+                resp.setCharacterEncoding("UTF-8");
+                resp.getWriter().write("{\"fee\": " + fee + ", \"weight\": " + totalWeight + ", \"totalBooks\": " + groupRecords.size() + "}");
+                return;
             } else {
 
                 String methodFilter = req.getParameter("filter");
@@ -206,6 +230,16 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash",
                         "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
+                resp.sendRedirect(req.getContextPath() + redirectBase);
+                return;
+            } else if ("ship_confirm".equals(action)) {
+                String groupCode = req.getParameter("groupCode");
+                
+                com.lbms.service.ShippingService shippingService = new com.lbms.service.ShippingService();
+                shippingService.createGroupShipment(groupCode);
+                
+                req.getSession().setAttribute("flash", "Đã đẩy đơn hàng gồm nhiều sách sang GHTK thành công!");
+                // Sau khi giao xong cả nhóm, quay thẳng về trang danh sách (borrow_list)
                 resp.sendRedirect(req.getContextPath() + redirectBase);
                 return;
             }
