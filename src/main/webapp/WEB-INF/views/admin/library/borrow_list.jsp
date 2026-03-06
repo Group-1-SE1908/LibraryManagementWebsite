@@ -328,6 +328,12 @@
                                         <c:if test="${r.status == 'RETURNED' || r.status == 'REJECTED' || r.status == 'OVERDUE'}">
                                              <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Xem Chi tiết</a>
                                         </c:if>
+
+                                        <c:set var="pendingRenewal" value="${pendingRenewalMap[r.id]}" />
+                                        <c:if test="${not empty pendingRenewal}">
+                                            <span class="status-badge status-RENEWAL_REQUESTED" style="background:#fef3c7;color:#92400e;font-size:11px;">Gia hạn chờ duyệt</span>
+                                            <a href="${pageContext.request.contextPath}/admin/renewal/view?id=${pendingRenewal.id}" class="btn-modern secondary" style="padding: 8px 14px;">Xem yêu cầu gia hạn</a>
+                                        </c:if>
                                     </div>
                                     
                                 </div>

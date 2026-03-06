@@ -1,7 +1,9 @@
 package com.lbms.service;
 
 import com.lbms.dao.LibrarianBorrowDAO; // Đã đổi sang DAO mới
+import com.lbms.dao.RenewalRequestDAO;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.RenewalRequest;
 import com.lbms.util.DBConnection;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -14,6 +16,7 @@ public class LibrarianBorrowService {
 
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
+    private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
 
     public void returnBook(long borrowId, String inputBarcode) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
@@ -149,9 +152,9 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
-                // 4. Cập nhật phiếu mượn: Chuyển sang APPROVED, gán copy_id (Chưa set ngày mượn
-                // vì khách chưa đến lấy)
-                String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
+                // 4. Cập nhật phiếu mượn: Chuyển sang BORROWED, gán copy_id (Chờ thủ thư xác
+                // nhận lấy)
+                String updateBr = "UPDATE borrow_records SET status = 'BORROWED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
                     ps.setInt(1, copyId);
                     ps.setLong(2, borrowId);
@@ -288,6 +291,115 @@ public class LibrarianBorrowService {
                 throw ex;
             }
         }
+    }
+
+    public List<RenewalRequest> listPendingRenewalRequests() throws SQLException {
+        List<RenewalRequest> pending = renewalRequestDAO.listPending();
+        for (RenewalRequest request : pending) {
+            BorrowRecord record = libDAO.findById(request.getBorrowId());
+            request.setBorrowRecord(record);
+        }
+        return pending;
+    }
+
+    public RenewalRequest getRenewalRequest(long renewalId) throws SQLException {
+        RenewalRequest request = renewalRequestDAO.findById(renewalId);
+        if (request != null) {
+            BorrowRecord record = libDAO.findById(request.getBorrowId());
+            request.setBorrowRecord(record);
+        }
+        return request;
+    }
+
+    public void approveRenewalRequest(long renewalId, long staffId) throws SQLException {
+        RenewalRequest request = renewalRequestDAO.findById(renewalId);
+        if (request == null) {
+            throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
+        }
+        if (!"PENDING".equalsIgnoreCase(request.getStatus())) {
+            throw new IllegalArgumentException("Yêu cầu đã được xử lý trước đó.");
+        }
+        BorrowRecord record = libDAO.findById(request.getBorrowId());
+        if (record == null) {
+            throw new IllegalArgumentException("Không tìm thấy phiếu mượn tương ứng.");
+        }
+
+        LocalDate baseDate = record.getDueDate() != null ? record.getDueDate() : LocalDate.now();
+        LocalDate nextDue = baseDate.plusDays(BorrowService.LOAN_DAYS);
+
+        try (Connection c = DBConnection.getConnection()) {
+            boolean originalAuto = c.getAutoCommit();
+            c.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE borrow_records SET borrow_date = ?, due_date = ?, status = 'BORROWED' WHERE id = ?")) {
+                    ps.setDate(1, Date.valueOf(baseDate));
+                    ps.setDate(2, Date.valueOf(nextDue));
+                    ps.setLong(3, record.getId());
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE renewal_requests SET status = 'APPROVED' WHERE id = ?")) {
+                    ps.setLong(1, renewalId);
+                    ps.executeUpdate();
+                }
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            } finally {
+                c.setAutoCommit(originalAuto);
+            }
+        }
+
+        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
+        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
+        logDAO.addActivityLog((int) staffId,
+                "Phê duyệt gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "]");
+    }
+
+    public void rejectRenewalRequest(long renewalId, String reason, long staffId) throws SQLException {
+        RenewalRequest request = renewalRequestDAO.findById(renewalId);
+        if (request == null) {
+            throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
+        }
+        if (!"PENDING".equalsIgnoreCase(request.getStatus())) {
+            throw new IllegalArgumentException("Yêu cầu đã được xử lý trước đó.");
+        }
+        BorrowRecord record = libDAO.findById(request.getBorrowId());
+        if (record == null) {
+            throw new IllegalArgumentException("Không tìm thấy phiếu mượn tương ứng.");
+        }
+
+        try (Connection c = DBConnection.getConnection()) {
+            boolean originalAuto = c.getAutoCommit();
+            c.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = c
+                        .prepareStatement("UPDATE borrow_records SET status = 'BORROWED' WHERE id = ?")) {
+                    ps.setLong(1, record.getId());
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE renewal_requests SET status = 'REJECTED' WHERE id = ?")) {
+                    ps.setLong(1, renewalId);
+                    ps.executeUpdate();
+                }
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            } finally {
+                c.setAutoCommit(originalAuto);
+            }
+        }
+
+        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
+        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
+        String note = (reason != null && !reason.isBlank()) ? reason.trim() : "Không có lý do";
+        logDAO.addActivityLog((int) staffId,
+                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
+                        + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
