@@ -50,24 +50,37 @@ public class RenewalRequestDAO {
             ps.setLong(1, borrowId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    RenewalRequest request = new RenewalRequest();
-                    request.setId(rs.getLong("id"));
-                    request.setBorrowId(rs.getLong("borrow_id"));
-                    request.setUserId(rs.getLong("user_id"));
-                    request.setReason(rs.getString("reason"));
-                    request.setContactName(rs.getString("contact_name"));
-                    request.setContactPhone(rs.getString("contact_phone"));
-                    request.setContactEmail(rs.getString("contact_email"));
-                    request.setStatus(rs.getString("status"));
-                    java.sql.Timestamp ts = rs.getTimestamp("requested_at");
-                    if (ts != null) {
-                        request.setRequestedAt(ts.toLocalDateTime());
-                    }
-                    out.add(request);
+                    out.add(mapRow(rs));
                 }
             }
         }
         return out;
+    }
+
+    public List<RenewalRequest> listPending() throws SQLException {
+        List<RenewalRequest> out = new ArrayList<>();
+        String sql = "SELECT * FROM renewal_requests WHERE status = 'PENDING' ORDER BY requested_at DESC";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                out.add(mapRow(rs));
+            }
+        }
+        return out;
+    }
+
+    public RenewalRequest findById(long id) throws SQLException {
+        String sql = "SELECT * FROM renewal_requests WHERE id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
     }
 
     public int cancelPendingForBorrow(long borrowId) throws SQLException {
@@ -76,5 +89,22 @@ public class RenewalRequestDAO {
             ps.setLong(1, borrowId);
             return ps.executeUpdate();
         }
+    }
+
+    private RenewalRequest mapRow(ResultSet rs) throws SQLException {
+        RenewalRequest request = new RenewalRequest();
+        request.setId(rs.getLong("id"));
+        request.setBorrowId(rs.getLong("borrow_id"));
+        request.setUserId(rs.getLong("user_id"));
+        request.setReason(rs.getString("reason"));
+        request.setContactName(rs.getString("contact_name"));
+        request.setContactPhone(rs.getString("contact_phone"));
+        request.setContactEmail(rs.getString("contact_email"));
+        request.setStatus(rs.getString("status"));
+        java.sql.Timestamp ts = rs.getTimestamp("requested_at");
+        if (ts != null) {
+            request.setRequestedAt(ts.toLocalDateTime());
+        }
+        return request;
     }
 }

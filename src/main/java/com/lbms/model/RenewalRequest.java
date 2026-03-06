@@ -13,6 +13,7 @@ public class RenewalRequest {
     private String contactEmail;
     private String status;
     private LocalDateTime requestedAt;
+    private BorrowRecord borrowRecord;
 
     public long getId() {
         return id;
@@ -84,5 +85,13 @@ public class RenewalRequest {
 
     public void setRequestedAt(LocalDateTime requestedAt) {
         this.requestedAt = requestedAt;
+    }
+
+    public BorrowRecord getBorrowRecord() {
+        return borrowRecord;
+    }
+
+    public void setBorrowRecord(BorrowRecord borrowRecord) {
+        this.borrowRecord = borrowRecord;
     }
 }

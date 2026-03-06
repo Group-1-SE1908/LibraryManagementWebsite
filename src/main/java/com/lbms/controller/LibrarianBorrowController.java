@@ -5,6 +5,7 @@ import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
 import com.lbms.model.UserBorrowingSummary;
 import com.lbms.service.BookService;
@@ -16,36 +17,42 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive",
-    "/admin/borrowlibrary",
-    "/admin/borrowlibrary/approve",
-    "/admin/borrowlibrary/reject",
-    "/admin/borrowlibrary/return",
-    "/admin/borrowlibrary/detail",
-    "/admin/borrowlibrary/inperson",
-    "/admin/borrowlibrary/receive",
-    "/admin/books",
-    "/admin/books/approve",
-    "/admin/books/reject",
-    "/admin/books/return",
-    "/admin/books/detail",
-    "/admin/books/inperson",
-    "/admin/books/receive",
-    "/staff/borrowlibrary/ship_fee",
-    "/staff/borrowlibrary/ship_confirm",
-    "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm"
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/staff/renewal",
+        "/staff/renewal/approve",
+        "/staff/renewal/reject",
+        "/staff/renewal/view",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/renewal",
+        "/admin/renewal/approve",
+        "/admin/renewal/reject",
+        "/admin/renewal/view",
+        "/admin/books",
+        "/admin/books/approve",
+        "/admin/books/reject",
+        "/admin/books/return",
+        "/admin/books/detail",
+        "/admin/books/inperson",
+        "/admin/books/receive"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
     private static final String STAFF_BORROW_BASE = "/staff/borrowlibrary";
     private static final String ADMIN_BORROW_BASE = "/admin/borrowlibrary";
+    private static final String STAFF_RENEWAL_BASE = "/staff/renewal";
+    private static final String ADMIN_RENEWAL_BASE = "/admin/renewal";
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
     private final BorrowDAO borrowDAO = new BorrowDAO();
@@ -69,7 +76,10 @@ public class LibrarianBorrowController extends HttpServlet {
             String action = getAction(path);
 
             // 2. Điều hướng giao diện
-            if ("detail".equals(action)) {
+            if (path.contains("/renewal") && "view".equals(action)) {
+                handleRenewalDetail(req, resp);
+                return;
+            } else if ("detail".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
 
                 BorrowRecord record = libDAO.findById(id);
@@ -85,6 +95,12 @@ public class LibrarianBorrowController extends HttpServlet {
                     req.setAttribute("remaining", remaining > 0 ? remaining : 0);
                     req.setAttribute("record", record);
                     req.setAttribute("stats", stats);
+                    try {
+                        com.lbms.model.Shipment shipment = new com.lbms.dao.ShipmentDAO().findByBorrowRecordId(id);
+                        req.setAttribute("shipment", shipment);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 req.setAttribute("record", record);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_detail.jsp").forward(req, resp);
@@ -94,26 +110,8 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
-            } else if ("ship_fee".equals(action)) {
-                String groupCode = req.getParameter("groupCode");
-                List<BorrowRecord> groupRecords = libDAO.findByGroupCode(groupCode);
-                
-                if (groupRecords == null || groupRecords.isEmpty() || groupRecords.get(0).getShippingDetails() == null) {
-                    resp.setStatus(400); return;
-                }
-                
-                // Gom tổng trọng lượng cả nhóm
-                int totalWeight = 0;
-                for (BorrowRecord br : groupRecords) {
-                    totalWeight += (br.getQuantity() * 500);
-                }
-                
-                long fee = new com.lbms.service.GHTKService().calculateFee(groupRecords.get(0).getShippingDetails(), totalWeight);
-                
-                resp.setContentType("application/json");
-                resp.setCharacterEncoding("UTF-8");
-                resp.getWriter().write("{\"fee\": " + fee + ", \"weight\": " + totalWeight + ", \"totalBooks\": " + groupRecords.size() + "}");
-                return;
+            } else if ("renewal".equals(action)) {
+                handleRenewalQueue(req, resp);
             } else {
 
                 String methodFilter = req.getParameter("filter");
@@ -129,7 +127,8 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
                 for (BorrowRecord br : list) {
-                    // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị lỗi gộp
+                    // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị
+                    // lỗi gộp
                     String gc = br.getGroupCode();
                     if (gc == null || gc.isBlank()) {
                         gc = "DON-LE-" + br.getId();
@@ -138,6 +137,12 @@ public class LibrarianBorrowController extends HttpServlet {
                 }
 
                 req.setAttribute("groupedRecords", groupedRecords);
+                java.util.List<RenewalRequest> pendingRenewals = libService.listPendingRenewalRequests();
+                java.util.Map<Long, RenewalRequest> renewalLookup = new java.util.HashMap<>();
+                for (RenewalRequest pending : pendingRenewals) {
+                    renewalLookup.put(pending.getBorrowId(), pending);
+                }
+                req.setAttribute("pendingRenewalMap", renewalLookup);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
             }
 
@@ -147,9 +152,9 @@ public class LibrarianBorrowController extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/");
         } catch (Exception ex) {
 
-//            ex.printStackTrace();
-//            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-//            resp.sendRedirect(req.getContextPath() + "/");
+            // ex.printStackTrace();
+            // req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
+            // resp.sendRedirect(req.getContextPath() + "/");
             resp.setContentType("text/html;charset=UTF-8");
             resp.getWriter().print("<h1 style='color:red;'>LỖI RỒI: " + ex.getMessage() + "</h1>");
             resp.getWriter().print("<p>Chi tiết lỗi (StackTrace):</p><pre>");
@@ -176,7 +181,20 @@ public class LibrarianBorrowController extends HttpServlet {
             }
             long staffId = currentUser.getId();
 
-            if ("approve".equals(action)) {
+            if (path.contains("/renewal") && "approve".equals(action)) {
+                long renewalId = parseLongParameter(req, "renewalId", "ID yêu cầu gia hạn không hợp lệ");
+                libService.approveRenewalRequest(renewalId, staffId);
+                req.getSession().setAttribute("flash", "Đã phê duyệt yêu cầu gia hạn #" + renewalId);
+                resp.sendRedirect(req.getContextPath() + redirectBase);
+                return;
+            } else if (path.contains("/renewal") && "reject".equals(action)) {
+                long renewalId = parseLongParameter(req, "renewalId", "ID yêu cầu gia hạn không hợp lệ");
+                String note = req.getParameter("reason");
+                libService.rejectRenewalRequest(renewalId, note, staffId);
+                req.getSession().setAttribute("flash", "Đã từ chối yêu cầu gia hạn #" + renewalId);
+                resp.sendRedirect(req.getContextPath() + redirectBase);
+                return;
+            } else if ("approve".equals(action)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
 
@@ -188,6 +206,7 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 libService.approveRequest(id, barcode, staffId);
                 req.getSession().setAttribute("flash", "Duyệt thành công phiếu #" + id);
+                
 
             } else if ("return".equals(action)) {
                 String idStr = req.getParameter("id");
@@ -277,11 +296,51 @@ public class LibrarianBorrowController extends HttpServlet {
         return action;
     }
 
+    private long parseLongParameter(HttpServletRequest req, String name, String message) {
+        String value = req.getParameter(name);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     private String resolveRedirectBase(String path) {
-        if (path != null && path.startsWith("/admin/")) {
-            return ADMIN_BORROW_BASE;
+        if (path != null) {
+            if (path.startsWith(ADMIN_RENEWAL_BASE)) {
+                return ADMIN_RENEWAL_BASE;
+            }
+            if (path.startsWith(STAFF_RENEWAL_BASE)) {
+                return STAFF_RENEWAL_BASE;
+            }
+            if (path.startsWith("/admin/")) {
+                return ADMIN_BORROW_BASE;
+            }
         }
         return STAFF_BORROW_BASE;
+    }
+
+    private void handleRenewalQueue(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        List<RenewalRequest> tickets = libService.listPendingRenewalRequests();
+        String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
+        req.setAttribute("renewalTickets", tickets);
+        req.setAttribute("renewalActionPrefix", actionPrefix);
+        req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_requests.jsp").forward(req, resp);
+    }
+
+    private void handleRenewalDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        long renewalId = parseLongParameter(req, "id", "ID yêu cầu gia hạn không hợp lệ");
+        RenewalRequest ticket = libService.getRenewalRequest(renewalId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
+        }
+        String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
+        req.setAttribute("renewalTicket", ticket);
+        req.setAttribute("renewalActionPrefix", actionPrefix);
+        req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_request_detail.jsp").forward(req, resp);
     }
 
     private void requireStaff(HttpServletRequest req) {

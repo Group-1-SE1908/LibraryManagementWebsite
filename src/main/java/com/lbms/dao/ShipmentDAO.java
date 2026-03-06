@@ -16,8 +16,7 @@ public class ShipmentDAO {
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, borrowRecordId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next())
-                    return null;
+                if (!rs.next()) return null;
                 return mapOne(rs);
             }
         }
@@ -29,8 +28,7 @@ public class ShipmentDAO {
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next())
-                    return null;
+                if (!rs.next()) return null;
                 return mapOne(rs);
             }
         }
@@ -45,15 +43,14 @@ public class ShipmentDAO {
             ps.setString(3, phone);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next())
-                    return rs.getLong(1);
+                if (rs.next()) return rs.getLong(1);
                 return 0;
             }
         }
     }
 
     public void updateTracking(long shipmentId, String trackingCode, String status) throws SQLException {
-        String sql = "UPDATE shipments SET tracking_code=?, status=? WHERE id=?";
+        String sql = "UPDATE shipments SET tracking_code=?, status=?, updated_at=GETDATE() WHERE id=?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, trackingCode);
@@ -64,7 +61,7 @@ public class ShipmentDAO {
     }
 
     public void updateStatus(long shipmentId, String status) throws SQLException {
-        String sql = "UPDATE shipments SET status=? WHERE id=?";
+        String sql = "UPDATE shipments SET status=?, updated_at=GETDATE() WHERE id=?";
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -79,18 +76,15 @@ public class ShipmentDAO {
                 PreparedStatement ps = c.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             List<Shipment> out = new ArrayList<>();
-            while (rs.next())
-                out.add(mapOne(rs));
+            while (rs.next()) out.add(mapOne(rs));
             return out;
         }
     }
 
     private String baseSelect() {
-        return "SELECT s.delivery_id AS id, s.borrowing_id AS borrow_record_id, s.shipping_code AS tracking_code, s.delivery_status AS status, "
-                +
-                "'N/A' AS address, 'N/A' AS phone, b.borrow_date AS created_at, b.return_date AS updated_at, " +
-                "b.status AS br_status " +
-                "FROM Delivery s JOIN borrow_records b ON s.borrowing_id = b.id";
+        return "SELECT s.id, s.borrow_record_id, s.tracking_code, s.status, s.address, s.phone, "
+                + "s.created_at, s.updated_at, b.status AS br_status "
+                + "FROM shipments s JOIN borrow_records b ON s.borrow_record_id = b.id";
     }
 
     private Shipment mapOne(ResultSet rs) throws SQLException {

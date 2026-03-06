@@ -466,6 +466,7 @@
 
                     .renewal-history-record__meta,
                     .renewal-history-record__contact,
+                    .renewal-history-record__shipping,
                     .renewal-history-record__date {
                         display: flex;
                         justify-content: space-between;
@@ -480,6 +481,10 @@
                         letter-spacing: 0.3em;
                         text-transform: uppercase;
                         color: var(--text-muted);
+                    }
+
+                    .renewal-history-record__shipping {
+                        margin-top: 6px;
                     }
 
                     .renewal-history-record__value {
@@ -765,11 +770,34 @@
                                                         <div class="renewal-history-record__contact">
                                                             <span class="renewal-history-record__label">Liên hệ</span>
                                                             <strong class="renewal-history-record__value">
-                                                                <c:out value="${renewal.contactName}" default="Không có tên" /> ·
-                                                                <c:out value="${renewal.contactPhone}" default="Không có số" /> ·
-                                                                <c:out value="${renewal.contactEmail}" default="Không có email" />
+                                                                <c:out value="${not empty renewal.contactName ? renewal.contactName : r.user.fullName}" default="Không có tên" /> ·
+                                                                <c:out value="${not empty renewal.contactPhone ? renewal.contactPhone : r.user.phone}" default="Không có số" />
+                                                                <c:if test="${not empty renewal.contactEmail}">
+                                                                    · <c:out value="${renewal.contactEmail}" />
+                                                                </c:if>
                                                             </strong>
                                                         </div>
+                                                        <c:if test="${shipping != null && (not empty shipping.formattedAddress || not empty shipping.phone)}">
+                                                            <div class="renewal-history-record__shipping">
+                                                                <span class="renewal-history-record__label">Địa chỉ giao</span>
+                                                                <strong class="renewal-history-record__value">
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty shipping.formattedAddress}">
+                                                                            <c:out value="${shipping.formattedAddress}" />
+                                                                        </c:when>
+                                                                        <c:otherwise>Chưa có địa chỉ</c:otherwise>
+                                                                    </c:choose>
+                                                                </strong>
+                                                            </div>
+                                                            <c:if test="${not empty shipping.phone}">
+                                                                <div class="renewal-history-record__shipping">
+                                                                    <span class="renewal-history-record__label">SĐT giao hàng</span>
+                                                                    <strong class="renewal-history-record__value">
+                                                                        <c:out value="${shipping.phone}" />
+                                                                    </strong>
+                                                                </div>
+                                                            </c:if>
+                                                        </c:if>
                                                         <div class="renewal-history-record__date">
                                                             <span class="renewal-history-record__label">Gửi lúc</span>
                                                             <strong class="renewal-history-record__value">

@@ -400,7 +400,7 @@ public class BorrowController extends HttpServlet {
     private List<String> statusesForFilter(String normalized) {
         switch (normalized) {
             case "borrowing":
-                return List.of("BORROWED", "APPROVED");
+                return List.of("BORROWED");
             case "pending":
                 return List.of("REQUESTED", "RENEWAL_REQUESTED");
             case "returned":
