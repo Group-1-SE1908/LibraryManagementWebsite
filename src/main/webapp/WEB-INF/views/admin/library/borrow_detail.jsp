@@ -168,7 +168,7 @@
                         </c:choose>
 
                         <c:choose>
-                            <c:when test="${record.borrowMethod == 'ONLINE' && record.status == 'APPROVED' || record.status == 'BORROWED'}">
+                            <c:when test="${record.borrowMethod == 'ONLINE' && record.status == 'APPROVED'}">
                                 <div class="mt-4 text-end">
                                     <button type="button" class="btn btn-warning fw-bold text-dark px-4 py-2" onclick="openGHTKModal('${record.groupCode}')">
                                         🚀 Giao toàn bộ đơn GHTK
