@@ -332,10 +332,9 @@ public class LibrarianBorrowService {
             c.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = c.prepareStatement(
-                        "UPDATE borrow_records SET borrow_date = ?, due_date = ?, status = 'BORROWED' WHERE id = ?")) {
-                    ps.setDate(1, Date.valueOf(baseDate));
-                    ps.setDate(2, Date.valueOf(nextDue));
-                    ps.setLong(3, record.getId());
+                        "UPDATE borrow_records SET due_date = ?, status = 'BORROWED' WHERE id = ?")) {
+                    ps.setDate(1, Date.valueOf(nextDue));
+                    ps.setLong(2, record.getId());
                     ps.executeUpdate();
                 }
                 try (PreparedStatement ps = c.prepareStatement(
