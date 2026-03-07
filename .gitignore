@@ -38,3 +38,10 @@ Thumbs.db
 
 # Agent
 .github/
+out/
+target/
+build/
+*.class
+*.log
+*.iml
+.idea/
