@@ -236,7 +236,7 @@ public class BorrowDAO {
     }
 
     private String baseSelect() {
-        // ← chỉ SELECT deposit_amount 1 lần, bỏ br.despoit_amount thừa
+        
         return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.quantity, br.copy_id, "
                 + "br.borrow_date, br.due_date, br.return_date, br.status, br.fine_amount, "
                 + "br.deposit_amount, br.is_paid, br.borrow_method, "
