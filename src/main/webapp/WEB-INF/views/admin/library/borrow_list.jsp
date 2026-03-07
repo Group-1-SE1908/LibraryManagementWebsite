@@ -23,53 +23,126 @@
                 gap: 15px;
                 align-items: flex-end;
                 border: 1px solid #e2e8f0;
-                flex-wrap: wrap; 
+                flex-wrap: wrap;
             }
 
-            .filter-group { display: flex; flex-direction: column; gap: 5px; }
-            .filter-group label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .filter-group label {
+                font-size: 12px;
+                font-weight: 700;
+                color: #64748b;
+                text-transform: uppercase;
+            }
             .filter-group input, .filter-group select {
-                padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; min-width: 200px; outline: none; transition: 0.2s;
+                padding: 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                min-width: 200px;
+                outline: none;
+                transition: 0.2s;
             }
             .filter-group input:focus, .filter-group select:focus {
-                border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+                border-color: #0ea5e9;
+                box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
             }
 
             /* ================= BADGE TRẠNG THÁI ================= */
             .status-badge {
-                display: inline-flex; align-items: center; justify-content: center;
-                padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+                position: static !important; /* Ép badge không bị nhảy ra khỏi div */
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
                 white-space: nowrap; /* Chống rớt chữ trong badge */
             }
-            .status-REQUESTED { background: #fef3c7; color: #92400e; }
-            .status-APPROVED { background: #dbeafe; color: #1d4ed8; }
-            .status-RECEIVED { background: #ccfbf1; color: #0f766e; }
-            .status-BORROWED { background: #dcfce7; color: #166534; }
-            .status-RETURNED { background: #e2e8f0; color: #334155; }
-            .status-REJECTED { background: #f1f5f9; color: #475569; }
+            .status-REQUESTED {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .status-APPROVED {
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+            .status-RECEIVED {
+                background: #ccfbf1;
+                color: #0f766e;
+            }
+            .status-BORROWED {
+                background: #dcfce7;
+                color: #166534;
+            }
+            .status-RETURNED {
+                background: #e2e8f0;
+                color: #334155;
+            }
+            .status-REJECTED {
+                background: #f1f5f9;
+                color: #475569;
+            }
 
             /* ================= GIAO DIỆN CARD CHO ĐƠN MƯỢN ================= */
             .order-card {
-                background: #ffffff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-                margin-bottom: 25px; border: 1px solid #cbd5e1; overflow: hidden;
+                background: #ffffff;
+                border-radius: 10px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                margin-bottom: 25px;
+                border: 1px solid #cbd5e1;
+                overflow: hidden;
             }
 
             .order-header {
-                background: #f8fafc; padding: 15px 25px; border-bottom: 2px solid #e2e8f0;
-                display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+                background: #f8fafc;
+                padding: 15px 25px;
+                border-bottom: 2px solid #e2e8f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
             }
 
-            .order-header-info { display: flex; flex-direction: column; gap: 6px; }
-            .order-header-info .order-id { font-weight: 800; color: #0f172a; font-size: 16px; }
-            .order-header-info .user-meta { font-size: 13px; color: #475569; font-weight: 500; }
+            .order-header-info {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .order-header-info .order-id {
+                font-weight: 800;
+                color: #0f172a;
+                font-size: 16px;
+            }
+            .order-header-info .user-meta {
+                font-size: 13px;
+                color: #475569;
+                font-weight: 500;
+            }
 
             /* --- CẤU TRÚC HÀNG SÁCH (CHỐNG VỠ LAYOUT) --- */
             .book-item-row {
-                display: flex; justify-content: space-between; align-items: center;
-                padding: 18px 25px; border-bottom: 1px solid #f1f5f9; gap: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 18px 25px;
+                border-bottom: 1px solid #f1f5f9;
+                gap: 20px;
             }
-            .book-item-row:hover { background-color: #f8fafc; }
-            .book-item-row:last-child { border-bottom: none; }
+            .book-item-row:hover {
+                background-color: #f8fafc;
+            }
+            .book-item-row:last-child {
+                border-bottom: none;
+            }
 
             .book-info {
                 flex: 1; /* Cho phép chiếm hết không gian trống */
@@ -77,52 +150,111 @@
             }
 
             .book-info .book-title {
-                font-weight: 700; color: #1e293b; font-size: 15px; margin-bottom: 8px;
+                font-weight: 700;
+                color: #1e293b;
+                font-size: 15px;
+                margin-bottom: 8px;
             }
 
             /* Nhóm thông tin meta sách thiết kế dạng các khối (block) inline */
             .book-meta {
-                display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 13px; color: #64748b;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px 20px;
+                font-size: 13px;
+                color: #64748b;
             }
-            
+
             /* Khối chứa từng thông tin (Ngày, Hẹn trả, Trạng thái) */
             .meta-item {
-                display: flex; align-items: center; gap: 6px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
                 white-space: nowrap; /* BẮT BUỘC: Giữ các chữ dính liền, không bị vỡ vụn */
             }
 
             .book-actions {
-                display: flex; align-items: center; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: flex-end;
                 flex-shrink: 0; /* BẮT BUỘC: Cấm Flexbox ép nhỏ các nút bấm */
             }
 
             /* ================= NÚT BẤM ================= */
             .btn-modern {
-                padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
-                border: none; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+                text-decoration: none;
+                display: inline-block;
+                text-align: center;
                 white-space: nowrap; /* Chống rớt chữ trong nút */
             }
-            .btn-modern.primary { background: #0b57d0; color: white; }
-            .btn-modern.primary:hover { background: #0842a0; box-shadow: 0 2px 4px rgba(11,87,208,0.3); }
-            .btn-modern.success { background: #10b981; color: white; }
-            .btn-modern.success:hover { background: #059669; box-shadow: 0 2px 4px rgba(16,185,129,0.3); }
-            .btn-modern.danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-            .btn-modern.danger:hover { background: #fecaca; }
-            .btn-modern.secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-            .btn-modern.secondary:hover { background: #e2e8f0; }
+            .btn-modern.primary {
+                background: #0b57d0;
+                color: white;
+            }
+            .btn-modern.primary:hover {
+                background: #0842a0;
+                box-shadow: 0 2px 4px rgba(11,87,208,0.3);
+            }
+            .btn-modern.success {
+                background: #10b981;
+                color: white;
+            }
+            .btn-modern.success:hover {
+                background: #059669;
+                box-shadow: 0 2px 4px rgba(16,185,129,0.3);
+            }
+            .btn-modern.danger {
+                background: #fee2e2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+            }
+            .btn-modern.danger:hover {
+                background: #fecaca;
+            }
+            .btn-modern.secondary {
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #cbd5e1;
+            }
+            .btn-modern.secondary:hover {
+                background: #e2e8f0;
+            }
 
             /* Bố cục chung */
             .admin-main-content {
-                margin-left: 280px; min-height: 100vh; padding: 24px 32px; box-sizing: border-box; background-color: #f4f7f6;
+                margin-left: 280px;
+                min-height: 100vh;
+                padding: 24px 32px;
+                box-sizing: border-box;
+                background-color: #f4f7f6;
             }
 
             /* Responsive tự động đưa cột hành động xuống dưới nếu màn hình quá hẹp */
             @media (max-width: 1024px) {
-                .admin-main-content { margin-left: 0; padding: 16px; }
+                .admin-main-content {
+                    margin-left: 0;
+                    padding: 16px;
+                }
             }
             @media (max-width: 768px) {
-                .book-item-row { flex-direction: column; align-items: flex-start; }
-                .book-actions { width: 100%; justify-content: flex-start; margin-top: 10px; }
+                .book-item-row {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                .book-actions {
+                    width: 100%;
+                    justify-content: flex-start;
+                    margin-top: 10px;
+                }
             }
         </style>
     </head>
@@ -153,7 +285,7 @@
                             <option value="RETURNED" ${param.status=='RETURNED' ? 'selected' : '' }>Đã trả</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn-modern primary" style="padding: 10px 20px;">Áp dụng lọc</button>
+                    <button type="submit" class="btn-modern primary" style="padding: 14px 20px;">Áp dụng lọc</button>
                     <a href="${pageContext.request.contextPath}/admin/borrowlibrary" class="btn-modern secondary" style="padding: 10px 20px;">Xóa lọc</a>
                 </form>
 
@@ -229,13 +361,13 @@
 
                                         <div class="book-info">
                                             <div class="book-title">📖 ${r.book.title}</div>
-                                            
+
                                             <div class="book-meta">
                                                 <div class="meta-item">
-                                                    <strong>Ngày mượn:</strong> ${not empty r.borrowDate ? r.borrowDate : '---'}
+                                                    <strong>Ngày mượn:</strong> ${r.formattedBorrowDate}
                                                 </div>
                                                 <div class="meta-item">
-                                                    <strong>Hẹn trả:</strong> <span style="color:#ef4444;">${not empty r.dueDate ? r.dueDate : '---'}</span>
+                                                    <strong>Hẹn trả:</strong> <span style="color:#ef4444;">${r.formattedDueDate}</span>
                                                 </div>
                                                 <div class="meta-item">
                                                     <c:set var="itemStatus" value="${fn:toUpperCase(fn:trim(r.status))}" />
@@ -279,7 +411,7 @@
                                                     <button onclick="submitReturn(${r.id})" class="btn-modern success">Xác nhận</button>
                                                 </div>
                                                 <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn-modern success">Nhận trả</button>
-                                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Chi tiết</a>
+                                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Xem Chi tiết</a>
                                             </c:if>
 
                                             <c:if test="${r.status == 'APPROVED'}">
@@ -294,7 +426,7 @@
                                                         </form>
                                                     </c:otherwise>
                                                 </c:choose>
-                                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Chi tiết</a>
+                                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary/detail?id=${r.id}" class="btn-modern secondary">Xem Chi tiết</a>
                                             </c:if>
 
                                             <c:if test="${r.status == 'RETURNED' || r.status == 'REJECTED' || r.status == 'OVERDUE'}">
@@ -420,7 +552,7 @@
                             input.name = 'reason';
                             input.value = result.value;
                             formElement.appendChild(input);
-                            formElement.submit(); 
+                            formElement.submit();
                         }
                     });
                 }
