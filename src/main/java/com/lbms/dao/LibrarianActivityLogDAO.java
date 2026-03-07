@@ -84,10 +84,8 @@ public class LibrarianActivityLogDAO {
                         "FROM LibrarianActivityLog l " +
                         "INNER JOIN [User] u ON l.user_id = u.user_id " +
                         "INNER JOIN [Role] r ON u.role_id = r.role_id " +
-                        "WHERE 1=1 " // Để dễ nối chuỗi AND
-        );
+                        "WHERE r.role_name = 'LIBRARIAN' ");
 
-        // Thêm điều kiện lọc dựa trên nội dung cột action
         if ("BOOK".equals(filterType)) {
             // Lọc các hoạt động Thêm, Sửa, Xóa sách
             sql.append(

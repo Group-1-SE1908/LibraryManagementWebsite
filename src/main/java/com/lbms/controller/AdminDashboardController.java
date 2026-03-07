@@ -32,9 +32,40 @@ public class AdminDashboardController extends HttpServlet {
         String startParam = request.getParameter("startDate");
         String endParam = request.getParameter("endDate");
         String action = request.getParameter("action");
+        if (startParam != null && startParam.trim().isEmpty())
+            startParam = null;
 
-        if ((startParam != null && !startParam.isEmpty() && !isValidDate(startParam)) ||
-                (endParam != null && !endParam.isEmpty() && !isValidDate(endParam))) {
+        if (startParam != null && startParam.trim().isEmpty())
+            startParam = null;
+        if (endParam != null && endParam.trim().isEmpty())
+            endParam = null;
+
+        if ((startParam != null && !isValidDate(startParam)) ||
+                (endParam != null && !isValidDate(endParam))) {
+
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        if (startParam != null)
+            startDate = LocalDate.parse(startParam);
+        if (endParam != null)
+            endDate = LocalDate.parse(endParam);
+
+        if ((startDate != null && startDate.isAfter(today)) ||
+                (endDate != null && endDate.isAfter(today))) {
+
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            return;
+        }
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             return;
         }
@@ -66,7 +97,7 @@ public class AdminDashboardController extends HttpServlet {
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
 
         try (Workbook workbook = new XSSFWorkbook()) {
-            // --- CẤU HÌNH STYLES ---
+
             CellStyle headerStyle = createStyle(workbook, IndexedColors.INDIGO.getIndex(), true,
                     HorizontalAlignment.CENTER);
             CellStyle dataStyle = createStyle(workbook, null, false, HorizontalAlignment.LEFT);
