@@ -1,6 +1,6 @@
 package com.lbms.service;
 
-import com.lbms.dao.LibrarianBorrowDAO; // Đã đổi sang DAO mới
+import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.RenewalRequestDAO;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.RenewalRequest;
@@ -93,9 +93,8 @@ public class LibrarianBorrowService {
 
     public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false); // Bắt đầu Transaction để đảm bảo tính toàn vẹn dữ liệu
+            c.setAutoCommit(false); 
             try {
-                // Lấy thông tin chi tiết phiếu mượn để ghi log
                 String bookTitle = "N/A";
                 String userName = "N/A";
                 String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br " +
@@ -113,7 +112,7 @@ public class LibrarianBorrowService {
                 int copyId = -1;
                 long bookIdFromCopy = -1;
 
-                // 1. Kiểm tra mã vạch (Barcode) có tồn tại và đang sẵn sàng (AVAILABLE) không
+                // 1. Kiểm tra mã vạch
                 String checkCopy = "SELECT copy_id, book_id FROM BookCopy WHERE barcode = ? AND status = 'AVAILABLE'";
                 try (PreparedStatement ps = c.prepareStatement(checkCopy)) {
                     ps.setString(1, barcode);
@@ -128,8 +127,7 @@ public class LibrarianBorrowService {
                     }
                 }
 
-                // 2. Kiểm tra xem cuốn sách này có đúng là đầu sách mà người dùng đã yêu cầu
-                // không
+                // 2. Kiểm tra đầu sách
                 String checkBr = "SELECT book_id FROM borrow_records WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(checkBr)) {
                     ps.setLong(1, borrowId);
@@ -152,16 +150,15 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
-                // 4. Cập nhật phiếu mượn: Chuyển sang BORROWED, gán copy_id (Chờ thủ thư xác
-                // nhận lấy)
-                String updateBr = "UPDATE borrow_records SET status = 'BORROWED', copy_id = ? WHERE id = ?";
+                // 4. [ĐÃ SỬA LỖI TẠI ĐÂY] Cập nhật phiếu mượn: Chuyển sang APPROVED để UI hiện nút GHTK hoặc Xác nhận lấy
+                String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
                     ps.setInt(1, copyId);
                     ps.setLong(2, borrowId);
                     ps.executeUpdate();
                 }
 
-                // 5. Trừ số lượng sách trong kho (Bảng Book)
+                // 5. Trừ số lượng sách trong kho
                 try (PreparedStatement ps = c.prepareStatement(
                         "UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
                     ps.setLong(1, bookIdFromCopy);
@@ -170,13 +167,14 @@ public class LibrarianBorrowService {
                         throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
                     }
                 }
-                // 6. Ghi log hoạt động duyệt mượn
+                
+                // 6. Ghi log hoạt động
                 logDAO.addActivityLog((int) staffId,
                         "Duyệt mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
 
-                c.commit(); // Hoàn tất mọi thay đổi
+                c.commit(); 
             } catch (Exception e) {
-                c.rollback(); // Nếu có bất kỳ lỗi nào, hủy bỏ toàn bộ các thay đổi trên
+                c.rollback(); 
                 throw e;
             }
         }
@@ -186,8 +184,6 @@ public class LibrarianBorrowService {
         LocalDate borrowDate = LocalDate.now();
         LocalDate dueDate = borrowDate.plusDays(7);
 
-        // Cập nhật trạng thái sang RECEIVED (Thay cho BORROWED cũ để phân biệt việc đã
-        // cầm sách)
         String sql = "UPDATE borrow_records SET status = 'RECEIVED', borrow_date = ?, due_date = ? WHERE id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setDate(1, java.sql.Date.valueOf(borrowDate));
@@ -205,11 +201,8 @@ public class LibrarianBorrowService {
         String bookTitle = record.getBook().getTitle();
         String userName = record.getUser().getFullName();
         libDAO.rejectRequest(borrowId, reason);
-        // Ghi log hoạt động từ chối mượn
         logDAO.addActivityLog((int) staffId,
-
                 "Từ chối mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
-
     }
 
     public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
@@ -232,7 +225,6 @@ public class LibrarianBorrowService {
                     }
                 }
 
-                // Gọi hàm countActiveBorrows từ libDAO
                 int currentBorrowed = libDAO.countActiveBorrows(userId);
                 if (currentBorrowed + barcodes.size() > 5) {
                     throw new IllegalArgumentException(
@@ -402,11 +394,9 @@ public class LibrarianBorrowService {
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
-        // Logic tìm kiếm đã được tối ưu trong LibrarianBorrowDAO
         return libDAO.searchBorrowings(keyword, status, method);
     }
 
-    // Hàm bổ sung để lấy chi tiết phiếu mượn qua DAO mới
     public BorrowRecord getDetail(long id) throws SQLException {
         return libDAO.findById(id);
     }

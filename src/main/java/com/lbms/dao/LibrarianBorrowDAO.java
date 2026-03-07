@@ -14,32 +14,33 @@ public class LibrarianBorrowDAO {
         ensureBorrowMethodColumn();
     }
 
-//    private String baseSelect() {
+//        private String baseSelect() {
 //        return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
-//                + "br.quantity AS borrow_qty, " // Số lượng sách trong phiếu mượn này
+//                + "br.quantity AS borrow_qty, " 
 //                + "br.status AS borrow_status, "
-//                + "br.fine_amount, br.borrow_method, "
-//                // LẤY CÁC CỘT ĐỊA CHỈ GIAO HÀNG
-//                + "br.receiver_name, br.receiver_phone, br.receiver_address, "
+//                + "br.fine_amount, br.borrow_method, br.group_code, " // <--- Thêm br.group_code ở đây
+//                // Cột địa chỉ (Tùy theo bảng thực tế của bạn, nếu bạn dùng shipping_recipient thì sửa lại)
+//                + "br.shipping_recipient AS receiver_name, br.shipping_phone AS receiver_phone, br.shipping_street AS receiver_address, "
 //                + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
 //                + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
-//                + "bk.quantity AS book_qty_stock, " // Tồn kho thực tế của sách
+//                + "bk.quantity AS book_qty_stock, " // <--- Cột gây ra lỗi vừa nãy
 //                + "bc.barcode AS book_barcode "
 //                + "FROM borrow_records br "
 //                + "JOIN [User] u ON br.user_id = u.user_id "
 //                + "JOIN Book bk ON br.book_id = bk.book_id "
 //                + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
 //    }
-        private String baseSelect() {
+    private String baseSelect() {
         return "SELECT br.id AS borrowing_id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, "
-                + "br.quantity AS borrow_qty, " 
+                + "br.quantity AS borrow_qty, "
                 + "br.status AS borrow_status, "
-                + "br.fine_amount, br.borrow_method, br.group_code, " // <--- Thêm br.group_code ở đây
-                // Cột địa chỉ (Tùy theo bảng thực tế của bạn, nếu bạn dùng shipping_recipient thì sửa lại)
-                + "br.shipping_recipient AS receiver_name, br.shipping_phone AS receiver_phone, br.shipping_street AS receiver_address, "
+                + "br.fine_amount, br.borrow_method, br.group_code, "
+                // LẤY ĐẦY ĐỦ CÁC CỘT ĐỊA CHỈ TỪ DATABASE:
+                + "br.shipping_recipient, br.shipping_phone, br.shipping_street, br.shipping_residence, "
+                + "br.shipping_ward, br.shipping_district, br.shipping_city, "
                 + "u.email AS user_email, u.full_name AS user_full_name, u.phone AS user_phone, u.address AS user_address, "
                 + "bk.title AS book_title, bk.author AS book_author, bk.isbn AS book_isbn, bk.image AS book_image, "
-                + "bk.quantity AS book_qty_stock, " // <--- Cột gây ra lỗi vừa nãy
+                + "bk.quantity AS book_qty_stock, "
                 + "bc.barcode AS book_barcode "
                 + "FROM borrow_records br "
                 + "JOIN [User] u ON br.user_id = u.user_id "
@@ -216,12 +217,22 @@ public class LibrarianBorrowDAO {
         br.setBorrowMethod(rs.getString("borrow_method"));
         br.setGroupCode(rs.getString("group_code"));
 
-        // 4. QUAN TRỌNG: ÁNH XẠ THÔNG TIN GIAO HÀNG (Dành cho chức năng GHTK)
+//        // 4. QUAN TRỌNG: ÁNH XẠ THÔNG TIN GIAO HÀNG (Dành cho chức năng GHTK)
+//        ShippingDetails sd = new ShippingDetails();
+//        sd.setRecipient(rs.getString("receiver_name"));
+//        sd.setPhone(rs.getString("receiver_phone"));
+//        // Lưu địa chỉ đầy đủ vào street để hiển thị qua getFormattedAddress()
+//        sd.setStreet(rs.getString("receiver_address"));
+//        br.setShippingDetails(sd);
+// 4. QUAN TRỌNG: ÁNH XẠ THÔNG TIN GIAO HÀNG ĐẦY ĐỦ
         ShippingDetails sd = new ShippingDetails();
-        sd.setRecipient(rs.getString("receiver_name"));
-        sd.setPhone(rs.getString("receiver_phone"));
-        // Lưu địa chỉ đầy đủ vào street để hiển thị qua getFormattedAddress()
-        sd.setStreet(rs.getString("receiver_address"));
+        sd.setRecipient(rs.getString("shipping_recipient"));
+        sd.setPhone(rs.getString("shipping_phone"));
+        sd.setStreet(rs.getString("shipping_street"));
+        sd.setResidence(rs.getString("shipping_residence"));
+        sd.setWard(rs.getString("shipping_ward"));
+        sd.setDistrict(rs.getString("shipping_district"));
+        sd.setCity(rs.getString("shipping_city"));
         br.setShippingDetails(sd);
 
         // 5. Ánh xạ bản sao sách (Barcode)
@@ -280,6 +291,17 @@ public class LibrarianBorrowDAO {
             ps.setString(1, reason);
             ps.setLong(2, id);
             ps.executeUpdate();
+        }
+    }
+    
+    // Lấy tất cả các phiếu mượn chung 1 đơn (cùng group_code)
+    public List<BorrowRecord> findByGroupCode(String groupCode) throws SQLException {
+        String sql = baseSelect() + " WHERE br.group_code = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, groupCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                return mapList(rs); // Tái sử dụng hàm mapList đã có sẵn
+            }
         }
     }
 

@@ -17,36 +17,39 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
-        "/staff/borrowlibrary",
-        "/staff/borrowlibrary/approve",
-        "/staff/borrowlibrary/reject",
-        "/staff/borrowlibrary/return",
-        "/staff/borrowlibrary/detail",
-        "/staff/borrowlibrary/inperson",
-        "/staff/borrowlibrary/receive",
-        "/staff/renewal",
-        "/staff/renewal/approve",
-        "/staff/renewal/reject",
-        "/staff/renewal/view",
-        "/admin/borrowlibrary",
-        "/admin/borrowlibrary/approve",
-        "/admin/borrowlibrary/reject",
-        "/admin/borrowlibrary/return",
-        "/admin/borrowlibrary/detail",
-        "/admin/borrowlibrary/inperson",
-        "/admin/borrowlibrary/receive",
-        "/admin/renewal",
-        "/admin/renewal/approve",
-        "/admin/renewal/reject",
-        "/admin/renewal/view",
-        "/admin/books",
-        "/admin/books/approve",
-        "/admin/books/reject",
-        "/admin/books/return",
-        "/admin/books/detail",
-        "/admin/books/inperson",
-        "/admin/books/receive"
-})
+    "/staff/borrowlibrary",
+    "/staff/borrowlibrary/approve",
+    "/staff/borrowlibrary/reject",
+    "/staff/borrowlibrary/return",
+    "/staff/borrowlibrary/detail",
+    "/staff/borrowlibrary/inperson",
+    "/staff/borrowlibrary/receive",
+    "/staff/renewal",
+    "/staff/renewal/approve",
+    "/staff/renewal/reject",
+    "/staff/renewal/view",
+    "/staff/borrowlibrary/ship_fee",
+    "/staff/borrowlibrary/ship_confirm",
+    "/admin/borrowlibrary",
+    "/admin/borrowlibrary/approve",
+    "/admin/borrowlibrary/reject",
+    "/admin/borrowlibrary/return",
+    "/admin/borrowlibrary/detail",
+    "/admin/borrowlibrary/inperson",
+    "/admin/borrowlibrary/receive",
+    "/admin/renewal",
+    "/admin/renewal/approve",
+    "/admin/renewal/reject",
+    "/admin/renewal/view",
+    "/admin/books",
+    "/admin/books/approve",
+    "/admin/books/reject",
+    "/admin/books/return",
+    "/admin/books/detail",
+    "/admin/books/inperson",
+    "/admin/books/receive",
+    "/admin/borrowlibrary/ship_fee",
+    "/admin/borrowlibrary/ship_confirm",})
 public class LibrarianBorrowController extends HttpServlet {
 
     private static final String STAFF_BORROW_BASE = "/staff/borrowlibrary";
@@ -95,10 +98,49 @@ public class LibrarianBorrowController extends HttpServlet {
                     req.setAttribute("remaining", remaining > 0 ? remaining : 0);
                     req.setAttribute("record", record);
                     req.setAttribute("stats", stats);
+                    try {
+                        com.lbms.model.Shipment shipment = new com.lbms.dao.ShipmentDAO().findByBorrowRecordId(id);
+                        req.setAttribute("shipment", shipment);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 req.setAttribute("record", record);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_detail.jsp").forward(req, resp);
 
+            } else if ("ship_fee".equals(action)) {
+                String groupCode = req.getParameter("groupCode");
+                if (groupCode == null || groupCode.isBlank()) {
+                    resp.setStatus(400);
+                    resp.getWriter().write("{\"error\": \"Thiếu mã nhóm\"}");
+                    return;
+                }
+
+                // Lấy tất cả sách trong cùng 1 đơn (groupCode)
+                List<BorrowRecord> groupRecords = libDAO.findByGroupCode(groupCode);
+                if (groupRecords == null || groupRecords.isEmpty()) {
+                    resp.setStatus(404);
+                    resp.getWriter().write("{\"error\": \"Không tìm thấy đơn hàng\"}");
+                    return;
+                }
+
+                // Tính tổng trọng lượng (Giả định mỗi cuốn sách nặng 500 gram)
+                int totalBooks = 0;
+                for (BorrowRecord br : groupRecords) {
+                    totalBooks += br.getQuantity();
+                }
+                int totalWeight = totalBooks * 500;
+
+                // Gọi GHTK tính phí
+                BorrowRecord firstRecord = groupRecords.get(0);
+                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(), totalWeight);
+
+                // Trả về dữ liệu định dạng JSON cho AJAX hiển thị lên Modal
+                resp.setContentType("application/json");
+                resp.setCharacterEncoding("UTF-8");
+                resp.getWriter().write(String.format("{\"weight\": %d, \"totalBooks\": %d, \"fee\": %d}",
+                        totalWeight, totalBooks, fee));
+                return;
             } else if ("inperson".equals(action)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
@@ -242,6 +284,16 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash",
                         "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
 
+                resp.sendRedirect(req.getContextPath() + redirectBase);
+                return;
+            } else if ("ship_confirm".equals(action)) {
+                String groupCode = req.getParameter("groupCode");
+
+                com.lbms.service.ShippingService shippingService = new com.lbms.service.ShippingService();
+                shippingService.createGroupShipment(groupCode);
+
+                req.getSession().setAttribute("flash", "Đã đẩy đơn hàng gồm nhiều sách sang GHTK thành công!");
+                // Sau khi giao xong cả nhóm, quay thẳng về trang danh sách (borrow_list)
                 resp.sendRedirect(req.getContextPath() + redirectBase);
                 return;
             }
