@@ -1,9 +1,16 @@
 package com.lbms.controller;
-
+import com.lbms.dao.BookDAO;
+import com.lbms.model.Book;
+import java.util.ArrayList;
 import com.lbms.config.VNPayConfig;
+import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
+import com.lbms.model.CartItem;
+import com.lbms.model.ShippingDetails;
 
+import com.lbms.service.CartService;
+import com.lbms.service.EmailService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,9 +21,10 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @WebServlet(urlPatterns = { "/vnpay-return" })
 public class VNPayReturnController extends HttpServlet {
@@ -77,7 +85,121 @@ public class VNPayReturnController extends HttpServlet {
 
             if (signValue.equals(vnp_SecureHash)) {
                 if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
-                    if (borrowId > 0) {
+                    if (vnp_TxnRef.startsWith("CART-")) {
+                        // Xử lý đặt sách online
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession().getAttribute("cartCheckout-" + vnp_TxnRef);
+                        if (checkoutData != null) {
+                            // Thực hiện borrow như trong CartController
+                            String method = (String) checkoutData.get("method");
+                            String contactName = (String) checkoutData.get("contactName");
+                            String contactPhone = (String) checkoutData.get("contactPhone");
+                            String contactEmail = (String) checkoutData.get("contactEmail");
+                            int borrowDays = (Integer) checkoutData.get("borrowDays");
+                            LocalDate returnDate = (LocalDate) checkoutData.get("returnDate");
+                            String formattedReturnDate = (String) checkoutData.get("formattedReturnDate");
+                            String formattedPickupDate = (String) checkoutData.get("formattedPickupDate");
+                            ShippingDetails shippingDetails = (ShippingDetails) checkoutData.get("shippingDetails");
+                            @SuppressWarnings("unchecked")
+                            List<CartItem> items = (List<CartItem>) checkoutData.get("items");
+
+                            // Gửi request
+                            @SuppressWarnings("unchecked")
+                            List<BigDecimal> depositAmounts = (List<BigDecimal>) checkoutData.get("depositAmounts");
+
+// Nếu null hoặc toàn 0 → tính lại từ DB
+                            if (depositAmounts == null || depositAmounts.stream()
+                                    .allMatch(d -> d == null || d.compareTo(BigDecimal.ZERO) == 0)) {
+                                BookDAO bookDAO = new BookDAO();
+                                depositAmounts = new ArrayList<>();
+                                for (CartItem item : items) {
+                                    Book book = bookDAO.findById(item.getBookId());
+                                    BigDecimal price = (book != null && book.getPrice() != null)
+                                            ? BigDecimal.valueOf(book.getPrice())
+                                            : BigDecimal.ZERO;
+                                    BigDecimal deposit = price
+                                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+                                            .multiply(BigDecimal.valueOf(0.5));
+                                    depositAmounts.add(deposit);
+                                }
+                            }
+
+                            for (int i = 0; i < items.size(); i++) {
+                                CartItem item = items.get(i);
+                                String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
+                                BigDecimal depositAmount = (i < depositAmounts.size() && depositAmounts.get(i) != null)
+                                        ? depositAmounts.get(i)
+                                        : BigDecimal.ZERO;
+                                borrowService.requestBorrowCopies(
+                                        currentUser.getId(),
+                                        item.getBookId(),
+                                        method,
+                                        shippingDetails,
+                                        item.getQuantity(),
+                                        groupCode,
+                                        depositAmount
+                                );
+                            }
+                            // Clear cart
+                            new CartService().clearCart(currentUser.getId());
+
+                            // Notify librarians
+                            try {
+                                UserDAO userDAO = new UserDAO();
+                                List<User> librarians = userDAO.findByRoleName("LIBRARIAN");
+                                if (!librarians.isEmpty()) {
+                                    String emails = librarians.stream()
+                                            .map(User::getEmail)
+                                            .filter(Objects::nonNull)
+                                            .map(String::trim)
+                                            .filter(email -> !email.isBlank())
+                                            .distinct()
+                                            .collect(Collectors.joining(","));
+                                    if (!emails.isBlank()) {
+                                        String displayName = currentUser.getFullName() != null ? currentUser.getFullName() : "Người dùng";
+                                        String userEmail = currentUser.getEmail() != null ? currentUser.getEmail() : "chưa cung cấp";
+                                        String subject = "LBMS - Yêu cầu mượn sách mới từ " + displayName;
+                                        StringBuilder body = new StringBuilder();
+                                        body.append("<h3>Yêu cầu mượn sách mới</h3>");
+                                        body.append("<p>Người dùng ").append(displayName)
+                                                .append(" (").append(userEmail).append(") vừa gửi yêu cầu mượn sách.</p>");
+                                        body.append("<p>Phương thức: <strong>online</strong></p>");
+                                        body.append("<h4>Thông tin liên hệ</h4>");
+                                        body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
+                                        body.append("<li><strong>Tên:</strong> ").append(contactName).append("</li>");
+                                        body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone).append("</li>");
+                                        body.append("<li><strong>Email:</strong> ").append(contactEmail).append("</li>");
+                                        body.append("</ul>");
+                                        body.append("<h4>Chi tiết sách</h4>");
+                                        body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
+                                        for (CartItem item : items) {
+                                            body.append("<li>").append(item.getBook().getTitle()).append(" (").append(item.getQuantity()).append(" cuốn)</li>");
+                                        }
+                                        body.append("</ul>");
+                                        body.append("<p>Ngày trả dự kiến: ").append(formattedReturnDate).append("</p>");
+                                        if (shippingDetails != null) {
+                                            body.append("<p>Người nhận: ").append(shippingDetails.getRecipient()).append("</p>");
+                                            body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone()).append("</p>");
+                                            body.append("<p>Địa chỉ giao: ").append(shippingDetails.getFormattedAddress()).append("</p>");
+                                        }
+                                        body.append("<p>Vui lòng kiểm tra và xử lý yêu cầu.</p>");
+                                        new EmailService().send(emails, subject, body.toString());
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // Ignore email error
+                            }
+
+                            // Remove session data
+                            req.getSession().removeAttribute("cartCheckout-" + vnp_TxnRef);
+
+                            req.getSession().setAttribute("flash", "Thanh toán cọc thành công! Đặt sách online thành công.");
+                            resp.sendRedirect(req.getContextPath() + "/cart");
+                        } else {
+                            req.getSession().setAttribute("flash", "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
+                            resp.sendRedirect(req.getContextPath() + "/cart");
+                        }
+                    } else if (borrowId > 0) {
                         if (MODE_FINE.equals(mode)) {
                             borrowService.markFinePaid(borrowId);
                             req.getSession().setAttribute("flash", "Thanh toán phí phạt thành công!");

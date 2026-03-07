@@ -53,7 +53,7 @@ public class BorrowService {
     }
 
     public List<Long> requestBorrowCopies(long userId, long bookId, String method,
-            ShippingDetails shippingDetails, int quantity) throws SQLException {
+                                          ShippingDetails shippingDetails, int quantity, String groupCode, BigDecimal depositAmount) throws SQLException {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
         }
@@ -138,11 +138,31 @@ public class BorrowService {
         }
 
         List<Long> ids = new ArrayList<>(quantity);
+
+// tính tiền cọc = 50% giá sách
+        BigDecimal price = book.getPrice() != null
+                ? BigDecimal.valueOf(book.getPrice())
+                : BigDecimal.ZERO;
+
+        BigDecimal depositAmount = price.multiply(BigDecimal.valueOf(0.5));
+
         for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails,groupCode));
+            ids.add(borrowDAO.createRequest(
+                    userId,
+                    bookId,
+                    1,
+                    method,
+                    shippingDetails,
+                    groupCode,
+                    depositAmount
+            ));
         }
+
         return ids;
     }
+    
+    
+    
     
     
     

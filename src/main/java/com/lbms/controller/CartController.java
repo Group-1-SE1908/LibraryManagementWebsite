@@ -1,5 +1,6 @@
 package com.lbms.controller;
 
+import com.lbms.config.VNPayConfig;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Cart;
 import com.lbms.model.CartItem;
@@ -17,17 +18,25 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = { "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout" })
+@WebServlet(urlPatterns = { "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout", "/cart/checkout/process" })
 public class CartController extends HttpServlet {
 
     private CartService cartService;
@@ -49,19 +58,20 @@ public class CartController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!"/cart".equals(req.getServletPath())) {
-            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-            return;
-        }
+        String path = req.getServletPath();
         User currentUser = getCurrentUser(req);
         if (currentUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
         try {
-            Cart cart = cartService.getCart(currentUser.getId());
-            req.setAttribute("cart", cart);
-            req.getRequestDispatcher("/WEB-INF/views/cart.jsp").forward(req, resp);
+            if ("/cart".equals(path)) {
+                Cart cart = cartService.getCart(currentUser.getId());
+                req.setAttribute("cart", cart);
+                req.getRequestDispatcher("/WEB-INF/views/cart.jsp").forward(req, resp);
+            } else {
+                resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            }
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
@@ -89,12 +99,16 @@ public class CartController extends HttpServlet {
                 case "/cart/checkout":
                     handleBorrowRequestFromCart(req, resp, currentUser);
                     break;
+                case "/cart/checkout/process":
+                    handleCheckoutProcess(req, resp, currentUser);
+                    break;
                 default:
                     resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
             }
         } catch (IllegalArgumentException ex) {
             handlePostError(req, resp, path, ex.getMessage());
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new ServletException(ex);
         }
     }
@@ -133,22 +147,17 @@ public class CartController extends HttpServlet {
             throws Exception {
         String method = parseBorrowMethod(req.getParameter("borrowMethod"));
 
-        // Mặc định lấy từ thông tin User cho các trường ẩn
         String contactName = currentUser.getFullName();
         String contactPhone = currentUser.getPhone();
         String contactEmail = currentUser.getEmail();
 
-        // Nếu là yêu cầu có form (ví dụ tại chỗ) thì mới lấy từ form hoặc ghi đè
         String formName = req.getParameter("contactName");
         String formPhone = req.getParameter("contactPhone");
         String formEmail = req.getParameter("contactEmail");
 
-        if (formName != null && !formName.isBlank())
-            contactName = formName;
-        if (formPhone != null && !formPhone.isBlank())
-            contactPhone = formPhone;
-        if (formEmail != null && !formEmail.isBlank())
-            contactEmail = formEmail;
+        if (formName != null && !formName.isBlank()) contactName = formName;
+        if (formPhone != null && !formPhone.isBlank()) contactPhone = formPhone;
+        if (formEmail != null && !formEmail.isBlank()) contactEmail = formEmail;
 
         int borrowDays = parseIntParam(req, "borrowDuration", 7);
         LocalDate pickupDate = null;
@@ -156,35 +165,43 @@ public class CartController extends HttpServlet {
         LocalDate returnDate = null;
         String formattedReturnDate;
         ShippingDetails shippingDetails = null;
+
         String deliveryAddress = req.getParameter("deliveryAddress");
         if (deliveryAddress != null && !deliveryAddress.isBlank()) {
-            userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(),
-                    deliveryAddress);
-            // Cập nhật lại đối tượng trong session để hiển thị ngay mà không cần logout
+            userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(), deliveryAddress);
             currentUser.setAddress(deliveryAddress);
             req.getSession().setAttribute("currentUser", currentUser);
         }
+
         if (METHOD_IN_PERSON.equals(method)) {
             pickupDate = parsePickupDateParam(req, "pickupDate");
             formattedPickupDate = pickupDate.format(DISPLAY_DATE_FORMAT);
             returnDate = pickupDate.plusDays(borrowDays);
         } else if (METHOD_ONLINE.equals(method)) {
-            String shippingRecipient = requireTextParam(req, "shippingRecipient", "tên người nhận");
-            String shippingRecipientPhone = requireTextParam(req, "shippingPhone", "số điện thoại người nhận");
-            String shippingStreet = requireTextParam(req, "shippingStreet", "tên đường / số nhà");
-            String shippingCity = requireTextParam(req, "shippingCity", "tỉnh/thành phố");
-            String shippingDistrict = requireTextParam(req, "shippingDistrict", "quận/huyện");
-            String shippingWard = requireTextParam(req, "shippingWard", "phường/xã");
-            String shippingResidence = optionalTextParam(req, "shippingResidence");
-            shippingDetails = new ShippingDetails(shippingRecipient, normalizePhoneDigits(shippingRecipientPhone),
-                    shippingStreet,
-                    shippingResidence, shippingWard, shippingDistrict, shippingCity);
+            String shippingRecipient      = req.getParameter("shippingRecipient");
+            String shippingRecipientPhone = req.getParameter("shippingPhone");
+            String shippingStreet         = req.getParameter("shippingStreet");
+            String shippingCity           = req.getParameter("shippingCity");
+            String shippingDistrict       = req.getParameter("shippingDistrict");
+            String shippingWard           = req.getParameter("shippingWard");
+            String shippingResidence      = req.getParameter("shippingResidence");
+
+            if (shippingRecipient != null && !shippingRecipient.isBlank()
+                    && shippingRecipientPhone != null && !shippingRecipientPhone.isBlank()
+                    && shippingStreet  != null && !shippingStreet.isBlank()
+                    && shippingCity    != null && !shippingCity.isBlank()
+                    && shippingDistrict != null && !shippingDistrict.isBlank()
+                    && shippingWard    != null && !shippingWard.isBlank()) {
+                shippingDetails = new ShippingDetails(
+                        shippingRecipient, normalizePhoneDigits(shippingRecipientPhone),
+                        shippingStreet, shippingResidence, shippingWard, shippingDistrict, shippingCity);
+            }
             returnDate = LocalDate.now().plusDays(borrowDays);
         }
-        if (returnDate == null) {
-            returnDate = LocalDate.now().plusDays(borrowDays);
-        }
+
+        if (returnDate == null) returnDate = LocalDate.now().plusDays(borrowDays);
         formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
+
         Cart cart = cartService.getCart(currentUser.getId());
         if (cart == null || cart.getItems().isEmpty()) {
             redirectWithParam(req, resp, "/cart", "cartError", "Giỏ hàng trống");
@@ -200,21 +217,70 @@ public class CartController extends HttpServlet {
                             + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
             return;
         }
+
+        if (METHOD_ONLINE.equals(method)) {
+            // ── Tính tổng cọc (BigDecimal để giữ chính xác khi lưu DB) ──────────
+            BigDecimal totalDeposit = items.stream()
+                    .map(item -> {
+                        BigDecimal sub = BigDecimal.valueOf(item.getSubtotal());
+                        return sub.multiply(BigDecimal.valueOf(0.5));
+                    })
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            double totalValue = items.stream().mapToDouble(CartItem::getSubtotal).sum();
+
+            // ── Tạo txnRef và lưu TOÀN BỘ dữ liệu vào session ─────────────────
+            String txnRef = "CART-" + currentUser.getId() + "-" + System.currentTimeMillis();
+
+            Map<String, Object> checkoutData = new HashMap<>();
+            checkoutData.put("method",              method);
+            checkoutData.put("contactName",          contactName);
+            checkoutData.put("contactPhone",         contactPhone);
+            checkoutData.put("contactEmail",         contactEmail);
+            checkoutData.put("borrowDays",           borrowDays);
+            checkoutData.put("formattedReturnDate",  formattedReturnDate);
+            checkoutData.put("formattedPickupDate",  formattedPickupDate);
+            checkoutData.put("shippingDetails",      shippingDetails);   // ← lưu đúng chỗ
+            checkoutData.put("items",                items);
+            checkoutData.put("totalDeposit",         totalDeposit);
+            // Tính và lưu depositAmount cho từng item ngay lúc này (khi book còn đủ data)
+            List<BigDecimal> depositAmounts = items.stream()
+                    .map(item -> BigDecimal.valueOf(item.getSubtotal()).multiply(BigDecimal.valueOf(0.5)))
+                    .collect(java.util.stream.Collectors.toList());
+            checkoutData.put("depositAmounts", depositAmounts);
+            req.getSession().setAttribute("cartCheckout-" + txnRef, checkoutData);
+
+            // ── Forward sang checkout_cart.jsp kèm txnRef để form POST lại ─────
+            req.setAttribute("cart",           cart);
+            req.setAttribute("totalDeposit",   totalDeposit.doubleValue());
+            req.setAttribute("totalValue",     totalValue);
+            req.setAttribute("borrowMethod",   method);
+            req.setAttribute("contactName",    contactName);
+            req.setAttribute("contactPhone",   contactPhone);
+            req.setAttribute("contactEmail",   contactEmail);
+            req.setAttribute("borrowDuration", borrowDays);
+            req.setAttribute("pickupDate",     formattedPickupDate);
+            req.setAttribute("returnDate",     formattedReturnDate);
+            req.setAttribute("shippingDetails",shippingDetails);
+            req.setAttribute("txnRef",         txnRef);                  // ← truyền txnRef xuống JSP
+            req.getRequestDispatcher("/WEB-INF/views/checkout_cart.jsp").forward(req, resp);
+            return;
+        }
+
+        // ── IN_PERSON: tạo borrow records ngay, không qua VNPay ─────────────
         for (CartItem item : items) {
             String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
             borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
-                    item.getQuantity(),groupCode);
+                    item.getQuantity(), groupCode);
         }
 
         cartService.clearCart(currentUser.getId());
-        notifyLibrarians(currentUser, items, method, contactName, contactPhone, contactEmail, formattedReturnDate,
-                formattedPickupDate, shippingDetails);
+        notifyLibrarians(currentUser, items, method, contactName, contactPhone, contactEmail,
+                formattedReturnDate, formattedPickupDate, shippingDetails);
+
         StringBuilder message = new StringBuilder();
         message.append("Gửi yêu cầu mượn ").append(toMethodLabel(method)).append(" thành công. ");
         message.append("Ngày trả dự kiến ").append(formattedReturnDate).append(". ");
-        if (formattedPickupDate != null) {
-            message.append("Ngày đến lấy: ").append(formattedPickupDate).append(". ");
-        }
+        if (formattedPickupDate != null) message.append("Ngày đến lấy: ").append(formattedPickupDate).append(". ");
         if (shippingDetails != null) {
             message.append("Người nhận: ").append(shippingDetails.getRecipient()).append(". ");
             message.append("Điện thoại người nhận: ").append(shippingDetails.getPhone()).append(". ");
@@ -224,6 +290,88 @@ public class CartController extends HttpServlet {
         redirectWithParam(req, resp, "/cart", "cartSuccess", message.toString());
     }
 
+    private void handleCheckoutProcess(HttpServletRequest req, HttpServletResponse resp, User currentUser)
+            throws Exception {
+        // ── Lấy txnRef đã tạo ở bước trước (truyền qua hidden input) ────────
+        String txnRef = req.getParameter("txnRef");
+        if (txnRef == null || txnRef.isBlank()) {
+            redirectWithParam(req, resp, "/cart", "cartError", "Phiên thanh toán không hợp lệ, vui lòng thử lại.");
+            return;
+        }
+
+        // ── Đọc lại checkoutData từ session (đã lưu đầy đủ ở bước trên) ─────
+        @SuppressWarnings("unchecked")
+        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession().getAttribute("cartCheckout-" + txnRef);
+        if (checkoutData == null) {
+            redirectWithParam(req, resp, "/cart", "cartError", "Phiên thanh toán đã hết hạn, vui lòng đặt lại.");
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        List<CartItem> items = (List<CartItem>) checkoutData.get("items");
+        if (items == null || items.isEmpty()) {
+            redirectWithParam(req, resp, "/cart", "cartError", "Giỏ hàng trống");
+            return;
+        }
+
+        // ── Tính deposit từ items trong session (chắc chắn có subtotal) ─────
+        BigDecimal totalDeposit = items.stream()
+                .map(item -> {
+                    BigDecimal sub = BigDecimal.valueOf(item.getSubtotal());
+                    return sub.multiply(BigDecimal.valueOf(0.5));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // VNPay yêu cầu đơn vị là VND * 100
+        long amount = totalDeposit.multiply(BigDecimal.valueOf(100)).longValue();
+
+        // ── Tạo VNPay URL ────────────────────────────────────────────────────
+        String vnp_TmnCode  = VNPayConfig.vnp_TmnCode;
+        String vnp_IpAddr   = VNPayConfig.getIpAddress(req);
+        String vnp_ReturnUrl = req.getScheme() + "://" + req.getServerName() + ":"
+                + req.getServerPort() + req.getContextPath() + VNPayConfig.vnp_ReturnUrl;
+
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version",   "2.1.0");
+        vnp_Params.put("vnp_Command",   "pay");
+        vnp_Params.put("vnp_TmnCode",   vnp_TmnCode);
+        vnp_Params.put("vnp_Amount",    String.valueOf(amount));
+        vnp_Params.put("vnp_CurrCode",  "VND");
+        vnp_Params.put("vnp_TxnRef",    txnRef);                         // ← dùng txnRef đã có
+        vnp_Params.put("vnp_OrderInfo", "Thanh toan coc dat sach online");
+        vnp_Params.put("vnp_OrderType", "other");
+        vnp_Params.put("vnp_Locale",    "vn");
+        vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
+        vnp_Params.put("vnp_IpAddr",    vnp_IpAddr);
+
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        vnp_Params.put("vnp_CreateDate", formatter.format(cld.getTime()));
+        cld.add(Calendar.MINUTE, 15);
+        vnp_Params.put("vnp_ExpireDate", formatter.format(cld.getTime()));
+
+        List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        StringBuilder query    = new StringBuilder();
+        Iterator<String> itr   = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName  = itr.next();
+            String fieldValue = vnp_Params.get(fieldName);
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                hashData.append(fieldName).append('=')
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()))
+                        .append('=')
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                if (itr.hasNext()) { query.append('&'); hashData.append('&'); }
+            }
+        }
+
+        String secureHash   = VNPayConfig.hmacSHA512(VNPayConfig.vnp_HashSecret, hashData.toString());
+        String paymentUrl   = VNPayConfig.vnp_PayUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
+        resp.sendRedirect(paymentUrl);
+    }
     private String parseBorrowMethod(String raw) {
         if (raw != null && raw.equalsIgnoreCase(METHOD_IN_PERSON)) {
             return METHOD_IN_PERSON;
