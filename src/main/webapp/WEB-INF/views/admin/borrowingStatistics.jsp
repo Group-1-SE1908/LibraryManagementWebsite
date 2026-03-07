@@ -9,7 +9,7 @@
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Thống Kê Thư Viện - Dashboard</title>
+                    <title>Thống Kê Thư Viện </title>
 
                     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
                         rel="stylesheet">
@@ -53,7 +53,7 @@
                         #content {
                             flex-grow: 1;
                             min-width: 0;
-                            /* Ngăn chặn việc vỡ layout khi table quá rộng */
+
                             padding: 2rem 1.5rem;
                         }
 
@@ -388,7 +388,7 @@
                     </div>
 
                     <script>
-                        // Cập nhật ngày tháng hiển thị
+
                         document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('vi-VN', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                         });
@@ -420,7 +420,7 @@
                             document.getElementById('loader').style.display = 'flex';
                         };
 
-                        // Chart.js initialization
+
                         const dataMap = {};
                         <c:forEach items="${stats.statusCounts}" var="e">
                             dataMap["${e.key}"] = ${e.value};

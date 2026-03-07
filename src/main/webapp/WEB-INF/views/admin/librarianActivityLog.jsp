@@ -359,89 +359,106 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <c:forEach var="log" items="${activityLogs}">
-                                                <tr>
-                                                    <td
-                                                        style="font-family: monospace; font-weight: 600; color: var(--text-muted);">
-                                                        #${log.logId}
-                                                    </td>
-                                                    <td>
-                                                        <div class="user-info">
-                                                            <div class="avatar">
-                                                                <c:choose>
-                                                                    <c:when test="${not empty log.user.avatar}">
-                                                                        <img src="${pageContext.request.contextPath}/${log.user.avatar}"
-                                                                            alt="Avt"
-                                                                            style="width:100%; height:100%; object-fit:cover;">
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <span>${fn:toUpperCase(fn:substring(log.user.fullName,
-                                                                            0, 1))}</span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                            </div>
-                                                            <div class="user-details">
-                                                                <div style="font-weight: 700; line-height: 1.2;">
-                                                                    ${log.user.fullName}</div>
-                                                                <div
-                                                                    style="font-size: 0.75rem; color: var(--text-muted);">
-                                                                    ${log.user.email}</div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <c:set var="roleName"
-                                                            value="${fn:toUpperCase(log.user.role.name)}" />
-                                                        <span
-                                                            class="badge ${roleName == 'ADMIN' ? 'badge-admin' : (roleName == 'LIBRARIAN' ? 'badge-lib' : 'badge-member')}">
-                                                            <i class="fa-solid fa-shield-halved"></i>
-                                                            ${log.user.role.name}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div class="action-cell-content">
-                                                            <c:choose>
-                                                                <c:when test="${fn:contains(log.action, '[ID:')}">
-                                                                    <c:set var="displayText"
-                                                                        value="${fn:substringBefore(log.action, ' [ID:')}" />
-                                                                    <c:set var="targetId"
-                                                                        value="${fn:substringBefore(fn:substringAfter(log.action, '[ID:'), ']')}" />
 
-                                                                    <span
-                                                                        class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
+                                            <c:choose>
+
+                                                <c:when test="${empty activityLogs}">
+
+                                                    <tr>
+                                                        <td colspan="5" class="empty">
+                                                            Không có nhật ký hoạt động
+                                                        </td>
+                                                    </tr>
+
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:forEach var="log" items="${activityLogs}">
+                                                        <tr>
+                                                            <td
+                                                                style="font-family: monospace; font-weight: 600; color: var(--text-muted);">
+                                                                #${log.logId}
+                                                            </td>
+                                                            <td>
+                                                                <div class="user-info">
+                                                                    <div class="avatar">
+                                                                        <c:choose>
+                                                                            <c:when test="${not empty log.user.avatar}">
+                                                                                <img src="${pageContext.request.contextPath}/${log.user.avatar}"
+                                                                                    alt="Avt"
+                                                                                    style="width:100%; height:100%; object-fit:cover;">
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <span>${fn:toUpperCase(fn:substring(log.user.fullName,
+                                                                                    0, 1))}</span>
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                    </div>
+                                                                    <div class="user-details">
+                                                                        <div
+                                                                            style="font-weight: 700; line-height: 1.2;">
+                                                                            ${log.user.fullName}</div>
+                                                                        <div
+                                                                            style="font-size: 0.75rem; color: var(--text-muted);">
+                                                                            ${log.user.email}</div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <c:set var="roleName"
+                                                                    value="${fn:toUpperCase(log.user.role.name)}" />
+                                                                <span
+                                                                    class="badge ${roleName == 'ADMIN' ? 'badge-admin' : (roleName == 'LIBRARIAN' ? 'badge-lib' : 'badge-member')}">
+                                                                    <i class="fa-solid fa-shield-halved"></i>
+                                                                    ${log.user.role.name}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <div class="action-cell-content">
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${fn:contains(log.action, '[ID:')}">
+                                                                            <c:set var="displayText"
+                                                                                value="${fn:substringBefore(log.action, ' [ID:')}" />
+                                                                            <c:set var="targetId"
+                                                                                value="${fn:substringBefore(fn:substringAfter(log.action, '[ID:'), ']')}" />
+
+                                                                            <span
+                                                                                class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
                                                         (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 
                                                         (fn:containsIgnoreCase(log.action, 'Duyệt') ? 'text-approve' : 
                                                         (fn:containsIgnoreCase(log.action, 'Từ chối') ? 'text-reject' : 'text-update')))}">
-                                                                        ${displayText}
-                                                                    </span>
+                                                                                ${displayText}
+                                                                            </span>
 
-                                                                    <c:set var="detailUrl"
-                                                                        value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/admin/borrowlibrary/detail?id='}${targetId}" />
-                                                                    <a href="${pageContext.request.contextPath}${detailUrl}"
-                                                                        class="btn-view-log">
-                                                                        <i
-                                                                            class="fa-solid fa-arrow-up-right-from-square"></i>
-                                                                    </a>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <span
-                                                                        class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
+                                                                            <c:set var="detailUrl"
+                                                                                value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/admin/borrowlibrary/detail?id='}${targetId}" />
+                                                                            <a href="${pageContext.request.contextPath}${detailUrl}"
+                                                                                class="btn-view-log">
+                                                                                <i
+                                                                                    class="fa-solid fa-arrow-up-right-from-square"></i>
+                                                                            </a>
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <span
+                                                                                class="action-text-label ${fn:containsIgnoreCase(log.action, 'Thêm') ? 'text-add' : 
                                                         (fn:containsIgnoreCase(log.action, 'Xóa') ? 'text-delete' : 'text-update')}">
-                                                                        ${log.action}
-                                                                    </span>
-                                                                </c:otherwise>
-                                                            </c:choose>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="time-cell">
-                                                            <i class="fa-regular fa-clock"></i>
-                                                            <fmt:formatDate value="${log.timestamp}"
-                                                                pattern="dd/MM/yyyy HH:mm" />
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </c:forEach>
+                                                                                ${log.action}
+                                                                            </span>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="time-cell">
+                                                                    <i class="fa-regular fa-clock"></i>
+                                                                    <fmt:formatDate value="${log.timestamp}"
+                                                                        pattern="dd/MM/yyyy HH:mm" />
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </tbody>
                                     </table>
                                 </div>
