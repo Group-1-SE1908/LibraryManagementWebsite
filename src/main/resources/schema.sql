@@ -102,11 +102,17 @@ CREATE TABLE borrow_records (
                                 reject_reason NVARCHAR(255) NULL, --
                                 borrow_method VARCHAR(20) DEFAULT 'IN_PERSON', --
                                 quantity INT DEFAULT 1, --
+                                deposit_amount DECIMAL(10,2) DEFAULT 0,
+                                group_code VARCHAR(50) NULL,
 
     -- Thông tin giao hàng/nhận hàng
-                                receiver_name NVARCHAR(100) NULL,
-                                receiver_phone VARCHAR(20) NULL,
-                                receiver_address NVARCHAR(500) NULL,
+                                shipping_recipient NVARCHAR(255) NULL,
+                                shipping_phone VARCHAR(30) NULL,
+                                shipping_street NVARCHAR(255) NULL,
+                                shipping_residence NVARCHAR(255) NULL,
+                                shipping_ward NVARCHAR(255) NULL,
+                                shipping_district NVARCHAR(255) NULL,
+                                shipping_city NVARCHAR(255) NULL,
 
 
                                 created_at DATETIME DEFAULT GETDATE(),
@@ -116,7 +122,27 @@ CREATE TABLE borrow_records (
 );
 GO
 
--- Bảng 7: Đặt trước sách (Reservations)
+-- Bảng 7: Yêu cầu gia hạn (Renewal Requests)
+CREATE TABLE renewal_requests (
+                                  id BIGINT IDENTITY(1,1) PRIMARY KEY,
+                                  borrow_id BIGINT NOT NULL,
+                                  user_id INT NOT NULL,
+                                  reason NVARCHAR(1000) NOT NULL,
+                                  contact_name NVARCHAR(255) NULL,
+                                  contact_phone VARCHAR(30) NULL,
+                                  contact_email VARCHAR(255) NULL,
+                                  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                                  requested_at DATETIME NOT NULL DEFAULT GETDATE(),
+                                  CONSTRAINT FK_RenewalRequest_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id),
+                                  CONSTRAINT FK_RenewalRequest_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+);
+GO
+
+CREATE INDEX IX_RenewalRequest_BorrowId ON renewal_requests (borrow_id);
+CREATE INDEX IX_RenewalRequest_Status ON renewal_requests (status);
+GO
+
+-- Bảng 8: Đặt trước sách (Reservations)
 CREATE TABLE reservations (
                               id BIGINT IDENTITY(1,1) PRIMARY KEY,
                               user_id INT NOT NULL,
@@ -287,8 +313,6 @@ CLOSE book_cursor;
 DEALLOCATE book_cursor;
 END;
 GO
-ALTER TABLE borrow_records ADD group_code VARCHAR(50) NULL;
-ALTER TABLE borrow_records ADD deposit_amount DECIMAL(10,2) DEFAULT 0;
 -- =============================================
 -- 3. NẠP DỮ LIỆU MẪU (SEED DATA)
 -- =============================================
