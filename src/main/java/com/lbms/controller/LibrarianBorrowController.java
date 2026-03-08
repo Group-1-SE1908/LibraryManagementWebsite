@@ -315,13 +315,15 @@ public class LibrarianBorrowController extends HttpServlet {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
             req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
             if ("inperson".equals(action)) {
-                resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+                //resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+                resp.sendRedirect(req.getContextPath() + redirectBase);
             } else {
                 resp.sendRedirect(req.getContextPath() + redirectBase);
             }
         } catch (Exception ex) {
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+            //resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+            resp.sendRedirect(req.getContextPath() + redirectBase);
         }
     }
 

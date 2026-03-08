@@ -291,23 +291,25 @@
 
                 <c:if test="${not empty flash}">
                     <script>
+                        // Sử dụng dấu nháy kép và escape ký tự đặc biệt để tránh lỗi JS khi chuỗi có dấu nháy đơn hoặc xuống dòng
+                        const flashMsg = `<c:out value="${flash}"/>`.trim();
+                        const lowerMsg = flashMsg.toLowerCase();
+
                         let iconType = 'error';
                         let titleText = 'Lỗi';
-                        const flashMsg = '<c:out value="${flash}"/>';
 
-                        if (flashMsg.includes('thành công') || flashMsg.includes('Đã nhận trả')) {
+                        // Kiểm tra nội dung để chọn icon phù hợp (Không phân biệt hoa thường)
+                        if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả')) {
                             iconType = 'success';
                             titleText = 'Thành công';
-                        } else if (flashMsg.includes('từ chối')) {
-                            iconType = 'info';
-                            titleText = 'Thông báo';
                         }
 
                         Swal.fire({
                             icon: iconType,
                             title: titleText,
                             text: flashMsg,
-                            confirmButtonColor: '#0b57d0'
+                            confirmButtonColor: '#0b57d0',
+                            timer: 5000 // Tự động đóng sau 5 giây
                         });
                     </script>
                 </c:if>
@@ -498,7 +500,9 @@
                 }
 
                 // 3. Hàm Xác nhận Trả sách
+
                 function submitReturn(id) {
+                    // 1. Lấy giá trị từ đúng ô input của dòng đó
                     const bc = document.getElementById('ret-bc-' + id).value;
                     if (!bc) {
                         Swal.fire({icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng quét lại mã vạch trên sách để xác nhận trả!'});
@@ -518,8 +522,16 @@
                         if (result.isConfirmed) {
                             const form = document.createElement('form');
                             form.method = 'POST';
-                            form.action = '${pageContext.request.contextPath}/admin/borrowlibrary/return';
-                            form.innerHTML = `<input type="hidden" name="id" value="${id}"><input type="hidden" name="barcode" value="${bc}">`;
+
+                            // 2. Tự động xác định URL dựa trên vai trò hiện tại (Admin hoặc Staff)
+                            const currentPath = window.location.pathname;
+                            const actionPath = currentPath.includes('/admin/') ? '/admin/borrowlibrary/return' : '/staff/borrowlibrary/return';
+                            form.action = '${pageContext.request.contextPath}' + actionPath;
+
+                            // 3. Truyền đúng biến 'bc' và dùng nối chuỗi an toàn
+                            form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
+                                    '<input type="hidden" name="barcode" value="' + bc.trim() + '">';
+
                             document.body.appendChild(form);
                             form.submit();
                         }

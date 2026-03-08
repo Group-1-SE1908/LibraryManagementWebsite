@@ -94,4 +94,6 @@ public class RenewalRequest {
     public void setBorrowRecord(BorrowRecord borrowRecord) {
         this.borrowRecord = borrowRecord;
     }
+
+
 }

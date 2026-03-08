@@ -78,7 +78,21 @@ public class ShippingService {
     public void createGroupShipment(String groupCode) throws SQLException {
         com.lbms.dao.LibrarianBorrowDAO libDAO = new com.lbms.dao.LibrarianBorrowDAO();
         java.util.List<BorrowRecord> groupRecords = libDAO.findByGroupCode(groupCode);
-
+        
+        if (groupCode != null && groupCode.startsWith("DON-LE-")) {
+        
+        long id = Long.parseLong(groupCode.substring(7));
+        BorrowRecord br = libDAO.findById(id); // Tìm trực tiếp theo ID 
+        groupRecords = new java.util.ArrayList<>();
+        if (br != null) {
+            groupRecords.add(br);
+        }
+    } else {
+        // Nếu là mã nhóm thật (từ Checkout gom nhóm), tìm như bình thường
+        groupRecords = libDAO.findByGroupCode(groupCode); 
+    }
+        
+        
         if (groupRecords == null || groupRecords.isEmpty()) {
             throw new IllegalArgumentException("Không tìm thấy dữ liệu phiếu mượn.");
         }

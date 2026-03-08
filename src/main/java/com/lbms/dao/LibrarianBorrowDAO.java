@@ -49,15 +49,16 @@ public class LibrarianBorrowDAO {
                 + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
     }
 
-    public long createRequest(long userId, long bookId, String method, int qty) throws SQLException {
-        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity) "
-                + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?)";
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    // --- CÁC PHƯƠNG THỨC SAO CHÉP TỪ BorrowDAO VÀ TỐI ƯU ---
+    public long createRequest(long userId, long bookId, String method, int qty, String groupCode) throws SQLException {
+        String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity,group_code) "
+                + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?, ?)";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
             ps.setInt(4, qty);
+            ps.setString(5, groupCode);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 return rs.next() ? rs.getLong(1) : 0;
