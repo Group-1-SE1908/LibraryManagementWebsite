@@ -8,469 +8,407 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Danh sách đặt trước – LBMS</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css"/>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <style>
-        :root {
-            --primary: #1a6fc4;
-            --primary-light: #e8f1fb;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        :root {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-soft: #64748b;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-light: #eff6ff;
+            --radius-sm: 6px;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        }
 
         body {
-            background: #f4f7fb;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            display: flex; flex-direction: column;
         }
 
+        .main-wrap { flex: 1; }
 
-        .container.pb-5 {
-            flex: 1;
+        /* ── PAGE HEADER ── */
+        .page-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 40px;
         }
-
-        /* ── Page banner ── */
-        .page-banner {
-            padding: 1.5rem 0;
+        .page-header__inner {
+            max-width: 1100px; margin: 0 auto;
+            display: flex; align-items: center; gap: 14px;
         }
-
-        .page-banner h3 {
-            font-weight: 700;
-            letter-spacing: -.3px;
-        }
-
-        /* ── Stats row ── */
-        .stat-card {
-            border: none;
-            border-radius: 14px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
-        }
-
-        .stat-card .icon-wrap {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-
-        /* ── Table card ── */
-        .table-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,.07);
-        }
-
-        .table thead th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: .78rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            border-bottom: 2px solid #e2e8f0;
-            padding: .85rem 1rem;
-            white-space: nowrap;
-        }
-
-        .table tbody tr {
-            transition: background .15s;
-        }
-
-        .table tbody tr:hover {
-            background: #f0f7ff;
-        }
-
-        .table tbody td {
-            vertical-align: middle;
-            padding: .85rem 1rem;
-            font-size: .9rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        /* ── Book thumb ── */
-        .book-thumb {
-            width: 46px;
-            height: 62px;
-            object-fit: cover;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
-        }
-
-        .book-thumb-ph {
-            width: 46px;
-            height: 62px;
-            background: #e2e8f0;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            font-size: 1.4rem;
-        }
-
-        /* ── Status badges ── */
-        .badge-status {
-            font-size: .74rem;
-            font-weight: 600;
-            padding: .35em .75em;
-            border-radius: 20px;
-            letter-spacing: .04em;
-        }
-
-        .badge-WAITING {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .badge-AVAILABLE {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .badge-BORROWED {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .badge-CANCELLED {
-            background: #f1f5f9;
-            color: #475569;
-        }
-
-        .badge-EXPIRED {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        /* ── Cancel button ── */
-        .btn-cancel {
-            font-size: .8rem;
-            padding: .3rem .85rem;
-            border-radius: 8px;
-            border: 1.5px solid #ef4444;
-            color: #ef4444;
-            background: transparent;
-            transition: all .15s;
-            white-space: nowrap;
-        }
-
-        .btn-cancel:hover {
-            background: #ef4444;
-            color: #fff;
-        }
-
-        /* ── Filter tabs ── */
-        .filter-tabs .nav-link {
-            color: #64748b;
-            font-size: .85rem;
-            font-weight: 500;
-            border-radius: 8px;
-            padding: .4rem .9rem;
-            border: none;
-        }
-
-        .filter-tabs .nav-link.active {
+        .page-header__icon {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
             background: var(--primary-light);
-            color: var(--primary);
-            font-weight: 600;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            color: var(--primary); font-size: 1.2rem;
         }
+        .page-header__title { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+        .page-header__sub { font-size: .8rem; color: var(--text-soft); margin-top: 2px; }
 
-        /* ── Empty state ── */
+        /* ── TOOLBAR ── */
+        .toolbar {
+            max-width: 1100px; margin: 0 auto;
+            padding: 20px 40px 0;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .filter-tabs {
+            display: flex; gap: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+        }
+        .filter-tab {
+            padding: 6px 14px; border-radius: 4px; font-size: .82rem; font-weight: 500;
+            cursor: pointer; border: none; background: transparent; color: var(--text-soft);
+            transition: all .15s; white-space: nowrap; display: flex; align-items: center; gap: 5px;
+            text-decoration: none;
+        }
+        .filter-tab:hover { color: var(--text); background: var(--bg); }
+        .filter-tab.active { background: var(--primary); color: #fff; }
+
+        .count-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.25); color: inherit;
+            border-radius: 99px; padding: 0 6px; font-size: .7rem;
+            min-width: 18px; font-weight: 600;
+        }
+        .filter-tab:not(.active) .count-badge { background: var(--bg); color: var(--text-muted); }
+
+        .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 7px 12px; transition: border-color .15s;
+        }
+        .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+        .search-box svg { color: var(--text-muted); flex-shrink: 0; }
+        .search-box input {
+            border: none; outline: none; font-family: inherit;
+            font-size: .85rem; color: var(--text); background: transparent; width: 200px;
+        }
+        .search-box input::placeholder { color: var(--text-muted); }
+
+        .btn-add {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--primary); color: #fff;
+            border: none; border-radius: var(--radius-sm);
+            padding: 7px 16px; font-size: .85rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .15s;
+        }
+        .btn-add:hover { background: #2563eb; color: #fff; }
+
+        /* ── CONTENT ── */
+        .content { max-width: 1100px; margin: 0 auto; padding: 20px 40px 60px; }
+
+        /* ── FLASH ── */
+        .flash { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: .875rem; }
+        .flash--success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+        .flash--error   { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+        .flash__close { margin-left: auto; cursor: pointer; background: none; border: none; font-size: 1.1rem; color: inherit; opacity: .6; }
+        .flash__close:hover { opacity: 1; }
+
+        /* ── EMPTY STATE ── */
         .empty-state {
-            padding: 4rem 1rem;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 80px 20px; text-align: center;
         }
+        .empty-state__icon { font-size: 3rem; color: #cbd5e1; margin-bottom: 12px; }
+        .empty-state__title { font-size: 1rem; font-weight: 600; color: var(--text-soft); margin-bottom: 6px; }
+        .empty-state__sub { font-size: .85rem; color: var(--text-muted); margin-bottom: 20px; }
 
-        .empty-state .empty-icon {
-            font-size: 4rem;
-            color: #cbd5e1;
+        /* ── TABLE ── */
+        .table-wrap {
+            background: var(--surface); border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+        thead th {
+            background: #f8fafc; color: var(--text-soft);
+            font-weight: 600; font-size: .72rem; letter-spacing: .06em;
+            text-transform: uppercase; padding: 12px 18px; text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #f8fafc; }
+        tbody tr.hidden-row { display: none; }
+        td { padding: 14px 18px; vertical-align: middle; color: var(--text-soft); }
+        td.td-num { color: var(--text-muted); font-size: .8rem; width: 40px; }
+
+        /* ── BOOK CELL ── */
+        .book-cell { display: flex; align-items: center; gap: 12px; }
+        .book-thumb {
+            width: 40px; height: 54px; object-fit: cover;
+            border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,.12); flex-shrink: 0;
+        }
+        .book-thumb-ph {
+            width: 40px; height: 54px; background: var(--primary-light);
+            border-radius: 5px; display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 1.2rem; flex-shrink: 0;
+        }
+        .book-title {
+            font-weight: 600; color: var(--text); font-size: .88rem;
+            max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .book-author { font-size: .76rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── BADGES ── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 99px; font-size: .75rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid transparent;
+        }
+        .badge__dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+        .badge--waiting   { background: #fffbeb; color: #92400e; border-color: #fcd34d; }
+        .badge--waiting   .badge__dot { background: #92400e; }
+        .badge--available { background: #f0fdf4; color: #166534; border-color: #86efac; }
+        .badge--available .badge__dot { background: #166534; }
+        .badge--borrowed  { background: #eff6ff; color: #1e40af; border-color: #93c5fd; }
+        .badge--borrowed  .badge__dot { background: #1e40af; }
+        .badge--cancelled { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+        .badge--cancelled .badge__dot { background: #475569; }
+        .badge--expired   { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+        .badge--expired   .badge__dot { background: #991b1b; }
+
+        /* ── DATE ── */
+        .date-main { font-size: .85rem; color: var(--text-soft); }
+        .date-time { font-size: .75rem; color: var(--text-muted); margin-top: 1px; }
+        .date-deadline { font-size: .83rem; font-weight: 600; color: #ef4444; }
+
+        /* ── CANCEL BTN ── */
+        .btn-cancel {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: .8rem; font-weight: 500; padding: 5px 12px;
+            border-radius: var(--radius-sm); border: 1.5px solid #ef4444;
+            color: #ef4444; background: transparent; cursor: pointer; transition: all .15s;
+            white-space: nowrap;
+        }
+        .btn-cancel:hover { background: #ef4444; color: #fff; }
+
+        /* ── PAGINATION ── */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 20px; }
+        .page-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text-soft); font-size: .82rem; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s;
+        }
+        .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .page-btn:disabled { opacity: .35; cursor: default; }
+
+        @media (max-width: 768px) {
+            .page-header { padding: 16px 20px; }
+            .toolbar { padding: 14px 20px 0; flex-direction: column; align-items: stretch; }
+            .toolbar-right { margin-left: 0; flex-wrap: wrap; }
+            .search-box input { width: 100%; }
+            .content { padding: 14px 20px 40px; }
+            thead { display: none; }
+            tbody tr { display: block; padding: 12px 16px; }
+            td { display: block; padding: 4px 0; border: none; }
+            td::before { content: attr(data-label) ': '; font-weight: 600; font-size: .72rem; color: var(--text-muted); text-transform: uppercase; }
         }
     </style>
 </head>
 <body>
 
-<%-- ══ NAVBAR — thay bằng jsp:include header của project ══ --%>
 <jsp:include page="/WEB-INF/views/header.jsp"/>
 
-<%-- ══ BANNER ══ --%>
-<div class="page-banner">
-    <div class="container">
-        <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-bookmark-star fs-2"></i>
+<div class="main-wrap">
+
+    <!-- HEADER -->
+    <header class="page-header">
+        <div class="page-header__inner">
+            <div class="page-header__icon">
+                <i class="bi bi-bookmark-star"></i>
+            </div>
             <div>
-                <h3 class="mb-0">Danh sách đặt trước</h3>
-                <p class="mb-0 opacity-75 small">
-                    Theo dõi trạng thái các sách bạn đã đặt trước
-                </p>
+                <div class="page-header__title">Danh sách đặt trước</div>
+                <div class="page-header__sub">Theo dõi trạng thái các sách bạn đã đặt trước</div>
             </div>
         </div>
-    </div>
-</div>
+    </header>
 
-<%-- ══ MAIN ══ --%>
-<div class="container pb-5">
-
-    <%-- Flash messages --%>
-    <c:if test="${not empty sessionScope.successMsg}">
-        <div class="alert alert-success d-flex align-items-center gap-2 mt-4 rounded-3 shadow-sm">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <span>${sessionScope.successMsg}</span>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-        </div>
-        <c:remove var="successMsg" scope="session"/>
-    </c:if>
-    <c:if test="${not empty sessionScope.errorMsg}">
-        <div class="alert alert-danger d-flex align-items-center gap-2 mt-4 rounded-3 shadow-sm">
-            <i class="bi bi-x-circle-fill fs-5"></i>
-            <span>${sessionScope.errorMsg}</span>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-        </div>
-        <c:remove var="errorMsg" scope="session"/>
-    </c:if>
-
-    <%-- ── Stats (chỉ hiện khi có dữ liệu) ── --%>
-    <c:if test="${not empty reservations}">
-        <c:set var="cntWaiting" value="0"/>
-        <c:set var="cntAvail" value="0"/>
-        <c:set var="cntBorrowed" value="0"/>
-        <c:forEach var="r" items="${reservations}">
-            <c:if test="${r.status == 'WAITING'}">
-                <c:set var="cntWaiting" value="${cntWaiting  + 1}"/>
-            </c:if>
-            <c:if test="${r.status == 'AVAILABLE'}">
-                <c:set var="cntAvail" value="${cntAvail    + 1}"/>
-            </c:if>
-            <c:if test="${r.status == 'BORROWED'}">
-                <c:set var="cntBorrowed" value="${cntBorrowed + 1}"/>
-            </c:if>
-        </c:forEach>
-
-        <div class="row g-3 mt-3 mb-3">
-            <div class="col-6 col-md-3">
-                <div class="card stat-card p-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="icon-wrap bg-primary bg-opacity-10 text-primary">
-                            <i class="bi bi-list-ul"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold fs-5">${reservations.size()}</div>
-                            <div class="text-muted small">Tổng</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card p-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="icon-wrap" style="background:#fef3c7;color:#92400e">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold fs-5">${cntWaiting}</div>
-                            <div class="text-muted small">Đang chờ</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card p-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="icon-wrap" style="background:#d1fae5;color:#065f46">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold fs-5">${cntAvail}</div>
-                            <div class="text-muted small">Sẵn sàng</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card p-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="icon-wrap" style="background:#dbeafe;color:#1e40af">
-                            <i class="bi bi-book"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold fs-5">${cntBorrowed}</div>
-                            <div class="text-muted small">Đã mượn</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </c:if>
-
-    <%-- ── Table card ── --%>
-    <div class="card table-card">
-
-        <div class="card-header bg-white border-0 px-4 pt-4 pb-2
-                    d-flex flex-wrap align-items-center justify-content-between gap-3">
-
-            <ul class="nav filter-tabs gap-1" id="statusFilter">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#" data-filter="ALL">Tất cả</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-filter="WAITING">
-                        <i class="bi bi-hourglass-split me-1"></i>Đang chờ
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-filter="AVAILABLE">
-                        <i class="bi bi-check-circle me-1"></i>Sẵn sàng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-filter="BORROWED">
-                        <i class="bi bi-book me-1"></i>Đã mượn
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-filter="CANCELLED">
-                        <i class="bi bi-x-circle me-1"></i>Đã hủy
-                    </a>
-                </li>
-            </ul>
-
-            <a href="${pageContext.request.contextPath}/books"
-               class="btn btn-primary btn-sm rounded-pill px-3">
-                <i class="bi bi-plus-lg me-1"></i>Đặt thêm sách
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="filter-tabs">
+            <a href="#" class="filter-tab active" data-filter="ALL">
+                Tất cả <span class="count-badge" id="count-all"></span>
+            </a>
+            <a href="#" class="filter-tab" data-filter="WAITING">
+                <i class="bi bi-hourglass-split"></i>Đang chờ
+                <span class="count-badge" id="count-waiting"></span>
+            </a>
+            <a href="#" class="filter-tab" data-filter="AVAILABLE">
+                <i class="bi bi-check-circle"></i>Sẵn sàng
+                <span class="count-badge" id="count-available"></span>
+            </a>
+            <a href="#" class="filter-tab" data-filter="BORROWED">
+                <i class="bi bi-book"></i>Đã mượn
+                <span class="count-badge" id="count-borrowed"></span>
+            </a>
+            <a href="#" class="filter-tab" data-filter="CANCELLED">
+                <i class="bi bi-x-circle"></i>Đã hủy
+                <span class="count-badge" id="count-cancelled"></span>
             </a>
         </div>
+        <div class="toolbar-right">
+            <div class="search-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Tìm theo tên sách, tác giả…"/>
+            </div>
+            <a href="${pageContext.request.contextPath}/books" class="btn-add">
+                <i class="bi bi-plus-lg"></i>Đặt thêm sách
+            </a>
+        </div>
+    </div>
 
-        <div class="card-body p-0">
+    <!-- CONTENT -->
+    <main class="content">
 
-            <%-- Empty state --%>
-            <c:if test="${empty reservations}">
-                <div class="empty-state text-center">
-                    <div class="empty-icon mb-3"><i class="bi bi-bookmark-x"></i></div>
-                    <h5 class="text-muted fw-semibold">Chưa có sách đặt trước nào</h5>
-                    <p class="text-muted small mb-4">
-                        Khi sách bạn muốn mượn hết hàng, hãy đặt trước để được<br/>
-                        thông báo ngay khi sách có sẵn.
+        <!-- Flash messages -->
+        <c:if test="${not empty sessionScope.successMsg}">
+            <div class="flash flash--success">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>${sessionScope.successMsg}</span>
+                <button class="flash__close" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <c:remove var="successMsg" scope="session"/>
+        </c:if>
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <div class="flash flash--error">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>${sessionScope.errorMsg}</span>
+                <button class="flash__close" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <c:remove var="errorMsg" scope="session"/>
+        </c:if>
+
+        <c:choose>
+            <c:when test="${empty reservations}">
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="bi bi-bookmark-x"></i></div>
+                    <div class="empty-state__title">Chưa có sách đặt trước nào</div>
+                    <p class="empty-state__sub">
+                        Khi sách bạn muốn mượn hết hàng, hãy đặt trước để được<br/>thông báo ngay khi sách có sẵn.
                     </p>
-                    <a href="${pageContext.request.contextPath}/books"
-                       class="btn btn-primary rounded-pill px-4">
-                        <i class="bi bi-search me-1"></i>Tìm sách ngay
+                    <a href="${pageContext.request.contextPath}/books" class="btn-add">
+                        <i class="bi bi-search"></i>Tìm sách ngay
                     </a>
                 </div>
-            </c:if>
-
-            <%-- Table --%>
-            <c:if test="${not empty reservations}">
-                <div class="table-responsive">
-                    <table class="table mb-0" id="resTable">
+            </c:when>
+            <c:otherwise>
+                <div class="table-wrap">
+                    <table id="resTable">
                         <thead>
                         <tr>
-                            <th style="width:46px">#</th>
+                            <th>#</th>
                             <th>Sách</th>
                             <th>Trạng thái</th>
                             <th>Ngày đặt</th>
                             <th>Hạn lấy</th>
-                            <th style="width:110px">Thao tác</th>
+                            <th>Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
                         <c:forEach var="res" items="${reservations}" varStatus="loop">
-                            <tr data-status="${res.status}">
+                            <tr data-status="${res.status}"
+                                data-search="${res.bookTitle} ${res.bookAuthor}">
 
-                                    <%-- STT --%>
-                                <td class="text-muted small">${loop.index + 1}</td>
+                                <td class="td-num" data-label="STT">${loop.index + 1}</td>
 
-                                    <%-- Sách --%>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
+                                <td data-label="Sách">
+                                    <div class="book-cell">
                                         <c:choose>
                                             <c:when test="${not empty res.bookImage}">
                                                 <img src="${pageContext.request.contextPath}/${res.bookImage}"
-                                                     alt="${res.bookTitle}"
-                                                     class="book-thumb flex-shrink-0"/>
+                                                     alt="${res.bookTitle}" class="book-thumb"/>
                                             </c:when>
                                             <c:otherwise>
-                                                <div class="book-thumb-ph flex-shrink-0">
+                                                <div class="book-thumb-ph">
                                                     <i class="bi bi-book"></i>
                                                 </div>
                                             </c:otherwise>
                                         </c:choose>
                                         <div>
-                                            <div class="fw-semibold"
-                                                 style="max-width:220px;white-space:nowrap;
-                                                        overflow:hidden;text-overflow:ellipsis"
-                                                 title="${res.bookTitle}">
-                                                    ${res.bookTitle}
-                                            </div>
-                                            <div class="text-muted small">
-                                                <i class="bi bi-person me-1"></i>${res.bookAuthor}
+                                            <div class="book-title" title="${res.bookTitle}">${res.bookTitle}</div>
+                                            <div class="book-author">
+                                                <i class="bi bi-person" style="font-size:.7rem"></i>
+                                                    ${res.bookAuthor}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
 
-                                    <%-- Trạng thái --%>
-                                <td>
+                                <td data-label="Trạng thái">
                                     <c:choose>
                                         <c:when test="${res.status == 'WAITING'}">
-                                            <span class="badge-status badge-WAITING">
-                                                <i class="bi bi-hourglass-split me-1"></i>Đang chờ
-                                            </span>
+                                                <span class="badge badge--waiting">
+                                                    <span class="badge__dot"></span>Đang chờ
+                                                </span>
                                         </c:when>
                                         <c:when test="${res.status == 'AVAILABLE'}">
-                                            <span class="badge-status badge-AVAILABLE">
-                                                <i class="bi bi-check-circle me-1"></i>Sẵn sàng nhận
-                                            </span>
+                                                <span class="badge badge--available">
+                                                    <span class="badge__dot"></span>Sẵn sàng nhận
+                                                </span>
                                         </c:when>
                                         <c:when test="${res.status == 'BORROWED'}">
-                                            <span class="badge-status badge-BORROWED">
-                                                <i class="bi bi-book me-1"></i>Đã mượn
-                                            </span>
+                                                <span class="badge badge--borrowed">
+                                                    <span class="badge__dot"></span>Đã mượn
+                                                </span>
                                         </c:when>
                                         <c:when test="${res.status == 'CANCELLED'}">
-                                            <span class="badge-status badge-CANCELLED">
-                                                <i class="bi bi-x-circle me-1"></i>Đã hủy
-                                            </span>
+                                                <span class="badge badge--cancelled">
+                                                    <span class="badge__dot"></span>Đã hủy
+                                                </span>
                                         </c:when>
                                         <c:when test="${res.status == 'EXPIRED'}">
-                                            <span class="badge-status badge-EXPIRED">
-                                                <i class="bi bi-clock-history me-1"></i>Hết hạn
-                                            </span>
+                                                <span class="badge badge--expired">
+                                                    <span class="badge__dot"></span>Hết hạn
+                                                </span>
                                         </c:when>
                                     </c:choose>
                                 </td>
 
-                                    <%-- Ngày đặt --%>
-                                <td class="text-muted small">
-                                    <fmt:formatDate value="${res.createdAt}" pattern="dd/MM/yyyy"/>
-                                    <br/>
-                                    <span class="opacity-75">
+                                <td data-label="Ngày đặt">
+                                    <div class="date-main">
+                                        <fmt:formatDate value="${res.createdAt}" pattern="dd/MM/yyyy"/>
+                                    </div>
+                                    <div class="date-time">
                                         <fmt:formatDate value="${res.createdAt}" pattern="HH:mm"/>
-                                    </span>
+                                    </div>
                                 </td>
 
-                                    <%-- Hạn lấy --%>
-                                <td class="small">
+                                <td data-label="Hạn lấy">
                                     <c:choose>
                                         <c:when test="${not empty res.expiredAt}">
-                                            <span class="text-danger fw-semibold">
-                                                <i class="bi bi-alarm me-1"></i>
-                                                <fmt:formatDate value="${res.expiredAt}"
-                                                                pattern="dd/MM/yyyy"/>
-                                            </span>
+                                            <div class="date-deadline">
+                                                <i class="bi bi-alarm" style="font-size:.8rem"></i>
+                                                <fmt:formatDate value="${res.expiredAt}" pattern="dd/MM/yyyy"/>
+                                            </div>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="text-muted">—</span>
+                                            <span style="color:var(--text-muted)">—</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
 
-                                    <%-- Thao tác --%>
-                                <td>
+                                <td data-label="Thao tác">
                                     <c:choose>
                                         <c:when test="${res.status == 'WAITING' || res.status == 'AVAILABLE'}">
                                             <form method="post"
@@ -479,61 +417,125 @@
                                                 <input type="hidden" name="action" value="cancel"/>
                                                 <input type="hidden" name="resId" value="${res.id}"/>
                                                 <button type="submit" class="btn-cancel">
-                                                    <i class="bi bi-trash3 me-1"></i>Hủy
+                                                    <i class="bi bi-trash3"></i>Hủy
                                                 </button>
                                             </form>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="text-muted small">—</span>
+                                            <span style="color:var(--text-muted)">—</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
-
                             </tr>
                         </c:forEach>
                         </tbody>
                     </table>
                 </div>
-            </c:if>
-
-        </div>
-    </div>
-    <%-- end .table-card --%>
-
+                <nav class="pagination" id="pagination" aria-label="Phân trang"></nav>
+            </c:otherwise>
+        </c:choose>
+    </main>
 </div>
-<%-- end .container --%>
-
-<%-- ══ FOOTER — thay bằng jsp:include footer của project ══ --%>
 
 <jsp:include page="/WEB-INF/views/footer.jsp"/>
 
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
 <script>
-    // Filter theo status
-    document.querySelectorAll('#statusFilter .nav-link').forEach(function (tab) {
-        tab.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelectorAll('#statusFilter .nav-link')
-                .forEach(function (t) {
-                    t.classList.remove('active');
-                });
-            this.classList.add('active');
+    (function () {
+        const ROWS_PER_PAGE = 10;
+        let currentFilter = 'ALL';
+        let currentPage = 1;
 
-            var filter = this.dataset.filter;
-            document.querySelectorAll('#resTable tbody tr').forEach(function (row) {
-                row.style.display =
-                    (filter === 'ALL' || row.dataset.status === filter) ? '' : 'none';
+        const rows        = Array.from(document.querySelectorAll('#resTable tbody tr'));
+        const searchInput = document.getElementById('searchInput');
+        const pagination  = document.getElementById('pagination');
+
+        const counts = {
+            all:       document.getElementById('count-all'),
+            waiting:   document.getElementById('count-waiting'),
+            available: document.getElementById('count-available'),
+            borrowed:  document.getElementById('count-borrowed'),
+            cancelled: document.getElementById('count-cancelled'),
+        };
+
+        function matchSearch(r) {
+            const q = searchInput ? searchInput.value.toLowerCase() : '';
+            return !q || (r.dataset.search || '').toLowerCase().includes(q);
+        }
+
+        function updateCounts() {
+            counts.all.textContent       = rows.filter(matchSearch).length;
+            counts.waiting.textContent   = rows.filter(r => r.dataset.status === 'WAITING'   && matchSearch(r)).length;
+            counts.available.textContent = rows.filter(r => r.dataset.status === 'AVAILABLE' && matchSearch(r)).length;
+            counts.borrowed.textContent  = rows.filter(r => r.dataset.status === 'BORROWED'  && matchSearch(r)).length;
+            counts.cancelled.textContent = rows.filter(r => r.dataset.status === 'CANCELLED' && matchSearch(r)).length;
+        }
+
+        function getVisible() {
+            return rows.filter(r => {
+                const statusOk = currentFilter === 'ALL' || r.dataset.status === currentFilter;
+                return statusOk && matchSearch(r);
+            });
+        }
+
+        function render() {
+            const visible    = getVisible();
+            const totalPages = Math.max(1, Math.ceil(visible.length / ROWS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            rows.forEach(r => r.classList.add('hidden-row'));
+            const start = (currentPage - 1) * ROWS_PER_PAGE;
+            visible.slice(start, start + ROWS_PER_PAGE).forEach(r => r.classList.remove('hidden-row'));
+
+            if (pagination) {
+                pagination.innerHTML = '';
+                if (totalPages <= 1) return;
+                const prev = mkBtn('‹', currentPage === 1);
+                prev.onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+                pagination.appendChild(prev);
+                for (let i = 1; i <= totalPages; i++) {
+                    const b = mkBtn(i, false, i === currentPage);
+                    b.onclick = () => { currentPage = i; render(); };
+                    pagination.appendChild(b);
+                }
+                const next = mkBtn('›', currentPage === totalPages);
+                next.onclick = () => { if (currentPage < totalPages) { currentPage++; render(); } };
+                pagination.appendChild(next);
+            }
+        }
+
+        function mkBtn(label, disabled, active) {
+            const b = document.createElement('button');
+            b.className = 'page-btn' + (active ? ' active' : '');
+            b.textContent = label;
+            b.disabled = !!disabled;
+            return b;
+        }
+
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                currentPage = 1;
+                render();
             });
         });
-    });
 
-    // Confirm hủy + disable button tránh double submit
+        if (searchInput) {
+            searchInput.addEventListener('input', () => { currentPage = 1; updateCounts(); render(); });
+        }
+
+        updateCounts();
+        render();
+    })();
+
     function confirmCancel(form) {
         if (!confirm('Bạn có chắc muốn hủy đặt trước này?')) return false;
-        var btn = form.querySelector('button[type="submit"]');
+        const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.innerHTML = '⏳ Đang hủy…';
         return true;
     }
 </script>

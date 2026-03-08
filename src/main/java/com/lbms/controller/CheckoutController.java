@@ -72,7 +72,7 @@ public class CheckoutController extends HttpServlet {
                     return;
                 }
             } else {
-                if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
+                if (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
                     req.getSession().setAttribute("flash", "Sách này không đang trong trạng thái mượn.");
                     resp.sendRedirect(req.getContextPath() + "/history");
                     return;
@@ -125,7 +125,7 @@ public class CheckoutController extends HttpServlet {
                 return;
             }
 
-            if (!fineMode && !"BORROWED".equalsIgnoreCase(br.getStatus())) {
+            if (!fineMode && (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus()))) {
                 resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
