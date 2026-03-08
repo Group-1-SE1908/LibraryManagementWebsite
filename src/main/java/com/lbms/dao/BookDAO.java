@@ -128,7 +128,6 @@ public class BookDAO {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }
 
-           
             ps.setString(7, b.getIsbn());
             ps.setLong(8, b.getId());
             // Lấy tên sách trước khi cập nhật để log
@@ -168,5 +167,20 @@ public class BookDAO {
 
         b.setCategoryId(rs.getObject("category_id") != null ? rs.getLong("category_id") : null);
         return b;
+    }
+
+    public boolean existsByIsbn(String isbn) {
+        String sql = "SELECT COUNT(*) FROM Book WHERE ISBN = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, isbn);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

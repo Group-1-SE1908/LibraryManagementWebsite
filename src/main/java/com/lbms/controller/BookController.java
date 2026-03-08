@@ -1,7 +1,6 @@
 package com.lbms.controller;
 
 import com.lbms.model.Book;
-import com.lbms.model.Category;
 import com.lbms.model.User;
 import com.lbms.service.BookService;
 import com.lbms.dao.CategoryDAO;
@@ -25,7 +24,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = { "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search" })
-
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
         maxRequestSize = 1024 * 1024 * 50 // 50MB
@@ -64,7 +62,6 @@ public class BookController extends HttpServlet {
                     break;
                 case "/books/delete":
                     int delId = Integer.parseInt(req.getParameter("id"));
-                    // Cần userId để ghi log hoạt động xóa sách
                     bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
                     resp.sendRedirect(req.getContextPath() + "/books");
                     break;
@@ -83,10 +80,10 @@ public class BookController extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
 
         try {
-
+            // 1. Xử lý ảnh
             String imagePath = uploadImage(req);
 
-            // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
+            // 2. Lấy thông tin người dùng
             HttpSession session = req.getSession();
             User currentUser = (User) session.getAttribute("currentUser");
             if (currentUser == null) {
@@ -95,11 +92,12 @@ public class BookController extends HttpServlet {
             }
             long userId = currentUser.getId();
 
-            // 2. THỰC HIỆN THEO PATH
+            // 3. Thực hiện tạo mới hoặc cập nhật
             if ("/books/new".equals(path)) {
                 Book b = readBookFromRequest(req);
                 b.setImage(imagePath);
-                bookService.create(b, userId);
+                // create sẽ gọi validate và existsByIsbn trong Service
+                bookService.create(b, userId); 
             } else if ("/books/edit".equals(path)) {
                 int id = Integer.parseInt(req.getParameter("id"));
                 Book b = readBookFromRequest(req);
@@ -107,36 +105,44 @@ public class BookController extends HttpServlet {
                 b.setImage(imagePath);
                 bookService.update(b, userId);
             }
+            
+            // Nếu thành công thì redirect về danh sách
             resp.sendRedirect(req.getContextPath() + "/books");
+
         } catch (IllegalArgumentException ex) {
+            // ĐÂY LÀ NƠI XỬ LÝ LỖI TRÙNG ISBN HOẶC VALIDATION
             req.setAttribute("error", ex.getMessage());
             req.setAttribute("mode", path.contains("new") ? "create" : "edit");
+            
+            // Đổ lại dữ liệu cũ vào form để người dùng không phải nhập lại
+            req.setAttribute("book", readBookFromRequest(req));
+            
             try {
                 req.setAttribute("categories", categoryDAO.listAll());
             } catch (SQLException ex1) {
                 Logger.getLogger(BookController.class.getName()).log(Level.SEVERE, null, ex1);
             }
+            
+            // Forward quay lại trang form thay vì redirect để hiện thông báo lỗi
             req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
+            
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
     }
 
     private String uploadImage(HttpServletRequest req) throws IOException, ServletException {
-        Part filePart = req.getPart("imageFile"); // Khớp với name="imageFile" trong book_form.jsp
-
+        Part filePart = req.getPart("imageFile");
         if (filePart == null || filePart.getSize() <= 0) {
             return req.getParameter("currentImage");
         }
 
         String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
         String relativePath = "assets/images/books/" + fileName;
-
         String uploadPath = getServletContext().getRealPath("/") + relativePath;
 
         File uploadDir = new File(getServletContext().getRealPath("/") + "assets/images/books/");
-        if (!uploadDir.exists())
-            uploadDir.mkdirs();
+        if (!uploadDir.exists()) uploadDir.mkdirs();
 
         filePart.write(uploadPath);
         return relativePath;
@@ -163,7 +169,6 @@ public class BookController extends HttpServlet {
         Book book = bookService.findById(id);
         req.setAttribute("book", book);
 
-        // Load comments for the book
         try {
             req.setAttribute("comments", commentDAO.getCommentsByBook(id));
         } catch (Exception e) {
@@ -182,7 +187,6 @@ public class BookController extends HttpServlet {
 
         String priceStr = req.getParameter("price");
         if (priceStr != null && !priceStr.isBlank()) {
-
             b.setPrice(Double.valueOf(priceStr));
         }
 
@@ -190,13 +194,11 @@ public class BookController extends HttpServlet {
         b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
 
         String catIdStr = req.getParameter("categoryId");
-
         if (catIdStr != null && !catIdStr.isEmpty()) {
             b.setCategoryId(Long.valueOf(catIdStr));
         } else {
             b.setCategoryId(null);
         }
-
         return b;
     }
 }

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class BookService {
+
     private final BookDAO bookDAO;
 
     public BookService() {
@@ -25,17 +26,37 @@ public class BookService {
         return bookDAO.findById(id);
     }
 
+//    public long create(Book b, long userId) throws SQLException {
+//        validate(b);
+//        if (b.getStatus() == null || b.getStatus().isBlank())
+//            b.setStatus("AVAILABLE");
+//        return bookDAO.create(b, userId);
+//    }
     public long create(Book b, long userId) throws SQLException {
         validate(b);
-        if (b.getStatus() == null || b.getStatus().isBlank())
+
+       
+        String isbnToCheck = b.getIsbn();
+        if (isbnToCheck != null && !isbnToCheck.isBlank() && !isbnToCheck.startsWith("ISBN-")) {
+            isbnToCheck = "ISBN-" + isbnToCheck;
+        }
+
+        
+        if (bookDAO.existsByIsbn(isbnToCheck)) {
+            throw new IllegalArgumentException("Mã ISBN '" + isbnToCheck + "' đã tồn tại trong hệ thống.");
+        }
+
+        if (b.getStatus() == null || b.getStatus().isBlank()) {
             b.setStatus("AVAILABLE");
+        }
         return bookDAO.create(b, userId);
     }
 
     public void update(Book b, long userId) throws SQLException {
         validate(b);
-        if (b.getStatus() == null || b.getStatus().isBlank())
+        if (b.getStatus() == null || b.getStatus().isBlank()) {
             b.setStatus("AVAILABLE");
+        }
         bookDAO.update(b, userId);
     }
 
@@ -44,15 +65,20 @@ public class BookService {
     }
 
     private void validate(Book b) {
-        if (b == null)
+        if (b == null) {
             throw new IllegalArgumentException("Dữ liệu sách không hợp lệ");
-        if (b.getIsbn() == null || b.getIsbn().isBlank())
+        }
+        if (b.getIsbn() == null || b.getIsbn().isBlank()) {
             throw new IllegalArgumentException("ISBN là bắt buộc");
-        if (b.getTitle() == null || b.getTitle().isBlank())
+        }
+        if (b.getTitle() == null || b.getTitle().isBlank()) {
             throw new IllegalArgumentException("Tên sách là bắt buộc");
-        if (b.getAuthor() == null || b.getAuthor().isBlank())
+        }
+        if (b.getAuthor() == null || b.getAuthor().isBlank()) {
             throw new IllegalArgumentException("Tác giả là bắt buộc");
-        if (b.getQuantity() < 0)
+        }
+        if (b.getQuantity() < 0) {
             throw new IllegalArgumentException("Số lượng không hợp lệ");
+        }
     }
 }
