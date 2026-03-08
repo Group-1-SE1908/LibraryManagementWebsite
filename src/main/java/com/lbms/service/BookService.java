@@ -22,26 +22,35 @@ public class BookService {
         return bookDAO.searchByCategory(q, categoryId);
     }
 
+    public List<Book> searchByCategory(String q, Long categoryId, int page, int pageSize) throws SQLException {
+        int safePage = Math.max(page, 1);
+        int safePageSize = Math.max(pageSize, 1);
+        int offset = (safePage - 1) * safePageSize;
+        return bookDAO.searchByCategoryPaged(q, categoryId, offset, safePageSize);
+    }
+
+    public int countByCategory(String q, Long categoryId) throws SQLException {
+        return bookDAO.countByCategory(q, categoryId);
+    }
+
     public Book findById(long id) throws SQLException {
         return bookDAO.findById(id);
     }
 
-//    public long create(Book b, long userId) throws SQLException {
-//        validate(b);
-//        if (b.getStatus() == null || b.getStatus().isBlank())
-//            b.setStatus("AVAILABLE");
-//        return bookDAO.create(b, userId);
-//    }
+    // public long create(Book b, long userId) throws SQLException {
+    // validate(b);
+    // if (b.getStatus() == null || b.getStatus().isBlank())
+    // b.setStatus("AVAILABLE");
+    // return bookDAO.create(b, userId);
+    // }
     public long create(Book b, long userId) throws SQLException {
         validate(b);
 
-       
         String isbnToCheck = b.getIsbn();
         if (isbnToCheck != null && !isbnToCheck.isBlank() && !isbnToCheck.startsWith("ISBN-")) {
             isbnToCheck = "ISBN-" + isbnToCheck;
         }
 
-        
         if (bookDAO.existsByIsbn(isbnToCheck)) {
             throw new IllegalArgumentException("Mã ISBN '" + isbnToCheck + "' đã tồn tại trong hệ thống.");
         }

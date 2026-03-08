@@ -49,6 +49,51 @@ public class BookDAO {
         }
     }
 
+    public List<Book> searchByCategoryPaged(String q, Long categoryId, int offset, int limit) throws SQLException {
+        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
+
+        if (categoryId != null && categoryId > 0) {
+            sql.append(" AND category_id = ?");
+        }
+        sql.append(" ORDER BY book_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            int nextIndex = bindSearchParameters(ps, like, categoryId);
+            ps.setInt(nextIndex++, Math.max(offset, 0));
+            ps.setInt(nextIndex, Math.max(limit, 1));
+
+            List<Book> out = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapBook(rs));
+                }
+            }
+            return out;
+        }
+    }
+
+    public int countByCategory(String q, Long categoryId) throws SQLException {
+        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
+
+        if (categoryId != null && categoryId > 0) {
+            sql.append(" AND category_id = ?");
+        }
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            bindSearchParameters(ps, like, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
     public Book findById(long id) throws SQLException {
         String sql = "SELECT * FROM Book WHERE book_id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -138,6 +183,18 @@ public class BookDAO {
                 logDAO.addActivityLog((int) userId, "Xóa sách: " + bookTitle + " [ID:" + id + "]");
             }
         }
+    }
+
+    private int bindSearchParameters(PreparedStatement ps, String like, Long categoryId) throws SQLException {
+        ps.setString(1, like);
+        ps.setString(2, like);
+        ps.setString(3, like);
+
+        int nextIndex = 4;
+        if (categoryId != null && categoryId > 0) {
+            ps.setLong(nextIndex++, categoryId);
+        }
+        return nextIndex;
     }
 
     private Book mapBook(ResultSet rs) throws SQLException {

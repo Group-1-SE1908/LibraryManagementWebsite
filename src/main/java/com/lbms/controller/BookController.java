@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,6 +30,8 @@ import java.util.logging.Logger;
         maxRequestSize = 1024 * 1024 * 50 // 50MB
 )
 public class BookController extends HttpServlet {
+    private static final int BOOKS_PER_PAGE = 8;
+
     private BookService bookService;
     private CategoryDAO categoryDAO;
     private CommentDAO commentDAO;
@@ -97,7 +100,7 @@ public class BookController extends HttpServlet {
                 Book b = readBookFromRequest(req);
                 b.setImage(imagePath);
                 // create sẽ gọi validate và existsByIsbn trong Service
-                bookService.create(b, userId); 
+                bookService.create(b, userId);
             } else if ("/books/edit".equals(path)) {
                 int id = Integer.parseInt(req.getParameter("id"));
                 Book b = readBookFromRequest(req);
@@ -105,7 +108,7 @@ public class BookController extends HttpServlet {
                 b.setImage(imagePath);
                 bookService.update(b, userId);
             }
-            
+
             // Nếu thành công thì redirect về danh sách
             resp.sendRedirect(req.getContextPath() + "/books");
 
@@ -113,19 +116,19 @@ public class BookController extends HttpServlet {
             // ĐÂY LÀ NƠI XỬ LÝ LỖI TRÙNG ISBN HOẶC VALIDATION
             req.setAttribute("error", ex.getMessage());
             req.setAttribute("mode", path.contains("new") ? "create" : "edit");
-            
+
             // Đổ lại dữ liệu cũ vào form để người dùng không phải nhập lại
             req.setAttribute("book", readBookFromRequest(req));
-            
+
             try {
                 req.setAttribute("categories", categoryDAO.listAll());
             } catch (SQLException ex1) {
                 Logger.getLogger(BookController.class.getName()).log(Level.SEVERE, null, ex1);
             }
-            
+
             // Forward quay lại trang form thay vì redirect để hiện thông báo lỗi
             req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
-            
+
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
@@ -142,7 +145,8 @@ public class BookController extends HttpServlet {
         String uploadPath = getServletContext().getRealPath("/") + relativePath;
 
         File uploadDir = new File(getServletContext().getRealPath("/") + "assets/images/books/");
-        if (!uploadDir.exists()) uploadDir.mkdirs();
+        if (!uploadDir.exists())
+            uploadDir.mkdirs();
 
         filePart.write(uploadPath);
         return relativePath;
@@ -151,12 +155,29 @@ public class BookController extends HttpServlet {
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String keyword = normalizeKeyword(req);
         Long categoryId = parseCategoryId(req);
-        List<Book> books = bookService.searchByCategory(keyword, categoryId);
+        int requestedPage = parsePage(req.getParameter("page"));
+        int totalBooks = bookService.countByCategory(keyword, categoryId);
+        int totalPages = totalBooks == 0 ? 1 : (int) Math.ceil((double) totalBooks / BOOKS_PER_PAGE);
+        int currentPage = Math.min(requestedPage, totalPages);
+        List<Book> books = totalBooks == 0
+                ? Collections.emptyList()
+                : bookService.searchByCategory(keyword, categoryId, currentPage, BOOKS_PER_PAGE);
+
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, startPage + 4);
+        startPage = Math.max(1, endPage - 4);
+
         req.setAttribute("books", books);
         req.setAttribute("categories", categoryDAO.listAll());
-        req.setAttribute("totalBooks", books.size());
+        req.setAttribute("totalBooks", totalBooks);
         req.setAttribute("searchKeyword", keyword == null ? "" : keyword);
         req.setAttribute("selectedCategoryId", categoryId);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("startPage", startPage);
+        req.setAttribute("endPage", endPage);
+        req.setAttribute("hasPreviousPage", currentPage > 1);
+        req.setAttribute("hasNextPage", currentPage < totalPages);
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
     }
 
@@ -185,6 +206,18 @@ public class BookController extends HttpServlet {
             return categoryId > 0 ? categoryId : null;
         } catch (NumberFormatException ex) {
             return null;
+        }
+    }
+
+    private int parsePage(String rawPage) {
+        if (rawPage == null || rawPage.isBlank()) {
+            return 1;
+        }
+        try {
+            int page = Integer.parseInt(rawPage.trim());
+            return page > 0 ? page : 1;
+        } catch (NumberFormatException ex) {
+            return 1;
         }
     }
 
