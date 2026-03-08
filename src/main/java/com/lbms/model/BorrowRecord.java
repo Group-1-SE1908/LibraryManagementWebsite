@@ -6,6 +6,8 @@ import java.time.temporal.ChronoUnit;
 
 public class BorrowRecord {
 
+    private static final BigDecimal FINE_PER_DAY = new BigDecimal("5000");
+
     private long id;
     private User user;
     private Book book;
@@ -139,6 +141,32 @@ public class BorrowRecord {
         this.fineAmount = fineAmount;
     }
 
+    public BigDecimal getOutstandingFineAmount() {
+        if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+            return fineAmount;
+        }
+        long overdueDays = getOverdueDays();
+        if (overdueDays <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return FINE_PER_DAY.multiply(BigDecimal.valueOf(overdueDays));
+    }
+
+    public boolean hasOutstandingFine() {
+        return getOutstandingFineAmount().compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    public boolean isCurrentlyOverdue() {
+        if (dueDate == null || returnDate != null) {
+            return false;
+        }
+        if (status == null) {
+            return dueDate.isBefore(LocalDate.now());
+        }
+        return dueDate.isBefore(LocalDate.now())
+                && ("BORROWED".equalsIgnoreCase(status) || "RECEIVED".equalsIgnoreCase(status));
+    }
+
     public BigDecimal getDepositAmount() {
         return depositAmount;
     }
@@ -172,7 +200,8 @@ public class BorrowRecord {
     }
 
     public String getFormattedBorrowDate() {
-        return borrowDate != null ? borrowDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "---";
+        return borrowDate != null ? borrowDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                : "---";
     }
 
     public String getFormattedDueDate() {

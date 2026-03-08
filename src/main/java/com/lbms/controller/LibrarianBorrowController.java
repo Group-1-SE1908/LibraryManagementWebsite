@@ -14,42 +14,45 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive",
-    "/staff/renewal",
-    "/staff/renewal/approve",
-    "/staff/renewal/reject",
-    "/staff/renewal/view",
-    "/staff/borrowlibrary/ship_fee",
-    "/staff/borrowlibrary/ship_confirm",
-    "/admin/borrowlibrary",
-    "/admin/borrowlibrary/approve",
-    "/admin/borrowlibrary/reject",
-    "/admin/borrowlibrary/return",
-    "/admin/borrowlibrary/detail",
-    "/admin/borrowlibrary/inperson",
-    "/admin/borrowlibrary/receive",
-    "/admin/renewal",
-    "/admin/renewal/approve",
-    "/admin/renewal/reject",
-    "/admin/renewal/view",
-    "/admin/books",
-    "/admin/books/approve",
-    "/admin/books/reject",
-    "/admin/books/return",
-    "/admin/books/detail",
-    "/admin/books/inperson",
-    "/admin/books/receive",
-    "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm",})
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/staff/renewal",
+        "/staff/renewal/approve",
+        "/staff/renewal/reject",
+        "/staff/renewal/view",
+        "/staff/borrowlibrary/ship_fee",
+        "/staff/borrowlibrary/ship_confirm",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/renewal",
+        "/admin/renewal/approve",
+        "/admin/renewal/reject",
+        "/admin/renewal/view",
+        "/admin/books",
+        "/admin/books/approve",
+        "/admin/books/reject",
+        "/admin/books/return",
+        "/admin/books/detail",
+        "/admin/books/inperson",
+        "/admin/books/receive",
+        "/admin/borrowlibrary/ship_fee",
+        "/admin/borrowlibrary/ship_confirm", })
 public class LibrarianBorrowController extends HttpServlet {
 
     private static final String STAFF_BORROW_BASE = "/staff/borrowlibrary";
@@ -133,7 +136,8 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 // Gọi GHTK tính phí
                 BorrowRecord firstRecord = groupRecords.get(0);
-                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(), totalWeight);
+                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(),
+                        totalWeight);
 
                 // Trả về dữ liệu định dạng JSON cho AJAX hiển thị lên Modal
                 resp.setContentType("application/json");
@@ -250,8 +254,15 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }
 
-                libService.returnBook(Long.parseLong(idStr), barcode);
-                req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                BigDecimal fineAmount = libService.returnBook(Long.parseLong(idStr), barcode);
+                if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    req.getSession().setAttribute("flash",
+                            "Đã nhận trả sách thành công. Phiếu này phát sinh tiền phạt "
+                                    + formatCurrency(fineAmount)
+                                    + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
+                } else {
+                    req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                }
             } else if ("receive".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 libService.confirmReceive(id);
@@ -387,5 +398,12 @@ public class LibrarianBorrowController extends HttpServlet {
         if (!"ADMIN".equalsIgnoreCase(role) && !"LIBRARIAN".equalsIgnoreCase(role)) {
             throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
         }
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
+        formatter.setMaximumFractionDigits(0);
+        formatter.setMinimumFractionDigits(0);
+        return formatter.format(amount);
     }
 }

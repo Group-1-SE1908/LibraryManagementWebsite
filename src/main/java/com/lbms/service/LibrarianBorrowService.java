@@ -18,15 +18,16 @@ public class LibrarianBorrowService {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
 
-    public void returnBook(long borrowId, String inputBarcode) throws SQLException {
+    public BigDecimal returnBook(long borrowId, String inputBarcode) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
                 // 1. Kiểm tra Barcode có khớp với phiếu mượn không
-                String sqlCheck = "SELECT bc.barcode, br.book_id FROM borrow_records br "
+                String sqlCheck = "SELECT bc.barcode, br.book_id, br.due_date FROM borrow_records br "
                         + "JOIN BookCopy bc ON br.copy_id = bc.copy_id WHERE br.id = ?";
                 String correctBarcode = "";
                 long bookId = -1;
+                LocalDate dueDate = null;
 
                 try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
                     ps.setLong(1, borrowId);
@@ -34,6 +35,8 @@ public class LibrarianBorrowService {
                         if (rs.next()) {
                             correctBarcode = rs.getString("barcode");
                             bookId = rs.getLong("book_id");
+                            Date dueDateValue = rs.getDate("due_date");
+                            dueDate = dueDateValue == null ? null : dueDateValue.toLocalDate();
                         } else {
                             throw new IllegalArgumentException("Không tìm thấy thông tin bản sao cho phiếu mượn này.");
                         }
@@ -76,14 +79,20 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
+                LocalDate returnDate = LocalDate.now();
+                BigDecimal fineAmount = calculateFine(dueDate, returnDate);
+
                 // 5. Kết thúc phiếu mượn
-                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
+                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=?, is_paid=0 WHERE id=?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
-                    ps.setLong(1, borrowId);
+                    ps.setDate(1, Date.valueOf(returnDate));
+                    ps.setBigDecimal(2, fineAmount);
+                    ps.setLong(3, borrowId);
                     ps.executeUpdate();
                 }
 
                 c.commit();
+                return fineAmount;
             } catch (Exception e) {
                 c.rollback();
                 throw e;
@@ -93,7 +102,7 @@ public class LibrarianBorrowService {
 
     public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false); 
+            c.setAutoCommit(false);
             try {
                 String bookTitle = "N/A";
                 String userName = "N/A";
@@ -150,7 +159,8 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
-                // 4. [ĐÃ SỬA LỖI TẠI ĐÂY] Cập nhật phiếu mượn: Chuyển sang APPROVED để UI hiện nút GHTK hoặc Xác nhận lấy
+                // 4. [ĐÃ SỬA LỖI TẠI ĐÂY] Cập nhật phiếu mượn: Chuyển sang APPROVED để UI hiện
+                // nút GHTK hoặc Xác nhận lấy
                 String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
                     ps.setInt(1, copyId);
@@ -167,14 +177,14 @@ public class LibrarianBorrowService {
                         throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
                     }
                 }
-                
+
                 // 6. Ghi log hoạt động
                 logDAO.addActivityLog((int) staffId,
                         "Duyệt mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
 
-                c.commit(); 
+                c.commit();
             } catch (Exception e) {
-                c.rollback(); 
+                c.rollback();
                 throw e;
             }
         }
@@ -399,5 +409,13 @@ public class LibrarianBorrowService {
 
     public BorrowRecord getDetail(long id) throws SQLException {
         return libDAO.findById(id);
+    }
+
+    private BigDecimal calculateFine(LocalDate dueDate, LocalDate returnDate) {
+        if (dueDate == null || returnDate == null || !returnDate.isAfter(dueDate)) {
+            return BigDecimal.ZERO;
+        }
+        long lateDays = java.time.temporal.ChronoUnit.DAYS.between(dueDate, returnDate);
+        return BorrowService.FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
     }
 }

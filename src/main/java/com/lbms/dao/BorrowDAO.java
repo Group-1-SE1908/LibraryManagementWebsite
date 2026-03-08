@@ -89,7 +89,7 @@ public class BorrowDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Không thể đồng bộ schema borrow_records", e);
         }
-    }   // ← chỉ 1 dấu } đóng ensureRequiredColumns, KHÔNG có } thừa ở đây
+    } // ← chỉ 1 dấu } đóng ensureRequiredColumns, KHÔNG có } thừa ở đây
 
     private static boolean columnExists(Connection c, String tableName, String columnName) throws SQLException {
         String checkSql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=? AND COLUMN_NAME=?";
@@ -113,7 +113,7 @@ public class BorrowDAO {
                 + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
@@ -138,14 +138,14 @@ public class BorrowDAO {
     }
 
     public long createRequest(long userId, long bookId, int quantity, String method,
-                              ShippingDetails shippingDetails, String groupCode, BigDecimal depositAmount)
+            ShippingDetails shippingDetails, String groupCode, BigDecimal depositAmount)
             throws SQLException {
         String sql = "INSERT INTO borrow_records (user_id, book_id, quantity, borrow_method, status, group_code, deposit_amount, "
                 + "shipping_recipient, shipping_phone, shipping_street, shipping_residence, shipping_ward, "
                 + "shipping_district, shipping_city) "
                 + "VALUES (?, ?, ?, ?, 'REQUESTED', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setInt(3, quantity);
@@ -169,8 +169,8 @@ public class BorrowDAO {
     public List<BorrowRecord> listAll() throws SQLException {
         String sql = baseSelect() + " ORDER BY br.id DESC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -178,7 +178,7 @@ public class BorrowDAO {
     public List<BorrowRecord> listByUser(long userId) throws SQLException {
         String sql = baseSelect() + " WHERE br.user_id = ? ORDER BY br.id DESC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
@@ -190,7 +190,7 @@ public class BorrowDAO {
         String sql = "SELECT SUM(CASE WHEN quantity IS NULL OR quantity <= 0 THEN 1 ELSE quantity END) AS c "
                 + "FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED')";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -205,10 +205,11 @@ public class BorrowDAO {
     public BorrowRecord findById(long id) throws SQLException {
         String sql = baseSelect() + " WHERE br.id = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
+                if (!rs.next())
+                    return null;
                 return mapOne(rs);
             }
         }
@@ -217,7 +218,7 @@ public class BorrowDAO {
     public void updateStatus(long id, String status) throws SQLException {
         String sql = "UPDATE borrow_records SET status = ? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, id);
             ps.executeUpdate();
@@ -227,7 +228,7 @@ public class BorrowDAO {
     public void markReturned(long id, LocalDate returnDate, BigDecimal fineAmount) throws SQLException {
         String sql = "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(returnDate));
             ps.setBigDecimal(2, fineAmount);
             ps.setLong(3, id);
@@ -251,7 +252,8 @@ public class BorrowDAO {
 
     private List<BorrowRecord> mapList(ResultSet rs) throws SQLException {
         List<BorrowRecord> out = new ArrayList<>();
-        while (rs.next()) out.add(mapOne(rs));
+        while (rs.next())
+            out.add(mapOne(rs));
         return out;
     }
 
@@ -325,8 +327,8 @@ public class BorrowDAO {
         String sql = baseSelect()
                 + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             return mapList(rs);
         }
     }
@@ -335,7 +337,7 @@ public class BorrowDAO {
         String sql = baseSelect()
                 + " WHERE br.user_id = ? AND br.fine_amount > 0 AND br.is_paid = 0 ORDER BY br.due_date ASC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
@@ -347,8 +349,47 @@ public class BorrowDAO {
         String sql = baseSelect()
                 + " WHERE br.user_id = ? AND br.fine_amount > 0 ORDER BY br.return_date DESC, br.id DESC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return mapList(rs);
+            }
+        }
+    }
+
+    public List<BorrowRecord> listFineRecordsForStaff(String keyword, String paymentStatus) throws SQLException {
+        StringBuilder sql = new StringBuilder(baseSelect())
+                .append(" WHERE (")
+                .append("(br.fine_amount > 0)")
+                .append(" OR (br.status IN ('BORROWED','RECEIVED') AND br.due_date IS NOT NULL AND br.due_date < CAST(GETDATE() AS DATE))")
+                .append(" OR (br.status = 'RETURNED' AND br.due_date IS NOT NULL AND br.return_date IS NOT NULL AND br.return_date > br.due_date)")
+                .append(")");
+
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+        boolean paidOnly = "PAID".equalsIgnoreCase(paymentStatus);
+        boolean unpaidOnly = "UNPAID".equalsIgnoreCase(paymentStatus);
+
+        if (hasKeyword) {
+            sql.append(" AND (u.full_name LIKE ? OR bk.title LIKE ? OR CAST(br.id AS VARCHAR(20)) LIKE ?)");
+        }
+        if (paidOnly) {
+            sql.append(" AND br.is_paid = 1 AND br.fine_amount > 0");
+        } else if (unpaidOnly) {
+            sql.append(" AND (br.is_paid = 0 OR br.is_paid IS NULL)");
+        }
+
+        sql.append(
+                " ORDER BY CASE WHEN br.is_paid = 0 THEN 0 ELSE 1 END, br.due_date ASC, br.return_date DESC, br.id DESC");
+
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (hasKeyword) {
+                String like = "%" + keyword.trim() + "%";
+                ps.setString(index++, like);
+                ps.setString(index++, like);
+                ps.setString(index++, like);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
             }
@@ -358,8 +399,18 @@ public class BorrowDAO {
     public void markFinePaid(long id) throws SQLException {
         String sql = "UPDATE borrow_records SET is_paid = 1 WHERE id = ? AND fine_amount > 0";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public void updateFineAmount(long id, BigDecimal fineAmount) throws SQLException {
+        String sql = "UPDATE borrow_records SET fine_amount = ?, is_paid = 0 WHERE id = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setBigDecimal(1, fineAmount);
+            ps.setLong(2, id);
             ps.executeUpdate();
         }
     }
@@ -367,11 +418,12 @@ public class BorrowDAO {
     public List<BorrowRecord> listByMethod(String method) throws SQLException {
         String sql = baseSelect() + " WHERE br.borrow_method = ? ORDER BY br.id DESC";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, method);
             try (ResultSet rs = ps.executeQuery()) {
                 List<BorrowRecord> out = new ArrayList<>();
-                while (rs.next()) out.add(mapOne(rs));
+                while (rs.next())
+                    out.add(mapOne(rs));
                 return out;
             }
         }
