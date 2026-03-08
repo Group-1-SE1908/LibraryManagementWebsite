@@ -18,78 +18,153 @@ public class LibrarianBorrowService {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
 
-    public void returnBook(long borrowId, String inputBarcode) throws SQLException {
-        try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false);
-            try {
-                // 1. Kiểm tra Barcode có khớp với phiếu mượn không
-                String sqlCheck = "SELECT bc.barcode, br.book_id FROM borrow_records br "
-                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id WHERE br.id = ?";
-                String correctBarcode = "";
-                long bookId = -1;
+//    public void returnBook(long borrowId, String inputBarcode) throws SQLException {
+//        try (Connection c = DBConnection.getConnection()) {
+//            c.setAutoCommit(false);
+//            try {
+//                // 1. Kiểm tra Barcode có khớp với phiếu mượn không
+//                String sqlCheck = "SELECT bc.barcode, br.book_id FROM borrow_records br "
+//                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id WHERE br.id = ?";
+//                String correctBarcode = "";
+//                long bookId = -1;
+//
+//                try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
+//                    ps.setLong(1, borrowId);
+//                    try (ResultSet rs = ps.executeQuery()) {
+//                        if (rs.next()) {
+//                            correctBarcode = rs.getString("barcode");
+//                            bookId = rs.getLong("book_id");
+//                        } else {
+//                            throw new IllegalArgumentException("Không tìm thấy thông tin bản sao cho phiếu mượn này.");
+//                        }
+//                    }
+//                }
+//
+//                // 2. So khớp Barcode
+//                if (!correctBarcode.equalsIgnoreCase(inputBarcode)) {
+//                    String ownerName = "";
+//                    String sqlReverse = "SELECT u.full_name FROM borrow_records br "
+//                            + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+//                            + "JOIN [User] u ON br.user_id = u.user_id "
+//                            + "WHERE bc.barcode = ? AND br.status IN ('BORROWED', 'SHIPPING', 'RECEIVED')";
+//                    try (PreparedStatement ps = c.prepareStatement(sqlReverse)) {
+//                        ps.setString(1, inputBarcode);
+//                        try (ResultSet rs = ps.executeQuery()) {
+//                            if (rs.next()) {
+//                                ownerName = rs.getString("full_name");
+//                            }
+//                        }
+//                    }
+//                    if (!ownerName.isEmpty()) {
+//                        throw new IllegalArgumentException("Sai sách! Mã vạch này thuộc về khách hàng: " + ownerName);
+//                    } else {
+//                        throw new IllegalArgumentException("Mã vạch không khớp với bất kỳ phiếu mượn nào.");
+//                    }
+//                }
+//
+//                // 3. Cập nhật BookCopy thành AVAILABLE
+//                String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE barcode = ?";
+//                try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
+//                    ps.setString(1, inputBarcode);
+//                    ps.executeUpdate();
+//                }
+//
+//                // 4. Tăng quantity bảng Book
+//                String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
+//                try (PreparedStatement ps = c.prepareStatement(updateQty)) {
+//                    ps.setLong(1, bookId);
+//                    ps.executeUpdate();
+//                }
+//
+//                // 5. Kết thúc phiếu mượn
+//                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
+//                try (PreparedStatement ps = c.prepareStatement(updateBr)) {
+//                    ps.setLong(1, borrowId);
+//                    ps.executeUpdate();
+//                }
+//
+//                c.commit();
+//            } catch (Exception e) {
+//                c.rollback();
+//                throw e;
+//            }
+//        }
+//    }
+    
+    // Trong file LibrarianBorrowService.java
 
-                try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
-                    ps.setLong(1, borrowId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            correctBarcode = rs.getString("barcode");
-                            bookId = rs.getLong("book_id");
-                        } else {
-                            throw new IllegalArgumentException("Không tìm thấy thông tin bản sao cho phiếu mượn này.");
-                        }
-                    }
-                }
+public void returnBook(long borrowId, String inputBarcode) throws SQLException {
+    if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
+        throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
+    }
+    
+    // Chuẩn hóa đầu vào: bỏ khoảng trắng thừa
+    String cleanInput = inputBarcode.trim();
 
-                // 2. So khớp Barcode
-                if (!correctBarcode.equalsIgnoreCase(inputBarcode)) {
-                    String ownerName = "";
-                    String sqlReverse = "SELECT u.full_name FROM borrow_records br "
+    try (Connection c = DBConnection.getConnection()) {
+        c.setAutoCommit(false);
+        try {
+            // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn trong DB)
+            String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status "
+                            + "FROM borrow_records br "
                             + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
-                            + "JOIN [User] u ON br.user_id = u.user_id "
-                            + "WHERE bc.barcode = ? AND br.status = 'BORROWED'";
-                    try (PreparedStatement ps = c.prepareStatement(sqlReverse)) {
-                        ps.setString(1, inputBarcode);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                ownerName = rs.getString("full_name");
-                            }
-                        }
-                    }
-                    if (!ownerName.isEmpty()) {
-                        throw new IllegalArgumentException("Sai sách! Mã vạch này thuộc về khách hàng: " + ownerName);
+                            + "WHERE br.id = ?";
+            
+            String correctBarcode = "";
+            long bookId = -1;
+            String currentStatus = "";
+
+            try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
+                ps.setLong(1, borrowId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        correctBarcode = rs.getString("barcode");
+                        bookId = rs.getLong("book_id");
+                        currentStatus = rs.getString("status");
                     } else {
-                        throw new IllegalArgumentException("Mã vạch không khớp với bất kỳ phiếu mượn nào.");
+                        throw new IllegalArgumentException("Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
                     }
                 }
-
-                // 3. Cập nhật BookCopy thành AVAILABLE
-                String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE barcode = ?";
-                try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
-                    ps.setString(1, inputBarcode);
-                    ps.executeUpdate();
-                }
-
-                // 4. Tăng quantity bảng Book
-                String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
-                try (PreparedStatement ps = c.prepareStatement(updateQty)) {
-                    ps.setLong(1, bookId);
-                    ps.executeUpdate();
-                }
-
-                // 5. Kết thúc phiếu mượn
-                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
-                try (PreparedStatement ps = c.prepareStatement(updateBr)) {
-                    ps.setLong(1, borrowId);
-                    ps.executeUpdate();
-                }
-
-                c.commit();
-            } catch (Exception e) {
-                c.rollback();
-                throw e;
             }
+
+            // 2. So khớp Barcode (Sử dụng equalsIgnoreCase và hiển thị lỗi chi tiết nếu sai)
+            if (correctBarcode == null || !correctBarcode.equalsIgnoreCase(cleanInput)) {
+                throw new IllegalArgumentException("Sai mã vạch! Phiếu này yêu cầu mã '" + correctBarcode 
+                                                 + "', nhưng bạn lại quét mã '" + cleanInput + "'.");
+            }
+
+            // 3. Cập nhật trạng thái bản sao sách về khả dụng
+            String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE copy_id = "
+                              + "(SELECT copy_id FROM borrow_records WHERE id = ?)";
+            try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
+                ps.setLong(1, borrowId);
+                ps.executeUpdate();
+            }
+
+            // 4. Tăng số lượng đầu sách trong kho (Chỉ tăng nếu trạng thái cũ là đang mượn/giao)
+            String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
+            try (PreparedStatement ps = c.prepareStatement(updateQty)) {
+                ps.setLong(1, bookId);
+                ps.executeUpdate();
+            }
+
+            // 5. Cập nhật phiếu mượn thành công
+            String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
+            try (PreparedStatement ps = c.prepareStatement(updateBr)) {
+                ps.setLong(1, borrowId);
+                ps.executeUpdate();
+            }
+
+            c.commit();
+        } catch (Exception e) {
+            c.rollback();
+            throw e;
         }
     }
+}
+    
+    
+    
 
     public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
