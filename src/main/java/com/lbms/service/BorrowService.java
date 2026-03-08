@@ -93,7 +93,7 @@ public class BorrowService {
 
         List<Long> ids = new ArrayList<>(quantity);
         for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails));
+            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails,groupCode,depositAmount));
         }
         return ids;
     }
