@@ -53,7 +53,8 @@ public class LibrarianBorrowDAO {
     public long createRequest(long userId, long bookId, String method, int qty, String groupCode) throws SQLException {
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity,group_code) "
                 + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);

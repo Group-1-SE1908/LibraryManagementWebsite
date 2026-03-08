@@ -22,74 +22,75 @@ public class LibrarianBorrowService {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
         }
-        
+
         // Chuẩn hóa đầu vào: bỏ khoảng trắng thừa
         String cleanInput = inputBarcode.trim();
 
-    try (Connection c = DBConnection.getConnection()) {
-        c.setAutoCommit(false);
-        try {
-            // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn trong DB)
-            String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status "
-                            + "FROM borrow_records br "
-                            + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
-                            + "WHERE br.id = ?";
-            
-            String correctBarcode = "";
-            long bookId = -1;
-            String currentStatus = "";
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
+                // trong DB)
+                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status "
+                        + "FROM borrow_records br "
+                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+                        + "WHERE br.id = ?";
 
-            try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
-                ps.setLong(1, borrowId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        correctBarcode = rs.getString("barcode");
-                        bookId = rs.getLong("book_id");
-                        currentStatus = rs.getString("status");
-                    } else {
-                        throw new IllegalArgumentException("Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
+                String correctBarcode = "";
+                long bookId = -1;
+                String currentStatus = "";
+
+                try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
+                    ps.setLong(1, borrowId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            correctBarcode = rs.getString("barcode");
+                            bookId = rs.getLong("book_id");
+                            currentStatus = rs.getString("status");
+                        } else {
+                            throw new IllegalArgumentException(
+                                    "Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
+                        }
                     }
                 }
-            }
 
-            // 2. So khớp Barcode (Sử dụng equalsIgnoreCase và hiển thị lỗi chi tiết nếu sai)
-            if (correctBarcode == null || !correctBarcode.equalsIgnoreCase(cleanInput)) {
-                throw new IllegalArgumentException("Sai mã vạch! Phiếu này yêu cầu mã '" + correctBarcode 
-                                                 + "', nhưng bạn lại quét mã '" + cleanInput + "'.");
-            }
+                // 2. So khớp Barcode (Sử dụng equalsIgnoreCase và hiển thị lỗi chi tiết nếu
+                // sai)
+                if (correctBarcode == null || !correctBarcode.equalsIgnoreCase(cleanInput)) {
+                    throw new IllegalArgumentException("Sai mã vạch! Phiếu này yêu cầu mã '" + correctBarcode
+                            + "', nhưng bạn lại quét mã '" + cleanInput + "'.");
+                }
 
-            // 3. Cập nhật trạng thái bản sao sách về khả dụng
-            String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE copy_id = "
-                              + "(SELECT copy_id FROM borrow_records WHERE id = ?)";
-            try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
-                ps.setLong(1, borrowId);
-                ps.executeUpdate();
-            }
+                // 3. Cập nhật trạng thái bản sao sách về khả dụng
+                String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE copy_id = "
+                        + "(SELECT copy_id FROM borrow_records WHERE id = ?)";
+                try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
+                    ps.setLong(1, borrowId);
+                    ps.executeUpdate();
+                }
 
-            // 4. Tăng số lượng đầu sách trong kho (Chỉ tăng nếu trạng thái cũ là đang mượn/giao)
-            String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
-            try (PreparedStatement ps = c.prepareStatement(updateQty)) {
-                ps.setLong(1, bookId);
-                ps.executeUpdate();
-            }
+                // 4. Tăng số lượng đầu sách trong kho (Chỉ tăng nếu trạng thái cũ là đang
+                // mượn/giao)
+                String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
+                try (PreparedStatement ps = c.prepareStatement(updateQty)) {
+                    ps.setLong(1, bookId);
+                    ps.executeUpdate();
+                }
 
-            // 5. Cập nhật phiếu mượn thành công
-            String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
-            try (PreparedStatement ps = c.prepareStatement(updateBr)) {
-                ps.setLong(1, borrowId);
-                ps.executeUpdate();
-            }
+                // 5. Cập nhật phiếu mượn thành công
+                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
+                try (PreparedStatement ps = c.prepareStatement(updateBr)) {
+                    ps.setLong(1, borrowId);
+                    ps.executeUpdate();
+                }
 
-            c.commit();
-        } catch (Exception e) {
-            c.rollback();
-            throw e;
+                c.commit();
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
         }
     }
-}
-    
-    
-    
 
     public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
