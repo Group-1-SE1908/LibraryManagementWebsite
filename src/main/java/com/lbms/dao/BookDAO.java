@@ -18,28 +18,13 @@ public class BookDAO {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
 
     public List<Book> search(String q) throws SQLException {
-        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
-        // Chọn tất cả các cột bao gồm cả cột image và availability (computed column)
-        String sql = "SELECT * FROM Book WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? ORDER BY book_id DESC";
-
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, like);
-            ps.setString(2, like);
-            ps.setString(3, like);
-
-            List<Book> out = new ArrayList<>();
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    out.add(mapBook(rs));
-                }
-            }
-            return out;
-        }
+        return searchByCategory(q, null);
     }
 
     public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
         String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
-        StringBuilder sql = new StringBuilder("SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ?)");
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
 
         if (categoryId != null && categoryId > 0) {
             sql.append(" AND category_id = ?");
@@ -49,8 +34,9 @@ public class BookDAO {
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
             ps.setString(1, like);
             ps.setString(2, like);
+            ps.setString(3, like);
             if (categoryId != null && categoryId > 0) {
-                ps.setLong(3, categoryId);
+                ps.setLong(4, categoryId);
             }
 
             List<Book> out = new ArrayList<>();
@@ -79,7 +65,8 @@ public class BookDAO {
     public long create(Book b, long userId) throws SQLException {
         String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
@@ -90,7 +77,7 @@ public class BookDAO {
             }
             ps.setBigDecimal(4, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
             ps.setInt(5, b.getQuantity());
-            //ps.setString(6, b.getIsbn());
+            // ps.setString(6, b.getIsbn());
             String isbn = b.getIsbn();
             if (isbn != null && !isbn.isBlank() && !isbn.startsWith("ISBN-")) {
                 isbn = "ISBN-" + isbn;
@@ -128,7 +115,6 @@ public class BookDAO {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }
 
-           
             ps.setString(7, b.getIsbn());
             ps.setLong(8, b.getId());
             // Lấy tên sách trước khi cập nhật để log

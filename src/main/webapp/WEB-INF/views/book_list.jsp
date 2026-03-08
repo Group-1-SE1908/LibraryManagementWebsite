@@ -36,6 +36,12 @@
                     <c:set var="isStaff" value="${user.role.name == 'ADMIN' || user.role.name == 'LIBRARIAN'}" />
                     <c:set var="catCount" value="${fn:length(categories)}" />
                     <fmt:message key="search.placeholder" var="searchPlaceholder" />
+                    <c:url var="catalogUrl" value="/books" />
+                    <c:url var="allCategoryUrl" value="/books">
+                        <c:if test="${not empty searchKeyword}">
+                            <c:param name="search" value="${searchKeyword}" />
+                        </c:if>
+                    </c:url>
 
                     <header class="catalog-hero">
                         <div class="catalog-hero__grid container">
@@ -79,16 +85,16 @@
                     <main class="catalog-page">
                         <section class="catalog-controls container">
                             <div class="search-panel">
-                                <form action="${pageContext.request.contextPath}/books" method="get"
-                                    class="search-panel__form">
+                                <form action="${catalogUrl}" method="get" class="search-panel__form">
                                     <input type="text" name="search" class="search-panel__input"
-                                        placeholder="${searchPlaceholder}" value="${param.search}">
+                                        placeholder="${searchPlaceholder}" value="${searchKeyword}">
                                     <select name="category" class="search-panel__select">
-                                        <option value="0">
+                                        <option value="0" ${empty selectedCategoryId || selectedCategoryId <=0
+                                            ? 'selected' : '' }>
                                             <fmt:message key="category.all" />
                                         </option>
                                         <c:forEach var="cat" items="${categories}">
-                                            <option value="${cat.id}" ${param.category==cat.id ? 'selected' : '' }>
+                                            <option value="${cat.id}" ${selectedCategoryId==cat.id ? 'selected' : '' }>
                                                 ${cat.name}
                                             </option>
                                         </c:forEach>
@@ -108,13 +114,19 @@
                             </c:if>
 
                             <div class="category-chips">
-                                <a href="${pageContext.request.contextPath}/books"
-                                    class="category-chip ${empty param.category || param.category == '0' ? 'active' : ''}">
+                                <a href="${allCategoryUrl}"
+                                    class="category-chip ${empty selectedCategoryId ? 'active' : ''}">
                                     <fmt:message key="category.all" />
                                 </a>
                                 <c:forEach var="cat" items="${categories}">
-                                    <a href="${pageContext.request.contextPath}/books?category=${cat.id}"
-                                        class="category-chip ${param.category == cat.id ? 'active' : ''}">
+                                    <c:url var="categoryUrl" value="/books">
+                                        <c:if test="${not empty searchKeyword}">
+                                            <c:param name="search" value="${searchKeyword}" />
+                                        </c:if>
+                                        <c:param name="category" value="${cat.id}" />
+                                    </c:url>
+                                    <a href="${categoryUrl}"
+                                        class="category-chip ${selectedCategoryId == cat.id ? 'active' : ''}">
                                         ${cat.name}
                                     </a>
                                 </c:forEach>

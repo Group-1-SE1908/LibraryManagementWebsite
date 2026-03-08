@@ -143,10 +143,43 @@ public class BookController extends HttpServlet {
     }
 
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        String keyword = req.getParameter("q");
-        List<Book> books = bookService.search(keyword);
+        String keyword = normalizeKeyword(req);
+        Long categoryId = parseCategoryId(req);
+        List<Book> books = bookService.searchByCategory(keyword, categoryId);
         req.setAttribute("books", books);
+        req.setAttribute("categories", categoryDAO.listAll());
+        req.setAttribute("totalBooks", books.size());
+        req.setAttribute("searchKeyword", keyword == null ? "" : keyword);
+        req.setAttribute("selectedCategoryId", categoryId);
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
+    }
+
+    private String normalizeKeyword(HttpServletRequest req) {
+        String keyword = req.getParameter("search");
+        if (keyword == null || keyword.isBlank()) {
+            keyword = req.getParameter("q");
+        }
+        if (keyword == null) {
+            return null;
+        }
+        String normalized = keyword.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Long parseCategoryId(HttpServletRequest req) {
+        String rawCategoryId = req.getParameter("category");
+        if (rawCategoryId == null || rawCategoryId.isBlank()) {
+            rawCategoryId = req.getParameter("categoryId");
+        }
+        if (rawCategoryId == null || rawCategoryId.isBlank()) {
+            return null;
+        }
+        try {
+            Long categoryId = Long.valueOf(rawCategoryId.trim());
+            return categoryId > 0 ? categoryId : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private void handleEditForm(HttpServletRequest req, HttpServletResponse resp) throws Exception {
