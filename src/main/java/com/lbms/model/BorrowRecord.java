@@ -98,7 +98,6 @@ public class BorrowRecord {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-    
 
     public void setIsPaid(boolean isPaid) {
         this.isPaid = isPaid;
@@ -170,5 +169,13 @@ public class BorrowRecord {
 
     public void setShippingDetails(ShippingDetails shippingDetails) {
         this.shippingDetails = shippingDetails;
+    }
+
+    public String getFormattedBorrowDate() {
+        return borrowDate != null ? borrowDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "---";
+    }
+
+    public String getFormattedDueDate() {
+        return dueDate != null ? dueDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "---";
     }
 }
