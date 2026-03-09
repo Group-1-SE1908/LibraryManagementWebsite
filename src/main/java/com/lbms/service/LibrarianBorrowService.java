@@ -18,7 +18,7 @@ public class LibrarianBorrowService {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
 
-    public void returnBook(long borrowId, String inputBarcode) throws SQLException {
+    public BigDecimal returnBook(long borrowId, String inputBarcode) throws SQLException {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
         }
@@ -31,7 +31,7 @@ public class LibrarianBorrowService {
             try {
                 // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
                 // trong DB)
-                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status "
+                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status, br.due_date "
                         + "FROM borrow_records br "
                         + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
                         + "WHERE br.id = ?";
@@ -39,6 +39,7 @@ public class LibrarianBorrowService {
                 String correctBarcode = "";
                 long bookId = -1;
                 String currentStatus = "";
+                LocalDate dueDate = null;
 
                 try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
                     ps.setLong(1, borrowId);
@@ -47,6 +48,10 @@ public class LibrarianBorrowService {
                             correctBarcode = rs.getString("barcode");
                             bookId = rs.getLong("book_id");
                             currentStatus = rs.getString("status");
+                            java.sql.Date dueDateSql = rs.getDate("due_date");
+                            if (dueDateSql != null) {
+                                dueDate = dueDateSql.toLocalDate();
+                            }
                         } else {
                             throw new IllegalArgumentException(
                                     "Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
@@ -84,7 +89,12 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
+                // 6. Tính tiền phạt nếu trễ hạn
+                LocalDate returnDate = LocalDate.now();
+                BigDecimal fineAmount = calculateFine(dueDate, returnDate);
+
                 c.commit();
+                return fineAmount;
             } catch (Exception e) {
                 c.rollback();
                 throw e;
