@@ -90,4 +90,21 @@ public class BookService {
             throw new IllegalArgumentException("Số lượng không hợp lệ");
         }
     }
+
+
+    public boolean restockBook(int bookId, int additionalQuantity, long userId) throws SQLException {
+        // 1. Kiểm tra nghiệp vụ
+        if (additionalQuantity <= 0) {
+            throw new IllegalArgumentException("Số lượng nhập thêm phải lớn hơn 0");
+        }
+
+        // 2. Kiểm tra sách tồn tại
+        Book book = bookDAO.findById(bookId);
+        if (book == null) {
+            throw new IllegalArgumentException("Không tìm thấy đầu sách để nhập hàng");
+        }
+
+        // 3. Gọi DAO và truyền thêm userId để ghi log
+        return bookDAO.restockBook(bookId, additionalQuantity, userId);
+    }
 }

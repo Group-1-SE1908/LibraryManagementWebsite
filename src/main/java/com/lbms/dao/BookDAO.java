@@ -110,8 +110,7 @@ public class BookDAO {
     public long create(Book b, long userId) throws SQLException {
         String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
@@ -223,6 +222,34 @@ public class BookDAO {
                 }
             }
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+//    public boolean restockBook(int bookId, int additionalQuantity) {
+//        String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
+//        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+//            ps.setInt(1, additionalQuantity);
+//            ps.setInt(2, bookId);
+//            return ps.executeUpdate() > 1;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return false;
+//    }
+    public boolean restockBook(int bookId, int additionalQuantity, long userId) { 
+        String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, additionalQuantity);
+            ps.setInt(2, bookId);
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                // Ghi log nghiệp vụ nhập kho
+                logDAO.addActivityLog((int) userId, "Nhập thêm " + additionalQuantity + " cuốn cho sách ID: " + bookId);
+                return true;
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;

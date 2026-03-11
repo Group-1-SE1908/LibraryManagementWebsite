@@ -256,6 +256,14 @@
                     margin-top: 10px;
                 }
             }
+            .my-swal-input {
+                width: 90% !important;
+                margin: 10px auto !important;
+                border-radius: 8px !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 12px !important;
+                font-size: 14px !important;
+            }
         </style>
     </head>
 
@@ -299,7 +307,7 @@
                         let titleText = 'Lỗi';
 
                         // Kiểm tra nội dung để chọn icon phù hợp (Không phân biệt hoa thường)
-                        if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả')) {
+                        if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả') || lowerMsg.includes('từ chối')) {
                             iconType = 'success';
                             titleText = 'Thành công';
                         }
@@ -552,6 +560,10 @@
                         cancelButtonColor: '#64748b',
                         confirmButtonText: 'Xác nhận từ chối',
                         cancelButtonText: 'Quay lại',
+                        customClass: {
+                            input: 'my-swal-input'
+                        },
+
                         inputValidator: (value) => {
                             if (!value) {
                                 return 'Bạn phải nhập lý do từ chối!'
