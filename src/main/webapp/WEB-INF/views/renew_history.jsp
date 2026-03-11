@@ -149,6 +149,28 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
         .date-text { font-size: .83rem; color: var(--text-soft); white-space: nowrap; }
+        .rejection-note {
+            font-size: .78rem;
+            color: #991b1b;
+            border-radius: 10px;
+            border: 1px solid #fecaca;
+            background: #fff5f5;
+            padding: 8px 10px;
+            margin-top: 8px;
+            max-width: 220px;
+        }
+        .rejection-note strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: .7rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .reason-empty {
+            font-size: .8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
 
         /* ── BADGE ── */
         .badge {
@@ -249,13 +271,14 @@
                         <th>Người liên hệ</th>
                         <th>Lý do</th>
                         <th>Ngày gửi</th>
+                        <th>Lý do từ chối</th>
                         <th>Trạng thái</th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach var="r" items="${renewalList}" varStatus="loop">
                         <tr data-status="${r.status}"
-                            data-search="${borrowBookMap[r.borrowId]} ${r.contactName}">
+                            data-search="${borrowBookMap[r.borrowId]} ${r.contactName} ${r.reason} ${r.rejectionReason}">
 
                             <td class="td-num" data-label="STT">${loop.index + 1}</td>
 
@@ -280,11 +303,25 @@
                             </td>
 
                             <td data-label="Lý do">
-                                <div class="reason-text">${r.reason}</div>
+                                <div class="reason-text"><c:out value="${r.reason}"/></div>
                             </td>
 
                             <td data-label="Ngày gửi">
                                 <div class="date-text">${r.requestedAt}</div>
+                            </td>
+
+                            <td data-label="Lý do từ chối">
+                                <c:choose>
+                                    <c:when test="${not empty r.rejectionReason}">
+                                        <div class="rejection-note">
+                                            <strong>Lý do từ chối</strong>
+                                            <span><c:out value="${r.rejectionReason}"/></span>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="reason-empty">Không có</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
 
                             <td data-label="Trạng thái">

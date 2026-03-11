@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lbms.model.RenewalRequest;
+import com.lbms.util.BorrowSchemaSupport;
 import com.lbms.util.DBConnection;
 
 public class RenewalRequestDAO {
@@ -30,6 +31,7 @@ public class RenewalRequestDAO {
                             + "contact_phone VARCHAR(30) NULL, "
                             + "contact_email VARCHAR(255) NULL, "
                             + "status VARCHAR(20) NOT NULL DEFAULT 'PENDING', "
+                            + "rejection_reason NVARCHAR(1000) NULL, "
                             + "requested_at DATETIME NOT NULL DEFAULT GETDATE(), "
                             + "CONSTRAINT FK_RenewalRequest_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id), "
                             + "CONSTRAINT FK_RenewalRequest_User FOREIGN KEY (user_id) REFERENCES [User](user_id)"
@@ -51,6 +53,8 @@ public class RenewalRequestDAO {
                     "ALTER TABLE renewal_requests ADD contact_email VARCHAR(255) NULL;");
             addColumnIfMissing(connection, "status",
                     "ALTER TABLE renewal_requests ADD status VARCHAR(20) NOT NULL DEFAULT 'PENDING';");
+            addColumnIfMissing(connection, "rejection_reason",
+                    "ALTER TABLE renewal_requests ADD rejection_reason NVARCHAR(1000) NULL;");
             addColumnIfMissing(connection, "requested_at",
                     "ALTER TABLE renewal_requests ADD requested_at DATETIME NOT NULL DEFAULT GETDATE();");
         } catch (SQLException e) {
@@ -170,6 +174,7 @@ public class RenewalRequestDAO {
         if (ts != null) {
             request.setRequestedAt(ts.toLocalDateTime());
         }
+        request.setRejectionReason(rs.getString("rejection_reason"));
         return request;
     }
 }

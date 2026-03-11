@@ -374,6 +374,7 @@ public class LibrarianBorrowService {
             throw new IllegalArgumentException("Không tìm thấy phiếu mượn tương ứng.");
         }
 
+        String trimmedNote = (reason != null && !reason.isBlank()) ? reason.trim() : null;
         try (Connection c = DBConnection.getConnection()) {
             boolean originalAuto = c.getAutoCommit();
             c.setAutoCommit(false);
@@ -384,8 +385,9 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
                 try (PreparedStatement ps = c.prepareStatement(
-                        "UPDATE renewal_requests SET status = 'REJECTED' WHERE id = ?")) {
-                    ps.setLong(1, renewalId);
+                        "UPDATE renewal_requests SET status = 'REJECTED', rejection_reason = ? WHERE id = ?")) {
+                    ps.setString(1, trimmedNote);
+                    ps.setLong(2, renewalId);
                     ps.executeUpdate();
                 }
                 c.commit();
@@ -399,7 +401,7 @@ public class LibrarianBorrowService {
 
         String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
         String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
-        String note = (reason != null && !reason.isBlank()) ? reason.trim() : "Không có lý do";
+        String note = trimmedNote != null ? trimmedNote : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
                 "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
                         + note);

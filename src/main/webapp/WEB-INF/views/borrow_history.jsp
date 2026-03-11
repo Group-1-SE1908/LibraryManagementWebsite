@@ -125,8 +125,11 @@
 
         .history-stack {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-auto-rows: minmax(520px, auto);
+            gap: 24px;
+            align-items: stretch;
+            align-content: stretch;
         }
 
         @media (max-width: 1100px) {
@@ -149,16 +152,27 @@
             box-shadow: var(--shadow-sm);
             display: flex;
             flex-direction: column;
+            height: 100%;
+            min-height: 520px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 35px 60px rgba(15, 23, 42, 0.15), 0 15px 25px rgba(15, 23, 42, 0.08);
+            align-self: stretch;
+        }
+
+        .history-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 42px 90px rgba(15, 23, 42, 0.2), 0 20px 30px rgba(15, 23, 42, 0.1);
         }
 
         .history-card__banner {
             padding: 24px;
-            background: var(--history-gradient);
+            background: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .copy-badge {
@@ -172,7 +186,7 @@
         .history-card__poster {
             position: relative;
             height: 220px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 60%, #a855f7 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -198,6 +212,12 @@
             font-size: 1.35rem;
             margin: 6px 0 4px;
             line-height: 1.2;
+            max-height: calc(1.2rem * 2.4);
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
         }
 
         .history-card__banner .muted {
@@ -250,6 +270,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
+            flex: 1;
+            grid-auto-rows: minmax(72px, auto);
         }
 
         .history-card__field {
@@ -284,6 +306,7 @@
             gap: 12px;
             flex-wrap: wrap;
             background: white;
+            margin-top: auto;
         }
 
         .history-card__actions form {
@@ -673,15 +696,6 @@
                             <div class="history-card__field">
                                 <span>Hạn trả</span>
                                 <strong>${r.dueDate}</strong>
-                            </div>
-                            <div class="history-card__field">
-                                <span>ISBN</span>
-                                <strong>
-                                    <c:choose>
-                                        <c:when test="${not empty r.book.isbn}">${r.book.isbn}</c:when>
-                                        <c:otherwise>Không có</c:otherwise>
-                                    </c:choose>
-                                </strong>
                             </div>
                             <div class="history-card__field">
                                 <span>Người mượn</span>
