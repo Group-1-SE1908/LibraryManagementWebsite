@@ -158,8 +158,9 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
-            } else if ("renewal".equals(action)) {
-                handleRenewalQueue(req, resp);
+            } else if ("import".equals(action)) {
+                req.getRequestDispatcher("book_restock.jsp").forward(req, resp);
+                return;
             } else {
 
                 String methodFilter = req.getParameter("filter");
