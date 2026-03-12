@@ -81,25 +81,41 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${bookList}" var="book">
-                        <tr>
-                            <td>
-                                <img src="${pageContext.request.contextPath}/${book.image}" class="img-preview" onerror="this.src='${pageContext.request.contextPath}/assets/images/books/default.jpg'">
-                            </td>
-                            <td>${book.isbn}</td>
-                            <td><strong>${book.title}</strong><br><small>${book.author}</small></td>
-                            <td>
-                                <span style="font-weight: bold; color: ${book.quantity < 5 ? '#ef4444' : '#1e293b'}">
-                                    ${book.quantity}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="${pageContext.request.contextPath}/books/restock?id=${book.id}" class="btn-import">
-                                    <i class="fas fa-plus"></i> Nhập thêm
-                                </a>
-                            </td>
-                        </tr>
-                    </c:forEach>
+                    <c:choose>
+                        <c:when test = "${not empty bookList}">
+                            <c:forEach items="${bookList}" var="book">
+                                <tr>
+                                    <td>
+                                        <img src="${pageContext.request.contextPath}/${book.image}" class="img-preview" onerror="this.src='${pageContext.request.contextPath}/assets/images/books/default.jpg'">
+                                    </td>
+                                    <td>${book.isbn}</td>
+                                    <td><strong>${book.title}</strong><br><small>${book.author}</small></td>
+                                    <td>
+                                        <span style="font-weight: bold; color: ${book.quantity < 5 ? '#ef4444' : '#1e293b'}">
+                                            ${book.quantity}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="${pageContext.request.contextPath}/books/restock?id=${book.id}" class="btn-import">
+                                            <i class="fas fa-plus"></i> Nhập thêm
+                                        </a>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 50px; color: #64748b;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🔍</div>
+                                    <p style="font-size: 16px; margin: 0;">Không tìm thấy sách nào phù hợp với từ khóa "<strong>${lastSearch}</strong>".</p>
+                                    <a href="${pageContext.request.contextPath}/books?action=viewImportList" 
+                                       style="display: inline-block; margin-top: 15px; color: #0b57d0; text-decoration: none; font-size: 14px;">
+                                        <i class="fas fa-sync-alt"></i> Hiển thị tất cả sách
+                                    </a>
+                                </td>
+                            </tr>
+                        </c:otherwise>
+                    </c:choose>
                 </tbody>
             </table>
         </div>

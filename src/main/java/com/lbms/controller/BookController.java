@@ -123,9 +123,14 @@ public class BookController extends HttpServlet {
             } else if ("/books/edit".equals(path)) {
                 String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
+                
+                Book existingBook = bookService.findById(id);
                 Book b = readBookFromRequest(req);
+                
                 b.setId(id);
                 b.setImage(imagePath);
+                
+                b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
             } else if ("restock".equals(action)) {
                 int bookId = Integer.parseInt(req.getParameter("bookId"));
@@ -289,8 +294,8 @@ public class BookController extends HttpServlet {
             b.setPrice(Double.valueOf(priceStr));
         }
 
-        String qtyStr = req.getParameter("quantity");
-        b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
+        //String qtyStr = req.getParameter("quantity");
+        //b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
 
         String catIdStr = req.getParameter("categoryId");
         if (catIdStr != null && !catIdStr.isEmpty()) {
@@ -303,10 +308,12 @@ public class BookController extends HttpServlet {
 
     private void handleImportList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String keyword = req.getParameter("searchImport");
-        List<Book> books = bookService.searchByCategory(null, null, 1, 100);
+        String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        
+        List<Book> books = bookService.searchByCategory(searchKeyword, null, 1, 100);
 
         req.setAttribute("bookList", books);
-        req.setAttribute("searchKeyword", keyword);
+        req.setAttribute("lastSearch", searchKeyword);
         req.getRequestDispatcher("/WEB-INF/views/admin/library/import_list.jsp").forward(req, resp);
     }
 }

@@ -145,6 +145,38 @@
         justify-content: center;
         font-weight: bold;
     }
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        text-decoration: none !important;
+        font-weight: 500;
+        transition: 0.2s;
+    }
+
+    .btn-profile {
+        background: rgba(255,255,255,0.05);
+        color: white;
+    }
+
+    .btn-profile:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .btn-logout {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .btn-logout:hover {
+        background: #ef4444;
+        color: white;
+    }
 </style>
 
 <div class="lib-sidebar">
@@ -191,11 +223,11 @@
     <div class="sidebar-section">
         <div class="sidebar-section-title">KHO SÁCH</div>
         <div class="sidebar-nav">
-            <a href="${pageContext.request.contextPath}/books/new" class="btn-add-sidebar">
+            <a href="${pageContext.request.contextPath}/books/new">
                 + Thêm sách mới
             </a>
 
-            <a href="${pageContext.request.contextPath}/books?action=viewImportList" class="btn small success">
+            <a href="${pageContext.request.contextPath}/books?action=viewImportList">
                 <i class="fas fa-plus-circle"></i> Nhập kho
             </a>
 
@@ -210,22 +242,19 @@
     </div>
 
     <div class="sidebar-footer">
-        <div class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" data-toggle="dropdown">
-                <div class="avatar-sm mr-2 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                    ${sessionScope.user.fullName.substring(0,1).toUpperCase()}
-                </div>
-                <span class="d-none d-md-inline text-dark">${sessionScope.user.fullName}</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right border-0 shadow">
-                <a class="dropdown-item" href="${pageContext.request.contextPath}/profile">
-                    <i class="fas fa-user-circle mr-2 text-muted"></i> Hồ sơ cá nhân
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout">
-                    <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
-                </a>
+        <div class="profile-card">
+            <div class="avatar">${userInitial.toUpperCase()}</div>
+            <div class="user-info">
+                <span class="user-name">${userName}</span>
             </div>
+        </div>
+        <div class="footer-actions">
+            <a href="${pageContext.request.contextPath}/profile" class="btn-action btn-profile">
+                <i class="fa-solid fa-user-gear"></i> Hồ sơ
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-action btn-logout">
+                <i class="fa-solid fa-power-off"></i> Thoát
+            </a>
         </div>
     </div>
 </div>
