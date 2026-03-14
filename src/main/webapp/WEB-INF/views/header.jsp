@@ -7,6 +7,10 @@
 <c:set var="userName"
        value="${not empty currentUser && not empty currentUser.fullName ? currentUser.fullName : 'Guest'}"/>
 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}"/>
+<c:set var="walletBalance" value="0"/>
+<c:if test="${not empty currentUser && not empty currentUser.walletBalance}">
+    <c:set var="walletBalance" value="${currentUser.walletBalance}"/>
+</c:if>
 
 <style>
     /* ===== HEADER ===== */
@@ -107,6 +111,75 @@
         gap: 8px;
         flex-shrink: 0;
         margin-left: auto;
+    }
+
+    .header-wallet {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px;
+    }
+
+    .wallet-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid transparent;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .wallet-badge:hover {
+        border-color: #93c5fd;
+        background: #e0f2fe;
+    }
+
+    .wallet-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .wallet-amount {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 2px;
+        font-size: 13px;
+        color: #1d4ed8;
+    }
+
+    .wallet-topup {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #111827;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .wallet-topup svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .wallet-topup:hover {
+        background: #1f2937;
+        transform: translateY(-1px);
+    }
+
+    .wallet-currency {
+        font-size: 11px;
     }
 
     /* Login button */
@@ -411,6 +484,30 @@
                 </svg>
                 <fmt:message key="nav.cart"/>
             </a>
+            <c:if test="${not empty currentUser}">
+                <div class="header-wallet">
+                    <a class="wallet-badge" href="${pageContext.request.contextPath}/wallet">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.6">
+                            <path d="M3 7h18v10H3z"/>
+                            <path d="M3 9h18"/>
+                            <circle cx="17" cy="13.5" r="1.2" fill="currentColor"/>
+                        </svg>
+                        <span class="wallet-amount">
+                            <fmt:formatNumber value="${walletBalance}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+                            <span class="wallet-currency">₫</span>
+                        </span>
+                    </a>
+                    <a class="wallet-topup" href="${pageContext.request.contextPath}/wallet">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                             stroke-width="1.8">
+                            <circle cx="10" cy="10" r="9"/>
+                            <path d="M10 6v8M6 10h8"/>
+                        </svg>
+                        <span><fmt:message key="wallet.action.topup"/></span>
+                    </a>
+                </div>
+            </c:if>
             <c:choose>
                 <c:when test="${not empty currentUser}">
                     <%-- User dropdown --%>

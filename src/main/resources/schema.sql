@@ -44,6 +44,7 @@ CREATE TABLE [User] (
     status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
     role_id INT NOT NULL,
     avatar VARCHAR(255) NULL, --
+    wallet_balance DECIMAL(14,2) NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id)
     );
