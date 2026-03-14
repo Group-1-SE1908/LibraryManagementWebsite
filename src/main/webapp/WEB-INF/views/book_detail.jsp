@@ -89,6 +89,17 @@
             color: var(--text-dark);
             margin-bottom: 12px;
             line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .book-rating-display {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--primary-color);
+            white-space: nowrap;
         }
 
         .book-author-name {
@@ -360,6 +371,7 @@
             color: var(--text-muted);
         }
 
+
         .login-prompt {
             background: var(--light-bg);
             padding: 20px;
@@ -372,6 +384,26 @@
             color: var(--primary-color);
             text-decoration: none;
             font-weight: 600;
+        }
+
+        .already-commented-message {
+            text-align: center;
+            padding: 20px;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            color: #0c4a6e;
+        }
+
+        .already-commented-message p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        .message-note {
+            font-size: 14px !important;
+            color: #64748b !important;
+            font-style: italic;
         }
 
         @media (max-width: 768px) {
@@ -439,7 +471,10 @@
                 </c:choose>
             </div>
 
-            <h1 class="book-title">${book.title}</h1>
+            <h1 class="book-title">
+                ${book.title}
+                <span class="book-rating-display" id="bookRatingDisplay"></span>
+            </h1>
             <p class="book-author-name">
                 <fmt:message key="book.by"/> ${book.author}
             </p>
@@ -517,41 +552,53 @@
 
     <c:choose>
         <c:when test="${not empty sessionScope.currentUser}">
-            <div class="comment-form-wrapper">
-                <h3 class="comment-form-title">Chia Sẻ Suy Nghĩ Của Bạn</h3>
-                <form action="${pageContext.request.contextPath}/comment" method="POST">
-                    <input type="hidden" name="action" value="add">
-                    <input type="hidden" name="bookId" value="${book.id}">
-
-                    <div class="form-group">
-                        <label for="content">Bình Luận Của Bạn</label>
-                        <textarea id="content" name="content" required
-                                  placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="rating-group">
-                            <label>Đánh Giá</label>
-                            <div class="star-rating">
-                                <input type="radio" id="star5" name="rating" value="5" required>
-                                <label for="star5">★★★★★</label>
-                                <input type="radio" id="star4" name="rating" value="4">
-                                <label for="star4">★★★★☆</label>
-                                <input type="radio" id="star3" name="rating" value="3">
-                                <label for="star3">★★★☆☆</label>
-                                <input type="radio" id="star2" name="rating" value="2">
-                                <label for="star2">★★☆☆☆</label>
-                                <input type="radio" id="star1" name="rating" value="1">
-                                <label for="star1">★☆☆☆☆</label>
-                            </div>
+            <c:choose>
+                <c:when test="${hasCommented}">
+                    <div class="comment-form-wrapper">
+                        <div class="already-commented-message">
+                            <p>Bạn đã đánh giá và bình luận cho cuốn sách này rồi!</p>
+                            <p class="message-note">Mỗi tài khoản chỉ được đánh giá và bình luận một lần cho mỗi cuốn sách.</p>
                         </div>
                     </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="comment-form-wrapper">
+                        <h3 class="comment-form-title">Chia Sẻ Suy Nghĩ Của Bạn</h3>
+                        <form action="${pageContext.request.contextPath}/comment" method="POST">
+                            <input type="hidden" name="action" value="add">
+                            <input type="hidden" name="bookId" value="${book.id}">
 
-                    <div class="form-actions">
-                        <button type="submit" class="btn primary">Gửi Bình Luận</button>
+                            <div class="form-group">
+                                <label for="content">Bình Luận Của Bạn</label>
+                                <textarea id="content" name="content" required
+                                          placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="rating-group">
+                                    <label>Đánh Giá</label>
+                                    <div class="star-rating">
+                                        <input type="radio" id="star5" name="rating" value="5" required>
+                                        <label for="star5">★★★★★</label>
+                                        <input type="radio" id="star4" name="rating" value="4">
+                                        <label for="star4">★★★★☆</label>
+                                        <input type="radio" id="star3" name="rating" value="3">
+                                        <label for="star3">★★★☆☆</label>
+                                        <input type="radio" id="star2" name="rating" value="2">
+                                        <label for="star2">★★☆☆☆</label>
+                                        <input type="radio" id="star1" name="rating" value="1">
+                                        <label for="star1">★☆☆☆☆</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn primary">Gửi Bình Luận</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
+                </c:otherwise>
+            </c:choose>
         </c:when>
         <c:otherwise>
             <div class="login-prompt">
@@ -762,7 +809,24 @@
     }
 </script>
 
+<script>
+    // Display rating in book title
+    document.addEventListener('DOMContentLoaded', function() {
+        const averageRating = ${averageRating};
+        const ratingCount = ${ratingCount};
+        const ratingDisplay = document.getElementById('bookRatingDisplay');
+        
+        if (ratingDisplay) {
+            if (ratingCount > 0) {
+                const formattedRating = averageRating.toFixed(1);
+                ratingDisplay.textContent = formattedRating + ' ⭐ đánh giá';
+            } else {
+                ratingDisplay.textContent = 'Chưa có lượt đánh giá';
+            }
+        }
+    });
+</script>
+
 <jsp:include page="footer.jsp"/>
 </body>
 </html>
-z

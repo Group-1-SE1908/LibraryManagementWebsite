@@ -119,6 +119,12 @@ public class CommentController extends HttpServlet {
             return;
         }
 
+        // Kiểm tra xem user đã comment cho sách này chưa
+        if (commentDAO.hasUserCommented(bookId, (int) user.getId())) {
+            response.sendError(400, "Bạn đã đánh giá và bình luận cho cuốn sách này rồi!");
+            return;
+        }
+
         Comment comment = new Comment();
         comment.setBookId(bookId);
         comment.setUserId((int) user.getId());

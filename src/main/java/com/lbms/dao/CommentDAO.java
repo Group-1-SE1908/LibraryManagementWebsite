@@ -182,4 +182,51 @@ public class CommentDAO {
             return ps.executeUpdate() > 0;
         }
     }
+
+    // Phương thức để lấy rating trung bình của một cuốn sách
+    public double getAverageRating(int bookId) throws Exception {
+        String sql = "SELECT AVG(CAST(rating AS FLOAT)) as avg_rating FROM Comment WHERE book_id = ? AND status = 'VISIBLE'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double avgRating = rs.getDouble("avg_rating");
+                    return Double.isNaN(avgRating) ? 0 : avgRating;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Phương thức để đếm số lượt đánh giá của một cuốn sách
+    public int getRatingCount(int bookId) throws Exception {
+        String sql = "SELECT COUNT(*) as rating_count FROM Comment WHERE book_id = ? AND status = 'VISIBLE'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("rating_count");
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Phương thức kiểm tra xem user đã comment cho sách này chưa
+    public boolean hasUserCommented(int bookId, int userId) throws Exception {
+        String sql = "SELECT COUNT(*) as comment_count FROM Comment WHERE book_id = ? AND user_id = ? AND status = 'VISIBLE'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("comment_count") > 0;
+                }
+            }
+        }
+        return false;
+    }
 }

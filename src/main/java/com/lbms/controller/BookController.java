@@ -171,9 +171,28 @@ public class BookController extends HttpServlet {
 
         try {
             req.setAttribute("comments", commentDAO.getCommentsByBook(id));
+            
+            // Lấy rating trung bình và số lượt đánh giá
+            double averageRating = commentDAO.getAverageRating(id);
+            int ratingCount = commentDAO.getRatingCount(id);
+            req.setAttribute("averageRating", averageRating);
+            req.setAttribute("ratingCount", ratingCount);
+
+            // Kiểm tra xem user hiện tại đã comment cho sách này chưa
+            HttpSession session = req.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser != null) {
+                boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
+                req.setAttribute("hasCommented", hasCommented);
+            } else {
+                req.setAttribute("hasCommented", false);
+            }
         } catch (Exception e) {
             Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
             req.setAttribute("comments", new java.util.ArrayList<>());
+            req.setAttribute("averageRating", 0.0);
+            req.setAttribute("ratingCount", 0);
+            req.setAttribute("hasCommented", false);
         }
 
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);
