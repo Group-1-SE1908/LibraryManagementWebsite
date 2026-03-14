@@ -24,6 +24,7 @@
 
 html {
     scroll-behavior: smooth;
+    height: 100%;
 }
 
 body {
@@ -31,6 +32,13 @@ body {
     line-height: 1.6;
     color: var(--text-dark);
     background-color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body > main {
+    flex: 1 0 auto;
 }
 
 /* ============ CONTAINER & LAYOUT ============ */
@@ -1803,6 +1811,7 @@ footer {
     background-color: #1f2937;
     color: white;
     margin: 0;
+    margin-top: auto;
     border-top: 1px solid var(--border-color);
 }
 
