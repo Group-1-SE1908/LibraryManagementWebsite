@@ -123,9 +123,14 @@ public class BookController extends HttpServlet {
             } else if ("/books/edit".equals(path)) {
                 String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
+                
+                Book existingBook = bookService.findById(id);
                 Book b = readBookFromRequest(req);
+                
                 b.setId(id);
                 b.setImage(imagePath);
+                
+                b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
             } else if ("restock".equals(action)) {
                 int bookId = Integer.parseInt(req.getParameter("bookId"));
@@ -270,9 +275,28 @@ public class BookController extends HttpServlet {
 
         try {
             req.setAttribute("comments", commentDAO.getCommentsByBook(id));
+            
+            // Lấy rating trung bình và số lượt đánh giá
+            double averageRating = commentDAO.getAverageRating(id);
+            int ratingCount = commentDAO.getRatingCount(id);
+            req.setAttribute("averageRating", averageRating);
+            req.setAttribute("ratingCount", ratingCount);
+
+            // Kiểm tra xem user hiện tại đã comment cho sách này chưa
+            HttpSession session = req.getSession();
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser != null) {
+                boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
+                req.setAttribute("hasCommented", hasCommented);
+            } else {
+                req.setAttribute("hasCommented", false);
+            }
         } catch (Exception e) {
             Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
             req.setAttribute("comments", new java.util.ArrayList<>());
+            req.setAttribute("averageRating", 0.0);
+            req.setAttribute("ratingCount", 0);
+            req.setAttribute("hasCommented", false);
         }
 
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);
@@ -289,8 +313,8 @@ public class BookController extends HttpServlet {
             b.setPrice(Double.valueOf(priceStr));
         }
 
-        String qtyStr = req.getParameter("quantity");
-        b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
+        //String qtyStr = req.getParameter("quantity");
+        //b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
 
         String catIdStr = req.getParameter("categoryId");
         if (catIdStr != null && !catIdStr.isEmpty()) {
@@ -303,10 +327,12 @@ public class BookController extends HttpServlet {
 
     private void handleImportList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String keyword = req.getParameter("searchImport");
-        List<Book> books = bookService.searchByCategory(null, null, 1, 100);
+        String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        
+        List<Book> books = bookService.searchByCategory(searchKeyword, null, 1, 100);
 
         req.setAttribute("bookList", books);
-        req.setAttribute("searchKeyword", keyword);
+        req.setAttribute("lastSearch", searchKeyword);
         req.getRequestDispatcher("/WEB-INF/views/admin/library/import_list.jsp").forward(req, resp);
     }
 }
