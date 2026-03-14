@@ -224,31 +224,6 @@
         color: #1d4ed8;
     }
 
-    .wallet-topup {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: #111827;
-        color: #ffffff;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 600;
-        border: 1px solid transparent;
-        transition: background 0.2s, transform 0.2s;
-    }
-
-    .wallet-topup svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .wallet-topup:hover {
-        background: #1f2937;
-        transform: translateY(-1px);
-    }
-
     .wallet-currency {
         font-size: 11px;
     }
@@ -501,10 +476,6 @@
             margin-left: auto;
         }
 
-        .wallet-topup {
-            display: none;
-        }
-
         .header-nav-panel.open {
             transform: translateY(0);
             opacity: 1;
@@ -637,15 +608,6 @@
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/books">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                                </svg>
-                                <fmt:message key="nav.catalog"/>
-                            </a>
-                        </li>
-                        <li>
                             <a href="${pageContext.request.contextPath}/reservation">
                                 <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
                                     <path d="m23.976,17.305l-2.044-11.587c-.381-2.154-2.245-3.717-4.432-3.717H6.5c-2.187,0-4.051,1.563-4.432,3.718L.024,17.305c-.384,2.175,1.052,4.27,3.202,4.67.093.018.185.025.276.025.708,0,1.339-.504,1.473-1.226.152-.814-.386-1.598-1.2-1.749-.529-.099-.894-.647-.796-1.199l1.764-9.994,1.698,9.624c.464,2.633,2.742,4.544,5.416,4.544h8.181c1.186,0,2.302-.521,3.064-1.429.762-.908,1.081-2.099.875-3.267Zm-3.173,1.338c-.112.134-.36.357-.766.357h-8.181c-1.215,0-2.251-.868-2.462-2.065l-2.106-11.935h10.212c.729,0,1.351.521,1.478,1.239l2.044,11.587c.07.399-.107.684-.219.816Zm-9.303-7.643c-.829,0-1.5-.671-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.671,1.5,1.5s-.671,1.5-1.5,1.5h-4.5Zm7,3.5c0,.828-.671,1.5-1.5,1.5h-4.5c-.829,0-1.5-.672-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.672,1.5,1.5Z"/>
@@ -688,14 +650,6 @@
                             <fmt:formatNumber value="${walletBalance}" type="number" groupingUsed="true" maxFractionDigits="0"/>
                             <span class="wallet-currency">₫</span>
                         </span>
-                    </a>
-                    <a class="wallet-topup" href="${pageContext.request.contextPath}/wallet">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-                             stroke-width="1.8">
-                            <circle cx="10" cy="10" r="9"/>
-                            <path d="M10 6v8M6 10h8"/>
-                        </svg>
-                        <span><fmt:message key="wallet.action.topup"/></span>
                     </a>
                 </div>
             </c:if>
