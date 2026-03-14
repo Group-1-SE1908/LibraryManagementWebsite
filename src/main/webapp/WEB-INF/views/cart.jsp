@@ -101,7 +101,6 @@
                                 <form action="${pageContext.request.contextPath}/cart/update" method="post" class="quantity-form">
                                     <input type="hidden" name="bookId" value="${item.bookId}" />
                                     <input type="number" name="quantity" min="1" value="${item.quantity}" class="quantity-input" />
-                                    <button type="submit" class="btn secondary">Cập nhật</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/cart/remove" method="post" class="remove-form">
                                     <input type="hidden" name="bookId" value="${item.bookId}" />
@@ -615,6 +614,30 @@
             }
         });
 
+        const attachQuantityAutoSubmit = () => {
+            const quantityForms = document.querySelectorAll('.cart-item-card .quantity-form');
+            quantityForms.forEach(form => {
+                const input = form.querySelector('.quantity-input');
+                if (!input) {
+                    return;
+                }
+                let debounceTimer;
+                const submitForm = () => {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+                    form.submit();
+                };
+                const scheduleSubmit = () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = window.setTimeout(submitForm, 280);
+                };
+                input.addEventListener('input', scheduleSubmit);
+                input.addEventListener('change', scheduleSubmit);
+            });
+        };
+        attachQuantityAutoSubmit();
         fetchLocationCatalog();
     })();
 </script>
