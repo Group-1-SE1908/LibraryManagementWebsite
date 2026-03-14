@@ -6,6 +6,7 @@ import com.lbms.model.User;
 import com.lbms.service.BookService;
 import com.lbms.dao.CategoryDAO;
 import com.lbms.dao.CommentDAO;
+import com.lbms.dao.ReservationDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -37,12 +38,14 @@ public class BookController extends HttpServlet {
     private BookService bookService;
     private CategoryDAO categoryDAO;
     private CommentDAO commentDAO;
+    private ReservationDAO reservationDAO;
 
     @Override
     public void init() {
         this.bookService = new BookService();
         this.categoryDAO = new CategoryDAO();
         this.commentDAO = new CommentDAO();
+        this.reservationDAO = new ReservationDAO();
     }
 
     @Override
@@ -288,8 +291,13 @@ public class BookController extends HttpServlet {
             if (currentUser != null) {
                 boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
                 req.setAttribute("hasCommented", hasCommented);
+
+                // Kiểm tra xem user đã đặt trước sách này chưa
+                boolean hasReserved = reservationDAO.existsActive((int) currentUser.getId(), id);
+                req.setAttribute("hasReserved", hasReserved);
             } else {
                 req.setAttribute("hasCommented", false);
+                req.setAttribute("hasReserved", false);
             }
         } catch (Exception e) {
             Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
@@ -297,6 +305,7 @@ public class BookController extends HttpServlet {
             req.setAttribute("averageRating", 0.0);
             req.setAttribute("ratingCount", 0);
             req.setAttribute("hasCommented", false);
+            req.setAttribute("hasReserved", false);
         }
 
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);

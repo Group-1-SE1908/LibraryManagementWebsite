@@ -13,13 +13,34 @@ public class ReservationDAO {
     public boolean existsActive(long userId, long bookId) throws SQLException {
         String sql = "SELECT COUNT(1) FROM reservations " +
                 "WHERE user_id = ? AND book_id = ? " +
-                "AND status IN ('WAITING', 'AVAILABLE')";
+                "AND status NOT IN ('CANCELLED', 'EXPIRED')";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ResultSet rs = ps.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    // ── findByUserAndBook: tìm reservation của user cho book ───────────────
+    public Reservation findByUserAndBook(long userId, long bookId) throws SQLException {
+        String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
+                "r.note, r.notified_at, r.expired_at, " +
+                "r.created_at, r.updated_at, " +
+                "b.title AS book_title, " +
+                "b.author AS book_author, " +
+                "b.image AS book_image " +
+                "FROM reservations r " +
+                "INNER JOIN Book b ON r.book_id = b.book_id " +
+                "WHERE r.user_id = ? AND r.book_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, bookId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapRow(rs);
+            return null;
         }
     }
 
@@ -56,6 +77,17 @@ public class ReservationDAO {
                 throw new IllegalStateException(
                         "Không thể hủy: reservation không tồn tại hoặc không thuộc về bạn");
             }
+        }
+    }
+
+    // ── updateStatus: cập nhật status của reservation ──────────────────────
+    public void updateStatus(long reservationId, String status) throws SQLException {
+        String sql = "UPDATE reservations SET status = ?, updated_at = GETDATE() WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setLong(2, reservationId);
+            ps.executeUpdate();
         }
     }
 
