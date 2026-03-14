@@ -189,7 +189,7 @@ public class WalletController extends HttpServlet {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
         return formatter.format(amount);
     }
 

@@ -1,8 +1,6 @@
 package com.lbms.controller;
 
-import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReportDAO;
-import com.lbms.model.Comment;
 import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
@@ -18,15 +16,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(name = "AdminReportController", urlPatterns = {"/admin/reports"})
+@WebServlet(name = "AdminReportController", urlPatterns = { "/admin/reports" })
 public class AdminReportController extends HttpServlet {
     private CommentReportDAO reportDAO;
-    private CommentDAO commentDAO;
 
     @Override
     public void init() {
         this.reportDAO = new CommentReportDAO();
-        this.commentDAO = new CommentDAO();
     }
 
     @Override
@@ -37,7 +33,7 @@ public class AdminReportController extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                                   !"LIBRARIAN".equals(user.getRole().getName()))) {
+                !"LIBRARIAN".equals(user.getRole().getName()))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
@@ -66,7 +62,7 @@ public class AdminReportController extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                                   !"LIBRARIAN".equals(user.getRole().getName()))) {
+                !"LIBRARIAN".equals(user.getRole().getName()))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
@@ -95,7 +91,8 @@ public class AdminReportController extends HttpServlet {
     }
 
     private CommentReport getReportById(long reportId) throws SQLException {
-        // This is a simple implementation; in real app, you might want a getReportById method
+        // This is a simple implementation; in real app, you might want a getReportById
+        // method
         List<CommentReport> reports = reportDAO.getAllReports();
         for (CommentReport report : reports) {
             if (report.getReportId() == reportId) {

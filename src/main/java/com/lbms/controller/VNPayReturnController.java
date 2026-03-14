@@ -1,4 +1,5 @@
 package com.lbms.controller;
+
 import com.lbms.dao.BookDAO;
 import com.lbms.model.Book;
 import java.util.ArrayList;
@@ -101,7 +102,8 @@ public class VNPayReturnController extends HttpServlet {
                     if (vnp_TxnRef.startsWith("CART-")) {
                         // Xử lý đặt sách online
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession().getAttribute("cartCheckout-" + vnp_TxnRef);
+                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession()
+                                .getAttribute("cartCheckout-" + vnp_TxnRef);
                         if (checkoutData != null) {
                             // Thực hiện borrow như trong CartController
                             String method = (String) checkoutData.get("method");
@@ -117,7 +119,7 @@ public class VNPayReturnController extends HttpServlet {
                             @SuppressWarnings("unchecked")
                             List<BigDecimal> depositAmounts = (List<BigDecimal>) checkoutData.get("depositAmounts");
 
-// Nếu null hoặc toàn 0 → tính lại từ DB
+                            // Nếu null hoặc toàn 0 → tính lại từ DB
                             if (depositAmounts == null || depositAmounts.stream()
                                     .allMatch(d -> d == null || d.compareTo(BigDecimal.ZERO) == 0)) {
                                 BookDAO bookDAO = new BookDAO();
@@ -147,8 +149,7 @@ public class VNPayReturnController extends HttpServlet {
                                         shippingDetails,
                                         item.getQuantity(),
                                         groupCode,
-                                        depositAmount
-                                );
+                                        depositAmount);
                             }
                             // Clear cart
                             new CartService().clearCart(currentUser.getId());
@@ -166,31 +167,41 @@ public class VNPayReturnController extends HttpServlet {
                                             .distinct()
                                             .collect(Collectors.joining(","));
                                     if (!emails.isBlank()) {
-                                        String displayName = currentUser.getFullName() != null ? currentUser.getFullName() : "Người dùng";
-                                        String userEmail = currentUser.getEmail() != null ? currentUser.getEmail() : "chưa cung cấp";
+                                        String displayName = currentUser.getFullName() != null
+                                                ? currentUser.getFullName()
+                                                : "Người dùng";
+                                        String userEmail = currentUser.getEmail() != null ? currentUser.getEmail()
+                                                : "chưa cung cấp";
                                         String subject = "LBMS - Yêu cầu mượn sách mới từ " + displayName;
                                         StringBuilder body = new StringBuilder();
                                         body.append("<h3>Yêu cầu mượn sách mới</h3>");
                                         body.append("<p>Người dùng ").append(displayName)
-                                                .append(" (").append(userEmail).append(") vừa gửi yêu cầu mượn sách.</p>");
+                                                .append(" (").append(userEmail)
+                                                .append(") vừa gửi yêu cầu mượn sách.</p>");
                                         body.append("<p>Phương thức: <strong>online</strong></p>");
                                         body.append("<h4>Thông tin liên hệ</h4>");
                                         body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
                                         body.append("<li><strong>Tên:</strong> ").append(contactName).append("</li>");
-                                        body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone).append("</li>");
-                                        body.append("<li><strong>Email:</strong> ").append(contactEmail).append("</li>");
+                                        body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone)
+                                                .append("</li>");
+                                        body.append("<li><strong>Email:</strong> ").append(contactEmail)
+                                                .append("</li>");
                                         body.append("</ul>");
                                         body.append("<h4>Chi tiết sách</h4>");
                                         body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
                                         for (CartItem item : items) {
-                                            body.append("<li>").append(item.getBook().getTitle()).append(" (").append(item.getQuantity()).append(" cuốn)</li>");
+                                            body.append("<li>").append(item.getBook().getTitle()).append(" (")
+                                                    .append(item.getQuantity()).append(" cuốn)</li>");
                                         }
                                         body.append("</ul>");
                                         body.append("<p>Ngày trả dự kiến: ").append(formattedReturnDate).append("</p>");
                                         if (shippingDetails != null) {
-                                            body.append("<p>Người nhận: ").append(shippingDetails.getRecipient()).append("</p>");
-                                            body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone()).append("</p>");
-                                            body.append("<p>Địa chỉ giao: ").append(shippingDetails.getFormattedAddress()).append("</p>");
+                                            body.append("<p>Người nhận: ").append(shippingDetails.getRecipient())
+                                                    .append("</p>");
+                                            body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone())
+                                                    .append("</p>");
+                                            body.append("<p>Địa chỉ giao: ")
+                                                    .append(shippingDetails.getFormattedAddress()).append("</p>");
                                         }
                                         body.append("<p>Vui lòng kiểm tra và xử lý yêu cầu.</p>");
                                         new EmailService().send(emails, subject, body.toString());
@@ -203,10 +214,12 @@ public class VNPayReturnController extends HttpServlet {
                             // Remove session data
                             req.getSession().removeAttribute("cartCheckout-" + vnp_TxnRef);
 
-                            req.getSession().setAttribute("flash", "Thanh toán cọc thành công! Đặt sách online thành công.");
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán cọc thành công! Đặt sách online thành công.");
                             resp.sendRedirect(req.getContextPath() + "/cart");
                         } else {
-                            req.getSession().setAttribute("flash", "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
                             resp.sendRedirect(req.getContextPath() + "/cart");
                         }
                     } else if (borrowId > 0) {
@@ -260,7 +273,8 @@ public class VNPayReturnController extends HttpServlet {
 
         HttpSession session = req.getSession();
         @SuppressWarnings("unchecked")
-        Map<String, Object> topUpData = (Map<String, Object>) session.getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+        Map<String, Object> topUpData = (Map<String, Object>) session
+                .getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
         BigDecimal amount = null;
         if (topUpData != null) {
             Object storedAmount = topUpData.get("amount");
@@ -297,7 +311,7 @@ public class VNPayReturnController extends HttpServlet {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
         return formatter.format(amount);
     }
 
