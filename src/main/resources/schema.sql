@@ -44,6 +44,8 @@ CREATE TABLE [User] (
     status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
     role_id INT NOT NULL,
     avatar VARCHAR(255) NULL, --
+    wallet_balance DECIMAL(14,2) NOT NULL DEFAULT 0,
+    banned_until DATETIME NULL,
     created_at DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id)
     );
@@ -257,7 +259,22 @@ CREATE TABLE CommentReply (
 );
 GO
 
--- Bảng 13: Bảo mật & Xác thực [cite: 13, 14]
+-- Bảng 13: Báo cáo bình luận (Comment Reports)
+CREATE TABLE CommentReport (
+                               report_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+                               comment_id BIGINT NOT NULL,
+                               reporter_user_id INT NOT NULL,
+                               reason NVARCHAR(100) NOT NULL,
+                               description NVARCHAR(MAX) NULL,
+                               report_time DATETIME DEFAULT GETDATE(),
+                               status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, RESOLVED, IGNORED
+                               CONSTRAINT FK_CommentReport_Comment FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
+                               CONSTRAINT FK_CommentReport_User FOREIGN KEY (reporter_user_id) REFERENCES [User](user_id) ON DELETE NO ACTION,
+                               CONSTRAINT CHK_ReportStatus CHECK (status IN ('PENDING', 'RESOLVED', 'IGNORED'))
+);
+GO
+
+-- Bảng 14: Bảo mật & Xác thực [cite: 13, 14]
 CREATE TABLE password_reset_token (
                                       token_id INT IDENTITY(1,1) PRIMARY KEY,
                                       user_id INT NOT NULL,

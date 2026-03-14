@@ -2,9 +2,6 @@ package com.lbms.service;
 
 import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
-import com.lbms.util.DBConnection;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.mindrot.jbcrypt.BCrypt;
 

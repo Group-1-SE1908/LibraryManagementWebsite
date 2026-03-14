@@ -11,6 +11,8 @@ import com.lbms.model.ShippingDetails;
 
 import com.lbms.service.CartService;
 import com.lbms.service.EmailService;
+import com.lbms.service.ProfileService;
+import com.lbms.service.WalletService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,10 +23,11 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = { "/vnpay-return" })
 public class VNPayReturnController extends HttpServlet {
@@ -32,10 +35,14 @@ public class VNPayReturnController extends HttpServlet {
     private BorrowService borrowService;
     private static final String MODE_RETURN = "return";
     private static final String MODE_FINE = "fine";
+    private WalletService walletService;
+    private ProfileService profileService;
 
     @Override
     public void init() {
         this.borrowService = new BorrowService();
+        this.walletService = new WalletService();
+        this.profileService = new ProfileService();
     }
 
     @Override
@@ -83,8 +90,14 @@ public class VNPayReturnController extends HttpServlet {
                 }
             }
 
+            boolean isWalletTxn = vnp_TxnRef != null && vnp_TxnRef.startsWith(WalletService.TXN_REF_PREFIX);
+
             if (signValue.equals(vnp_SecureHash)) {
                 if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
+                    if (isWalletTxn) {
+                        handleWalletTopUpSuccess(req, resp, vnp_TxnRef, currentUser);
+                        return;
+                    }
                     if (vnp_TxnRef.startsWith("CART-")) {
                         // Xử lý đặt sách online
                         @SuppressWarnings("unchecked")
@@ -95,10 +108,7 @@ public class VNPayReturnController extends HttpServlet {
                             String contactName = (String) checkoutData.get("contactName");
                             String contactPhone = (String) checkoutData.get("contactPhone");
                             String contactEmail = (String) checkoutData.get("contactEmail");
-                            int borrowDays = (Integer) checkoutData.get("borrowDays");
-                            LocalDate returnDate = (LocalDate) checkoutData.get("returnDate");
                             String formattedReturnDate = (String) checkoutData.get("formattedReturnDate");
-                            String formattedPickupDate = (String) checkoutData.get("formattedPickupDate");
                             ShippingDetails shippingDetails = (ShippingDetails) checkoutData.get("shippingDetails");
                             @SuppressWarnings("unchecked")
                             List<CartItem> items = (List<CartItem>) checkoutData.get("items");
@@ -216,15 +226,22 @@ public class VNPayReturnController extends HttpServlet {
                         resp.sendRedirect(req.getContextPath() + "/history");
                     }
                 } else {
-                    String redirect = req.getContextPath() + "/checkout";
-                    if (borrowId > 0) {
-                        redirect += "?borrowId=" + borrowId;
-                        if (MODE_FINE.equals(mode)) {
-                            redirect += "&mode=fine";
+                    String redirect;
+                    if (isWalletTxn) {
+                        redirect = req.getContextPath() + "/wallet";
+                        req.getSession().removeAttribute(WalletService.SESSION_KEY_PREFIX + vnp_TxnRef);
+                    } else {
+                        redirect = req.getContextPath() + "/checkout";
+                        if (borrowId > 0) {
+                            redirect += "?borrowId=" + borrowId;
+                            if (MODE_FINE.equals(mode)) {
+                                redirect += "&mode=fine";
+                            }
                         }
                     }
                     req.getSession().setAttribute("flash", "Thanh toán thất bại! (Mã lỗi: "
                             + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại.");
+                    req.getSession().setAttribute("flashType", "error");
                     resp.sendRedirect(redirect);
                 }
             } else {
@@ -236,6 +253,52 @@ public class VNPayReturnController extends HttpServlet {
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private void handleWalletTopUpSuccess(HttpServletRequest req, HttpServletResponse resp, String txnRef,
+            User currentUser) throws Exception {
+
+        HttpSession session = req.getSession();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> topUpData = (Map<String, Object>) session.getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+        BigDecimal amount = null;
+        if (topUpData != null) {
+            Object storedAmount = topUpData.get("amount");
+            if (storedAmount instanceof BigDecimal) {
+                amount = (BigDecimal) storedAmount;
+            } else if (storedAmount instanceof Number) {
+                amount = BigDecimal.valueOf(((Number) storedAmount).doubleValue());
+            }
+        }
+        session.removeAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+
+        if (amount == null) {
+            String paramAmount = req.getParameter("vnp_Amount");
+            if (paramAmount != null && !paramAmount.isBlank()) {
+                amount = new BigDecimal(paramAmount).divide(BigDecimal.valueOf(100));
+            }
+        }
+
+        if (amount == null) {
+            amount = BigDecimal.ZERO;
+        }
+
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            walletService.creditWallet(currentUser.getId(), amount);
+        }
+        User refreshed = profileService.refreshUser(currentUser.getId());
+        session.setAttribute("currentUser", refreshed);
+        String message = amount.compareTo(BigDecimal.ZERO) > 0
+                ? "Nạp " + formatCurrency(amount) + " vào ví thành công."
+                : "Nạp tiền vào ví thành công.";
+        session.setAttribute("flash", message);
+        session.setAttribute("flashType", "success");
+        resp.sendRedirect(req.getContextPath() + "/wallet");
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        return formatter.format(amount);
     }
 
     private User getCurrentUser(HttpServletRequest req) {

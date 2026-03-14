@@ -6,7 +6,9 @@ package com.lbms.controller;
 
 import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReplyDAO;
+import com.lbms.dao.CommentReportDAO;
 import com.lbms.model.Comment;
+import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -29,11 +31,13 @@ import java.util.logging.Logger;
 public class CommentController extends HttpServlet {
     private CommentDAO commentDAO;
     private CommentReplyDAO replyDAO;
+    private CommentReportDAO reportDAO;
 
     @Override
     public void init() {
         this.commentDAO = new CommentDAO();
         this.replyDAO = new CommentReplyDAO();
+        this.reportDAO = new CommentReportDAO();
     }
 
     @Override
@@ -92,6 +96,15 @@ public class CommentController extends HttpServlet {
 
         request.setAttribute("comments", comments);
         request.setAttribute("bookId", bookId);
+
+        // Load reports if user is librarian
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser != null && "LIBRARIAN".equals(currentUser.getRole().getName())) {
+            List<CommentReport> bookReports = reportDAO.getReportsByBook(bookId);
+            request.setAttribute("bookReports", bookReports);
+        }
+
         request.getRequestDispatcher("/WEB-INF/views/comments_list.jsp").forward(request, response);
     }
 
@@ -132,6 +145,9 @@ public class CommentController extends HttpServlet {
         comment.setRating(rating);
 
         commentDAO.insertComment(comment);
+
+        // Set success message
+        session.setAttribute("message", "Bình luận đã được thêm thành công!");
 
         // Quay trở lại trang chi tiết sách
         response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
@@ -181,6 +197,7 @@ public class CommentController extends HttpServlet {
             boolean updated = commentDAO.updateComment(comment, isAdmin);
 
             if (updated) {
+                session.setAttribute("message", "Bình luận đã được cập nhật thành công!");
                 response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
             } else {
                 response.sendError(403, "Forbidden - You can only update your own comments");
@@ -215,6 +232,7 @@ public class CommentController extends HttpServlet {
         boolean deleted = commentDAO.deleteComment(commentId, (int) user.getId(), isAdmin);
 
         if (deleted) {
+            session.setAttribute("message", "Bình luận đã được xóa thành công!");
             response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
         } else {
             response.sendError(403, "Forbidden - You can only delete your own comments");

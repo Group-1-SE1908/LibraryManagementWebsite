@@ -186,6 +186,7 @@
                             <span>Thống kê mượn trả sách</span>
                         </a>
 
+                        <a href="${pageContext.request.contextPath}/admin/reports"><i class="fas fa-flag"></i> <span>Comment Reports</span></a>
                         <a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span></a>
                         <a href="#"><i class="fas fa-shipping-fast"></i> <span>Shipments</span></a>
                     </div>

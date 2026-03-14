@@ -233,35 +233,53 @@
 
         .status-pill {
             font-size: 0.75rem;
-            padding: 6px 16px;
+            padding: 7px 18px;
             border-radius: 999px;
             font-weight: 700;
-            text-transform: uppercase;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            box-shadow: 0 8px 18px rgba(12, 108, 208, 0.3);
             letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .status-pill:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 24px rgba(15, 23, 42, 0.35);
         }
 
         .status-borrowed {
-            border-color: rgba(16, 185, 129, 0.8);
-            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(4, 120, 87, 0.9));
+            color: #dcfce7;
+        }
+
+        .status-shipping {
+            border-color: rgba(234, 179, 8, 0.7);
+            background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(245, 158, 11, 0.8));
+            color: #92400e;
+            text-shadow: 0 0 2px rgba(66, 32, 6, 0.4);
         }
 
         .status-returned {
-            border-color: rgba(59, 130, 246, 0.8);
-            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.7);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.9));
+            color: white;
         }
 
         .status-pending {
-            border-color: rgba(249, 115, 22, 0.8);
-            background: rgba(249, 115, 22, 0.2);
+            border-color: rgba(220, 38, 38, 0.8);
+            background: linear-gradient(135deg, rgba(254, 226, 226, 0.9), rgba(220, 38, 38, 0.9));
+            color: #7f1d1d;
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.25);
         }
 
         .status-muted {
             border-color: rgba(229, 231, 235, 0.8);
-            background: rgba(229, 231, 235, 0.3);
+            background: rgba(229, 231, 235, 0.5);
+            color: #475569;
         }
 
         .history-card__body {
@@ -649,13 +667,14 @@
                     <c:set var="r" value="${entry.record}"/>
                     <c:set var="statusClass">
                         <c:choose>
-                            <c:when
+                                <c:when
                                     test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED' || fn:toUpperCase(r.status) == 'RECEIVED'}">status-borrowed
-                            </c:when>
-                            <c:when test="${fn:toUpperCase(r.status) == 'RETURNED'}">status-returned
-                            </c:when>
-                            <c:when test="${fn:toUpperCase(r.status) == 'REQUESTED'}">status-pending</c:when>
-                            <c:when
+                                </c:when>
+                                <c:when test="${fn:toUpperCase(r.status) == 'SHIPPING'}">status-shipping</c:when>
+                                <c:when test="${fn:toUpperCase(r.status) == 'RETURNED'}">status-returned
+                                </c:when>
+                                <c:when test="${fn:toUpperCase(r.status) == 'REQUESTED'}">status-pending</c:when>
+                                <c:when
                                     test="${fn:toUpperCase(r.status) == 'RENEWAL_REQUESTED'}">status-pending</c:when>
                             <c:otherwise>status-muted</c:otherwise>
                         </c:choose>

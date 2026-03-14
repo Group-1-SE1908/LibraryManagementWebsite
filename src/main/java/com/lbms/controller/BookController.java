@@ -1,12 +1,15 @@
 package com.lbms.controller;
 
-import com.lbms.dao.BookDAO;
 import com.lbms.model.Book;
+import com.lbms.model.Comment;
+import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import com.lbms.service.BookService;
 import com.lbms.dao.CategoryDAO;
 import com.lbms.dao.CommentDAO;
+import com.lbms.dao.CommentReplyDAO;
 import com.lbms.dao.ReservationDAO;
+import com.lbms.dao.CommentReportDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -38,14 +41,18 @@ public class BookController extends HttpServlet {
     private BookService bookService;
     private CategoryDAO categoryDAO;
     private CommentDAO commentDAO;
+    private CommentReplyDAO replyDAO;
     private ReservationDAO reservationDAO;
+    private CommentReportDAO reportDAO;
 
     @Override
     public void init() {
         this.bookService = new BookService();
         this.categoryDAO = new CategoryDAO();
         this.commentDAO = new CommentDAO();
+        this.replyDAO = new CommentReplyDAO();
         this.reservationDAO = new ReservationDAO();
+        this.reportDAO = new CommentReportDAO();
     }
 
     @Override
@@ -276,34 +283,39 @@ public class BookController extends HttpServlet {
         Book book = bookService.findById(id);
         req.setAttribute("book", book);
 
-        try {
-            req.setAttribute("comments", commentDAO.getCommentsByBook(id));
-            
-            // Lấy rating trung bình và số lượt đánh giá
-            double averageRating = commentDAO.getAverageRating(id);
-            int ratingCount = commentDAO.getRatingCount(id);
-            req.setAttribute("averageRating", averageRating);
-            req.setAttribute("ratingCount", ratingCount);
+        List<Comment> comments = commentDAO.getCommentsByBook(id);
+        
+        // Load replies for each comment
+        for (Comment comment : comments) {
+            List<com.lbms.model.CommentReply> replies = this.replyDAO.findByCommentId(comment.getCommentId());
+            comment.setReplies(replies);
+        }
+        
+        req.setAttribute("comments", comments);
+        
+        // Lấy rating trung bình và số lượt đánh giá
+        double averageRating = commentDAO.getAverageRating(id);
+        int ratingCount = commentDAO.getRatingCount(id);
+        req.setAttribute("averageRating", averageRating);
+        req.setAttribute("ratingCount", ratingCount);
 
-            // Kiểm tra xem user hiện tại đã comment cho sách này chưa
-            HttpSession session = req.getSession();
-            User currentUser = (User) session.getAttribute("currentUser");
-            if (currentUser != null) {
-                boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
-                req.setAttribute("hasCommented", hasCommented);
+        // Kiểm tra xem user hiện tại đã comment cho sách này chưa
+        HttpSession session = req.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser != null) {
+            boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
+            req.setAttribute("hasCommented", hasCommented);
 
-                // Kiểm tra xem user đã đặt trước sách này chưa
-                boolean hasReserved = reservationDAO.existsActive((int) currentUser.getId(), id);
-                req.setAttribute("hasReserved", hasReserved);
-            } else {
-                req.setAttribute("hasCommented", false);
-                req.setAttribute("hasReserved", false);
+            // Kiểm tra xem user đã đặt trước sách này chưa
+            boolean hasReserved = reservationDAO.existsActive((int) currentUser.getId(), id);
+            req.setAttribute("hasReserved", hasReserved);
+
+            // If user is librarian, load reported comments for this book
+            if ("LIBRARIAN".equals(currentUser.getRole().getName())) {
+                List<CommentReport> bookReports = reportDAO.getReportsByBook(id);
+                req.setAttribute("bookReports", bookReports);
             }
-        } catch (Exception e) {
-            Logger.getLogger(BookController.class.getName()).log(Level.WARNING, "Error loading comments", e);
-            req.setAttribute("comments", new java.util.ArrayList<>());
-            req.setAttribute("averageRating", 0.0);
-            req.setAttribute("ratingCount", 0);
+        } else {
             req.setAttribute("hasCommented", false);
             req.setAttribute("hasReserved", false);
         }

@@ -95,6 +95,36 @@
             color: #6b7280;
             line-height: 1.6;
             word-wrap: break-word;
+            max-height: 4.8em; /* 3 lines * 1.6 */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .comment-content.expanded {
+            max-height: none;
+        }
+
+        .comment-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 1.6em;
+            background: linear-gradient(to right, transparent, #ffffff);
+            pointer-events: none;
+        }
+
+        .comment-content.truncated::after {
+            content: '';
+        }
+
+        .read-more-btn {
+            color: #2563eb;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 4px;
+            text-decoration: underline;
         }
 
         .no-comments {
@@ -131,6 +161,55 @@
         .reply-time {
             color: #9ca3af;
             font-size: 12px;
+        }
+
+        /* Styles for reported comments section */
+        .reports-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .reports-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .reports-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .report-card {
+            border-radius: 18px;
+            border: 1px solid #dbeafe;
+            padding: 18px;
+            background: #ffffff;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+            margin-bottom: 16px;
+        }
+
+        .report-reason {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .report-time {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .report-details p {
+            margin: 4px 0;
+            color: #374151;
+        }
+
+        .report-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
         }
     </style>
 </head>
@@ -201,6 +280,46 @@
                 </div>
             </c:otherwise>
         </c:choose>
+
+        <!-- Reported Comments Section for Librarians -->
+        <c:if test="${not empty sessionScope.currentUser && sessionScope.currentUser.role.name == 'LIBRARIAN' && not empty bookReports}">
+            <div class="reports-section">
+                <h3 class="reports-title">Bình luận bị báo cáo</h3>
+                <p class="message-note">Các bình luận bị báo cáo cần được xem xét.</p>
+                <div class="reports-list">
+                    <c:forEach var="report" items="${bookReports}">
+                        <div class="report-card">
+                            <div class="report-header">
+                                <span class="report-reason"><strong>Lý do:</strong> ${report.reason}</span>
+                                <span class="report-time"><fmt:formatDate value="${report.reportTime}" type="both" dateStyle="short" timeStyle="short" /></span>
+                            </div>
+                            <div class="report-details">
+                                <p><strong>Người báo cáo:</strong> ${report.reporterFullName}</p>
+                                <p><strong>Bình luận:</strong> ${report.commentContent}</p>
+                                <p><strong>Người viết:</strong> ${report.commentUserFullName}</p>
+                            </div>
+                            <div class="report-actions">
+                                <form method="post" action="${pageContext.request.contextPath}/admin/reports" style="display: inline;">
+                                    <input type="hidden" name="action" value="resolve">
+                                    <input type="hidden" name="reportId" value="${report.reportId}">
+                                    <button type="submit" class="btn btn-success">Giải quyết</button>
+                                </form>
+                                <form method="post" action="${pageContext.request.contextPath}/admin/reports" style="display: inline;">
+                                    <input type="hidden" name="action" value="ignore">
+                                    <input type="hidden" name="reportId" value="${report.reportId}">
+                                    <button type="submit" class="btn btn-secondary">Bỏ qua</button>
+                                </form>
+                                <form method="post" action="${pageContext.request.contextPath}/admin/reports" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?')">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="reportId" value="${report.reportId}">
+                                    <button type="submit" class="btn btn-danger">Xóa bình luận</button>
+                                </form>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
+            </div>
+        </c:if>
     </div>
 
     <jsp:include page="footer.jsp" />

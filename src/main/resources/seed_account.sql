@@ -128,6 +128,60 @@ BEGIN TRY
 	DECLARE @member3Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member3@gmail.com');
 	DECLARE @member4Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member4@gmail.com');
 
+	-- Seed thÃªm sáº¡ch má»›i Ä‘á»ƒ hiá»ƒn thá»‹ kho sáº£n pháº©m demo.
+	DECLARE @catTech INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Công nghệ thông tin');
+	DECLARE @catLit INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Văn học Việt Nam');
+	DECLARE @catSkills INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Kỹ năng sống');
+	DECLARE @catHighSchool INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Giáo trình THPT');
+
+	IF @catTech IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-004')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Lập trình Python nâng cao', N'Hoàng Vũ', @catTech, 170000, 8, 'ISBN-004', 'assets/images/books/python.jpg');
+		END;
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-005')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Thiết kế hệ thống microservices', N'Nguyễn Thị Hạ', @catTech, 190000, 6, 'ISBN-005', 'assets/images/books/microservices.jpg');
+		END;
+	END;
+
+	IF @catLit IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-006')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Truyện Kiều', N'Nguyễn Du', @catLit, 110000, 12, 'ISBN-006', 'assets/images/books/truyen_kieu.jpg');
+		END;
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-007')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Dế Mèn phiêu lưu ký', N'Tạ Duy Anh', @catLit, 85000, 10, 'ISBN-007', 'assets/images/books/de_men.jpg');
+		END;
+	END;
+
+	IF @catSkills IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-008')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Kỹ năng mềm cho sinh viên', N'Hoàng Minh Sơn', @catSkills, 95000, 9, 'ISBN-008', 'assets/images/books/soft_skills.jpg');
+		END;
+	END;
+
+	IF @catHighSchool IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-009')
+		BEGIN
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES (N'Giáo trình Toán cao cấp', N'Lê Thị Bình', @catHighSchool, 130000, 7, 'ISBN-009', 'assets/images/books/giaotrinh_toan.jpg');
+		END;
+	END;
+
 	DECLARE @bookJava INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-001');
 	DECLARE @bookSql INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-002');
 	DECLARE @bookTatDen INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-003');

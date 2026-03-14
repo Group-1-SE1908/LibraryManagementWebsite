@@ -38,7 +38,7 @@ public class CommentDAO {
         String sql = "SELECT c.*, u.full_name, u.avatar "
                 + "FROM Comment c "
                 + "JOIN [User] u ON c.user_id = u.user_id "
-                + "WHERE c.book_id = ? AND c.status = 'VISIBLE' "
+                + "WHERE c.book_id = ? "
                 + "ORDER BY c.created_at DESC";
 
         try (Connection conn = DBConnection.getConnection();
@@ -165,9 +165,9 @@ public class CommentDAO {
         String sql;
 
         if (isAdmin) {
-            sql = "UPDATE Comment SET status='DELETED', deleted_at=GETDATE() WHERE comment_id=?";
+            sql = "DELETE FROM Comment WHERE comment_id=?";
         } else {
-            sql = "UPDATE Comment SET status='DELETED', deleted_at=GETDATE() WHERE comment_id=? AND user_id=?";
+            sql = "DELETE FROM Comment WHERE comment_id=? AND user_id=?";
         }
 
         try (Connection conn = DBConnection.getConnection();
@@ -228,5 +228,57 @@ public class CommentDAO {
             }
         }
         return false;
+    }
+
+    // Get userId of a comment
+    public int getCommentUserId(long commentId) throws Exception {
+        String sql = "SELECT user_id FROM Comment WHERE comment_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, commentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("user_id");
+                }
+            }
+        }
+        throw new Exception("Comment not found");
+    }
+
+    // Get comments that have no replies from librarians
+    public List<Comment> getCommentsWithoutReplies() throws Exception {
+        List<Comment> list = new ArrayList<>();
+
+        String sql = "SELECT c.*, u.full_name, u.avatar "
+                + "FROM Comment c "
+                + "JOIN [User] u ON c.user_id = u.user_id "
+                + "WHERE c.status = 'VISIBLE' "
+                + "AND NOT EXISTS (SELECT 1 FROM CommentReply cr WHERE cr.comment_id = c.comment_id) "
+                + "ORDER BY c.created_at DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Comment comment = new Comment();
+                comment.setCommentId(rs.getLong("comment_id"));
+                comment.setBookId(rs.getInt("book_id"));
+                comment.setUserId(rs.getInt("user_id"));
+                comment.setContent(rs.getString("content"));
+                comment.setRating(rs.getInt("rating"));
+                comment.setStatus(rs.getString("status"));
+                comment.setCreatedAt(rs.getTimestamp("created_at"));
+                comment.setUpdatedAt(rs.getTimestamp("updated_at"));
+                comment.setDeletedAt(rs.getTimestamp("deleted_at"));
+                comment.setFullName(rs.getString("full_name"));
+                comment.setAvatar(rs.getString("avatar"));
+                list.add(comment);
+            }
+        }
+        return list;
     }
 }
