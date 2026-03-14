@@ -550,7 +550,7 @@
                   <i class="fas fa-users"></i>
                   <span>User Management</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/borrowlibrary">
+                <a href="${pageContext.request.contextPath}/admin/books">
                   <i class="fas fa-book-open"></i>
                   <span>Book Management</span>
                 </a>

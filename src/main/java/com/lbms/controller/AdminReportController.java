@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(name = "AdminReportController", urlPatterns = { "/admin/reports" })
+@WebServlet(name = "AdminReportController", urlPatterns = { "/staff/reports", "/admin/reports" })
 public class AdminReportController extends HttpServlet {
     private CommentReportDAO reportDAO;
 
@@ -30,20 +30,21 @@ public class AdminReportController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
+        User user = (User) session.getAttribute("currentUser");
 
-        if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                !"LIBRARIAN".equals(user.getRole().getName()))) {
+        if (!hasOperationalRole(user)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
 
         String path = request.getServletPath();
+        String reportsBasePath = resolveBasePath(path);
 
         try {
-            if ("/admin/reports".equals(path)) {
+            if (reportsBasePath.equals(path)) {
                 List<CommentReport> reports = reportDAO.getAllReports();
                 request.setAttribute("reports", reports);
+                request.setAttribute("reportsBasePath", reportsBasePath);
                 request.getRequestDispatcher("/WEB-INF/views/admin/reports_management.jsp").forward(request, response);
             } else {
                 response.sendError(404);
@@ -59,10 +60,9 @@ public class AdminReportController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
+        User user = (User) session.getAttribute("currentUser");
 
-        if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                !"LIBRARIAN".equals(user.getRole().getName()))) {
+        if (!hasOperationalRole(user)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
@@ -83,11 +83,26 @@ public class AdminReportController extends HttpServlet {
                     reportDAO.updateReportStatus(reportId, "RESOLVED");
                 }
             }
-            response.sendRedirect(request.getContextPath() + "/admin/reports");
+            response.sendRedirect(request.getContextPath() + resolveBasePath(request.getServletPath()));
         } catch (SQLException e) {
             Logger.getLogger(AdminReportController.class.getName()).log(Level.SEVERE, null, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
+    }
+
+    private boolean hasOperationalRole(User user) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        String role = user.getRole().getName();
+        return "LIBRARIAN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
+    }
+
+    private String resolveBasePath(String path) {
+        if (path != null && path.startsWith("/admin/")) {
+            return "/admin/reports";
+        }
+        return "/staff/reports";
     }
 
     private CommentReport getReportById(long reportId) throws SQLException {

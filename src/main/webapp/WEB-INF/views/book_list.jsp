@@ -94,24 +94,39 @@
                 <body>
 
                     <c:set var="user" value="${sessionScope.currentUser}" />
-                    <c:set var="isStaff" value="${user.role.name == 'LIBRARIAN'}" />
+                    <c:set var="isLibrarian" value="${not empty user && user.role.name == 'LIBRARIAN'}" />
+                    <c:set var="isStaff"
+                        value="${not empty user && (user.role.name == 'ADMIN' || user.role.name == 'LIBRARIAN')}" />
+                    <c:set var="booksBasePath" value="${not empty booksBasePath ? booksBasePath : '/books'}" />
+                    <c:set var="opsCatalogView"
+                        value="${booksBasePath == '/staff/books' || booksBasePath == '/admin/books'}" />
 
                     <c:choose>
-                        <c:when test="${isStaff}">
-
+                        <c:when test="${opsCatalogView}">
+                            <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+                        </c:when>
+                        <c:when test="${isLibrarian}">
                             <jsp:include page="headerLibBook.jsp" />
                         </c:when>
                         <c:otherwise>
-
                             <jsp:include page="header.jsp" />
                         </c:otherwise>
                     </c:choose>
 
-
-                    <c:set var="user" value="${sessionScope.currentUser}" />
-                    <c:set var="isStaff" value="${user.role.name == 'ADMIN' || user.role.name == 'LIBRARIAN'}" />
                     <c:set var="catCount" value="${fn:length(categories)}" />
                     <fmt:message key="search.placeholder" var="searchPlaceholder" />
+
+                    <c:if test="${opsCatalogView}">
+                        <style>
+                            @media (min-width: 1025px) {
+
+                                .catalog-hero,
+                                .catalog-page {
+                                    margin-left: 280px;
+                                }
+                            }
+                        </style>
+                    </c:if>
 
                     <header class="catalog-hero">
                         <div class="catalog-hero__grid container">
@@ -155,7 +170,7 @@
                     <main class="catalog-page">
                         <section class="catalog-controls container">
                             <div class="search-panel">
-                                <form action="${pageContext.request.contextPath}/books" method="get"
+                                <form action="${pageContext.request.contextPath}${booksBasePath}" method="get"
                                     class="search-panel__form">
                                     <input type="text" name="search" class="search-panel__input"
                                         placeholder="${searchPlaceholder}" value="${fn:escapeXml(searchKeyword)}">
@@ -177,14 +192,15 @@
 
                             <c:if test="${isStaff}">
                                 <div class="admin-controls">
-                                    <a href="${pageContext.request.contextPath}/books/new" class="btn primary">➕
+                                    <a href="${pageContext.request.contextPath}${booksBasePath}/new"
+                                        class="btn primary">➕
                                         <fmt:message key="btn.add_new" />
                                     </a>
                                 </div>
                             </c:if>
 
                             <div class="category-chips">
-                                <c:url var="allCategoriesUrl" value="/books">
+                                <c:url var="allCategoriesUrl" value="${booksBasePath}">
                                     <c:if test="${not empty searchKeyword}">
                                         <c:param name="search" value="${searchKeyword}" />
                                     </c:if>
@@ -194,7 +210,7 @@
                                     <fmt:message key="category.all" />
                                 </a>
                                 <c:forEach var="cat" items="${categories}">
-                                    <c:url var="categoryUrl" value="/books">
+                                    <c:url var="categoryUrl" value="${booksBasePath}">
                                         <c:param name="category" value="${cat.id}" />
                                         <c:if test="${not empty searchKeyword}">
                                             <c:param name="search" value="${searchKeyword}" />
@@ -241,7 +257,7 @@
                                     <c:forEach var="book" items="${books}">
                                         <div class="book-card">
                                             <a class="book-card__link"
-                                                href="${pageContext.request.contextPath}/books/detail?id=${book.id}">
+                                                href="${pageContext.request.contextPath}${booksBasePath}/detail?id=${book.id}">
                                                 <div class="book-image">
                                                     <c:choose>
                                                         <c:when test="${not empty book.image}">
@@ -300,7 +316,7 @@
                                     <nav class="pagination" aria-label="Book pagination">
                                         <c:choose>
                                             <c:when test="${hasPreviousPage}">
-                                                <c:url var="previousPageUrl" value="/books">
+                                                <c:url var="previousPageUrl" value="${booksBasePath}">
                                                     <c:param name="page" value="${currentPage - 1}" />
                                                     <c:if test="${not empty searchKeyword}">
                                                         <c:param name="search" value="${searchKeyword}" />
@@ -321,7 +337,7 @@
                                         </c:choose>
 
                                         <c:if test="${startPage > 1}">
-                                            <c:url var="firstPageUrl" value="/books">
+                                            <c:url var="firstPageUrl" value="${booksBasePath}">
                                                 <c:param name="page" value="1" />
                                                 <c:if test="${not empty searchKeyword}">
                                                     <c:param name="search" value="${searchKeyword}" />
@@ -342,7 +358,7 @@
                                                     <span class="current">${pageNumber}</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <c:url var="pageUrl" value="/books">
+                                                    <c:url var="pageUrl" value="${booksBasePath}">
                                                         <c:param name="page" value="${pageNumber}" />
                                                         <c:if test="${not empty searchKeyword}">
                                                             <c:param name="search" value="${searchKeyword}" />
@@ -360,7 +376,7 @@
                                             <c:if test="${endPage < totalPages - 1}">
                                                 <span>...</span>
                                             </c:if>
-                                            <c:url var="lastPageUrl" value="/books">
+                                            <c:url var="lastPageUrl" value="${booksBasePath}">
                                                 <c:param name="page" value="${totalPages}" />
                                                 <c:if test="${not empty searchKeyword}">
                                                     <c:param name="search" value="${searchKeyword}" />
@@ -374,7 +390,7 @@
 
                                         <c:choose>
                                             <c:when test="${hasNextPage}">
-                                                <c:url var="nextPageUrl" value="/books">
+                                                <c:url var="nextPageUrl" value="${booksBasePath}">
                                                     <c:param name="page" value="${currentPage + 1}" />
                                                     <c:if test="${not empty searchKeyword}">
                                                         <c:param name="search" value="${searchKeyword}" />
@@ -404,7 +420,7 @@
                                         <fmt:message key="book.not_found" />
                                     </h3>
                                     <p class="empty-state__text">Thử một từ khoá khác hoặc mở rộng phạm vi tìm kiếm.</p>
-                                    <a href="${pageContext.request.contextPath}/books" class="btn primary">
+                                    <a href="${pageContext.request.contextPath}${booksBasePath}" class="btn primary">
                                         <fmt:message key="book.back" />
                                     </a>
                                 </div>
@@ -429,7 +445,7 @@
                             }).then((result) => {
                                 if (result.isConfirmed) {
                                     // Chuyển hướng đến URL xóa đã định nghĩa trong BookController
-                                    window.location.href = '${pageContext.request.contextPath}/books/delete?id=' + bookId;
+                                    window.location.href = '${pageContext.request.contextPath}${booksBasePath}/delete?id=' + bookId;
                                 }
                             });
                         }

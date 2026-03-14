@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  *
  * @author Trien
  */
-@WebServlet(name = "CommentController", urlPatterns = {"/comment"})
+@WebServlet(name = "CommentController", urlPatterns = { "/comment" })
 public class CommentController extends HttpServlet {
     private CommentDAO commentDAO;
     private CommentReplyDAO replyDAO;
@@ -88,7 +88,7 @@ public class CommentController extends HttpServlet {
             throws Exception {
         int bookId = Integer.parseInt(request.getParameter("bookId"));
         List<Comment> comments = commentDAO.getCommentsByBook(bookId);
-        
+
         // Load replies cho mỗi comment
         for (Comment comment : comments) {
             comment.setReplies(replyDAO.findByCommentId(comment.getCommentId()));
@@ -100,7 +100,11 @@ public class CommentController extends HttpServlet {
         // Load reports if user is librarian
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
-        if (currentUser != null && "LIBRARIAN".equals(currentUser.getRole().getName())) {
+        request.setAttribute("reportsBasePath", resolveReportsBasePath(currentUser));
+
+        if (currentUser != null && currentUser.getRole() != null
+                && ("LIBRARIAN".equalsIgnoreCase(currentUser.getRole().getName())
+                        || "ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
             List<CommentReport> bookReports = reportDAO.getReportsByBook(bookId);
             request.setAttribute("bookReports", bookReports);
         }
@@ -242,5 +246,12 @@ public class CommentController extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Comment Controller for managing book comments";
+    }
+
+    private String resolveReportsBasePath(User user) {
+        if (user != null && user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+            return "/admin/reports";
+        }
+        return "/staff/reports";
     }
 }

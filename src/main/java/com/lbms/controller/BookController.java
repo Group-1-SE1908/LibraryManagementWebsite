@@ -29,7 +29,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(urlPatterns = {"/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock"})
+@WebServlet(urlPatterns = {
+        "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock",
+        "/staff/books", "/staff/books/new", "/staff/books/edit", "/staff/books/delete", "/staff/books/detail",
+        "/staff/books/search", "/staff/books/restock",
+        "/admin/books", "/admin/books/new", "/admin/books/edit", "/admin/books/delete", "/admin/books/detail",
+        "/admin/books/search", "/admin/books/restock"
+})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
         maxRequestSize = 1024 * 1024 * 50 // 50MB
@@ -58,6 +64,9 @@ public class BookController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
+        String normalizedPath = normalizeBooksPath(path);
+        String booksBasePath = resolveBooksBasePath(path);
+        req.setAttribute("booksBasePath", booksBasePath);
         try {
             String action = req.getParameter("action");
             String rawId = req.getParameter("id");
@@ -65,7 +74,7 @@ public class BookController extends HttpServlet {
                 handleImportList(req, resp);
                 return;
             }
-            switch (path) {
+            switch (normalizedPath) {
                 case "/books":
                 case "/books/search":
                     handleList(req, resp);
@@ -84,7 +93,7 @@ public class BookController extends HttpServlet {
                 case "/books/delete":
                     int delId = Integer.parseInt(req.getParameter("id"));
                     bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
-                    resp.sendRedirect(req.getContextPath() + "/books");
+                    resp.sendRedirect(req.getContextPath() + booksBasePath);
                     break;
 
                 case "/books/restock":
@@ -94,7 +103,7 @@ public class BookController extends HttpServlet {
                         req.setAttribute("book", bookToRestock);
                         req.getRequestDispatcher("/WEB-INF/views/admin/library/book_restock.jsp").forward(req, resp);
                     } else {
-                        resp.sendRedirect(req.getContextPath() + "/books?action=viewImportList");
+                        resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
                     }
                     break;
                 default:
@@ -109,6 +118,9 @@ public class BookController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
+        String normalizedPath = normalizeBooksPath(path);
+        String booksBasePath = resolveBooksBasePath(path);
+        req.setAttribute("booksBasePath", booksBasePath);
         req.setCharacterEncoding("UTF-8");
         String action = req.getParameter("action");
 
@@ -124,22 +136,22 @@ public class BookController extends HttpServlet {
             long userId = currentUser.getId();
 
             // 3. Thực hiện tạo mới hoặc cập nhật
-            if ("/books/new".equals(path)) {
+            if ("/books/new".equals(normalizedPath)) {
                 String imagePath = uploadImage(req);
                 Book b = readBookFromRequest(req);
                 b.setImage(imagePath);
                 b.setQuantity(0);
                 bookService.create(b, userId);
-            } else if ("/books/edit".equals(path)) {
+            } else if ("/books/edit".equals(normalizedPath)) {
                 String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
-                
+
                 Book existingBook = bookService.findById(id);
                 Book b = readBookFromRequest(req);
-                
+
                 b.setId(id);
                 b.setImage(imagePath);
-                
+
                 b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
             } else if ("restock".equals(action)) {
@@ -152,17 +164,18 @@ public class BookController extends HttpServlet {
                 } else {
                     req.getSession().setAttribute("flash", "Lỗi khi nhập hàng.");
                 }
-                resp.sendRedirect(req.getContextPath() + "/books?action=viewImportList");
+                resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
                 return;
             }
 
             // Nếu thành công thì redirect về danh sách
-            resp.sendRedirect(req.getContextPath() + "/books");
+            resp.sendRedirect(req.getContextPath() + booksBasePath);
 
         } catch (IllegalArgumentException ex) {
             // ĐÂY LÀ NƠI XỬ LÝ LỖI TRÙNG ISBN HOẶC VALIDATION
             req.setAttribute("error", ex.getMessage());
-            req.setAttribute("mode", path.contains("new") ? "create" : "edit");
+            req.setAttribute("mode", normalizedPath.contains("new") ? "create" : "edit");
+            req.setAttribute("booksBasePath", booksBasePath);
 
             // Đổ lại dữ liệu cũ vào form để người dùng không phải nhập lại
             req.setAttribute("book", readBookFromRequest(req));
@@ -284,15 +297,15 @@ public class BookController extends HttpServlet {
         req.setAttribute("book", book);
 
         List<Comment> comments = commentDAO.getCommentsByBook(id);
-        
+
         // Load replies for each comment
         for (Comment comment : comments) {
             List<com.lbms.model.CommentReply> replies = this.replyDAO.findByCommentId(comment.getCommentId());
             comment.setReplies(replies);
         }
-        
+
         req.setAttribute("comments", comments);
-        
+
         // Lấy rating trung bình và số lượt đánh giá
         double averageRating = commentDAO.getAverageRating(id);
         int ratingCount = commentDAO.getRatingCount(id);
@@ -302,6 +315,7 @@ public class BookController extends HttpServlet {
         // Kiểm tra xem user hiện tại đã comment cho sách này chưa
         HttpSession session = req.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
+        req.setAttribute("reportsBasePath", resolveReportsBasePath(req.getServletPath(), currentUser));
         if (currentUser != null) {
             boolean hasCommented = commentDAO.hasUserCommented(id, (int) currentUser.getId());
             req.setAttribute("hasCommented", hasCommented);
@@ -310,8 +324,9 @@ public class BookController extends HttpServlet {
             boolean hasReserved = reservationDAO.existsActive((int) currentUser.getId(), id);
             req.setAttribute("hasReserved", hasReserved);
 
-            // If user is librarian, load reported comments for this book
-            if ("LIBRARIAN".equals(currentUser.getRole().getName())) {
+            // Librarian/admin views can moderate reported comments directly from detail
+            // page
+            if (hasOperationalRole(currentUser)) {
                 List<CommentReport> bookReports = reportDAO.getReportsByBook(id);
                 req.setAttribute("bookReports", bookReports);
             }
@@ -334,8 +349,8 @@ public class BookController extends HttpServlet {
             b.setPrice(Double.valueOf(priceStr));
         }
 
-        //String qtyStr = req.getParameter("quantity");
-        //b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
+        // String qtyStr = req.getParameter("quantity");
+        // b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
 
         String catIdStr = req.getParameter("categoryId");
         if (catIdStr != null && !catIdStr.isEmpty()) {
@@ -349,11 +364,59 @@ public class BookController extends HttpServlet {
     private void handleImportList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         String keyword = req.getParameter("searchImport");
         String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
-        
+
         List<Book> books = bookService.searchByCategory(searchKeyword, null, 1, 100);
 
         req.setAttribute("bookList", books);
         req.setAttribute("lastSearch", searchKeyword);
         req.getRequestDispatcher("/WEB-INF/views/admin/library/import_list.jsp").forward(req, resp);
+    }
+
+    private String resolveBooksBasePath(String path) {
+        if (path != null && path.startsWith("/admin/books")) {
+            return "/admin/books";
+        }
+        if (path != null && path.startsWith("/staff/books")) {
+            return "/staff/books";
+        }
+        return "/books";
+    }
+
+    private String normalizeBooksPath(String path) {
+        if (path == null) {
+            return "";
+        }
+        if (path.startsWith("/admin/books")) {
+            return "/books" + path.substring("/admin/books".length());
+        }
+        if (path.startsWith("/staff/books")) {
+            return "/books" + path.substring("/staff/books".length());
+        }
+        return path;
+    }
+
+    private String resolveReportsBasePath(String servletPath, User currentUser) {
+        if (servletPath != null && servletPath.startsWith("/admin/")) {
+            return "/admin/reports";
+        }
+        if (servletPath != null && servletPath.startsWith("/staff/")) {
+            return "/staff/reports";
+        }
+
+        if (currentUser != null && currentUser.getRole() != null) {
+            String role = currentUser.getRole().getName();
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                return "/admin/reports";
+            }
+        }
+        return "/staff/reports";
+    }
+
+    private boolean hasOperationalRole(User user) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        String role = user.getRole().getName();
+        return "LIBRARIAN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
     }
 }

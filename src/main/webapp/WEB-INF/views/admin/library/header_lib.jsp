@@ -8,6 +8,11 @@
                 <c:set var="isStaff" value="${roleName == 'ADMIN' || roleName == 'LIBRARIAN'}" />
                 <c:set var="userName" value="${not empty user.fullName ? user.fullName : 'Staff'}" />
                 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
+                <c:set var="routePrefix"
+                    value="${fn:startsWith(pageContext.request.servletPath, '/admin/') ? '/admin' : '/staff'}" />
+                <c:set var="borrowBase" value="${routePrefix}/borrowlibrary" />
+                <c:set var="booksBase" value="${routePrefix}/books" />
+                <c:set var="feedbackBase" value="${routePrefix}/feedback" />
 
                 <style>
                     :root {
@@ -166,37 +171,37 @@
 
                 <header class="admin-header">
                     <div class="container">
-                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary" class="admin-logo">
+                        <a href="${pageContext.request.contextPath}${borrowBase}" class="admin-logo">
                             LBMS <span>STAFF</span>
                         </a>
 
                         <ul class="admin-nav">
                             <li>
-                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary">
+                                <a href="${pageContext.request.contextPath}${borrowBase}">
                                     📦 Quản lý mượn trả
                                 </a>
                             </li>
                             <li>
-                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary?filter=ONLINE">🌐 Yêu
+                                <a href="${pageContext.request.contextPath}${borrowBase}?filter=ONLINE">🌐 Yêu
                                     cầu trực tuyến</a>
                             </li>
                             <li>
-                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary/inperson">➕ Mượn tại
+                                <a href="${pageContext.request.contextPath}${borrowBase}/inperson">➕ Mượn tại
                                     quầy</a>
                             </li>
                             <li>
-                                <a href="${pageContext.request.contextPath}/admin/borrowlibrary?filter=OVERDUE">
+                                <a href="${pageContext.request.contextPath}${borrowBase}?filter=OVERDUE">
                                     ⏰ Quá hạn <span class="badge-count">!</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="${pageContext.request.contextPath}/books">
+                                <a href="${pageContext.request.contextPath}${booksBase}">
                                     📚 Kho sách
                                 </a>
                             </li>
                             <li>
                                 <div style="position:relative">
-                                    <a href="${pageContext.request.contextPath}/admin/feedback?action=list">💬 Phản hồi
+                                    <a href="${pageContext.request.contextPath}${feedbackBase}">💬 Phản hồi
                                         về sách</a>
                                     <!-- small submenu indicator could be enhanced later -->
                                 </div>
@@ -205,7 +210,7 @@
                         </ul>
 
                         <div class="admin-actions">
-                            <a href="${pageContext.request.contextPath}/books/new" class="btn-add-quick">
+                            <a href="${pageContext.request.contextPath}${booksBase}/new" class="btn-add-quick">
                                 + Thêm sách mới
                             </a>
 

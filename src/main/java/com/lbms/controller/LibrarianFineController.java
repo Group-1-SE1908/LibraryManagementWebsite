@@ -14,10 +14,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
-        "/admin/fines",
-        "/admin/fines/confirm-paid",
         "/staff/fines",
-        "/staff/fines/confirm-paid"
+        "/staff/fines/confirm-paid",
+        "/admin/fines",
+        "/admin/fines/confirm-paid"
 })
 public class LibrarianFineController extends HttpServlet {
 
@@ -30,8 +30,9 @@ public class LibrarianFineController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String basePath = resolveBasePath(req);
         try {
-            requireStaff(req);
+            requireOperationalAccess(req);
 
             Object flash = req.getSession().getAttribute("flash");
             if (flash != null) {
@@ -69,7 +70,7 @@ public class LibrarianFineController extends HttpServlet {
             req.setAttribute("overdueActiveCount", overdueActiveCount);
             req.setAttribute("unpaidCount", unpaidCount);
             req.setAttribute("paidCount", paidCount);
-            req.setAttribute("finesBasePath", resolveBasePath(req.getServletPath()));
+            req.setAttribute("finesBasePath", basePath);
             req.getRequestDispatcher("/WEB-INF/views/admin/library/fines_list.jsp").forward(req, resp);
         } catch (IllegalArgumentException ex) {
             req.getSession().setAttribute("flash", ex.getMessage());
@@ -81,9 +82,9 @@ public class LibrarianFineController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String basePath = resolveBasePath(req.getServletPath());
+        String basePath = resolveBasePath(req);
         try {
-            requireStaff(req);
+            requireOperationalAccess(req);
 
             if (!req.getServletPath().endsWith("/confirm-paid")) {
                 resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -136,28 +137,38 @@ public class LibrarianFineController extends HttpServlet {
         }
     }
 
-    private void requireStaff(HttpServletRequest req) {
+    private void requireOperationalAccess(HttpServletRequest req) {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (currentUser == null || currentUser.getRole() == null) {
             throw new IllegalArgumentException("Vui lòng đăng nhập để tiếp tục.");
         }
         String role = currentUser.getRole().getName();
-        if (!"ADMIN".equalsIgnoreCase(role) && !"LIBRARIAN".equalsIgnoreCase(role)) {
+        boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(role);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        if (!isLibrarian && !isAdmin) {
             throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
         }
     }
 
-    private String resolveBasePath(String servletPath) {
-        if (servletPath != null && servletPath.startsWith("/staff/")) {
-            return "/staff/fines";
+    private String resolveBasePath(HttpServletRequest req) {
+        String path = req.getServletPath();
+        if (path != null && path.startsWith("/admin/")) {
+            return "/admin/fines";
         }
-        return "/admin/fines";
+        return "/staff/fines";
     }
 
     private String resolveErrorRedirect(HttpServletRequest req) {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (currentUser == null) {
             return req.getContextPath() + "/login";
+        }
+        String role = currentUser.getRole() == null ? "" : currentUser.getRole().getName();
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return req.getContextPath() + "/admin/dashboard";
+        }
+        if ("LIBRARIAN".equalsIgnoreCase(role)) {
+            return req.getContextPath() + "/staff/borrowlibrary";
         }
         return req.getContextPath() + "/";
     }

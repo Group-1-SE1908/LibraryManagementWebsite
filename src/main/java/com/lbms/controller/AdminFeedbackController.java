@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(name = "AdminFeedbackController", urlPatterns = {"/admin/feedback"})
+@WebServlet(name = "AdminFeedbackController", urlPatterns = { "/staff/feedback", "/admin/feedback" })
 public class AdminFeedbackController extends HttpServlet {
     private CommentReportDAO reportDAO;
     private CommentDAO commentDAO;
@@ -35,13 +35,13 @@ public class AdminFeedbackController extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
 
-        if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                                   !"LIBRARIAN".equals(user.getRole().getName()))) {
+        if (!hasOperationalRole(user)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
 
         try {
+            request.setAttribute("feedbackBasePath", resolveBasePath(request.getServletPath()));
             List<CommentReport> reports = reportDAO.getAllReports();
             request.setAttribute("reports", reports);
             List<Comment> pendingReplies = commentDAO.getCommentsWithoutReplies();
@@ -60,8 +60,7 @@ public class AdminFeedbackController extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
 
-        if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
-                                   !"LIBRARIAN".equals(user.getRole().getName()))) {
+        if (!hasOperationalRole(user)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
@@ -82,11 +81,26 @@ public class AdminFeedbackController extends HttpServlet {
                     reportDAO.updateReportStatus(reportId, "RESOLVED");
                 }
             }
-            response.sendRedirect(request.getContextPath() + "/admin/feedback");
+            response.sendRedirect(request.getContextPath() + resolveBasePath(request.getServletPath()));
         } catch (Exception e) {
             Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
+    }
+
+    private boolean hasOperationalRole(User user) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        String role = user.getRole().getName();
+        return "LIBRARIAN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
+    }
+
+    private String resolveBasePath(String path) {
+        if (path != null && path.startsWith("/admin/")) {
+            return "/admin/feedback";
+        }
+        return "/staff/feedback";
     }
 
     private CommentReport getReportById(long reportId) {

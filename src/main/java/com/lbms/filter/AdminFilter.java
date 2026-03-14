@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter(urlPatterns = {"/admin/*"})
+@WebFilter(urlPatterns = { "/admin/*" })
 public class AdminFilter implements Filter {
 
     @Override
@@ -31,10 +31,8 @@ public class AdminFilter implements Filter {
         }
 
         String role = currentUser.getRole() == null ? null : currentUser.getRole().getName();
-        // Allow both ADMIN and LIBRARIAN to access /admin/* pages
         boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
-        boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(role);
-        if (!(isAdmin || isLibrarian)) {
+        if (!isAdmin) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
