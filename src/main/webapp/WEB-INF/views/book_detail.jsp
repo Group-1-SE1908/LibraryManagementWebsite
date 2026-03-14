@@ -728,26 +728,31 @@
 
                                                                                                     <div
                                                                                                         class="comment-actions">
-                                                                                                        <c:if test="${sessionScope.currentUser.id == comment.userId
->>>>>>> 659264f877c96bdf0443aaf99cfc570bb60601c7
-                                          || sessionScope.currentUser.role.name == 'ADMIN'
-                                          || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="btn-action"
-                                                                                                                data-id="${comment.commentId}"
-                                                                                                                data-content="${fn:escapeXml(comment.content)}"
-                                                                                                                data-rating="${comment.rating}"
-                                                                                                                data-bookid="${book.id}"
-                                                                                                                onclick="openEditForm(this)">
-                                                                                                                Sửa
-                                                                                                            </button>
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="delete-btn"
-                                                                                                                onclick="openDeleteConfirm('${comment.commentId}', '${book.id}')">
-                                                                                                                Xóa
-                                                                                                            </button>
+                                                                                                        ${sessionScope.currentUser.id
+                                                                                                        ==
+                                                                                                        comment.userId
+                                                                                                        ||
+                                                                                                        sessionScope.currentUser.role.name
+                                                                                                        == 'ADMIN'
+                                                                                                        ||
+                                                                                                        sessionScope.currentUser.role.name
+                                                                                                        == 'LIBRARIAN'}
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="btn-action"
+                                                                                                            data-id="${comment.commentId}"
+                                                                                                            data-content="${fn:escapeXml(comment.content)}"
+                                                                                                            data-rating="${comment.rating}"
+                                                                                                            data-bookid="${book.id}"
+                                                                                                            onclick="openEditForm(this)">
+                                                                                                            Sửa
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="delete-btn"
+                                                                                                            onclick="openDeleteConfirm('${comment.commentId}', '${book.id}')">
+                                                                                                            Xóa
+                                                                                                        </button>
                                                                                                         </c:if>
                                                                                                     </div>
                                                                                                 </div>
