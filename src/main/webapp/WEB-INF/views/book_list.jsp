@@ -13,9 +13,12 @@
             <fmt:message key="catalog.title" /> | LBMS Library
         </title>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+              rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     </head>
+
 
     <body>
 
@@ -84,13 +87,13 @@
                     <form action="${pageContext.request.contextPath}/books" method="get"
                           class="search-panel__form">
                         <input type="text" name="search" class="search-panel__input"
-                               placeholder="${searchPlaceholder}" value="${param.search}">
+                               placeholder="${searchPlaceholder}" value="${fn:escapeXml(searchKeyword)}">
                         <select name="category" class="search-panel__select">
                             <option value="0">
                                 <fmt:message key="category.all" />
                             </option>
                             <c:forEach var="cat" items="${categories}">
-                                <option value="${cat.id}" ${param.category==cat.id ? 'selected' : '' }>
+                                <option value="${cat.id}" ${selectedCategoryId==cat.id ? 'selected' : '' }>
                                     ${cat.name}
                                 </option>
                             </c:forEach>
@@ -110,13 +113,24 @@
                 </c:if>
 
                 <div class="category-chips">
-                    <a href="${pageContext.request.contextPath}/books"
-                       class="category-chip ${empty param.category || param.category == '0' ? 'active' : ''}">
+                    <c:url var="allCategoriesUrl" value="/books">
+                        <c:if test="${not empty searchKeyword}">
+                            <c:param name="search" value="${searchKeyword}" />
+                        </c:if>
+                    </c:url>
+                    <a href="${allCategoriesUrl}"
+                       class="category-chip ${selectedCategoryId == null ? 'active' : ''}">
                         <fmt:message key="category.all" />
                     </a>
                     <c:forEach var="cat" items="${categories}">
-                        <a href="${pageContext.request.contextPath}/books?category=${cat.id}"
-                           class="category-chip ${param.category == cat.id ? 'active' : ''}">
+                        <c:url var="categoryUrl" value="/books">
+                            <c:param name="category" value="${cat.id}" />
+                            <c:if test="${not empty searchKeyword}">
+                                <c:param name="search" value="${searchKeyword}" />
+                            </c:if>
+                        </c:url>
+                        <a href="${categoryUrl}"
+                           class="category-chip ${selectedCategoryId == cat.id ? 'active' : ''}">
                             ${cat.name}
                         </a>
                     </c:forEach>
@@ -194,8 +208,8 @@
                                                class="btn-full primary">
                                                 <fmt:message key="btn.edit" />
                                             </a>
-                                            <button type="button" 
-                                                    onclick="confirmDelete('${book.id}', '${book.title}')" 
+                                            <button type="button"
+                                                    onclick="confirmDelete('${book.id}', '${book.title}')"
                                                     class="btn-full btn-danger">
                                                 Xóa
                                             </button>
@@ -217,6 +231,106 @@
                             </div>
                         </c:forEach>
                     </div>
+
+                    <c:if test="${totalPages > 1}">
+                        <nav class="pagination" aria-label="Book pagination">
+                            <c:choose>
+                                <c:when test="${hasPreviousPage}">
+                                    <c:url var="previousPageUrl" value="/books">
+                                        <c:param name="page" value="${currentPage - 1}" />
+                                        <c:if test="${not empty searchKeyword}">
+                                            <c:param name="search" value="${searchKeyword}" />
+                                        </c:if>
+                                        <c:if test="${selectedCategoryId != null}">
+                                            <c:param name="category" value="${selectedCategoryId}" />
+                                        </c:if>
+                                    </c:url>
+                                    <a href="${previousPageUrl}">
+                                        <fmt:message key="pagination.previous" />
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span>
+                                        <fmt:message key="pagination.previous" />
+                                    </span>
+                                </c:otherwise>
+                            </c:choose>
+
+                            <c:if test="${startPage > 1}">
+                                <c:url var="firstPageUrl" value="/books">
+                                    <c:param name="page" value="1" />
+                                    <c:if test="${not empty searchKeyword}">
+                                        <c:param name="search" value="${searchKeyword}" />
+                                    </c:if>
+                                    <c:if test="${selectedCategoryId != null}">
+                                        <c:param name="category" value="${selectedCategoryId}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${firstPageUrl}">1</a>
+                                <c:if test="${startPage > 2}">
+                                    <span>...</span>
+                                </c:if>
+                            </c:if>
+
+                            <c:forEach var="pageNumber" begin="${startPage}" end="${endPage}">
+                                <c:choose>
+                                    <c:when test="${pageNumber == currentPage}">
+                                        <span class="current">${pageNumber}</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:url var="pageUrl" value="/books">
+                                            <c:param name="page" value="${pageNumber}" />
+                                            <c:if test="${not empty searchKeyword}">
+                                                <c:param name="search" value="${searchKeyword}" />
+                                            </c:if>
+                                            <c:if test="${selectedCategoryId != null}">
+                                                <c:param name="category" value="${selectedCategoryId}" />
+                                            </c:if>
+                                        </c:url>
+                                        <a href="${pageUrl}">${pageNumber}</a>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:forEach>
+
+                            <c:if test="${endPage < totalPages}">
+                                <c:if test="${endPage < totalPages - 1}">
+                                    <span>...</span>
+                                </c:if>
+                                <c:url var="lastPageUrl" value="/books">
+                                    <c:param name="page" value="${totalPages}" />
+                                    <c:if test="${not empty searchKeyword}">
+                                        <c:param name="search" value="${searchKeyword}" />
+                                    </c:if>
+                                    <c:if test="${selectedCategoryId != null}">
+                                        <c:param name="category" value="${selectedCategoryId}" />
+                                    </c:if>
+                                </c:url>
+                                <a href="${lastPageUrl}">${totalPages}</a>
+                            </c:if>
+
+                            <c:choose>
+                                <c:when test="${hasNextPage}">
+                                    <c:url var="nextPageUrl" value="/books">
+                                        <c:param name="page" value="${currentPage + 1}" />
+                                        <c:if test="${not empty searchKeyword}">
+                                            <c:param name="search" value="${searchKeyword}" />
+                                        </c:if>
+                                        <c:if test="${selectedCategoryId != null}">
+                                            <c:param name="category" value="${selectedCategoryId}" />
+                                        </c:if>
+                                    </c:url>
+                                    <a href="${nextPageUrl}">
+                                        <fmt:message key="pagination.next" />
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span>
+                                        <fmt:message key="pagination.next" />
+                                    </span>
+                                </c:otherwise>
+                            </c:choose>
+                        </nav>
+                    </c:if>
                 </c:if>
 
                 <c:if test="${empty books}">
@@ -237,7 +351,6 @@
         <jsp:include page="footer.jsp" />
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-
                                                         function confirmDelete(bookId, bookTitle) {
                                                             Swal.fire({
                                                                 title: 'Xác nhận xóa?',
@@ -248,12 +361,13 @@
                                                                 cancelButtonColor: '#3085d6',
                                                                 confirmButtonText: 'Đồng ý xóa',
                                                                 cancelButtonText: 'Hủy bỏ'
+                                                                
                                                             }).then((result) => {
                                                                 if (result.isConfirmed) {
                                                                     // Chuyển hướng đến URL xóa đã định nghĩa trong BookController
                                                                     window.location.href = '${pageContext.request.contextPath}/books/delete?id=' + bookId;
                                                                 }
-                                                            })
+                                                            });
                                                         }
         </script>
     </body>

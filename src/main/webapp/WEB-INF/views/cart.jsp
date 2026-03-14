@@ -78,7 +78,14 @@
                 <c:forEach items="${cart.items}" var="item">
                     <article class="cart-item-card">
                         <div class="cart-item-cover">
-                            <span>${fn:substring(item.book.title, 0, 1)}</span>
+                            <c:choose>
+                                <c:when test="${not empty item.book.image}">
+                                    <img src="${pageContext.request.contextPath}/${item.book.image}" alt="${item.book.title}" loading="lazy" />
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="cover-placeholder">${fn:substring(item.book.title, 0, 1)}</span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="cart-item-body">
                             <div class="cart-item-head">

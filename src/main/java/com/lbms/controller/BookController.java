@@ -1,5 +1,6 @@
 package com.lbms.controller;
 
+import com.lbms.dao.BookDAO;
 import com.lbms.model.Book;
 import com.lbms.model.User;
 import com.lbms.service.BookService;
@@ -19,16 +20,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(urlPatterns = { "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search" })
+@WebServlet(urlPatterns = {"/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
         maxRequestSize = 1024 * 1024 * 50 // 50MB
 )
 public class BookController extends HttpServlet {
+
+    private static final int BOOKS_PER_PAGE = 8;
+
     private BookService bookService;
     private CategoryDAO categoryDAO;
     private CommentDAO commentDAO;
@@ -44,6 +49,12 @@ public class BookController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         try {
+            String action = req.getParameter("action");
+            String rawId = req.getParameter("id");
+            if ("viewImportList".equals(action)) {
+                handleImportList(req, resp);
+                return;
+            }
             switch (path) {
                 case "/books":
                 case "/books/search":
@@ -65,6 +76,17 @@ public class BookController extends HttpServlet {
                     bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
                     resp.sendRedirect(req.getContextPath() + "/books");
                     break;
+
+                case "/books/restock":
+                    if (rawId != null && !rawId.isEmpty()) {
+                        int restockId = Integer.parseInt(rawId);
+                        Book bookToRestock = bookService.findById(restockId);
+                        req.setAttribute("book", bookToRestock);
+                        req.getRequestDispatcher("/WEB-INF/views/admin/library/book_restock.jsp").forward(req, resp);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/books?action=viewImportList");
+                    }
+                    break;
                 default:
                     resp.sendError(404);
                     break;
@@ -78,10 +100,9 @@ public class BookController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         req.setCharacterEncoding("UTF-8");
+        String action = req.getParameter("action");
 
         try {
-            // 1. Xử lý ảnh
-            String imagePath = uploadImage(req);
 
             // 2. Lấy thông tin người dùng
             HttpSession session = req.getSession();
@@ -94,18 +115,37 @@ public class BookController extends HttpServlet {
 
             // 3. Thực hiện tạo mới hoặc cập nhật
             if ("/books/new".equals(path)) {
+                String imagePath = uploadImage(req);
                 Book b = readBookFromRequest(req);
                 b.setImage(imagePath);
-                // create sẽ gọi validate và existsByIsbn trong Service
-                bookService.create(b, userId); 
+                b.setQuantity(0);
+                bookService.create(b, userId);
             } else if ("/books/edit".equals(path)) {
+                String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
+                
+                Book existingBook = bookService.findById(id);
                 Book b = readBookFromRequest(req);
+                
                 b.setId(id);
                 b.setImage(imagePath);
+                
+                b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
+            } else if ("restock".equals(action)) {
+                int bookId = Integer.parseInt(req.getParameter("bookId"));
+                int amount = Integer.parseInt(req.getParameter("amount"));
+
+                boolean success = bookService.restockBook(bookId, amount, userId);
+                if (success) {
+                    req.getSession().setAttribute("flash", "Nhập hàng thành công!");
+                } else {
+                    req.getSession().setAttribute("flash", "Lỗi khi nhập hàng.");
+                }
+                resp.sendRedirect(req.getContextPath() + "/books?action=viewImportList");
+                return;
             }
-            
+
             // Nếu thành công thì redirect về danh sách
             resp.sendRedirect(req.getContextPath() + "/books");
 
@@ -113,19 +153,19 @@ public class BookController extends HttpServlet {
             // ĐÂY LÀ NƠI XỬ LÝ LỖI TRÙNG ISBN HOẶC VALIDATION
             req.setAttribute("error", ex.getMessage());
             req.setAttribute("mode", path.contains("new") ? "create" : "edit");
-            
+
             // Đổ lại dữ liệu cũ vào form để người dùng không phải nhập lại
             req.setAttribute("book", readBookFromRequest(req));
-            
+
             try {
                 req.setAttribute("categories", categoryDAO.listAll());
             } catch (SQLException ex1) {
                 Logger.getLogger(BookController.class.getName()).log(Level.SEVERE, null, ex1);
             }
-            
+
             // Forward quay lại trang form thay vì redirect để hiện thông báo lỗi
             req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
-            
+
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
@@ -142,17 +182,81 @@ public class BookController extends HttpServlet {
         String uploadPath = getServletContext().getRealPath("/") + relativePath;
 
         File uploadDir = new File(getServletContext().getRealPath("/") + "assets/images/books/");
-        if (!uploadDir.exists()) uploadDir.mkdirs();
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
 
         filePart.write(uploadPath);
         return relativePath;
     }
 
     private void handleList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        String keyword = req.getParameter("q");
-        List<Book> books = bookService.search(keyword);
+        String keyword = normalizeKeyword(req);
+        Long categoryId = parseCategoryId(req);
+        int requestedPage = parsePage(req.getParameter("page"));
+        int totalBooks = bookService.countByCategory(keyword, categoryId);
+        int totalPages = totalBooks == 0 ? 1 : (int) Math.ceil((double) totalBooks / BOOKS_PER_PAGE);
+        int currentPage = Math.min(requestedPage, totalPages);
+        List<Book> books = totalBooks == 0
+                ? Collections.emptyList()
+                : bookService.searchByCategory(keyword, categoryId, currentPage, BOOKS_PER_PAGE);
+
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, startPage + 4);
+        startPage = Math.max(1, endPage - 4);
+
         req.setAttribute("books", books);
+        req.setAttribute("categories", categoryDAO.listAll());
+        req.setAttribute("totalBooks", totalBooks);
+        req.setAttribute("searchKeyword", keyword == null ? "" : keyword);
+        req.setAttribute("selectedCategoryId", categoryId);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("startPage", startPage);
+        req.setAttribute("endPage", endPage);
+        req.setAttribute("hasPreviousPage", currentPage > 1);
+        req.setAttribute("hasNextPage", currentPage < totalPages);
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
+    }
+
+    private String normalizeKeyword(HttpServletRequest req) {
+        String keyword = req.getParameter("search");
+        if (keyword == null || keyword.isBlank()) {
+            keyword = req.getParameter("q");
+        }
+        if (keyword == null) {
+            return null;
+        }
+        String normalized = keyword.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Long parseCategoryId(HttpServletRequest req) {
+        String rawCategoryId = req.getParameter("category");
+        if (rawCategoryId == null || rawCategoryId.isBlank()) {
+            rawCategoryId = req.getParameter("categoryId");
+        }
+        if (rawCategoryId == null || rawCategoryId.isBlank()) {
+            return null;
+        }
+        try {
+            Long categoryId = Long.valueOf(rawCategoryId.trim());
+            return categoryId > 0 ? categoryId : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private int parsePage(String rawPage) {
+        if (rawPage == null || rawPage.isBlank()) {
+            return 1;
+        }
+        try {
+            int page = Integer.parseInt(rawPage.trim());
+            return page > 0 ? page : 1;
+        } catch (NumberFormatException ex) {
+            return 1;
+        }
     }
 
     private void handleEditForm(HttpServletRequest req, HttpServletResponse resp) throws Exception {
@@ -209,8 +313,8 @@ public class BookController extends HttpServlet {
             b.setPrice(Double.valueOf(priceStr));
         }
 
-        String qtyStr = req.getParameter("quantity");
-        b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
+        //String qtyStr = req.getParameter("quantity");
+        //b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
 
         String catIdStr = req.getParameter("categoryId");
         if (catIdStr != null && !catIdStr.isEmpty()) {
@@ -219,5 +323,16 @@ public class BookController extends HttpServlet {
             b.setCategoryId(null);
         }
         return b;
+    }
+
+    private void handleImportList(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        String keyword = req.getParameter("searchImport");
+        String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        
+        List<Book> books = bookService.searchByCategory(searchKeyword, null, 1, 100);
+
+        req.setAttribute("bookList", books);
+        req.setAttribute("lastSearch", searchKeyword);
+        req.getRequestDispatcher("/WEB-INF/views/admin/library/import_list.jsp").forward(req, resp);
     }
 }

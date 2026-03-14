@@ -7,12 +7,15 @@
 <c:set var="userName" value="${not empty user.fullName ? user.fullName : 'Staff'}" />
 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
     :root {
-        --admin-primary: #1e293b; /* */
-        --admin-accent: #0b57d0;  /* */
+        --admin-primary: #1e293b;
+        /* */
+        --admin-accent: #0b57d0;
+        /* */
         --sidebar-width: 280px;
     }
 
@@ -47,7 +50,8 @@
     }
 
     .admin-logo-text span {
-        background: var(--admin-accent); /* */
+        background: var(--admin-accent);
+        /* */
         padding: 2px 8px;
         border-radius: 4px;
         font-size: 11px;
@@ -80,7 +84,8 @@
         font-size: 14px;
     }
 
-    .sidebar-nav a:hover, .sidebar-nav a.active {
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
         background: rgba(255, 255, 255, 0.1);
         color: white;
     }
@@ -91,7 +96,8 @@
     }
 
     .badge-count {
-        background: #ef4444; /* */
+        background: #ef4444;
+        /* */
         font-size: 10px;
         padding: 2px 6px;
         border-radius: 10px;
@@ -139,6 +145,38 @@
         justify-content: center;
         font-weight: bold;
     }
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        text-decoration: none !important;
+        font-weight: 500;
+        transition: 0.2s;
+    }
+
+    .btn-profile {
+        background: rgba(255,255,255,0.05);
+        color: white;
+    }
+
+    .btn-profile:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .btn-logout {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .btn-logout:hover {
+        background: #ef4444;
+        color: white;
+    }
 </style>
 
 <div class="lib-sidebar">
@@ -153,40 +191,50 @@
     <div class="sidebar-section">
         <div class="sidebar-section-title">NGHIỆP VỤ</div>
         <div class="sidebar-nav">
-            <a href="${pageContext.request.contextPath}/admin/borrowlibrary" 
+            <a href="${pageContext.request.contextPath}/staff/borrowlibrary"
                class="${activeUri.endsWith('/borrowlibrary') && empty currentFilter ? 'active' : ''}">
                 <i class="fas fa-boxes"></i> <span>📦 Quản lý mượn trả</span>
             </a>
 
-            <a href="${pageContext.request.contextPath}/admin/borrowlibrary?filter=ONLINE"
+            <a href="${pageContext.request.contextPath}/staff/borrowlibrary?filter=ONLINE"
                class="${currentFilter == 'ONLINE' ? 'active' : ''}">
                 <i class="fas fa-globe"></i> <span>🌐 Yêu cầu trực tuyến</span>
             </a>
 
-            <a href="${pageContext.request.contextPath}/admin/borrowlibrary/inperson"
+            <a href="${pageContext.request.contextPath}/staff/borrowlibrary/inperson"
                class="${activeUri.contains('/inperson') ? 'active' : ''}">
                 <i class="fas fa-plus"></i> <span>➕ Mượn tại quầy</span>
             </a>
 
-            <a href="${pageContext.request.contextPath}/admin/borrowlibrary?filter=OVERDUE"
+            <a href="${pageContext.request.contextPath}/staff/borrowlibrary?filter=OVERDUE"
                class="${currentFilter == 'OVERDUE' ? 'active' : ''}">
-                <i class="fas fa-exclamation-triangle"></i> 
+                <i class="fas fa-exclamation-triangle"></i>
                 <span>⏰ Quá hạn</span>
                 <span class="badge-count">!</span> </a>
+
+            <a href="${pageContext.request.contextPath}/staff/fines"
+               class="${activeUri.contains('/fines') ? 'active' : ''}">
+                <i class="fas fa-coins"></i>
+                <span>💸 Tiền phạt</span>
+            </a>
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">KHO SÁCH</div>
         <div class="sidebar-nav">
-            <a href="${pageContext.request.contextPath}/books/new" class="btn-add-sidebar">
+            <a href="${pageContext.request.contextPath}/books/new">
                 + Thêm sách mới
             </a>
 
-            <a href="${pageContext.request.contextPath}/books" 
+            <a href="${pageContext.request.contextPath}/books?action=viewImportList">
+                <i class="fas fa-plus-circle"></i> Nhập kho
+            </a>
+
+            <a href="${pageContext.request.contextPath}/books"
                class="${activeUri.endsWith('/books') ? 'active' : ''}">
                 <i class="fas fa-book"></i> <span>📚 Kho sách</span> </a>
-            
+
             <a href="${pageContext.request.contextPath}/admin/feedback?action=list"
                class="${activeUri.contains('/feedback') ? 'active' : ''}">
                 <i class="fas fa-comment"></i> <span>💬 Phản hồi về sách</span> </a>
@@ -194,12 +242,19 @@
     </div>
 
     <div class="sidebar-footer">
-        <div class="profile-info">
-            <div class="avatar-small">${userInitial}</div> <div style="font-size: 13px; font-weight: 600;">${userName}</div>
+        <div class="profile-card">
+            <div class="avatar">${userInitial.toUpperCase()}</div>
+            <div class="user-info">
+                <span class="user-name">${userName}</span>
+            </div>
         </div>
-        <div class="sidebar-nav" style="padding: 0;">
-            <a href="${pageContext.request.contextPath}/profile"><i class="fas fa-user"></i> Hồ sơ</a> <a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Trang chủ</a> <a href="${pageContext.request.contextPath}/logout" style="color: #ef4444;">
-                <i class="fas fa-sign-out-alt"></i> Đăng xuất </a>
+        <div class="footer-actions">
+            <a href="${pageContext.request.contextPath}/profile" class="btn-action btn-profile">
+                <i class="fa-solid fa-user-gear"></i> Hồ sơ
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-action btn-logout">
+                <i class="fa-solid fa-power-off"></i> Thoát
+            </a>
         </div>
     </div>
 </div>

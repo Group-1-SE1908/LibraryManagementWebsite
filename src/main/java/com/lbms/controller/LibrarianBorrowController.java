@@ -14,7 +14,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = {
     "/staff/borrowlibrary",
@@ -127,13 +130,22 @@ public class LibrarianBorrowController extends HttpServlet {
                 // Tính tổng trọng lượng (Giả định mỗi cuốn sách nặng 500 gram)
                 int totalBooks = 0;
                 for (BorrowRecord br : groupRecords) {
-                    totalBooks += br.getQuantity();
+                    //totalBooks += br.getQuantity();
+                    if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
+                        totalBooks += br.getQuantity();
+                    }
+                }
+                if (totalBooks == 0) {
+                    resp.setStatus(400);
+                    resp.getWriter().write("{\"error\": \"Không có sách nào được duyệt để giao!\"}");
+                    return;
                 }
                 int totalWeight = totalBooks * 500;
 
                 // Gọi GHTK tính phí
                 BorrowRecord firstRecord = groupRecords.get(0);
-                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(), totalWeight);
+                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(),
+                        totalWeight);
 
                 // Trả về dữ liệu định dạng JSON cho AJAX hiển thị lên Modal
                 resp.setContentType("application/json");
@@ -146,8 +158,9 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
-            } else if ("renewal".equals(action)) {
-                handleRenewalQueue(req, resp);
+            } else if ("import".equals(action)) {
+                req.getRequestDispatcher("book_restock.jsp").forward(req, resp);
+                return;
             } else {
 
                 String methodFilter = req.getParameter("filter");
@@ -250,8 +263,15 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }
 
-                libService.returnBook(Long.parseLong(idStr), barcode);
-                req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                BigDecimal fineAmount = libService.returnBook(Long.parseLong(idStr), barcode);
+                if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    req.getSession().setAttribute("flash",
+                            "Đã nhận trả sách thành công. Phiếu này phát sinh tiền phạt "
+                            + formatCurrency(fineAmount)
+                            + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
+                } else {
+                    req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                }
             } else if ("receive".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 libService.confirmReceive(id);
@@ -389,5 +409,12 @@ public class LibrarianBorrowController extends HttpServlet {
         if (!"ADMIN".equalsIgnoreCase(role) && !"LIBRARIAN".equalsIgnoreCase(role)) {
             throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
         }
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
+        formatter.setMaximumFractionDigits(0);
+        formatter.setMinimumFractionDigits(0);
+        return formatter.format(amount);
     }
 }

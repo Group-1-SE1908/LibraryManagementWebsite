@@ -22,26 +22,35 @@ public class BookService {
         return bookDAO.searchByCategory(q, categoryId);
     }
 
+    public List<Book> searchByCategory(String q, Long categoryId, int page, int pageSize) throws SQLException {
+        int safePage = Math.max(page, 1);
+        int safePageSize = Math.max(pageSize, 1);
+        int offset = (safePage - 1) * safePageSize;
+        return bookDAO.searchByCategoryPaged(q, categoryId, offset, safePageSize);
+    }
+
+    public int countByCategory(String q, Long categoryId) throws SQLException {
+        return bookDAO.countByCategory(q, categoryId);
+    }
+
     public Book findById(long id) throws SQLException {
         return bookDAO.findById(id);
     }
 
-//    public long create(Book b, long userId) throws SQLException {
-//        validate(b);
-//        if (b.getStatus() == null || b.getStatus().isBlank())
-//            b.setStatus("AVAILABLE");
-//        return bookDAO.create(b, userId);
-//    }
+    // public long create(Book b, long userId) throws SQLException {
+    // validate(b);
+    // if (b.getStatus() == null || b.getStatus().isBlank())
+    // b.setStatus("AVAILABLE");
+    // return bookDAO.create(b, userId);
+    // }
     public long create(Book b, long userId) throws SQLException {
         validate(b);
 
-       
         String isbnToCheck = b.getIsbn();
         if (isbnToCheck != null && !isbnToCheck.isBlank() && !isbnToCheck.startsWith("ISBN-")) {
             isbnToCheck = "ISBN-" + isbnToCheck;
         }
 
-        
         if (bookDAO.existsByIsbn(isbnToCheck)) {
             throw new IllegalArgumentException("Mã ISBN '" + isbnToCheck + "' đã tồn tại trong hệ thống.");
         }
@@ -80,5 +89,22 @@ public class BookService {
         if (b.getQuantity() < 0) {
             throw new IllegalArgumentException("Số lượng không hợp lệ");
         }
+    }
+
+
+    public boolean restockBook(int bookId, int additionalQuantity, long userId) throws SQLException {
+        // 1. Kiểm tra nghiệp vụ
+        if (additionalQuantity <= 0) {
+            throw new IllegalArgumentException("Số lượng nhập thêm phải lớn hơn 0");
+        }
+
+        // 2. Kiểm tra sách tồn tại
+        Book book = bookDAO.findById(bookId);
+        if (book == null) {
+            throw new IllegalArgumentException("Không tìm thấy đầu sách để nhập hàng");
+        }
+
+        // 3. Gọi DAO và truyền thêm userId để ghi log
+        return bookDAO.restockBook(bookId, additionalQuantity, userId);
     }
 }
