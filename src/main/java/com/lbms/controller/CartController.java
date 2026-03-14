@@ -515,15 +515,6 @@ public class CartController extends HttpServlet {
         }
     }
 
-    private String optionalTextParam(HttpServletRequest req, String name) {
-        String value = req.getParameter(name);
-        if (value == null) {
-            return null;
-        }
-        value = value.trim();
-        return value.isEmpty() ? null : value;
-    }
-
     private String normalizePhoneDigits(String raw) {
         if (raw == null) {
             throw new IllegalArgumentException("Số điện thoại người nhận là bắt buộc");

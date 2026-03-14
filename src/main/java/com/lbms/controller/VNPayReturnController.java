@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
@@ -95,10 +94,7 @@ public class VNPayReturnController extends HttpServlet {
                             String contactName = (String) checkoutData.get("contactName");
                             String contactPhone = (String) checkoutData.get("contactPhone");
                             String contactEmail = (String) checkoutData.get("contactEmail");
-                            int borrowDays = (Integer) checkoutData.get("borrowDays");
-                            LocalDate returnDate = (LocalDate) checkoutData.get("returnDate");
                             String formattedReturnDate = (String) checkoutData.get("formattedReturnDate");
-                            String formattedPickupDate = (String) checkoutData.get("formattedPickupDate");
                             ShippingDetails shippingDetails = (ShippingDetails) checkoutData.get("shippingDetails");
                             @SuppressWarnings("unchecked")
                             List<CartItem> items = (List<CartItem>) checkoutData.get("items");

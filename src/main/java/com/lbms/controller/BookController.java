@@ -1,6 +1,5 @@
 package com.lbms.controller;
 
-import com.lbms.dao.BookDAO;
 import com.lbms.model.Book;
 import com.lbms.model.User;
 import com.lbms.service.BookService;
