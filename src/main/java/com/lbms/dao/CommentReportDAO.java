@@ -44,6 +44,19 @@ public class CommentReportDAO {
         }
         return false;
     }
+    /**
+     * Cập nhật description (chi tiết hành động xử lý)
+     */
+    public void updateDescription(long reportId, String description) throws SQLException {
+        String sql = "UPDATE CommentReport SET description = ? WHERE report_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, description);
+            ps.setLong(2, reportId);
+            ps.executeUpdate();
+        }
+    }
+
 
     // Get all reports for admin
     public List<CommentReport> getAllReports() throws SQLException {

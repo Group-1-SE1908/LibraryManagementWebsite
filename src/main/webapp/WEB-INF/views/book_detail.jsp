@@ -216,43 +216,77 @@
 
                                         <c:choose>
                                             <c:when test="${not empty sessionScope.currentUser}">
-                                                <c:if test="${hasCommented}">
-                                                    <div class="already-commented-message">
-                                                        <p>Bạn đã đánh giá và bình luận cho cuốn sách này rồi!</p>
-                                                    </div>
-                                                </c:if>
-                                                <div class="comment-form-wrapper">
-                                                    <h3 class="comment-form-title">Chia sẻ suy nghĩ của bạn</h3>
-                                                    <form action="${pageContext.request.contextPath}/comment" method="POST" ${hasCommented ? 'onsubmit="return false;"' : ''}>
-                                                        <input type="hidden" name="action" value="add">
-                                                        <input type="hidden" name="bookId" value="${book.id}">
 
-                                                        <div class="form-group">
-                                                            <label for="content">Bình luận của bạn</label>
-                                                            <textarea id="content" name="content" required placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..." ${hasCommented ? 'disabled' : ''}></textarea>
-                                                        </div>
-
-                                                        <div class="form-group rating-group">
-                                                            <label>Đánh giá</label>
-                                                            <div class="star-rating" role="radiogroup">
-                                                                <input type="radio" id="rate1" name="rating" value="1" required ${hasCommented ? 'disabled' : ''}>
-                                                                <label for="rate1" aria-label="1 sao">★</label>
-                                                                <input type="radio" id="rate2" name="rating" value="2" ${hasCommented ? 'disabled' : ''}>
-                                                                <label for="rate2" aria-label="2 sao">★</label>
-                                                                <input type="radio" id="rate3" name="rating" value="3" ${hasCommented ? 'disabled' : ''}>
-                                                                <label for="rate3" aria-label="3 sao">★</label>
-                                                                <input type="radio" id="rate4" name="rating" value="4" ${hasCommented ? 'disabled' : ''}>
-                                                                <label for="rate4" aria-label="4 sao">★</label>
-                                                                <input type="radio" id="rate5" name="rating" value="5" ${hasCommented ? 'disabled' : ''}>
-                                                                <label for="rate5" aria-label="5 sao">★</label>
+                                                <%-- Kiểm tra bị khóa comment --%>
+                                                <c:choose>
+                                                    <c:when test="${isCommentLocked}">
+                                                        <div style="
+                    background: #fff7ed;
+                    border: 1.5px solid #fed7aa;
+                    border-radius: 12px;
+                    padding: 20px 24px;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 14px;
+                    margin-bottom: 24px;
+                ">
+                                                            <span style="font-size: 28px; line-height: 1;">🔒</span>
+                                                            <div>
+                                                                <div style="font-weight: 700; color: #c2410c; font-size: 15px; margin-bottom: 4px;">
+                                                                    Tài khoản bị hạn chế bình luận
+                                                                </div>
+                                                                <div style="color: #9a3412; font-size: 13px; line-height: 1.6;">
+                                                                    Tài khoản của bạn đang bị tạm khóa chức năng bình luận do vi phạm quy định cộng đồng.
+                                                                    Vui lòng liên hệ thủ thư nếu bạn có thắc mắc.
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <c:if test="${hasCommented}">
+                                                            <div class="already-commented-message">
+                                                                <p>Bạn đã đánh giá và bình luận cho cuốn sách này rồi!</p>
+                                                            </div>
+                                                        </c:if>
+                                                        <div class="comment-form-wrapper">
+                                                            <h3 class="comment-form-title">Chia sẻ suy nghĩ của bạn</h3>
+                                                            <form action="${pageContext.request.contextPath}/comment" method="POST" ${hasCommented ? 'onsubmit="return false;"' : ''}>
+                                                                <input type="hidden" name="action" value="add">
+                                                                <input type="hidden" name="bookId" value="${book.id}">
 
-                                                        <div class="form-actions">
-                                                            <button type="submit" class="btn primary" ${hasCommented ? 'disabled' : ''}>Gửi bình luận</button>
+                                                                <div class="form-group">
+                                                                    <label for="content">Bình luận của bạn</label>
+                                                                    <textarea id="content" name="content" required
+                                                                              placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..."
+                                                                        ${hasCommented ? 'disabled' : ''}></textarea>
+                                                                </div>
+
+                                                                <div class="form-group rating-group">
+                                                                    <label>Đánh giá</label>
+                                                                    <div class="star-rating" role="radiogroup">
+                                                                        <input type="radio" id="rate1" name="rating" value="1" required ${hasCommented ? 'disabled' : ''}>
+                                                                        <label for="rate1" aria-label="1 sao">★</label>
+                                                                        <input type="radio" id="rate2" name="rating" value="2" ${hasCommented ? 'disabled' : ''}>
+                                                                        <label for="rate2" aria-label="2 sao">★</label>
+                                                                        <input type="radio" id="rate3" name="rating" value="3" ${hasCommented ? 'disabled' : ''}>
+                                                                        <label for="rate3" aria-label="3 sao">★</label>
+                                                                        <input type="radio" id="rate4" name="rating" value="4" ${hasCommented ? 'disabled' : ''}>
+                                                                        <label for="rate4" aria-label="4 sao">★</label>
+                                                                        <input type="radio" id="rate5" name="rating" value="5" ${hasCommented ? 'disabled' : ''}>
+                                                                        <label for="rate5" aria-label="5 sao">★</label>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-actions">
+                                                                    <button type="submit" class="btn primary" ${hasCommented ? 'disabled' : ''}>
+                                                                        Gửi bình luận
+                                                                    </button>
+                                                                </div>
+                                                            </form>
                                                         </div>
-                                                    </form>
-                                                </div>
+                                                    </c:otherwise>
+                                                </c:choose>
+
                                             </c:when>
                                             <c:otherwise>
                                                 <div class="login-prompt">
@@ -264,7 +298,8 @@
                                             </c:otherwise>
                                         </c:choose>
 
-                                        <%-- Comments are loaded in controller --%>
+
+                                    <%-- Comments are loaded in controller --%>
 
                                         <c:choose>
                                             <c:when test="${not empty comments}">
