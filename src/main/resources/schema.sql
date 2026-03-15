@@ -41,15 +41,15 @@ CREATE TABLE [User] (
     full_name NVARCHAR(100) NULL,
     phone VARCHAR(20) NULL,
     address NVARCHAR(255) NULL,
-    status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
+                        status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
     role_id INT NOT NULL,
     avatar VARCHAR(255) NULL, --
     wallet_balance DECIMAL(14,2) NOT NULL DEFAULT 0,
     banned_until DATETIME NULL,
+    comment_banned_until DATETIME NULL,
     created_at DATETIME DEFAULT GETDATE(),
-    ALTER TABLE [User] ADD comment_banned_until DATETIME NULL;
     CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id)
-    );
+                    );
 GO
 
 -- Bảng 2.1: Lịch sử giao dịch ví (Wallet transactions)
@@ -276,8 +276,8 @@ CREATE TABLE CommentReply (
                               admin_id INT NULL,
                               content NVARCHAR(MAX) NOT NULL,
                               created_at DATETIME DEFAULT GETDATE(),
-                              CONSTRAINT FK_CommentReply_Comment FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
-                              CONSTRAINT FK_CommentReply_Admin FOREIGN KEY (admin_id) REFERENCES [User](user_id) ON DELETE SET NULL
+    CONSTRAINT FK_CommentReply_Comment FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
+    CONSTRAINT FK_CommentReply_Admin FOREIGN KEY (admin_id) REFERENCES [User](user_id) ON DELETE NO ACTION
 );
 GO
 
@@ -373,4 +373,4 @@ INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) VALU
                                                                                 (N'Tắt đèn', N'Ngô Tất Tố', 2, 60000, 8, 'ISBN-003', 'assets/images/books/tatden.jpg');
 
 GO
-PRINT '--- DATABASE LIBRARYDB ĐÃ ĐƯỢC TỔNG HỢP HOÀN TẤT ---';
+PRINT '--- DATABASE LIBRARYDB HAS BEEN FULLY ASSEMBLED ---';
