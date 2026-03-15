@@ -2,9 +2,6 @@ package com.lbms.service;
 
 import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
-import com.lbms.util.DBConnection;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -45,7 +42,7 @@ public class ProfileService {
             throw new IllegalArgumentException("Số điện thoại phải đúng 10 số.");
         }
 
-        // 🔥 CHECK TRÙNG PHONE - ngoại trừ số điện thoại hiện tại của user
+        // CHECK TRÙNG PHONE - ngoại trừ số điện thoại hiện tại của user
         if (userDAO.isPhoneExists(phone, userId)) {
             throw new IllegalArgumentException("Số điện thoại này đã được sử dụng. Vui lòng nhập số khác.");
         }

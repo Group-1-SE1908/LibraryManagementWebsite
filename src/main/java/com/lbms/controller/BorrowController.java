@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
         "/borrow/return",
         "/borrow/renew",
         "/borrow/renew/cancel",
-        "/history" })
+        "/history", "/renew-history" })
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -94,7 +94,9 @@ public class BorrowController extends HttpServlet {
                 case "/history":
                     handleHistory(req, resp);
                     break;
-
+                case "/renew-history":
+                    handleRenewHistory(req, resp);
+                    break;
                 case "/borrow/overdue":
                     requireStaff(req);
                     List<BorrowRecord> overdueRecords = borrowDAO.listOverdue();
@@ -318,6 +320,39 @@ public class BorrowController extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/borrow_history.jsp").forward(req, resp);
     }
 
+    private void handleRenewHistory(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        List<BorrowRecord> records = borrowDAO.listByUser(currentUser.getId());
+
+        // Gom tất cả RenewalRequest thành 1 list phẳng
+        List<RenewalRequest> renewalList = new ArrayList<>();
+        Map<Long, String> borrowBookMap = new HashMap<>();
+        for (BorrowRecord record : records) {
+            if (record.getBook() != null) {
+                borrowBookMap.put(record.getId(), record.getBook().getTitle());
+            }
+            List<RenewalRequest> requests = borrowService.getRenewalRequestsForBorrow(record.getId());
+            if (requests != null) {
+                renewalList.addAll(requests);
+            }
+        }
+        req.setAttribute("renewalList", renewalList);
+        req.setAttribute("borrowBookMap", borrowBookMap);
+
+        Object flash = req.getSession().getAttribute("flash");
+        if (flash != null) {
+            req.setAttribute("flash", flash);
+            req.getSession().removeAttribute("flash");
+        }
+
+        req.getRequestDispatcher("/WEB-INF/views/renew_history.jsp").forward(req, resp);
+    }
+
     private void handleRenewalSubmit(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (currentUser == null) {
@@ -400,7 +435,7 @@ public class BorrowController extends HttpServlet {
     private List<String> statusesForFilter(String normalized) {
         switch (normalized) {
             case "borrowing":
-                return List.of("BORROWED");
+                return List.of("BORROWED", "RECEIVED");
             case "pending":
                 return List.of("REQUESTED", "RENEWAL_REQUESTED");
             case "returned":

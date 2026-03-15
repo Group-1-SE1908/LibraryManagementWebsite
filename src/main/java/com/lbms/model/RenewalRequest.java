@@ -12,6 +12,7 @@ public class RenewalRequest {
     private String contactPhone;
     private String contactEmail;
     private String status;
+    private String rejectionReason;
     private LocalDateTime requestedAt;
     private BorrowRecord borrowRecord;
 
@@ -79,6 +80,14 @@ public class RenewalRequest {
         this.status = status;
     }
 
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
     public LocalDateTime getRequestedAt() {
         return requestedAt;
     }
@@ -94,4 +103,5 @@ public class RenewalRequest {
     public void setBorrowRecord(BorrowRecord borrowRecord) {
         this.borrowRecord = borrowRecord;
     }
+
 }

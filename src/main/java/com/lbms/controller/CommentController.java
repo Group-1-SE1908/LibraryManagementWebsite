@@ -6,7 +6,9 @@ package com.lbms.controller;
 
 import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReplyDAO;
+import com.lbms.dao.CommentReportDAO;
 import com.lbms.model.Comment;
+import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,15 +27,17 @@ import java.util.logging.Logger;
  *
  * @author Trien
  */
-@WebServlet(name = "CommentController", urlPatterns = {"/comment"})
+@WebServlet(name = "CommentController", urlPatterns = { "/comment" })
 public class CommentController extends HttpServlet {
     private CommentDAO commentDAO;
     private CommentReplyDAO replyDAO;
+    private CommentReportDAO reportDAO;
 
     @Override
     public void init() {
         this.commentDAO = new CommentDAO();
         this.replyDAO = new CommentReplyDAO();
+        this.reportDAO = new CommentReportDAO();
     }
 
     @Override
@@ -84,7 +88,7 @@ public class CommentController extends HttpServlet {
             throws Exception {
         int bookId = Integer.parseInt(request.getParameter("bookId"));
         List<Comment> comments = commentDAO.getCommentsByBook(bookId);
-        
+
         // Load replies cho mỗi comment
         for (Comment comment : comments) {
             comment.setReplies(replyDAO.findByCommentId(comment.getCommentId()));
@@ -92,6 +96,19 @@ public class CommentController extends HttpServlet {
 
         request.setAttribute("comments", comments);
         request.setAttribute("bookId", bookId);
+
+        // Load reports if user is librarian
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+        request.setAttribute("reportsBasePath", resolveReportsBasePath(currentUser));
+
+        if (currentUser != null && currentUser.getRole() != null
+                && ("LIBRARIAN".equalsIgnoreCase(currentUser.getRole().getName())
+                        || "ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
+            List<CommentReport> bookReports = reportDAO.getReportsByBook(bookId);
+            request.setAttribute("bookReports", bookReports);
+        }
+
         request.getRequestDispatcher("/WEB-INF/views/comments_list.jsp").forward(request, response);
     }
 
@@ -119,6 +136,12 @@ public class CommentController extends HttpServlet {
             return;
         }
 
+        // Kiểm tra xem user đã comment cho sách này chưa
+        if (commentDAO.hasUserCommented(bookId, (int) user.getId())) {
+            response.sendError(400, "Bạn đã đánh giá và bình luận cho cuốn sách này rồi!");
+            return;
+        }
+
         Comment comment = new Comment();
         comment.setBookId(bookId);
         comment.setUserId((int) user.getId());
@@ -126,6 +149,9 @@ public class CommentController extends HttpServlet {
         comment.setRating(rating);
 
         commentDAO.insertComment(comment);
+
+        // Set success message
+        session.setAttribute("message", "Bình luận đã được thêm thành công!");
 
         // Quay trở lại trang chi tiết sách
         response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
@@ -175,6 +201,7 @@ public class CommentController extends HttpServlet {
             boolean updated = commentDAO.updateComment(comment, isAdmin);
 
             if (updated) {
+                session.setAttribute("message", "Bình luận đã được cập nhật thành công!");
                 response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
             } else {
                 response.sendError(403, "Forbidden - You can only update your own comments");
@@ -209,6 +236,7 @@ public class CommentController extends HttpServlet {
         boolean deleted = commentDAO.deleteComment(commentId, (int) user.getId(), isAdmin);
 
         if (deleted) {
+            session.setAttribute("message", "Bình luận đã được xóa thành công!");
             response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
         } else {
             response.sendError(403, "Forbidden - You can only delete your own comments");
@@ -218,5 +246,12 @@ public class CommentController extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Comment Controller for managing book comments";
+    }
+
+    private String resolveReportsBasePath(User user) {
+        if (user != null && user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+            return "/admin/reports";
+        }
+        return "/staff/reports";
     }
 }

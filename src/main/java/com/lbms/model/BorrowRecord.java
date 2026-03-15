@@ -2,9 +2,13 @@ package com.lbms.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 public class BorrowRecord {
+
+    private static final BigDecimal FINE_PER_DAY = new BigDecimal("5000");
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private long id;
     private User user;
@@ -98,7 +102,6 @@ public class BorrowRecord {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-    
 
     public void setIsPaid(boolean isPaid) {
         this.isPaid = isPaid;
@@ -140,6 +143,32 @@ public class BorrowRecord {
         this.fineAmount = fineAmount;
     }
 
+    public BigDecimal getOutstandingFineAmount() {
+        if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+            return fineAmount;
+        }
+        long overdueDays = getOverdueDays();
+        if (overdueDays <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return FINE_PER_DAY.multiply(BigDecimal.valueOf(overdueDays));
+    }
+
+    public boolean hasOutstandingFine() {
+        return getOutstandingFineAmount().compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    public boolean isCurrentlyOverdue() {
+        if (dueDate == null || returnDate != null) {
+            return false;
+        }
+        if (status == null) {
+            return dueDate.isBefore(LocalDate.now());
+        }
+        return dueDate.isBefore(LocalDate.now())
+                && ("BORROWED".equalsIgnoreCase(status) || "RECEIVED".equalsIgnoreCase(status));
+    }
+
     public BigDecimal getDepositAmount() {
         return depositAmount;
     }
@@ -170,5 +199,17 @@ public class BorrowRecord {
 
     public void setShippingDetails(ShippingDetails shippingDetails) {
         this.shippingDetails = shippingDetails;
+    }
+
+    public String getFormattedBorrowDate() {
+        return borrowDate != null ? borrowDate.format(DISPLAY_DATE) : "---";
+    }
+
+    public String getFormattedDueDate() {
+        return dueDate != null ? dueDate.format(DISPLAY_DATE) : "---";
+    }
+
+    public String getFormattedReturnDate() {
+        return returnDate != null ? returnDate.format(DISPLAY_DATE) : "Chưa trả";
     }
 }

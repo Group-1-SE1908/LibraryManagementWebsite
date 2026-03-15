@@ -1,4 +1,5 @@
 package com.lbms.controller;
+
 import com.lbms.dao.BookDAO;
 import com.lbms.model.Book;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import com.lbms.model.ShippingDetails;
 
 import com.lbms.service.CartService;
 import com.lbms.service.EmailService;
+import com.lbms.service.ProfileService;
+import com.lbms.service.WalletService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,10 +24,11 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = { "/vnpay-return" })
 public class VNPayReturnController extends HttpServlet {
@@ -32,10 +36,14 @@ public class VNPayReturnController extends HttpServlet {
     private BorrowService borrowService;
     private static final String MODE_RETURN = "return";
     private static final String MODE_FINE = "fine";
+    private WalletService walletService;
+    private ProfileService profileService;
 
     @Override
     public void init() {
         this.borrowService = new BorrowService();
+        this.walletService = new WalletService();
+        this.profileService = new ProfileService();
     }
 
     @Override
@@ -83,22 +91,26 @@ public class VNPayReturnController extends HttpServlet {
                 }
             }
 
+            boolean isWalletTxn = vnp_TxnRef != null && vnp_TxnRef.startsWith(WalletService.TXN_REF_PREFIX);
+
             if (signValue.equals(vnp_SecureHash)) {
                 if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
+                    if (isWalletTxn) {
+                        handleWalletTopUpSuccess(req, resp, vnp_TxnRef, currentUser);
+                        return;
+                    }
                     if (vnp_TxnRef.startsWith("CART-")) {
                         // Xử lý đặt sách online
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession().getAttribute("cartCheckout-" + vnp_TxnRef);
+                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession()
+                                .getAttribute("cartCheckout-" + vnp_TxnRef);
                         if (checkoutData != null) {
                             // Thực hiện borrow như trong CartController
                             String method = (String) checkoutData.get("method");
                             String contactName = (String) checkoutData.get("contactName");
                             String contactPhone = (String) checkoutData.get("contactPhone");
                             String contactEmail = (String) checkoutData.get("contactEmail");
-                            int borrowDays = (Integer) checkoutData.get("borrowDays");
-                            LocalDate returnDate = (LocalDate) checkoutData.get("returnDate");
                             String formattedReturnDate = (String) checkoutData.get("formattedReturnDate");
-                            String formattedPickupDate = (String) checkoutData.get("formattedPickupDate");
                             ShippingDetails shippingDetails = (ShippingDetails) checkoutData.get("shippingDetails");
                             @SuppressWarnings("unchecked")
                             List<CartItem> items = (List<CartItem>) checkoutData.get("items");
@@ -107,7 +119,7 @@ public class VNPayReturnController extends HttpServlet {
                             @SuppressWarnings("unchecked")
                             List<BigDecimal> depositAmounts = (List<BigDecimal>) checkoutData.get("depositAmounts");
 
-// Nếu null hoặc toàn 0 → tính lại từ DB
+                            // Nếu null hoặc toàn 0 → tính lại từ DB
                             if (depositAmounts == null || depositAmounts.stream()
                                     .allMatch(d -> d == null || d.compareTo(BigDecimal.ZERO) == 0)) {
                                 BookDAO bookDAO = new BookDAO();
@@ -137,8 +149,7 @@ public class VNPayReturnController extends HttpServlet {
                                         shippingDetails,
                                         item.getQuantity(),
                                         groupCode,
-                                        depositAmount
-                                );
+                                        depositAmount);
                             }
                             // Clear cart
                             new CartService().clearCart(currentUser.getId());
@@ -156,31 +167,41 @@ public class VNPayReturnController extends HttpServlet {
                                             .distinct()
                                             .collect(Collectors.joining(","));
                                     if (!emails.isBlank()) {
-                                        String displayName = currentUser.getFullName() != null ? currentUser.getFullName() : "Người dùng";
-                                        String userEmail = currentUser.getEmail() != null ? currentUser.getEmail() : "chưa cung cấp";
+                                        String displayName = currentUser.getFullName() != null
+                                                ? currentUser.getFullName()
+                                                : "Người dùng";
+                                        String userEmail = currentUser.getEmail() != null ? currentUser.getEmail()
+                                                : "chưa cung cấp";
                                         String subject = "LBMS - Yêu cầu mượn sách mới từ " + displayName;
                                         StringBuilder body = new StringBuilder();
                                         body.append("<h3>Yêu cầu mượn sách mới</h3>");
                                         body.append("<p>Người dùng ").append(displayName)
-                                                .append(" (").append(userEmail).append(") vừa gửi yêu cầu mượn sách.</p>");
+                                                .append(" (").append(userEmail)
+                                                .append(") vừa gửi yêu cầu mượn sách.</p>");
                                         body.append("<p>Phương thức: <strong>online</strong></p>");
                                         body.append("<h4>Thông tin liên hệ</h4>");
                                         body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
                                         body.append("<li><strong>Tên:</strong> ").append(contactName).append("</li>");
-                                        body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone).append("</li>");
-                                        body.append("<li><strong>Email:</strong> ").append(contactEmail).append("</li>");
+                                        body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone)
+                                                .append("</li>");
+                                        body.append("<li><strong>Email:</strong> ").append(contactEmail)
+                                                .append("</li>");
                                         body.append("</ul>");
                                         body.append("<h4>Chi tiết sách</h4>");
                                         body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
                                         for (CartItem item : items) {
-                                            body.append("<li>").append(item.getBook().getTitle()).append(" (").append(item.getQuantity()).append(" cuốn)</li>");
+                                            body.append("<li>").append(item.getBook().getTitle()).append(" (")
+                                                    .append(item.getQuantity()).append(" cuốn)</li>");
                                         }
                                         body.append("</ul>");
                                         body.append("<p>Ngày trả dự kiến: ").append(formattedReturnDate).append("</p>");
                                         if (shippingDetails != null) {
-                                            body.append("<p>Người nhận: ").append(shippingDetails.getRecipient()).append("</p>");
-                                            body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone()).append("</p>");
-                                            body.append("<p>Địa chỉ giao: ").append(shippingDetails.getFormattedAddress()).append("</p>");
+                                            body.append("<p>Người nhận: ").append(shippingDetails.getRecipient())
+                                                    .append("</p>");
+                                            body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone())
+                                                    .append("</p>");
+                                            body.append("<p>Địa chỉ giao: ")
+                                                    .append(shippingDetails.getFormattedAddress()).append("</p>");
                                         }
                                         body.append("<p>Vui lòng kiểm tra và xử lý yêu cầu.</p>");
                                         new EmailService().send(emails, subject, body.toString());
@@ -193,10 +214,12 @@ public class VNPayReturnController extends HttpServlet {
                             // Remove session data
                             req.getSession().removeAttribute("cartCheckout-" + vnp_TxnRef);
 
-                            req.getSession().setAttribute("flash", "Thanh toán cọc thành công! Đặt sách online thành công.");
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán cọc thành công! Đặt sách online thành công.");
                             resp.sendRedirect(req.getContextPath() + "/cart");
                         } else {
-                            req.getSession().setAttribute("flash", "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
                             resp.sendRedirect(req.getContextPath() + "/cart");
                         }
                     } else if (borrowId > 0) {
@@ -216,15 +239,22 @@ public class VNPayReturnController extends HttpServlet {
                         resp.sendRedirect(req.getContextPath() + "/history");
                     }
                 } else {
-                    String redirect = req.getContextPath() + "/checkout";
-                    if (borrowId > 0) {
-                        redirect += "?borrowId=" + borrowId;
-                        if (MODE_FINE.equals(mode)) {
-                            redirect += "&mode=fine";
+                    String redirect;
+                    if (isWalletTxn) {
+                        redirect = req.getContextPath() + "/wallet";
+                        req.getSession().removeAttribute(WalletService.SESSION_KEY_PREFIX + vnp_TxnRef);
+                    } else {
+                        redirect = req.getContextPath() + "/checkout";
+                        if (borrowId > 0) {
+                            redirect += "?borrowId=" + borrowId;
+                            if (MODE_FINE.equals(mode)) {
+                                redirect += "&mode=fine";
+                            }
                         }
                     }
                     req.getSession().setAttribute("flash", "Thanh toán thất bại! (Mã lỗi: "
                             + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại.");
+                    req.getSession().setAttribute("flashType", "error");
                     resp.sendRedirect(redirect);
                 }
             } else {
@@ -236,6 +266,53 @@ public class VNPayReturnController extends HttpServlet {
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private void handleWalletTopUpSuccess(HttpServletRequest req, HttpServletResponse resp, String txnRef,
+            User currentUser) throws Exception {
+
+        HttpSession session = req.getSession();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> topUpData = (Map<String, Object>) session
+                .getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+        BigDecimal amount = null;
+        if (topUpData != null) {
+            Object storedAmount = topUpData.get("amount");
+            if (storedAmount instanceof BigDecimal) {
+                amount = (BigDecimal) storedAmount;
+            } else if (storedAmount instanceof Number) {
+                amount = BigDecimal.valueOf(((Number) storedAmount).doubleValue());
+            }
+        }
+        session.removeAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+
+        if (amount == null) {
+            String paramAmount = req.getParameter("vnp_Amount");
+            if (paramAmount != null && !paramAmount.isBlank()) {
+                amount = new BigDecimal(paramAmount).divide(BigDecimal.valueOf(100));
+            }
+        }
+
+        if (amount == null) {
+            amount = BigDecimal.ZERO;
+        }
+
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            walletService.creditWallet(currentUser.getId(), amount);
+        }
+        User refreshed = profileService.refreshUser(currentUser.getId());
+        session.setAttribute("currentUser", refreshed);
+        String message = amount.compareTo(BigDecimal.ZERO) > 0
+                ? "Nạp " + formatCurrency(amount) + " vào ví thành công."
+                : "Nạp tiền vào ví thành công.";
+        session.setAttribute("flash", message);
+        session.setAttribute("flashType", "success");
+        resp.sendRedirect(req.getContextPath() + "/wallet");
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+        return formatter.format(amount);
     }
 
     private User getCurrentUser(HttpServletRequest req) {

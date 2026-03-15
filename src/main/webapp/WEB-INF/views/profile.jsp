@@ -129,6 +129,7 @@
                 color:white;
                 font-size:13px;
                 font-weight:500;
+                background-color: green;
             }
 
             .role-member{
@@ -203,7 +204,7 @@
             <div class="profile-container">
 
                 <h2>THÔNG TIN TÀI KHOẢN</h2>
-                
+
 
                 <c:if test="${not empty flash}">
                     <div class="message ${flashType}" id="flashMessage">
@@ -304,19 +305,26 @@
                         </div>
 
                         <p>
-                            Role:
+                            Vai trò:
                             <span class="tag
-                                  <c:choose>
-                                      <c:when test="${user.role.name eq 'Member'}">role-member</c:when>
-                                      <c:when test="${user.role.name eq 'Librarian'}">role-librarian</c:when>
-                                      <c:when test="${user.role.name eq 'Admin'}">role-admin</c:when>
-                                  </c:choose>">
-                                ${user.role.name}
-                            </span>
+      <c:choose>
+          <c:when test="${user.role.name eq 'MEMBER'}">role-member</c:when>
+          <c:when test="${user.role.name eq 'LIBRARIAN'}">role-librarian</c:when>
+          <c:when test="${user.role.name eq 'ADMIN'}">role-admin</c:when>
+      </c:choose>">
+
+    <c:choose>
+        <c:when test="${user.role.name eq 'MEMBER'}">Thành viên</c:when>
+        <c:when test="${user.role.name eq 'LIBRARIAN'}">Thủ thư</c:when>
+        <c:when test="${user.role.name eq 'ADMIN'}">Quản trị viên</c:when>
+        <c:otherwise>Không xác định</c:otherwise>
+    </c:choose>
+
+</span>
                         </p>
 
                         <p>
-                            Status:
+                            Trạng thái:
                             <span class="tag
                                   <c:choose>
                                       <c:when test="${user.status eq 'ACTIVE'}">status-active</c:when>
@@ -386,11 +394,11 @@
                     // Real-time validation - chỉ kiểm tra format
                     phoneInput.addEventListener('input', function() {
                         const phone = this.value.trim();
-                        
+
                         // Clear error message
                         phoneError.textContent = '';
                         phoneInput.classList.remove('phone-error');
-                        
+
                         // Check format
                         if (phone && phone.length > 0 && !/^\d{10}$/.test(phone)) {
                             phoneError.textContent = 'Số điện thoại phải đúng 10 chữ số';
@@ -401,7 +409,7 @@
                     // Form submit validation
                     profileForm.addEventListener('submit', function(e) {
                         const phone = phoneInput.value.trim();
-                        
+
                         // Validate format
                         if (!phone || !/^\d{10}$/.test(phone)) {
                             e.preventDefault();
@@ -423,7 +431,7 @@
         <!-- POPUP ĐỔI MẬT KHẨU -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-        <c:if test="${not empty flash 
+        <c:if test="${not empty flash
                       and flashType == 'success' 
                       and flash eq 'Đổi mật khẩu thành công.'}">
 

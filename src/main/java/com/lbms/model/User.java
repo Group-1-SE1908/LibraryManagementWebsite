@@ -1,5 +1,6 @@
 package com.lbms.model;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public class User {
@@ -15,6 +16,8 @@ public class User {
     private Instant createdAt;
     private Instant updatedAt;
     private String avatar;
+    private BigDecimal walletBalance;
+    private Instant bannedUntil;
 
     public User() {
     }
@@ -118,6 +121,22 @@ public class User {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public BigDecimal getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(BigDecimal walletBalance) {
+        this.walletBalance = walletBalance;
+    }
+
+    public Instant getBannedUntil() {
+        return bannedUntil;
+    }
+
+    public void setBannedUntil(Instant bannedUntil) {
+        this.bannedUntil = bannedUntil;
     }
 
 }

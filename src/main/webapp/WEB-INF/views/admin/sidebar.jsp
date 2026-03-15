@@ -157,16 +157,51 @@
                             <span>Quản lý người dùng</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary"
-                            class="${fn:contains(activeUri, '/admin/borrowlibrary') || fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/admin/books"
+                            class="${fn:contains(activeUri, '/admin/books') ? 'active' : ''}">
                             <i class="fas fa-book-open"></i>
-                            <span>Quản lý sách</span>
+                            <span>Kho sách</span>
                         </a>
 
                         <a href="${pageContext.request.contextPath}/admin/categories"
                             class="${fn:contains(activeUri, '/admin/categories') ? 'active' : ''}">
                             <i class="fas fa-list"></i>
                             <span>Danh mục sách</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">LIBRARY OPS</div>
+                    <div class="sidebar-nav">
+                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary"
+                            class="${fn:contains(activeUri, '/admin/borrowlibrary') ? 'active' : ''}">
+                            <i class="fas fa-boxes"></i>
+                            <span>Mượn trả sách</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/borrowlibrary/inperson"
+                            class="${fn:contains(activeUri, '/admin/borrowlibrary/inperson') ? 'active' : ''}">
+                            <i class="fas fa-hand-holding-medical"></i>
+                            <span>Mượn tại quầy</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/fines"
+                            class="${fn:contains(activeUri, '/admin/fines') ? 'active' : ''}">
+                            <i class="fas fa-coins"></i>
+                            <span>Tiền phạt</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/feedback"
+                            class="${fn:contains(activeUri, '/admin/feedback') ? 'active' : ''}">
+                            <i class="fas fa-comment-dots"></i>
+                            <span>Phản hồi sách</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/reports"
+                            class="${fn:contains(activeUri, '/admin/reports') ? 'active' : ''}">
+                            <i class="fas fa-flag"></i>
+                            <span>Báo cáo bình luận</span>
                         </a>
                     </div>
                 </div>
@@ -186,8 +221,6 @@
                             <span>Thống kê mượn trả sách</span>
                         </a>
 
-                        <a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span></a>
-                        <a href="#"><i class="fas fa-shipping-fast"></i> <span>Shipments</span></a>
                     </div>
                 </div>
 

@@ -78,7 +78,14 @@
                 <c:forEach items="${cart.items}" var="item">
                     <article class="cart-item-card">
                         <div class="cart-item-cover">
-                            <span>${fn:substring(item.book.title, 0, 1)}</span>
+                            <c:choose>
+                                <c:when test="${not empty item.book.image}">
+                                    <img src="${pageContext.request.contextPath}/${item.book.image}" alt="${item.book.title}" loading="lazy" />
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="cover-placeholder">${fn:substring(item.book.title, 0, 1)}</span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="cart-item-body">
                             <div class="cart-item-head">
@@ -94,7 +101,6 @@
                                 <form action="${pageContext.request.contextPath}/cart/update" method="post" class="quantity-form">
                                     <input type="hidden" name="bookId" value="${item.bookId}" />
                                     <input type="number" name="quantity" min="1" value="${item.quantity}" class="quantity-input" />
-                                    <button type="submit" class="btn secondary">Cập nhật</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/cart/remove" method="post" class="remove-form">
                                     <input type="hidden" name="bookId" value="${item.bookId}" />
@@ -608,6 +614,30 @@
             }
         });
 
+        const attachQuantityAutoSubmit = () => {
+            const quantityForms = document.querySelectorAll('.cart-item-card .quantity-form');
+            quantityForms.forEach(form => {
+                const input = form.querySelector('.quantity-input');
+                if (!input) {
+                    return;
+                }
+                let debounceTimer;
+                const submitForm = () => {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+                    form.submit();
+                };
+                const scheduleSubmit = () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = window.setTimeout(submitForm, 280);
+                };
+                input.addEventListener('input', scheduleSubmit);
+                input.addEventListener('change', scheduleSubmit);
+            });
+        };
+        attachQuantityAutoSubmit();
         fetchLocationCatalog();
     })();
 </script>

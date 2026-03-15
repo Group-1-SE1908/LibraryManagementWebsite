@@ -18,14 +18,26 @@ public class BookDAO {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
 
     public List<Book> search(String q) throws SQLException {
-        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
-        // Chọn tất cả các cột bao gồm cả cột image và availability (computed column)
-        String sql = "SELECT * FROM Book WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? ORDER BY book_id DESC";
+        return searchByCategory(q, null);
+    }
 
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+    public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
+        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
+
+        if (categoryId != null && categoryId > 0) {
+            sql.append(" AND category_id = ?");
+        }
+        sql.append(" ORDER BY book_id DESC");
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
             ps.setString(1, like);
             ps.setString(2, like);
             ps.setString(3, like);
+            if (categoryId != null && categoryId > 0) {
+                ps.setLong(4, categoryId);
+            }
 
             List<Book> out = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) {
@@ -37,21 +49,20 @@ public class BookDAO {
         }
     }
 
-    public List<Book> searchByCategory(String q, Long categoryId) throws SQLException {
+    public List<Book> searchByCategoryPaged(String q, Long categoryId, int offset, int limit) throws SQLException {
         String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
-        StringBuilder sql = new StringBuilder("SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ?)");
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
 
         if (categoryId != null && categoryId > 0) {
             sql.append(" AND category_id = ?");
         }
-        sql.append(" ORDER BY book_id DESC");
+        sql.append(" ORDER BY book_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
-            ps.setString(1, like);
-            ps.setString(2, like);
-            if (categoryId != null && categoryId > 0) {
-                ps.setLong(3, categoryId);
-            }
+            int nextIndex = bindSearchParameters(ps, like, categoryId);
+            ps.setInt(nextIndex++, Math.max(offset, 0));
+            ps.setInt(nextIndex, Math.max(limit, 1));
 
             List<Book> out = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) {
@@ -61,6 +72,26 @@ public class BookDAO {
             }
             return out;
         }
+    }
+
+    public int countByCategory(String q, Long categoryId) throws SQLException {
+        String like = (q == null || q.trim().isEmpty()) ? "%" : "%" + q.trim() + "%";
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) FROM Book WHERE (title LIKE ? OR author LIKE ? OR isbn LIKE ?)");
+
+        if (categoryId != null && categoryId > 0) {
+            sql.append(" AND category_id = ?");
+        }
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            bindSearchParameters(ps, like, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
     }
 
     public Book findById(long id) throws SQLException {
@@ -90,7 +121,7 @@ public class BookDAO {
             }
             ps.setBigDecimal(4, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
             ps.setInt(5, b.getQuantity());
-            //ps.setString(6, b.getIsbn());
+            // ps.setString(6, b.getIsbn());
             String isbn = b.getIsbn();
             if (isbn != null && !isbn.isBlank() && !isbn.startsWith("ISBN-")) {
                 isbn = "ISBN-" + isbn;
@@ -128,7 +159,6 @@ public class BookDAO {
                 ps.setNull(6, java.sql.Types.INTEGER);
             }
 
-           
             ps.setString(7, b.getIsbn());
             ps.setLong(8, b.getId());
             // Lấy tên sách trước khi cập nhật để log
@@ -154,6 +184,18 @@ public class BookDAO {
         }
     }
 
+    private int bindSearchParameters(PreparedStatement ps, String like, Long categoryId) throws SQLException {
+        ps.setString(1, like);
+        ps.setString(2, like);
+        ps.setString(3, like);
+
+        int nextIndex = 4;
+        if (categoryId != null && categoryId > 0) {
+            ps.setLong(nextIndex++, categoryId);
+        }
+        return nextIndex;
+    }
+
     private Book mapBook(ResultSet rs) throws SQLException {
         Book b = new Book();
 
@@ -168,5 +210,48 @@ public class BookDAO {
 
         b.setCategoryId(rs.getObject("category_id") != null ? rs.getLong("category_id") : null);
         return b;
+    }
+
+    public boolean existsByIsbn(String isbn) {
+        String sql = "SELECT COUNT(*) FROM Book WHERE ISBN = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, isbn);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+//    public boolean restockBook(int bookId, int additionalQuantity) {
+//        String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
+//        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+//            ps.setInt(1, additionalQuantity);
+//            ps.setInt(2, bookId);
+//            return ps.executeUpdate() > 1;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return false;
+//    }
+    public boolean restockBook(int bookId, int additionalQuantity, long userId) { 
+        String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, additionalQuantity);
+            ps.setInt(2, bookId);
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                // Ghi log nghiệp vụ nhập kho
+                logDAO.addActivityLog((int) userId, "Nhập thêm " + additionalQuantity + " cuốn cho sách ID: " + bookId);
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

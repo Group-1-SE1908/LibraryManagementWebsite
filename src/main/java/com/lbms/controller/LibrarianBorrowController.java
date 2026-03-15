@@ -1,6 +1,5 @@
 package com.lbms.controller;
 
-import com.lbms.dao.BorrowDAO;
 import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
@@ -14,51 +13,46 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive",
-    "/staff/renewal",
-    "/staff/renewal/approve",
-    "/staff/renewal/reject",
-    "/staff/renewal/view",
-    "/staff/borrowlibrary/ship_fee",
-    "/staff/borrowlibrary/ship_confirm",
-    "/admin/borrowlibrary",
-    "/admin/borrowlibrary/approve",
-    "/admin/borrowlibrary/reject",
-    "/admin/borrowlibrary/return",
-    "/admin/borrowlibrary/detail",
-    "/admin/borrowlibrary/inperson",
-    "/admin/borrowlibrary/receive",
-    "/admin/renewal",
-    "/admin/renewal/approve",
-    "/admin/renewal/reject",
-    "/admin/renewal/view",
-    "/admin/books",
-    "/admin/books/approve",
-    "/admin/books/reject",
-    "/admin/books/return",
-    "/admin/books/detail",
-    "/admin/books/inperson",
-    "/admin/books/receive",
-    "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm",})
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/staff/renewal",
+        "/staff/renewal/approve",
+        "/staff/renewal/reject",
+        "/staff/renewal/view",
+        "/staff/borrowlibrary/ship_fee",
+        "/staff/borrowlibrary/ship_confirm",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/renewal",
+        "/admin/renewal/approve",
+        "/admin/renewal/reject",
+        "/admin/renewal/view",
+        "/admin/borrowlibrary/ship_fee",
+        "/admin/borrowlibrary/ship_confirm"
+})
 public class LibrarianBorrowController extends HttpServlet {
 
-    private static final String STAFF_BORROW_BASE = "/staff/borrowlibrary";
-    private static final String ADMIN_BORROW_BASE = "/admin/borrowlibrary";
-    private static final String STAFF_RENEWAL_BASE = "/staff/renewal";
-    private static final String ADMIN_RENEWAL_BASE = "/admin/renewal";
+    private static final String BORROW_SUFFIX = "/borrowlibrary";
+    private static final String RENEWAL_SUFFIX = "/renewal";
+    private static final Locale VIETNAM_LOCALE = Locale.forLanguageTag("vi-VN");
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
-    private final BorrowDAO borrowDAO = new BorrowDAO();
     private final UserDAO userDAO = new UserDAO();
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
 
@@ -66,7 +60,7 @@ public class LibrarianBorrowController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
 
-            requireStaff(req);
+            requireOperationalAccess(req);
 
             HttpSession session = req.getSession();
             Object flash = session.getAttribute("flash");
@@ -77,10 +71,15 @@ public class LibrarianBorrowController extends HttpServlet {
 
             String path = req.getServletPath();
             String action = getAction(path);
+            String basePrefix = resolveBasePrefix(path);
+            String borrowBase = basePrefix + BORROW_SUFFIX;
+            String renewalBase = basePrefix + RENEWAL_SUFFIX;
+            req.setAttribute("staffBorrowBase", borrowBase);
+            req.setAttribute("staffRenewalBase", renewalBase);
 
             // 2. Điều hướng giao diện
             if (path.contains("/renewal") && "view".equals(action)) {
-                handleRenewalDetail(req, resp);
+                handleRenewalDetail(req, resp, borrowBase, renewalBase);
                 return;
             } else if ("detail".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
@@ -127,13 +126,22 @@ public class LibrarianBorrowController extends HttpServlet {
                 // Tính tổng trọng lượng (Giả định mỗi cuốn sách nặng 500 gram)
                 int totalBooks = 0;
                 for (BorrowRecord br : groupRecords) {
-                    totalBooks += br.getQuantity();
+                    // totalBooks += br.getQuantity();
+                    if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
+                        totalBooks += br.getQuantity();
+                    }
+                }
+                if (totalBooks == 0) {
+                    resp.setStatus(400);
+                    resp.getWriter().write("{\"error\": \"Không có sách nào được duyệt để giao!\"}");
+                    return;
                 }
                 int totalWeight = totalBooks * 500;
 
                 // Gọi GHTK tính phí
                 BorrowRecord firstRecord = groupRecords.get(0);
-                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(), totalWeight);
+                long fee = new com.lbms.service.GHTKService().calculateFee(firstRecord.getShippingDetails(),
+                        totalWeight);
 
                 // Trả về dữ liệu định dạng JSON cho AJAX hiển thị lên Modal
                 resp.setContentType("application/json");
@@ -146,8 +154,9 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.setAttribute("books", allBooks);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
-            } else if ("renewal".equals(action)) {
-                handleRenewalQueue(req, resp);
+            } else if ("import".equals(action)) {
+                req.getRequestDispatcher("book_restock.jsp").forward(req, resp);
+                return;
             } else {
 
                 String methodFilter = req.getParameter("filter");
@@ -206,7 +215,7 @@ public class LibrarianBorrowController extends HttpServlet {
         String redirectBase = resolveRedirectBase(path);
 
         try {
-            requireStaff(req);
+            requireOperationalAccess(req);
 
             // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
             HttpSession session = req.getSession();
@@ -250,8 +259,15 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }
 
-                libService.returnBook(Long.parseLong(idStr), barcode);
-                req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                BigDecimal fineAmount = libService.returnBook(Long.parseLong(idStr), barcode);
+                if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    req.getSession().setAttribute("flash",
+                            "Đã nhận trả sách thành công. Phiếu này phát sinh tiền phạt "
+                                    + formatCurrency(fineAmount)
+                                    + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
+                } else {
+                    req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                }
             } else if ("receive".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 libService.confirmReceive(id);
@@ -304,13 +320,15 @@ public class LibrarianBorrowController extends HttpServlet {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
             req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
             if ("inperson".equals(action)) {
-                resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+                // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+                resp.sendRedirect(req.getContextPath() + redirectBase);
             } else {
                 resp.sendRedirect(req.getContextPath() + redirectBase);
             }
         } catch (Exception ex) {
             req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
-            resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+            // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
+            resp.sendRedirect(req.getContextPath() + redirectBase);
         }
     }
 
@@ -344,48 +362,51 @@ public class LibrarianBorrowController extends HttpServlet {
     }
 
     private String resolveRedirectBase(String path) {
-        if (path != null) {
-            if (path.startsWith(ADMIN_RENEWAL_BASE)) {
-                return ADMIN_RENEWAL_BASE;
-            }
-            if (path.startsWith(STAFF_RENEWAL_BASE)) {
-                return STAFF_RENEWAL_BASE;
-            }
-            if (path.startsWith("/admin/")) {
-                return ADMIN_BORROW_BASE;
-            }
+        String basePrefix = resolveBasePrefix(path);
+        if (path != null && path.contains(RENEWAL_SUFFIX)) {
+            return basePrefix + RENEWAL_SUFFIX;
         }
-        return STAFF_BORROW_BASE;
+        return basePrefix + BORROW_SUFFIX;
     }
 
-    private void handleRenewalQueue(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        List<RenewalRequest> tickets = libService.listPendingRenewalRequests();
-        String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
-        req.setAttribute("renewalTickets", tickets);
-        req.setAttribute("renewalActionPrefix", actionPrefix);
-        req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_requests.jsp").forward(req, resp);
-    }
-
-    private void handleRenewalDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+    private void handleRenewalDetail(HttpServletRequest req, HttpServletResponse resp,
+            String borrowBase, String renewalBase) throws Exception {
         long renewalId = parseLongParameter(req, "id", "ID yêu cầu gia hạn không hợp lệ");
         RenewalRequest ticket = libService.getRenewalRequest(renewalId);
         if (ticket == null) {
             throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
         }
-        String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
         req.setAttribute("renewalTicket", ticket);
-        req.setAttribute("renewalActionPrefix", actionPrefix);
+        req.setAttribute("renewalActionPrefix", renewalBase);
+        req.setAttribute("staffBorrowBase", borrowBase);
+        req.setAttribute("staffRenewalBase", renewalBase);
         req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_request_detail.jsp").forward(req, resp);
     }
 
-    private void requireStaff(HttpServletRequest req) {
+    private String resolveBasePrefix(String path) {
+        if (path != null && path.startsWith("/admin/")) {
+            return "/admin";
+        }
+        return "/staff";
+    }
+
+    private void requireOperationalAccess(HttpServletRequest req) {
         User currentUser = (User) req.getSession().getAttribute("currentUser");
         if (currentUser == null || currentUser.getRole() == null) {
             throw new IllegalArgumentException("Vui lòng đăng nhập để tiếp tục.");
         }
         String role = currentUser.getRole().getName();
-        if (!"ADMIN".equalsIgnoreCase(role) && !"LIBRARIAN".equalsIgnoreCase(role)) {
+        boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(role);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        if (!isLibrarian && !isAdmin) {
             throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
         }
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        NumberFormat formatter = NumberFormat.getInstance(VIETNAM_LOCALE);
+        formatter.setMaximumFractionDigits(0);
+        formatter.setMinimumFractionDigits(0);
+        return formatter.format(amount);
     }
 }

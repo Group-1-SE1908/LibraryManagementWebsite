@@ -93,7 +93,8 @@ public class BorrowService {
 
         List<Long> ids = new ArrayList<>(quantity);
         for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails));
+
+            ids.add(borrowDAO.createRequest(userId, bookId, 1, method, shippingDetails, groupCode, depositAmount));
         }
         return ids;
     }
@@ -278,8 +279,8 @@ public class BorrowService {
         if (br == null) {
             throw new IllegalArgumentException("Phiếu mượn không tồn tại");
         }
-        if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Chỉ có thể trả khi đang BORROWED");
+        if (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
+            throw new IllegalArgumentException("Chỉ có thể trả khi sách đang mượn");
         }
 
         LocalDate today = LocalDate.now();
@@ -333,7 +334,7 @@ public class BorrowService {
         if (br.getUser() == null || br.getUser().getId() != userId) {
             throw new IllegalArgumentException("Bạn không có quyền gửi yêu cầu này");
         }
-        if (!"BORROWED".equalsIgnoreCase(br.getStatus())) {
+        if (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Chỉ có thể gia hạn khi sách đang mượn");
         }
         if (renewalRequestDAO.existsPendingForBorrow(borrowId)) {

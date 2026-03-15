@@ -44,6 +44,8 @@ CREATE TABLE [User] (
     status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
     role_id INT NOT NULL,
     avatar VARCHAR(255) NULL, --
+    wallet_balance DECIMAL(14,2) NOT NULL DEFAULT 0,
+    banned_until DATETIME NULL,
     created_at DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id)
     );
@@ -102,11 +104,17 @@ CREATE TABLE borrow_records (
                                 reject_reason NVARCHAR(255) NULL, --
                                 borrow_method VARCHAR(20) DEFAULT 'IN_PERSON', --
                                 quantity INT DEFAULT 1, --
+                                deposit_amount DECIMAL(10,2) DEFAULT 0,
+                                group_code VARCHAR(50) NULL,
 
     -- Thông tin giao hàng/nhận hàng
-                                receiver_name NVARCHAR(100) NULL,
-                                receiver_phone VARCHAR(20) NULL,
-                                receiver_address NVARCHAR(500) NULL,
+                                shipping_recipient NVARCHAR(255) NULL,
+                                shipping_phone VARCHAR(30) NULL,
+                                shipping_street NVARCHAR(255) NULL,
+                                shipping_residence NVARCHAR(255) NULL,
+                                shipping_ward NVARCHAR(255) NULL,
+                                shipping_district NVARCHAR(255) NULL,
+                                shipping_city NVARCHAR(255) NULL,
 
 
                                 created_at DATETIME DEFAULT GETDATE(),
@@ -116,7 +124,27 @@ CREATE TABLE borrow_records (
 );
 GO
 
--- Bảng 7: Đặt trước sách (Reservations)
+-- Bảng 7: Yêu cầu gia hạn (Renewal Requests)
+CREATE TABLE renewal_requests (
+                                  id BIGINT IDENTITY(1,1) PRIMARY KEY,
+                                  borrow_id BIGINT NOT NULL,
+                                  user_id INT NOT NULL,
+                                  reason NVARCHAR(1000) NOT NULL,
+                                  contact_name NVARCHAR(255) NULL,
+                                  contact_phone VARCHAR(30) NULL,
+                                  contact_email VARCHAR(255) NULL,
+                                  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                                  requested_at DATETIME NOT NULL DEFAULT GETDATE(),
+                                  CONSTRAINT FK_RenewalRequest_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id),
+                                  CONSTRAINT FK_RenewalRequest_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+);
+GO
+
+CREATE INDEX IX_RenewalRequest_BorrowId ON renewal_requests (borrow_id);
+CREATE INDEX IX_RenewalRequest_Status ON renewal_requests (status);
+GO
+
+-- Bảng 8: Đặt trước sách (Reservations)
 CREATE TABLE reservations (
                               id BIGINT IDENTITY(1,1) PRIMARY KEY,
                               user_id INT NOT NULL,
@@ -231,7 +259,22 @@ CREATE TABLE CommentReply (
 );
 GO
 
--- Bảng 13: Bảo mật & Xác thực [cite: 13, 14]
+-- Bảng 13: Báo cáo bình luận (Comment Reports)
+CREATE TABLE CommentReport (
+                               report_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+                               comment_id BIGINT NOT NULL,
+                               reporter_user_id INT NOT NULL,
+                               reason NVARCHAR(100) NOT NULL,
+                               description NVARCHAR(MAX) NULL,
+                               report_time DATETIME DEFAULT GETDATE(),
+                               status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, RESOLVED, IGNORED
+                               CONSTRAINT FK_CommentReport_Comment FOREIGN KEY (comment_id) REFERENCES Comment(comment_id) ON DELETE CASCADE,
+                               CONSTRAINT FK_CommentReport_User FOREIGN KEY (reporter_user_id) REFERENCES [User](user_id) ON DELETE NO ACTION,
+                               CONSTRAINT CHK_ReportStatus CHECK (status IN ('PENDING', 'RESOLVED', 'IGNORED'))
+);
+GO
+
+-- Bảng 14: Bảo mật & Xác thực [cite: 13, 14]
 CREATE TABLE password_reset_token (
                                       token_id INT IDENTITY(1,1) PRIMARY KEY,
                                       user_id INT NOT NULL,
@@ -287,8 +330,6 @@ CLOSE book_cursor;
 DEALLOCATE book_cursor;
 END;
 GO
-ALTER TABLE borrow_records ADD group_code VARCHAR(50) NULL;
-ALTER TABLE borrow_records ADD deposit_amount DECIMAL(10,2) DEFAULT 0;
 -- =============================================
 -- 3. NẠP DỮ LIỆU MẪU (SEED DATA)
 -- =============================================

@@ -34,6 +34,7 @@
             function toggleUserDropdown(event) {
                 event.stopPropagation();
                 const dropdown = document.getElementById('userDropdown');
+                if (!dropdown) return;
                 dropdown.classList.toggle('active');
             }
 
@@ -41,6 +42,7 @@
             document.addEventListener('click', function (event) {
                 const dropdown = document.getElementById('userDropdown');
                 const userProfile = document.querySelector('.user-profile');
+                if (!dropdown || !userProfile) return;
                 if (!userProfile.contains(event.target)) {
                     dropdown.classList.remove('active');
                 }

@@ -1,8 +1,6 @@
 package com.lbms.controller;
 
-import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReportDAO;
-import com.lbms.model.Comment;
 import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
@@ -13,19 +11,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@WebServlet(name = "AdminFeedbackController", urlPatterns = { "/staff/feedback", "/admin/feedback" })
-public class AdminFeedbackController extends HttpServlet {
+@WebServlet(name = "AdminReportController", urlPatterns = { "/staff/reports", "/admin/reports" })
+public class AdminReportController extends HttpServlet {
     private CommentReportDAO reportDAO;
-    private CommentDAO commentDAO;
 
     @Override
     public void init() {
         this.reportDAO = new CommentReportDAO();
-        this.commentDAO = new CommentDAO();
     }
 
     @Override
@@ -40,15 +37,20 @@ public class AdminFeedbackController extends HttpServlet {
             return;
         }
 
+        String path = request.getServletPath();
+        String reportsBasePath = resolveBasePath(path);
+
         try {
-            request.setAttribute("feedbackBasePath", resolveBasePath(request.getServletPath()));
-            List<CommentReport> reports = reportDAO.getAllReports();
-            request.setAttribute("reports", reports);
-            List<Comment> pendingReplies = commentDAO.getCommentsWithoutReplies();
-            request.setAttribute("pendingReplies", pendingReplies);
-            request.getRequestDispatcher("/WEB-INF/views/admin/feedback_list.jsp").forward(request, response);
+            if (reportsBasePath.equals(path)) {
+                List<CommentReport> reports = reportDAO.getAllReports();
+                request.setAttribute("reports", reports);
+                request.setAttribute("reportsBasePath", reportsBasePath);
+                request.getRequestDispatcher("/WEB-INF/views/admin/reports_management.jsp").forward(request, response);
+            } else {
+                response.sendError(404);
+            }
         } catch (Exception e) {
-            Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(AdminReportController.class.getName()).log(Level.SEVERE, null, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
     }
@@ -82,8 +84,8 @@ public class AdminFeedbackController extends HttpServlet {
                 }
             }
             response.sendRedirect(request.getContextPath() + resolveBasePath(request.getServletPath()));
-        } catch (Exception e) {
-            Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
+        } catch (SQLException e) {
+            Logger.getLogger(AdminReportController.class.getName()).log(Level.SEVERE, null, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
     }
@@ -98,21 +100,19 @@ public class AdminFeedbackController extends HttpServlet {
 
     private String resolveBasePath(String path) {
         if (path != null && path.startsWith("/admin/")) {
-            return "/admin/feedback";
+            return "/admin/reports";
         }
-        return "/staff/feedback";
+        return "/staff/reports";
     }
 
-    private CommentReport getReportById(long reportId) {
-        try {
-            List<CommentReport> reports = reportDAO.getAllReports();
-            for (CommentReport report : reports) {
-                if (report.getReportId() == reportId) {
-                    return report;
-                }
+    private CommentReport getReportById(long reportId) throws SQLException {
+        // This is a simple implementation; in real app, you might want a getReportById
+        // method
+        List<CommentReport> reports = reportDAO.getAllReports();
+        for (CommentReport report : reports) {
+            if (report.getReportId() == reportId) {
+                return report;
             }
-        } catch (Exception e) {
-            Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
     }

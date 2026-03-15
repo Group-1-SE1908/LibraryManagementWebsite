@@ -54,7 +54,7 @@ public class CartDAO {
 
     public List<CartItem> listItems(long cartId) throws SQLException {
         String sql = "SELECT ci.cart_item_id, ci.cart_id, ci.book_id, ci.quantity, " +
-                "b.title AS book_title, b.author AS book_author, b.price AS book_price, " +
+                "b.title AS book_title, b.author AS book_author, b.price AS book_price, b.image AS book_image, " +
                 "b.availability AS book_availability " +
                 "FROM CartItem ci LEFT JOIN Book b ON ci.book_id = b.book_id " +
                 "WHERE ci.cart_id = ?";
@@ -152,6 +152,7 @@ public class CartDAO {
         if (price != null) {
             book.setPrice(price.doubleValue());
         }
+        book.setImage(rs.getString("book_image"));
         return book;
     }
 }
