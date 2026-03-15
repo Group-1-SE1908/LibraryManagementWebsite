@@ -175,7 +175,7 @@
 
                 <body>
                     <div class="admin-layout">
-                        <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+                        <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
 
                         <main class="main-content">
                             <div class="page-header">
