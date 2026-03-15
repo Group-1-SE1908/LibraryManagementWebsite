@@ -3275,6 +3275,78 @@ footer {
     color: #475569;
 }
 
+.wallet-history-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 14px;
+}
+
+.wallet-history-entry {
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    padding: 18px;
+    background: #f8fafc;
+    display: grid;
+    gap: 10px;
+}
+
+.wallet-history-entry__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.wallet-history-entry__title {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.wallet-history-entry__context {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.wallet-history-entry__amount {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.wallet-history-entry__amount--credit {
+    color: #0f8b5f;
+}
+
+.wallet-history-entry__amount--debit {
+    color: #dc2626;
+}
+
+.wallet-history-entry__currency {
+    font-size: 0.85rem;
+}
+
+.wallet-history-entry__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #475569;
+    font-size: 13px;
+}
+
+.wallet-history-entry__date {
+    font-weight: 600;
+}
+
+.wallet-history-entry__reference {
+    font-weight: 600;
+}
+
 .already-commented-message {
     border-radius: 18px;
     padding: 16px;

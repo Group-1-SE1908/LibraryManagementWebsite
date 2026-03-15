@@ -298,7 +298,16 @@ public class VNPayReturnController extends HttpServlet {
         }
 
         if (amount.compareTo(BigDecimal.ZERO) > 0) {
-            walletService.creditWallet(currentUser.getId(), amount);
+            String source = "VNPay Sandbox";
+            String storedLabel = null;
+            if (topUpData != null) {
+                Object labelValue = topUpData.get("label");
+                if (labelValue instanceof String) {
+                    storedLabel = (String) labelValue;
+                }
+            }
+            String description = storedLabel != null ? storedLabel : formatCurrency(amount);
+            walletService.creditWallet(currentUser.getId(), amount, source, description, txnRef);
         }
         User refreshed = profileService.refreshUser(currentUser.getId());
         session.setAttribute("currentUser", refreshed);

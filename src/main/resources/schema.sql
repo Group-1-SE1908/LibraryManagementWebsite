@@ -52,6 +52,27 @@ CREATE TABLE [User] (
     );
 GO
 
+-- Bảng 2.1: Lịch sử giao dịch ví (Wallet transactions)
+IF OBJECT_ID('wallet_transaction', 'U') IS NOT NULL
+    DROP TABLE wallet_transaction;
+GO
+
+CREATE TABLE wallet_transaction (
+    transaction_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(30) NOT NULL,
+    source NVARCHAR(150) NOT NULL,
+    description NVARCHAR(255) NULL,
+    amount DECIMAL(14,2) NOT NULL,
+    reference VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_WalletTransaction_User FOREIGN KEY (user_id) REFERENCES [User](user_id) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX IX_wallet_transaction_user_date ON wallet_transaction (user_id, created_at DESC);
+GO
+
 -- Bảng 3: Thể loại sách (Category)
 CREATE TABLE Category (
                           category_id INT IDENTITY(1,1) PRIMARY KEY,
