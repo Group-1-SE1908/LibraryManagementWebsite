@@ -42,13 +42,12 @@
                     }
 
                     .main-wrapper {
-                        flex: 1;
                         margin-left: 280px;
+                        width: calc(100% - 280px);
                         background-color: var(--bg-light);
                         min-height: 100vh;
                         display: flex;
                         flex-direction: column;
-                        transition: margin-left 0.3s;
                     }
 
                     .content-area {
@@ -171,17 +170,17 @@
                         background-color: #BFDBFE;
                     }
 
-                    /* Table Style */
                     .table-card {
                         background: var(--card-light);
                         border-radius: 0.75rem;
                         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
+                        overflow-x: auto;
                         border: 1px solid #F3F4F6;
                     }
 
                     .overflow-x {
                         overflow-x: auto;
+                        width: 100%;
                     }
 
                     table {
@@ -189,6 +188,7 @@
                         border-collapse: collapse;
                         text-align: left;
                     }
+
 
                     thead tr {
                         background-color: #F9FAFB;
@@ -400,9 +400,17 @@
                         margin-top: 1.5rem;
                     }
 
+                    @media (max-width: 992px) {
+                        .main-wrapper {
+                            margin-left: 80px;
+                            width: calc(100% - 80px);
+                        }
+                    }
+
                     @media (max-width: 768px) {
                         .main-wrapper {
                             margin-left: 0;
+                            width: 100%;
                         }
 
                         .header-section {
@@ -494,7 +502,6 @@
                                                                             <th>Thông tin người dùng</th>
                                                                             <th>Số điện thoại</th>
                                                                             <th>Địa chỉ</th>
-                                                                            <th>Ngày tạo</th>
                                                                             <th>Vai trò</th>
                                                                             <th style="text-align: center;">Trạng thái
                                                                             </th>
@@ -556,15 +563,7 @@
                                                                                 </td>
 
                                                                                 <!-- NGÀY TẠO -->
-                                                                                <td>
-                                                                                    <fmt:parseDate
-                                                                                        value="${user.createdAt}"
-                                                                                        pattern="yyyy-MM-dd'T'HH:mm:ss"
-                                                                                        var="parsedDate" type="both" />
-                                                                                    <fmt:formatDate
-                                                                                        value="${parsedDate}"
-                                                                                        pattern="dd/MM/yyyy" />
-                                                                                </td>
+
                                                                                 <td>
                                                                                     <c:choose>
                                                                                         <c:when

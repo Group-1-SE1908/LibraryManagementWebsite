@@ -93,7 +93,7 @@ public class LibrarianBorrowService {
 
     public void approveRequest(long borrowId, String barcode, long staffId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
-            c.setAutoCommit(false); 
+            c.setAutoCommit(false);
             try {
                 String bookTitle = "N/A";
                 String userName = "N/A";
@@ -149,8 +149,8 @@ public class LibrarianBorrowService {
                     ps.setInt(1, copyId);
                     ps.executeUpdate();
                 }
-
-                // 4. [ĐÃ SỬA LỖI TẠI ĐÂY] Cập nhật phiếu mượn: Chuyển sang APPROVED để UI hiện nút GHTK hoặc Xác nhận lấy
+              
+                
                 String updateBr = "UPDATE borrow_records SET status = 'APPROVED', copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateBr)) {
                     ps.setInt(1, copyId);
@@ -167,14 +167,14 @@ public class LibrarianBorrowService {
                         throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
                     }
                 }
-                
+
                 // 6. Ghi log hoạt động
                 logDAO.addActivityLog((int) staffId,
                         "Duyệt mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
 
-                c.commit(); 
+                c.commit();
             } catch (Exception e) {
-                c.rollback(); 
+                c.rollback();
                 throw e;
             }
         }
@@ -346,7 +346,7 @@ public class LibrarianBorrowService {
         String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
         String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
         logDAO.addActivityLog((int) staffId,
-                "Phê duyệt gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "]");
+                "Phê duyệt gia hạn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + record.getId() + "]");
     }
 
     public void rejectRenewalRequest(long renewalId, String reason, long staffId) throws SQLException {
@@ -389,7 +389,7 @@ public class LibrarianBorrowService {
         String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
         String note = (reason != null && !reason.isBlank()) ? reason.trim() : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
-                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
+                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + record.getId() + "] - "
                         + note);
     }
 

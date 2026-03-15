@@ -43,15 +43,12 @@
                             color: var(--text-main);
                         }
 
-                        /* Layout */
                         .main-content {
-                            flex: 1;
                             margin-left: var(--sidebar-width);
                             min-height: 100vh;
+                            width: calc(100% - var(--sidebar-width));
                             display: flex;
                             flex-direction: column;
-                            width: calc(100% - var(--sidebar-width));
-                            /* Đảm bảo không tràn màn hình */
                         }
 
                         .content-container {
@@ -68,7 +65,7 @@
                             align-items: center;
                             margin-bottom: 2rem;
                             flex-wrap: wrap;
-                            /* Cho phép rớt dòng khi quá hẹp */
+
                             gap: 1rem;
                         }
 
@@ -81,7 +78,7 @@
                             margin: 0;
                         }
 
-                        /* Filter */
+
                         .custom-select {
                             padding: 0.625rem 2.5rem 0.625rem 1rem;
                             border-radius: 10px;
@@ -97,20 +94,20 @@
                             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
                         }
 
-                        /* Table Design */
+
                         .card {
                             background: var(--card);
                             border-radius: 16px;
                             border: 1px solid var(--border);
                             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
                             overflow: hidden;
-                            /* Cắt các góc bo tròn */
+
                         }
 
                         .table-responsive {
                             width: 100%;
                             overflow-x: auto;
-                            /* Tạo scroll ngang cho riêng bảng */
+
                             -webkit-overflow-scrolling: touch;
                         }
 
@@ -118,10 +115,10 @@
                             width: 100%;
                             border-collapse: collapse;
                             min-width: 900px;
-                            /* Đảm bảo bảng không bị ép quá nhỏ gây vỡ nội dung */
+
                         }
 
-                        /* Column Widths */
+
                         th:nth-child(1),
                         td:nth-child(1) {
                             width: 80px;
@@ -292,7 +289,15 @@
                             transition: color 0.2s;
                         }
 
-                        /* Responsive Breakpoints */
+                        @media (max-width:1100px) {
+
+                            .main-content {
+                                margin-left: 80px;
+                                width: calc(100% - 80px);
+                            }
+
+                        }
+
                         @media (max-width: 1024px) {
                             .main-content {
                                 margin-left: 0;

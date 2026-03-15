@@ -76,7 +76,6 @@ public class LibrarianActivityLogDAO {
     public List<LibrarianActivityLog> getActivityLogsFiltered(String filterType) {
         List<LibrarianActivityLog> logs = new ArrayList<>();
 
-        // Base SQL
         StringBuilder sql = new StringBuilder(
                 "SELECT l.log_id, l.action, l.timestamp, " +
                         "u.user_id, u.full_name, u.email, u.avatar, " +
@@ -87,16 +86,17 @@ public class LibrarianActivityLogDAO {
                         "WHERE r.role_name = 'LIBRARIAN' ");
 
         if ("BOOK".equals(filterType)) {
-            // Lọc các hoạt động Thêm, Sửa, Xóa sách
             sql.append(
                     "AND (l.action LIKE N'%Thêm sách%' OR l.action LIKE N'%Cập nhật sách%' OR l.action LIKE N'%Xóa sách%') ");
         } else if ("BORROW".equals(filterType)) {
-            // Lọc các hoạt động Duyệt, Từ chối, Nhận trả sách
             sql.append(
-                    "AND (l.action LIKE N'%Duyệt%' OR l.action LIKE N'%Từ chối%' OR l.action LIKE N'%trả sách%' OR l.action LIKE N'%mượn trực tiếp%') ");
+                    "AND (l.action LIKE N'%Duyệt mượn%' " +
+                            "OR l.action LIKE N'%Từ chối mượn%' " +
+                            "OR l.action LIKE N'%Phê duyệt gia hạn%' " +
+                            "OR l.action LIKE N'%Từ chối gia hạn%') ");
         }
 
-        sql.append("ORDER BY l.log_id DESC"); // Để log mới nhất hiện lên đầu
+        sql.append("ORDER BY l.log_id DESC");
 
         try (Connection c = DBConnection.getConnection();
                 PreparedStatement stmt = c.prepareStatement(sql.toString());
