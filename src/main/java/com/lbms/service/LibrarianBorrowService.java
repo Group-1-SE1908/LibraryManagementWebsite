@@ -352,10 +352,6 @@ public class LibrarianBorrowService {
             }
         }
 
-        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
-        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
-        logDAO.addActivityLog((int) staffId,
-                "Phê duyệt gia hạn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + record.getId() + "]");
     }
 
     public void rejectRenewalRequest(long renewalId, String reason, long staffId) throws SQLException {
@@ -396,12 +392,6 @@ public class LibrarianBorrowService {
             }
         }
 
-        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
-        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
-        String note = trimmedNote != null ? trimmedNote : "Không có lý do";
-        logDAO.addActivityLog((int) staffId,
-                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + record.getId() + "] - "
-                        + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {

@@ -35,6 +35,45 @@
                             --action-reject: #8B5CF6;
                         }
 
+                        .modal {
+                            display: none;
+                            position: fixed;
+                            z-index: 9999;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(0, 0, 0, 0.5);
+                        }
+
+                        .modal-content {
+                            background: white;
+                            margin: 5% auto;
+                            /* Giảm margin top xuống để thấy modal cao hơn */
+                            padding: 24px;
+                            /* Tăng padding một chút cho thoáng */
+
+                            /* THAY ĐỔI Ở ĐÂY */
+                            width: 90%;
+                            /* Mặc định chiếm 90% chiều rộng trên màn hình nhỏ */
+                            max-width: 600px;
+                            /* Nhưng không bao giờ vượt quá 600px trên màn hình lớn */
+
+                            border-radius: 12px;
+                            position: relative;
+                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                            transition: all 0.3s ease;
+                            /* Thêm hiệu ứng mượt mà */
+                        }
+
+                        .close {
+                            position: absolute;
+                            right: 15px;
+                            top: 10px;
+                            font-size: 22px;
+                            cursor: pointer;
+                        }
+
                         body {
                             margin: 0;
                             background: var(--bg-light);
@@ -168,7 +207,7 @@
                             background: #F1F5F9;
                         }
 
-
+                        /* User Info & Badges */
                         .user-info {
                             display: flex;
                             align-items: center;
@@ -340,7 +379,7 @@
                                 <div class="filter-container">
                                     <form action="${pageContext.request.contextPath}/admin/librarianActivityLog"
                                         method="GET" id="filterForm">
-                                        <select name="type" class="custom-select" onchange="this.form.submit()">
+                                        <select name="filterType" class="custom-select" onchange="this.form.submit()">
                                             <option value="">Tất cả nhật ký</option>
                                             <option value="BOOK" ${filterType=='BOOK' ? 'selected' : '' }>📦 Quản lý
                                                 Sách</option>
@@ -437,11 +476,11 @@
 
                                                                             <c:set var="detailUrl"
                                                                                 value="${fn:containsIgnoreCase(log.action, 'sách') ? '/books/detail?id=' : '/admin/borrowlibrary/detail?id='}${targetId}" />
-                                                                            <a href="${pageContext.request.contextPath}${detailUrl}"
-                                                                                class="btn-view-log">
-                                                                                <i
-                                                                                    class="fa-solid fa-arrow-up-right-from-square"></i>
-                                                                            </a>
+                                                                            <button class="btn-view-log view-detail-btn"
+                                                                                data-id="${targetId}"
+                                                                                data-type="${fn:containsIgnoreCase(log.action,'sách') ? 'BOOK' : 'BORROW'}">
+                                                                                <i class="fa-solid fa-eye"></i>
+                                                                            </button>
                                                                         </c:when>
                                                                         <c:otherwise>
                                                                             <span
@@ -464,10 +503,70 @@
                                                     </c:forEach>
                                                 </c:otherwise>
                                             </c:choose>
+
+
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
+                            <!-- MODAL -->
+                            <div id="detailModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close">&times;</span>
+                                    <h3>Chi tiết hoạt động</h3>
+                                    <div id="modalBody">
+                                        Đang tải dữ liệu...
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                const modal = document.getElementById("detailModal");
+                                const modalBody = document.getElementById("modalBody");
+                                const closeBtn = document.querySelector(".close");
+
+                                document.querySelectorAll(".view-detail-btn").forEach(btn => {
+
+                                    btn.addEventListener("click", function () {
+
+                                        const id = this.dataset.id;
+                                        const type = this.dataset.type;
+
+                                        modal.style.display = "block";
+                                        modalBody.innerHTML = "Đang tải dữ liệu...";
+
+                                        const url =
+                                            "${pageContext.request.contextPath}/admin/librarianActivityLog?modal=true&detailType="
+                                            + type +
+                                            "&id=" +
+                                            id;
+
+                                        fetch(url)
+                                            .then(res => res.text())
+                                            .then(data => {
+
+                                                modalBody.innerHTML = data;
+
+                                            })
+                                            .catch(() => {
+
+                                                modalBody.innerHTML = "Không tải được dữ liệu.";
+
+                                            });
+
+                                    });
+
+                                });
+
+                                closeBtn.onclick = function () {
+                                    modal.style.display = "none";
+                                };
+
+                                window.onclick = function (event) {
+                                    if (event.target == modal) {
+                                        modal.style.display = "none";
+                                    }
+                                };
+                            </script>
 
                             <a class="back-link" href="${pageContext.request.contextPath}/admin/dashboard">
                                 <i class="fa-solid fa-chevron-left"></i> Quay lại Dashboard
