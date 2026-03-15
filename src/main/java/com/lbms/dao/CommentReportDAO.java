@@ -124,6 +124,7 @@ public class CommentReportDAO {
                      "FROM CommentReport cr " +
                      "JOIN [User] u1 ON cr.reporter_user_id = u1.user_id " +
                      "JOIN Comment c ON cr.comment_id = c.comment_id " +
+                     "JOIN [User] u2 ON c.user_id = u2.user_id " +
                      "JOIN Book b ON c.book_id = b.book_id " +
                      "WHERE b.book_id = ? " +
                      "ORDER BY cr.report_time DESC";
