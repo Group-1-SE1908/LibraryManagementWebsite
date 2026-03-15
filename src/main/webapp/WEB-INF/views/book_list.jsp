@@ -6,7 +6,6 @@
                 <!DOCTYPE html>
                 <html lang="vi">
 
-<<<<<<< HEAD
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -90,20 +89,6 @@
                     </style>
 
                 </head>
-=======
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>
-            <fmt:message key="catalog.title" /> | LBMS Library
-        </title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-              rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    </head>
->>>>>>> 5f044575d23f6d092da1cee3b9ea3684f702df35
 
 
                 <body>
@@ -214,7 +199,6 @@
                                 </div>
                             </c:if>
 
-<<<<<<< HEAD
                             <div class="category-chips">
                                 <c:url var="allCategoriesUrl" value="${booksBasePath}">
                                     <c:if test="${not empty searchKeyword}">
@@ -245,69 +229,6 @@
                                 class="catalog-popup ${not empty param.cartError ? 'catalog-popup--error' : ''}">
                                 <div class="catalog-popup__panel">
                                     <div class="catalog-popup__title">
-=======
-            <section class="catalog-results container">
-                <div class="results-info">
-                    <fmt:message key="results.info">
-                        <fmt:param value="${totalBooks}" />
-                    </fmt:message>
-                </div>
-
-                <c:if test="${not empty books}">
-                    <div class="books-grid">
-                        <c:forEach var="book" items="${books}">
-                            <div class="book-card">
-                                <a class="book-card__link"
-                                   href="${pageContext.request.contextPath}/books/detail?id=${book.id}">
-                                <div class="book-image">
-                                    <c:choose>
-                                        <c:when test="${not empty book.image}">
-                                            <img src="${pageContext.request.contextPath}/${book.image}"
-                                                 alt="${book.title}">
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="book-image__fallback">📖</div>
-                                        </c:otherwise>
-                                    </c:choose>
-
-                                    <c:choose>
-                                        <c:when test="${book.quantity > 0}">
-                                            <span class="status-badge badge-available">
-                                                <fmt:message key="status.available" />
-                                            </span>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="status-badge badge-out">
-                                                <fmt:message key="status.out_of_stock" />
-                                            </span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-
-                                <div class="book-card__body">
-                                    <div class="book-title">${book.title}</div>
-                                    <div class="book-author">
-                                        <fmt:message key="book.author" />: ${book.author}
-                                    </div>
-                                    <div class="book-meta">
-                                        <span>
-                                            <fmt:message key="book.isbn" />: ${book.isbn}
-                                        </span>
-                                        <span>
-                                            <fmt:message key="book.year" />: ${book.publishYear}
-                                        </span>
-                                    </div>
-                                    <div class="book-stock-chip">
-                                        <fmt:message key="book.stock" />:
-                                        <fmt:message key="book.copies">
-                                            <fmt:param value="${book.quantity}" />
-                                        </fmt:message>
-                                    </div>
-                                </div>
-
-                                <div class="book-card__footer">
-                                    <div class="book-price">
->>>>>>> 5f044575d23f6d092da1cee3b9ea3684f702df35
                                         <c:choose>
                                             <c:when test="${not empty param.cartError}">Lỗi giỏ hàng</c:when>
                                             <c:otherwise>Đã thêm vào giỏ hàng</c:otherwise>
@@ -541,7 +462,6 @@
 
                             popup.classList.add('catalog-popup--visible');
 
-<<<<<<< HEAD
                             popup.addEventListener('click', (event) => {
                                 if (event.target === popup) {
                                     hidePopup();
@@ -556,30 +476,3 @@
                 </body>
 
                 </html>
-=======
-        <jsp:include page="footer.jsp" />
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-                                                        function confirmDelete(bookId, bookTitle) {
-                                                            Swal.fire({
-                                                                title: 'Xác nhận xóa?',
-                                                                text: "Bạn có chắc chắn muốn xóa cuốn sách '" + bookTitle + "' không? Hành động này không thể hoàn tác!",
-                                                                icon: 'warning',
-                                                                showCancelButton: true,
-                                                                confirmButtonColor: '#d33',
-                                                                cancelButtonColor: '#3085d6',
-                                                                confirmButtonText: 'Đồng ý xóa',
-                                                                cancelButtonText: 'Hủy bỏ'
-                                                                
-                                                            }).then((result) => {
-                                                                if (result.isConfirmed) {
-                                                                    // Chuyển hướng đến URL xóa đã định nghĩa trong BookController
-                                                                    window.location.href = '${pageContext.request.contextPath}/books/delete?id=' + bookId;
-                                                                }
-                                                            });
-                                                        }
-        </script>
-    </body>
-
-</html>
->>>>>>> 5f044575d23f6d092da1cee3b9ea3684f702df35
