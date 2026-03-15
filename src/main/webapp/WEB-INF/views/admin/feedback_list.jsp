@@ -160,27 +160,24 @@
             <h2>Quản lý phản hồi sách</h2>
             <p style="color:#6b7280;">Quản lý bình luận và báo cáo từ độc giả.</p>
 
-            <%-- Đếm badge --%>
-            <c:set var="pendingCount" value="${0}"/>
-            <c:forEach var="r" items="${reports}">
-                <c:if test="${r.status eq 'PENDING'}">
-                    <c:set var="pendingCount" value="${pendingCount + 1}"/>
-                </c:if>
-            </c:forEach>
-            <c:set var="unrepliedCount" value="${not empty comments ? comments.size() : 0}"/>
-
             <!-- MAIN TAB BAR -->
             <div class="tab-bar">
-                <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=${empty filter ? 'all' : filter}"
-                   class="tab-btn ${empty activeTab || activeTab eq 'feedback' ? 'active' : ''}">
+                <a href="#tab-feedback"
+                   class="tab-btn ${empty activeTab || activeTab eq 'feedback' ? 'active' : ''}"
+                   onclick="switchTab('feedback'); return false;">
                     Phản hồi cần trả lời
-                    <c:if test="${filter eq 'unreplied' && unrepliedCount > 0}">
-                        <span class="badge">${unrepliedCount}</span>
-                    </c:if>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/feedback?tab=reports"
-                   class="tab-btn ${activeTab eq 'reports' ? 'active' : ''}">
+                <a href="#tab-reports"
+                   class="tab-btn ${activeTab eq 'reports' ? 'active' : ''}"
+                   onclick="switchTab('reports'); return false;">
                     Bình luận bị báo cáo
+                    <%-- Đếm số PENDING --%>
+                    <c:set var="pendingCount" value="${0}"/>
+                    <c:forEach var="r" items="${reports}">
+                        <c:if test="${r.status eq 'PENDING'}">
+                            <c:set var="pendingCount" value="${pendingCount + 1}"/>
+                        </c:if>
+                    </c:forEach>
                     <c:if test="${pendingCount > 0}">
                         <span class="badge">${pendingCount}</span>
                     </c:if>
@@ -192,11 +189,11 @@
                  class="tab-content ${empty activeTab || activeTab eq 'feedback' ? 'active' : ''}">
 
                 <div class="filter-bar">
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=all"
+                    <a href="${pageContext.request.contextPath}/admin/feedback?filter=all&tab=feedback"
                        class="filter-btn ${filter eq 'all' || empty filter ? 'active' : ''}">Tất cả</a>
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=unreplied"
+                    <a href="${pageContext.request.contextPath}/admin/feedback?filter=unreplied&tab=feedback"
                        class="filter-btn ${filter eq 'unreplied' ? 'active' : ''}">Chưa phản hồi</a>
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=replied"
+                    <a href="${pageContext.request.contextPath}/admin/feedback?filter=replied&tab=feedback"
                        class="filter-btn ${filter eq 'replied' ? 'active' : ''}">Đã phản hồi</a>
                 </div>
 
@@ -240,15 +237,13 @@
 
                 <!-- SUB FILTER: Chưa xử lý / Đã xử lý -->
                 <div class="sub-filter-bar">
-                    <a href="#" class="sub-filter-btn active"
-                       onclick="filterReports('pending', this); return false;">
+                    <a href="#" class="sub-filter-btn active" onclick="filterReports('pending'); return false;">
                         Chưa xử lý
                         <c:if test="${pendingCount > 0}">
                             <span class="badge" style="background:#f97316;">${pendingCount}</span>
                         </c:if>
                     </a>
-                    <a href="#" class="sub-filter-btn"
-                       onclick="filterReports('done', this); return false;">
+                    <a href="#" class="sub-filter-btn" onclick="filterReports('done'); return false;">
                         Đã xử lý
                     </a>
                 </div>
@@ -311,12 +306,6 @@
                                             <c:otherwise>${report.status}</c:otherwise>
                                         </c:choose>
                                     </span>
-                                            <%-- Chi tiết hành động xử lý --%>
-                                        <c:if test="${not empty report.description && (report.status eq 'RESOLVED' || report.status eq 'IGNORED')}">
-                                            <div style="font-size:11px; color:#6b7280; margin-top:5px; font-style:italic; max-width:160px;">
-                                                ↳ ${report.description}
-                                            </div>
-                                        </c:if>
                                     </td>
 
                                     <td>
@@ -406,26 +395,32 @@
 <jsp:include page="/WEB-INF/views/footer.jsp"/>
 
 <script>
-    // ── Main tab switch (chỉ dùng khi click, không dùng sessionStorage) ──
+    // ── Main tab switch ──────────────────────────────────────────
     function switchTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + tabName).classList.add('active');
-        const activeBtn = document.querySelector('.tab-btn[href*="tab=' + tabName + '"]');
-        if (activeBtn) activeBtn.classList.add('active');
+        document.querySelector('[onclick="switchTab(\'' + tabName + '\'); return false;"]').classList.add('active');
+        sessionStorage.setItem('activeTab', tabName);
     }
 
     // ── Sub filter (Chưa xử lý / Đã xử lý) ──────────────────────
-    function filterReports(type, btn) {
+    function filterReports(type) {
         const rows = document.querySelectorAll('.report-row');
         rows.forEach(row => {
             const status = row.dataset.status;
-            row.style.display = (type === 'pending')
-                ? (status === 'PENDING' ? '' : 'none')
-                : (status === 'RESOLVED' || status === 'IGNORED' ? '' : 'none');
+            if (type === 'pending') {
+                row.style.display = (status === 'PENDING') ? '' : 'none';
+            } else {
+                row.style.display = (status === 'RESOLVED' || status === 'IGNORED') ? '' : 'none';
+            }
         });
-        document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+
+        // Update sub-filter button styles
+        document.querySelectorAll('.sub-filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.sub-filter-btn').classList.add('active');
+
+        sessionStorage.setItem('reportFilter', type);
     }
 
     // ── Lock dropdown toggle ──────────────────────────────────────
@@ -434,35 +429,42 @@
         el.classList.toggle('open');
     }
 
+    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.lock-wrapper')) {
             document.querySelectorAll('.lock-wrapper').forEach(el => el.classList.remove('open'));
         }
     });
 
-    // ── Init on load: đọc tab từ URL param ───────────────────────
+    // ── Restore state on load ─────────────────────────────────────
     window.addEventListener('DOMContentLoaded', function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlTab = urlParams.get('tab') || 'feedback';
+        // Restore main tab
+        const savedTab = sessionStorage.getItem('activeTab');
+        if (savedTab) switchTab(savedTab);
 
-        // Activate correct main tab
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        const tabEl = document.getElementById('tab-' + urlTab);
-        if (tabEl) tabEl.classList.add('active');
-        const tabBtn = document.querySelector('.tab-btn[href*="tab=' + urlTab + '"]');
-        if (tabBtn) tabBtn.classList.add('active');
-
-        // Init sub-filter cho tab reports
+        // Restore sub filter
+        const savedFilter = sessionStorage.getItem('reportFilter') || 'pending';
         const subBtns = document.querySelectorAll('.sub-filter-btn');
-        if (subBtns.length >= 2) {
-            const hasPending = Array.from(document.querySelectorAll('.report-row'))
-                .some(r => r.dataset.status === 'PENDING');
-            const defaultFilter = hasPending ? 'pending' : 'done';
-            const targetBtn = defaultFilter === 'done' ? subBtns[1] : subBtns[0];
-            filterReports(defaultFilter, targetBtn);
+        if (savedFilter === 'done' && subBtns[1]) {
+            subBtns[0].classList.remove('active');
+            subBtns[1].classList.add('active');
+            filterReportsOnLoad('done');
+        } else {
+            filterReportsOnLoad('pending');
         }
     });
+
+    function filterReportsOnLoad(type) {
+        const rows = document.querySelectorAll('.report-row');
+        rows.forEach(row => {
+            const status = row.dataset.status;
+            if (type === 'pending') {
+                row.style.display = (status === 'PENDING') ? '' : 'none';
+            } else {
+                row.style.display = (status === 'RESOLVED' || status === 'IGNORED') ? '' : 'none';
+            }
+        });
+    }
 </script>
 
 </body>

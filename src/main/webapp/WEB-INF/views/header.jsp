@@ -7,6 +7,10 @@
 <c:set var="userName"
        value="${not empty currentUser && not empty currentUser.fullName ? currentUser.fullName : 'Guest'}"/>
 <c:set var="userInitial" value="${fn:substring(userName, 0, 1)}"/>
+<c:set var="walletBalance" value="0"/>
+<c:if test="${not empty currentUser && not empty currentUser.walletBalance}">
+    <c:set var="walletBalance" value="${currentUser.walletBalance}"/>
+</c:if>
 
 <style>
     /* ===== HEADER ===== */
@@ -20,13 +24,82 @@
     }
 
     .site-header .header-inner {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 0 24px;
-        height: 64px;
+        padding: 0 16px;
+        min-height: 64px;
+        width: 100%;
         display: flex;
         align-items: center;
-        gap: 32px;
+        justify-content: center;
+    }
+
+    .header-top-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: nowrap;
+    }
+
+    .header-brand-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .header-nav-toggle {
+        display: none;
+        border: 0;
+        background: transparent;
+        border-radius: 12px;
+        padding: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .header-nav-toggle:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
+    .header-nav-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: #111827;
+        margin: 3px 0;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .header-nav-toggle.open span:nth-child(1) {
+        transform: translateY(5px) rotate(45deg);
+    }
+
+    .header-nav-toggle.open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .header-nav-toggle.open span:nth-child(3) {
+        transform: translateY(-5px) rotate(-45deg);
+    }
+
+    .header-nav-panel {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+        position: static;
+        background: transparent;
+        margin-top: 0;
+        padding: 0;
+    }
+
+    .header-nav-panel__inner {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0;
     }
 
     /* Logo */
@@ -63,19 +136,22 @@
         flex: 1;
         display: flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        gap: 2px;
         list-style: none;
         margin: 0;
         padding: 0;
+        flex-wrap: nowrap;
+        min-width: 0;
     }
 
     .header-nav li a {
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 14px;
+        padding: 6px 10px;
         border-radius: 8px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
         color: #4b5563;
         text-decoration: none;
@@ -104,9 +180,52 @@
     .header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
-        margin-left: auto;
+    }
+
+    .header-wallet {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px;
+    }
+
+    .wallet-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid transparent;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .wallet-badge:hover {
+        border-color: #93c5fd;
+        background: #e0f2fe;
+    }
+
+    .wallet-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .wallet-amount {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 2px;
+        font-size: 13px;
+        color: #1d4ed8;
+    }
+
+    .wallet-currency {
+        font-size: 11px;
     }
 
     /* Login button */
@@ -330,79 +449,186 @@
         height: 18px;
         flex-shrink: 0;
     }
+
+    @media (max-width: 1320px) {
+        .header-nav-toggle {
+            display: inline-flex;
+        }
+
+        .header-nav-panel {
+            position: fixed;
+            inset: 64px 0 0;
+            bottom: 0;
+            justify-content: flex-start;
+            align-items: flex-start;
+            flex-direction: column;
+            background: rgba(3, 9, 32, 0.95);
+            transform: translateY(-20px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
+            padding-top: 24px;
+            z-index: 1200;
+        }
+
+        .header-actions {
+            margin-left: auto;
+        }
+
+        .header-nav-panel.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition-delay: 0s;
+        }
+
+        .header-nav-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(3, 9, 32, 0.85);
+            z-index: -1;
+        }
+
+        .header-nav-panel__inner {
+            position: relative;
+            padding: 0 24px;
+            margin-top: 8px;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 560px;
+            width: 100%;
+        }
+
+        .header-nav {
+            flex-direction: column;
+            gap: 0;
+            width: 100%;
+        }
+
+        .header-nav li a {
+            width: 100%;
+            border-radius: 0;
+            padding: 14px 16px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .header-nav li a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .header-nav li a svg {
+            opacity: 0.95;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .site-header .header-inner {
+            padding: 0 12px;
+        }
+
+        .header-top-row {
+            gap: 10px;
+        }
+
+        .header-actions {
+            gap: 4px;
+        }
+
+        .btn-cart {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .wallet-badge {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .u-name {
+            display: none;
+        }
+    }
+
+    body.nav-panel-open {
+        overflow: hidden;
+    }
 </style>
 
 <header class="site-header">
-    <div class="header-inner">
+    <div class="container header-inner">
 
-        <%-- Logo --%>
-        <a href="${pageContext.request.contextPath}/" class="header-logo">
-            <img src="${pageContext.request.contextPath}/assets/images/logo/logo.png"
-                 alt="LBMS Logo" class="logo-icon"/>
-            <span class="logo-text">LBMS</span>
-        </a>
+        <div class="header-top-row">
+            <div class="header-brand-group">
+                <%-- Logo --%>
+                <a href="${pageContext.request.contextPath}/" class="header-logo">
+                    <img src="${pageContext.request.contextPath}/assets/images/logo/logo.png"
+                         alt="LBMS Logo" class="logo-icon"/>
+                    <span class="logo-text">LBMS</span>
+                </a>
+                <button id="headerNavToggle" class="header-nav-toggle" type="button"
+                        aria-label="Toggle navigation" aria-controls="headerNavPanel" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
 
-        <%-- Navigation --%>
-        <ul class="header-nav">
-            <li>
-                <a href="${pageContext.request.contextPath}/">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <fmt:message key="nav.home"/>
-                </a>
-            </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/history">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <fmt:message key="nav.history"/>
-                </a>
-            </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/fines">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                    <fmt:message key="nav.fines"/>
-                </a>
-            </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/books">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                    </svg>
-                    <fmt:message key="nav.catalog"/>
-                </a>
-            </li>
+            <nav class="header-nav-panel" id="headerNavPanel" aria-label="Primary navigation">
+                <div class="header-nav-panel__inner">
+                    <ul class="header-nav">
+                        <li>
+                            <a href="${pageContext.request.contextPath}/">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                    <polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                                <fmt:message key="nav.home"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/history">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <fmt:message key="nav.history"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/fines">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                <fmt:message key="nav.fines"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/reservation">
+                                <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                                    <path d="m23.976,17.305l-2.044-11.587c-.381-2.154-2.245-3.717-4.432-3.717H6.5c-2.187,0-4.051,1.563-4.432,3.718L.024,17.305c-.384,2.175,1.052,4.27,3.202,4.67.093.018.185.025.276.025.708,0,1.339-.504,1.473-1.226.152-.814-.386-1.598-1.2-1.749-.529-.099-.894-.647-.796-1.199l1.764-9.994,1.698,9.624c.464,2.633,2.742,4.544,5.416,4.544h8.181c1.186,0,2.302-.521,3.064-1.429.762-.908,1.081-2.099.875-3.267Zm-3.173,1.338c-.112.134-.36.357-.766.357h-8.181c-1.215,0-2.251-.868-2.462-2.065l-2.106-11.935h10.212c.729,0,1.351.521,1.478,1.239l2.044,11.587c.07.399-.107.684-.219.816Zm-9.303-7.643c-.829,0-1.5-.671-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.671,1.5,1.5s-.671,1.5-1.5,1.5h-4.5Zm7,3.5c0,.828-.671,1.5-1.5,1.5h-4.5c-.829,0-1.5-.672-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.672,1.5,1.5Z"/>
+                                </svg>
+                                Danh sách đặt trước
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/renew-history">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                                </svg>
+                                Danh sách yêu cầu gia hạn
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-            <li>
-                <a href="${pageContext.request.contextPath}/reservation">
-                    <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                        <path d="m23.976,17.305l-2.044-11.587c-.381-2.154-2.245-3.717-4.432-3.717H6.5c-2.187,0-4.051,1.563-4.432,3.718L.024,17.305c-.384,2.175,1.052,4.27,3.202,4.67.093.018.185.025.276.025.708,0,1.339-.504,1.473-1.226.152-.814-.386-1.598-1.2-1.749-.529-.099-.894-.647-.796-1.199l1.764-9.994,1.698,9.624c.464,2.633,2.742,4.544,5.416,4.544h8.181c1.186,0,2.302-.521,3.064-1.429.762-.908,1.081-2.099.875-3.267Zm-3.173,1.338c-.112.134-.36.357-.766.357h-8.181c-1.215,0-2.251-.868-2.462-2.065l-2.106-11.935h10.212c.729,0,1.351.521,1.478,1.239l2.044,11.587c.07.399-.107.684-.219.816Zm-9.303-7.643c-.829,0-1.5-.671-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.671,1.5,1.5s-.671,1.5-1.5,1.5h-4.5Zm7,3.5c0,.828-.671,1.5-1.5,1.5h-4.5c-.829,0-1.5-.672-1.5-1.5s.671-1.5,1.5-1.5h4.5c.829,0,1.5.672,1.5,1.5Z"/>
-
-                    </svg>
-                    Danh sách đặt trước
-                </a>
-            </li>
-
-            <li>
-                <a href="${pageContext.request.contextPath}/renew-history">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-                    </svg>
-                    Danh sách yêu cầu gia hạn
-                </a>
-            </li>
-        </ul>
-
-        <%-- Actions --%>
-        <div class="header-actions">
-            <a href="${pageContext.request.contextPath}/cart" class="btn-cart">
+            <div class="header-actions">
+                <a href="${pageContext.request.contextPath}/cart" class="btn-cart">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="9" cy="21" r="1"/>
                     <circle cx="20" cy="21" r="1"/>
@@ -411,6 +637,22 @@
                 </svg>
                 <fmt:message key="nav.cart"/>
             </a>
+            <c:if test="${not empty currentUser}">
+                <div class="header-wallet">
+                    <a class="wallet-badge" href="${pageContext.request.contextPath}/wallet">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.6">
+                            <path d="M3 7h18v10H3z"/>
+                            <path d="M3 9h18"/>
+                            <circle cx="17" cy="13.5" r="1.2" fill="currentColor"/>
+                        </svg>
+                        <span class="wallet-amount">
+                            <fmt:formatNumber value="${walletBalance}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+                            <span class="wallet-currency">₫</span>
+                        </span>
+                    </a>
+                </div>
+            </c:if>
             <c:choose>
                 <c:when test="${not empty currentUser}">
                     <%-- User dropdown --%>
@@ -484,25 +726,66 @@
                     </a>
                 </c:otherwise>
             </c:choose>
+            </div>
         </div>
 
     </div>
+
 </header>
 
 <script>
-    function toggleHeaderDropdown() {
-        const btn = document.getElementById('headerUserBtn');
-        const drop = document.getElementById('headerDropdown');
-        const isOpen = drop.classList.contains('open');
-        drop.classList.toggle('open', !isOpen);
-        btn.classList.toggle('open', !isOpen);
+    const headerDropdown = document.getElementById('headerDropdown');
+    const headerUserBtn = document.getElementById('headerUserBtn');
+    const headerUserWidget = document.getElementById('headerUserWidget');
+    const navToggle = document.getElementById('headerNavToggle');
+    const navPanel = document.getElementById('headerNavPanel');
+
+    function toggleHeaderDropdown(force) {
+        if (!headerDropdown || !headerUserBtn) {
+            return;
+        }
+        const isOpen = headerDropdown.classList.contains('open');
+        const shouldOpen = typeof force === 'boolean' ? force : !isOpen;
+        headerDropdown.classList.toggle('open', shouldOpen);
+        headerUserBtn.classList.toggle('open', shouldOpen);
     }
 
+    function toggleNavPanel(force) {
+        if (!navToggle || !navPanel) {
+            return;
+        }
+        const isOpen = navPanel.classList.contains('open');
+        const shouldOpen = typeof force === 'boolean' ? force : !isOpen;
+        navPanel.classList.toggle('open', shouldOpen);
+        navToggle.classList.toggle('open', shouldOpen);
+        navToggle.setAttribute('aria-expanded', String(shouldOpen));
+        document.body.classList.toggle('nav-panel-open', shouldOpen);
+    }
+
+    navToggle?.addEventListener('click', function (event) {
+        event.stopPropagation();
+        toggleNavPanel();
+    });
+
+    navPanel?.addEventListener('click', function (event) {
+        if (event.target === navPanel) {
+            toggleNavPanel(false);
+        }
+    });
+
     document.addEventListener('click', function (e) {
-        const widget = document.getElementById('headerUserWidget');
-        if (widget && !widget.contains(e.target)) {
-            document.getElementById('headerDropdown')?.classList.remove('open');
-            document.getElementById('headerUserBtn')?.classList.remove('open');
+        if (headerUserWidget && !headerUserWidget.contains(e.target)) {
+            toggleHeaderDropdown(false);
+        }
+        if (navPanel?.classList.contains('open') && !navPanel.contains(e.target) && e.target !== navToggle) {
+            toggleNavPanel(false);
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            toggleHeaderDropdown(false);
+            toggleNavPanel(false);
         }
     });
 </script>

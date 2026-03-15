@@ -1,6 +1,5 @@
 package com.lbms.controller;
 
-import com.lbms.dao.BorrowDAO;
 import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
@@ -59,9 +58,9 @@ public class LibrarianBorrowController extends HttpServlet {
     private static final String ADMIN_BORROW_BASE = "/admin/borrowlibrary";
     private static final String STAFF_RENEWAL_BASE = "/staff/renewal";
     private static final String ADMIN_RENEWAL_BASE = "/admin/renewal";
+    private static final Locale VIETNAM_LOCALE = Locale.forLanguageTag("vi-VN");
 
     private final LibrarianBorrowService libService = new LibrarianBorrowService();
-    private final BorrowDAO borrowDAO = new BorrowDAO();
     private final UserDAO userDAO = new UserDAO();
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
 
@@ -380,14 +379,6 @@ public class LibrarianBorrowController extends HttpServlet {
         return STAFF_BORROW_BASE;
     }
 
-    private void handleRenewalQueue(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        List<RenewalRequest> tickets = libService.listPendingRenewalRequests();
-        String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
-        req.setAttribute("renewalTickets", tickets);
-        req.setAttribute("renewalActionPrefix", actionPrefix);
-        req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_requests.jsp").forward(req, resp);
-    }
-
     private void handleRenewalDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         long renewalId = parseLongParameter(req, "id", "ID yêu cầu gia hạn không hợp lệ");
         RenewalRequest ticket = libService.getRenewalRequest(renewalId);
@@ -412,7 +403,7 @@ public class LibrarianBorrowController extends HttpServlet {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
+        NumberFormat formatter = NumberFormat.getInstance(VIETNAM_LOCALE);
         formatter.setMaximumFractionDigits(0);
         formatter.setMinimumFractionDigits(0);
         return formatter.format(amount);

@@ -8,7 +8,6 @@ import com.lbms.util.DBConnection;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import com.lbms.dao.LibrarianActivityLogDAO;
 
@@ -38,7 +37,6 @@ public class LibrarianBorrowService {
 
                 String correctBarcode = "";
                 long bookId = -1;
-                String currentStatus = "";
                 LocalDate dueDate = null;
 
                 try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
@@ -47,7 +45,6 @@ public class LibrarianBorrowService {
                         if (rs.next()) {
                             correctBarcode = rs.getString("barcode");
                             bookId = rs.getLong("book_id");
-                            currentStatus = rs.getString("status");
                             java.sql.Date dueDateSql = rs.getDate("due_date");
                             if (dueDateSql != null) {
                                 dueDate = dueDateSql.toLocalDate();

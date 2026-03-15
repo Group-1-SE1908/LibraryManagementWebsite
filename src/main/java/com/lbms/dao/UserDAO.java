@@ -1,5 +1,6 @@
 package com.lbms.dao;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,7 +35,7 @@ public class UserDAO {
 
     public User findByEmail(String email) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
                 + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.email = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -50,7 +51,7 @@ public class UserDAO {
 
     public User findById(long id) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
                 + "FROM [User] u "
                 + "JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.user_id = ?";
@@ -174,7 +175,7 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
         List<User> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
                 + "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.full_name LIKE ? OR u.email LIKE ? "
                 + "ORDER BY u.user_id ASC "
@@ -221,7 +222,7 @@ public class UserDAO {
 
     public List<User> findByRoleName(String roleName) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
                 + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE r.role_name = ?";
         List<User> list = new ArrayList<>();
@@ -245,6 +246,11 @@ public class UserDAO {
         u.setPhone(rs.getString("phone"));
         u.setAvatar(rs.getString("avatar"));
         u.setAddress(rs.getString("address"));
+        BigDecimal balance = rs.getBigDecimal("wallet_balance");
+        if (balance == null) {
+            balance = BigDecimal.ZERO;
+        }
+        u.setWalletBalance(balance);
         u.setStatus(rs.getString("status"));
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
@@ -303,4 +309,61 @@ public class UserDAO {
             ps.executeUpdate();
         }
     }
+
+    public void addToWallet(long userId, BigDecimal amount) throws SQLException {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        String sql = "UPDATE [User] SET wallet_balance = ISNULL(wallet_balance, 0) + ? WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setBigDecimal(1, amount);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void banUser(long userId, int days) throws SQLException {
+        String sql = "UPDATE [User] SET banned_until = DATEADD(day, ?, GETDATE()) WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Khóa user không cho comment trong X ngày
+     * Yêu cầu: ALTER TABLE [User] ADD comment_banned_until DATETIME NULL;
+     */
+    public void lockCommentAccess(long userId, int days) throws SQLException {
+        String sql = "UPDATE [User] SET comment_banned_until = DATEADD(day, ?, GETDATE()) WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Kiểm tra user có đang bị khóa comment không
+     */
+    public boolean isCommentLocked(long userId) throws SQLException {
+        String sql = "SELECT comment_banned_until FROM [User] WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Timestamp bannedUntil = rs.getTimestamp("comment_banned_until");
+                    if (bannedUntil == null) return false;
+                    return bannedUntil.after(new Timestamp(System.currentTimeMillis()));
+                }
+            }
+        }
+        return false;
+    }
+
+
+
 }

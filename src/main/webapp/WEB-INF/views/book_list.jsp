@@ -148,6 +148,8 @@
                     <div class="books-grid">
                         <c:forEach var="book" items="${books}">
                             <div class="book-card">
+                                <a class="book-card__link"
+                                   href="${pageContext.request.contextPath}/books/detail?id=${book.id}">
                                 <div class="book-image">
                                     <c:choose>
                                         <c:when test="${not empty book.image}">
@@ -186,48 +188,28 @@
                                             <fmt:message key="book.year" />: ${book.publishYear}
                                         </span>
                                     </div>
-                                    <div class="book-meta book-meta--stock">
-                                        <span>
-                                            <fmt:message key="book.stock" />:
-                                            <fmt:message key="book.copies">
-                                                <fmt:param value="${book.quantity}" />
-                                            </fmt:message>
-                                        </span>
+                                    <div class="book-stock-chip">
+                                        <fmt:message key="book.stock" />:
+                                        <fmt:message key="book.copies">
+                                            <fmt:param value="${book.quantity}" />
+                                        </fmt:message>
                                     </div>
                                 </div>
 
-                                <div class="book-card__footer book-actions">
-                                    <a href="${pageContext.request.contextPath}/books/detail?id=${book.id}"
-                                       class="btn-full btn-staff">
-                                        <fmt:message key="btn.detail" />
-                                    </a>
-
-                                    <c:choose>
-                                        <c:when test="${isStaff}">
-                                            <a href="${pageContext.request.contextPath}/books/edit?id=${book.id}"
-                                               class="btn-full primary">
-                                                <fmt:message key="btn.edit" />
-                                            </a>
-                                            <button type="button"
-                                                    onclick="confirmDelete('${book.id}', '${book.title}')"
-                                                    class="btn-full btn-danger">
-                                                Xóa
-                                            </button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <c:if test="${book.quantity > 0}">
-                                                <form action="${pageContext.request.contextPath}/cart/add"
-                                                      method="post">
-                                                    <input type="hidden" name="bookId" value="${book.id}">
-                                                    <button type="submit" class="btn-full primary">
-                                                        <fmt:message key="btn.add_to_cart" />
-                                                    </button>
-                                                </form>
-                                            </c:if>
-                                        </c:otherwise>
-                                    </c:choose>
-
+                                <div class="book-card__footer">
+                                    <div class="book-price">
+                                        <c:choose>
+                                            <c:when test="${not empty book.price}">
+                                                <strong><fmt:formatNumber value="${book.price}" pattern="#,##0" /> ₫</strong>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <strong><fmt:message key="book.price_unknown" /></strong>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <span class="book-price__note">Còn ${book.quantity} cuốn</span>
+                                    </div>
                                 </div>
+                                </a>
                             </div>
                         </c:forEach>
                     </div>

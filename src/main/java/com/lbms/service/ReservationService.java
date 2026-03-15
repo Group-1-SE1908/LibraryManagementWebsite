@@ -26,10 +26,20 @@ public class ReservationService {
             throw new IllegalArgumentException("Sách còn hàng, không cần đặt trước");
         }
 
+        // Check for existing active reservation
         if (reservationDAO.existsActive(userId, bookId)) {
             throw new IllegalArgumentException("Bạn đã đặt trước sách này rồi");
         }
 
+        // Check if there's a cancelled or expired reservation to reactivate
+        Reservation existing = reservationDAO.findByUserAndBook(userId, bookId);
+        if (existing != null && ("CANCELLED".equals(existing.getStatus()) || "EXPIRED".equals(existing.getStatus()))) {
+            // Reactivate the existing reservation
+            reservationDAO.updateStatus(existing.getId(), "WAITING");
+            return existing.getId();
+        }
+
+        // Create new reservation
         return reservationDAO.create(userId, bookId);
     }
 
