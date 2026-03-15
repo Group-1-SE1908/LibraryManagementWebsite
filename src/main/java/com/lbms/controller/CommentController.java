@@ -7,6 +7,7 @@ package com.lbms.controller;
 import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReplyDAO;
 import com.lbms.dao.CommentReportDAO;
+import com.lbms.dao.UserDAO;
 import com.lbms.model.Comment;
 import com.lbms.model.CommentReport;
 import com.lbms.model.User;
@@ -24,20 +25,20 @@ import java.util.logging.Logger;
 
 /**
  * CommentController - Xử lý các thao tác comment trên sách
- *
- * @author Trien
  */
 @WebServlet(name = "CommentController", urlPatterns = { "/comment" })
 public class CommentController extends HttpServlet {
     private CommentDAO commentDAO;
     private CommentReplyDAO replyDAO;
     private CommentReportDAO reportDAO;
+    private UserDAO userDAO;
 
     @Override
     public void init() {
         this.commentDAO = new CommentDAO();
         this.replyDAO = new CommentReplyDAO();
         this.reportDAO = new CommentReportDAO();
+        this.userDAO = new UserDAO();
     }
 
     @Override
@@ -97,7 +98,6 @@ public class CommentController extends HttpServlet {
         request.setAttribute("comments", comments);
         request.setAttribute("bookId", bookId);
 
-        // Load reports if user is librarian
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
         request.setAttribute("reportsBasePath", resolveReportsBasePath(currentUser));
@@ -120,9 +120,16 @@ public class CommentController extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
 
-        // Kiểm tra xem người dùng đã đăng nhập hay chưa
         if (user == null) {
             response.sendError(401, "Unauthorized - User not logged in");
+            return;
+        }
+
+        // ✅ Kiểm tra user có đang bị khóa comment không
+        if (userDAO.isCommentLocked(user.getId())) {
+            session.setAttribute("errorMessage", "Tài khoản của bạn đang bị hạn chế bình luận. Vui lòng thử lại sau.");
+            int bookId = Integer.parseInt(request.getParameter("bookId"));
+            response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
             return;
         }
 
@@ -130,13 +137,11 @@ public class CommentController extends HttpServlet {
         String content = request.getParameter("content");
         int rating = Integer.parseInt(request.getParameter("rating"));
 
-        // Validate input
         if (content == null || content.trim().isEmpty() || rating < 1 || rating > 5) {
             response.sendError(400, "Invalid input");
             return;
         }
 
-        // Kiểm tra xem user đã comment cho sách này chưa
         if (commentDAO.hasUserCommented(bookId, (int) user.getId())) {
             response.sendError(400, "Bạn đã đánh giá và bình luận cho cuốn sách này rồi!");
             return;
@@ -150,10 +155,7 @@ public class CommentController extends HttpServlet {
 
         commentDAO.insertComment(comment);
 
-        // Set success message
         session.setAttribute("message", "Bình luận đã được thêm thành công!");
-
-        // Quay trở lại trang chi tiết sách
         response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
     }
 
@@ -187,7 +189,6 @@ public class CommentController extends HttpServlet {
                 return;
             }
 
-            // Kiểm tra xem user có phải là admin/librarian hay không
             boolean isAdmin = (user.getRole() != null &&
                     ("ADMIN".equals(user.getRole().getName()) ||
                             "LIBRARIAN".equals(user.getRole().getName())));
@@ -228,7 +229,6 @@ public class CommentController extends HttpServlet {
         long commentId = Long.parseLong(request.getParameter("commentId"));
         int bookId = Integer.parseInt(request.getParameter("bookId"));
 
-        // Kiểm tra xem user có phải là admin hay không
         boolean isAdmin = (user.getRole() != null &&
                 ("ADMIN".equals(user.getRole().getName()) ||
                         "LIBRARIAN".equals(user.getRole().getName())));

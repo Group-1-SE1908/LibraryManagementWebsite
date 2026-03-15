@@ -330,4 +330,40 @@ public class UserDAO {
             ps.executeUpdate();
         }
     }
+
+    /**
+     * Khóa user không cho comment trong X ngày
+     * Yêu cầu: ALTER TABLE [User] ADD comment_banned_until DATETIME NULL;
+     */
+    public void lockCommentAccess(long userId, int days) throws SQLException {
+        String sql = "UPDATE [User] SET comment_banned_until = DATEADD(day, ?, GETDATE()) WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Kiểm tra user có đang bị khóa comment không
+     */
+    public boolean isCommentLocked(long userId) throws SQLException {
+        String sql = "SELECT comment_banned_until FROM [User] WHERE user_id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Timestamp bannedUntil = rs.getTimestamp("comment_banned_until");
+                    if (bannedUntil == null) return false;
+                    return bannedUntil.after(new Timestamp(System.currentTimeMillis()));
+                }
+            }
+        }
+        return false;
+    }
+
+
+
 }

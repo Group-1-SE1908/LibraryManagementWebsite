@@ -1,15 +1,11 @@
 package com.lbms.controller;
 
+import com.lbms.dao.*;
 import com.lbms.model.Book;
 import com.lbms.model.Comment;
 import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import com.lbms.service.BookService;
-import com.lbms.dao.CategoryDAO;
-import com.lbms.dao.CommentDAO;
-import com.lbms.dao.CommentReplyDAO;
-import com.lbms.dao.ReservationDAO;
-import com.lbms.dao.CommentReportDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -43,7 +39,7 @@ import java.util.logging.Logger;
 public class BookController extends HttpServlet {
 
     private static final int BOOKS_PER_PAGE = 8;
-
+    private UserDAO userDAO;
     private BookService bookService;
     private CategoryDAO categoryDAO;
     private CommentDAO commentDAO;
@@ -59,6 +55,7 @@ public class BookController extends HttpServlet {
         this.replyDAO = new CommentReplyDAO();
         this.reservationDAO = new ReservationDAO();
         this.reportDAO = new CommentReportDAO();
+        this.userDAO = new UserDAO();
     }
 
     @Override
@@ -323,6 +320,8 @@ public class BookController extends HttpServlet {
             // Kiểm tra xem user đã đặt trước sách này chưa
             boolean hasReserved = reservationDAO.existsActive((int) currentUser.getId(), id);
             req.setAttribute("hasReserved", hasReserved);
+            boolean isCommentLocked = userDAO.isCommentLocked(currentUser.getId());
+            req.setAttribute("isCommentLocked", isCommentLocked);
 
             // Librarian/admin views can moderate reported comments directly from detail
             // page
