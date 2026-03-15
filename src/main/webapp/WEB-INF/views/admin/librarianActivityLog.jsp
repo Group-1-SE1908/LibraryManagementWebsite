@@ -168,7 +168,7 @@
                             background: #F1F5F9;
                         }
 
-                        /* User Info & Badges */
+
                         .user-info {
                             display: flex;
                             align-items: center;
