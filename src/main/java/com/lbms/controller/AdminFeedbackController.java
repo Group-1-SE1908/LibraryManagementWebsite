@@ -1,4 +1,3 @@
-}
 package com.lbms.controller;
 
 import com.lbms.model.CommentReply;
@@ -181,21 +180,6 @@ public class AdminFeedbackController extends HttpServlet {
         }
     }
 
-    private boolean hasOperationalRole(User user) {
-        if (user == null || user.getRole() == null) {
-            return false;
-        }
-        String role = user.getRole().getName();
-        return "LIBRARIAN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
-    }
-
-    private String resolveBasePath(String path) {
-        if (path != null && path.startsWith("/admin/")) {
-            return "/admin/feedback";
-        }
-        return "/staff/feedback";
-    }
-
     private CommentReport getReportById(long reportId) {
         try {
             List<CommentReport> reports = reportDAO.getAllReports();
@@ -209,3 +193,5 @@ public class AdminFeedbackController extends HttpServlet {
         }
         return null;
     }
+
+}
