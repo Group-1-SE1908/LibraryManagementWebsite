@@ -281,4 +281,17 @@ public class CommentDAO {
         }
         return list;
     }
+
+
+    /**
+     * Xóa toàn bộ comment của một user (dùng khi khóa)
+     */
+    public void deleteAllCommentsByUser(int userId) throws Exception {
+        String sql = "DELETE FROM Comment WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+        }
+    }
 }

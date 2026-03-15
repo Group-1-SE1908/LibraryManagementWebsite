@@ -47,6 +47,7 @@ CREATE TABLE [User] (
     wallet_balance DECIMAL(14,2) NOT NULL DEFAULT 0,
     banned_until DATETIME NULL,
     created_at DATETIME DEFAULT GETDATE(),
+    ALTER TABLE [User] ADD comment_banned_until DATETIME NULL;
     CONSTRAINT FK_User_Role FOREIGN KEY (role_id) REFERENCES Role(role_id)
     );
 GO
