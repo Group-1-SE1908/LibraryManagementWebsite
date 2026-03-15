@@ -1,8 +1,10 @@
 package com.lbms.controller;
 
+import com.google.gson.Gson;
 import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
+import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,6 +35,8 @@ import java.util.Locale;
     "/staff/renewal/view",
     "/staff/borrowlibrary/ship_fee",
     "/staff/borrowlibrary/ship_confirm",
+    "/staff/borrowlibrary/verifyData",
+    "/admin/borrowlibrary/verifyData",
     "/admin/borrowlibrary",
     "/admin/borrowlibrary/approve",
     "/admin/borrowlibrary/reject",
@@ -155,11 +160,54 @@ public class LibrarianBorrowController extends HttpServlet {
             } else if ("inperson".equals(action)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
+                req.setAttribute("staffBorrowBase", STAFF_BORROW_BASE);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
             } else if ("import".equals(action)) {
                 req.getRequestDispatcher("book_restock.jsp").forward(req, resp);
                 return;
+                
+
+            } else if ("verifyData".equals(action)) {
+                try {
+                    // 1. Nhận tham số email và barcodes từ request
+                    String email = req.getParameter("email");
+                    String barcodesRaw = req.getParameter("barcodes");
+
+                    // 2. Tìm kiếm thông tin User theo Email
+                    com.lbms.model.User user = null;
+                    if (email != null && !email.isBlank()) {
+                        // Đảm bảo bạn đã có hàm findByEmail trong UserDAO
+                        user = userDAO.findByEmail(email.trim());
+                    }
+
+                    // 3. Tìm kiếm danh sách sách theo mã vạch
+                    java.util.List<com.lbms.model.BookCopy> copies = new java.util.ArrayList<>();
+                    if (barcodesRaw != null && !barcodesRaw.isBlank()) {
+                        String[] barcodes = barcodesRaw.split("\\r?\\n");
+                        for (String bc : barcodes) {
+                            if (!bc.trim().isEmpty()) {
+                                // Gọi hàm getBookByBarcode đã thêm vào Service ở bước trước
+                                com.lbms.model.BookCopy copy = libService.getBookByBarcode(bc.trim());
+                                if (copy != null) {
+                                    copies.add(copy);
+                                }
+                            }
+                        }
+                    }
+
+                    // 4. Trả về kết quả JSON cho Frontend
+                    resp.setContentType("application/json");
+                    resp.setCharacterEncoding("UTF-8");
+                    // Sử dụng lớp VerificationResult (đã hướng dẫn tạo ở cuối file)
+                    String json = new com.google.gson.Gson().toJson(new VerificationResult(user, copies));
+                    resp.getWriter().write(json);
+                    return; // Dừng lại ở đây, không forward tới trang JSP
+                } catch (Exception e) {
+                    resp.setStatus(500);
+                    resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+                    return;
+                }
             } else {
 
                 String methodFilter = req.getParameter("filter");
@@ -191,6 +239,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     renewalLookup.put(pending.getBorrowId(), pending);
                 }
                 req.setAttribute("pendingRenewalMap", renewalLookup);
+                req.setAttribute("staffBorrowBase", STAFF_BORROW_BASE);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
             }
 
@@ -282,10 +331,18 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu. Lý do: " + reason);
 
             } else if ("inperson".equals(action)) {
-                long userId = Long.parseLong(req.getParameter("userId"));
+//                long userId = Long.parseLong(req.getParameter("userId"));
+                String email = req.getParameter("email");
                 String rawBarcodes = req.getParameter("barcodes");
 
-                // Tách chuỗi mã vạch dựa trên khoảng trắng hoặc dấu xuống dòng (Enter)
+                // 1. Tìm userId từ email
+                User user = userDAO.findByEmail(email);
+                if (user == null) {
+                    throw new IllegalArgumentException("Không tìm thấy độc giả có email: " + email);
+                }
+                long userId = user.getId();
+
+                // 2. Tách mã vạch và xử lý như cũ
                 String[] barcodeArray = rawBarcodes.split("\\r?\\n");
                 List<String> validBarcodes = new java.util.ArrayList<>();
                 for (String bc : barcodeArray) {
@@ -298,12 +355,12 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("Chưa có mã vạch nào được nhập.");
                 }
 
-                // Gọi hàm mượn nhiều cuốn
+                /// 3. Gọi Service xử lý mượn
                 libService.borrowMultipleInPerson(userId, validBarcodes);
-                req.getSession().setAttribute("flash",
-                        "Đã cho mượn thành công " + validBarcodes.size() + " cuốn sách!");
+                req.getSession().setAttribute("flash", "Đã cho mượn thành công cho độc giả " + user.getFullName());
 
                 resp.sendRedirect(req.getContextPath() + redirectBase);
+                
                 return;
             } else if ("ship_confirm".equals(action)) {
                 String groupCode = req.getParameter("groupCode");
@@ -407,5 +464,16 @@ public class LibrarianBorrowController extends HttpServlet {
         formatter.setMaximumFractionDigits(0);
         formatter.setMinimumFractionDigits(0);
         return formatter.format(amount);
+    }
+
+    private static class VerificationResult {
+
+        User user;
+        java.util.List<com.lbms.model.BookCopy> copies;
+
+        VerificationResult(User user, java.util.List<com.lbms.model.BookCopy> copies) {
+            this.user = user;
+            this.copies = copies;
+        }
     }
 }

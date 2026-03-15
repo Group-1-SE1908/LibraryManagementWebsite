@@ -1,223 +1,241 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Mượn tại quầy | Staff LBMS</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-body: #f8fafc;
-            --primary-dark: #1e293b;
-            --accent-blue: #0b57d0;
-            --border-color: #e2e8f0;
-            --card-bg: #ffffff;
-            --text-main: #334155;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mượn sách tại quầy | LBMS</title>
 
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-        }
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
-        .main-content {
-            margin-left: 280px; /* Độ rộng sidebar */
-            padding: 40px;
-            min-height: 100vh;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .page-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary-dark);
-            margin: 0;
-        }
-
-        /* Bố cục lưới cân xứng */
-        .borrow-container {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr; /* Tỷ lệ 1:1.5 */
-            gap: 30px;
-            align-items: start;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            padding: 24px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--primary-dark);
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 12px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #64748b;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 15px;
-            transition: 0.3s;
-            box-sizing: border-box;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.1);
-        }
-
-        .book-preview {
-            display: flex;
-            gap: 15px;
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .btn-submit {
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            transition: 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-submit:hover {
-            background: #0842a0;
-            transform: translateY(-2px);
-        }
-
-        .alert-info {
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-
-    <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
-
-    <div class="main-content">
-        <div class="page-header">
-            <div>
-                <h1><i class="fas fa-hand-holding-medical"></i> Giao dịch mượn sách</h1>
-                <p style="color: #64748b; margin-top: 5px;">Thực hiện quy trình cho mượn trực tiếp tại thư viện</p>
-            </div>
-            <a href="${pageContext.request.contextPath}/admin/borrowlibrary" style="text-decoration: none; color: var(--accent-blue); font-weight: 500;">
-                <i class="fas fa-arrow-left"></i> Quay lại danh sách
-            </a>
-        </div>
-
-        <form action="${pageContext.request.contextPath}/admin/borrowlibrary/inperson" method="post">
-            <div class="borrow-container">
-                
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-user-circle"></i> Người mượn
-                    </div>
-                    <div class="alert-info">
-                        Nhập ID hoặc Username chính xác của người dùng trong hệ thống.
-                    </div>
-                    <div class="form-group">
-                        <label>Tên đăng nhập hoặc ID thành viên</label>
-                        <input type="text" name="username" class="form-control" placeholder="Ví dụ: user01, SV12345..." required>
-                    </div>
-                    <div class="form-group">
-                        <label>Số điện thoại xác nhận (Tùy chọn)</label>
-                        <input type="text" class="form-control" placeholder="Kiểm tra lại nếu cần">
-                    </div>
+        <style>
+            body {
+                background-color: #f4f7f6;
+            }
+            .main-content {
+                padding: 20px;
+            }
+            .card {
+                border: none;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .preview-card {
+                border-left: 5px solid #0d6efd;
+                background: #fff;
+            }
+            .preview-card.error {
+                border-left-color: #dc3545;
+            }
+            .badge-status {
+                font-size: 0.85rem;
+                padding: 5px 10px;
+            }
+            #barcodes {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 14px;
+            }
+            .table-preview th {
+                background-color: #f8f9fa;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse border-end" style="min-height: 100vh;">
+                    <jsp:include page="librarian_sidebar.jsp" />
                 </div>
 
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-book-open"></i> Thông tin mượn sách
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                        <h2 class="h3"><i class="fas fa-cash-register me-2"></i> Nghiệp vụ mượn sách tại quầy</h2>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Mã bản sao sách (Copy ID)</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" name="bookCopyId" class="form-control" placeholder="Nhập mã barcode trên sách..." required>
-                            <button type="button" class="btn-submit" style="width: auto; padding: 0 20px; background: var(--primary-dark);">
-                                <i class="fas fa-search"></i>
-                            </button>
+
+                    <c:if test="${not empty flash}">
+                        <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i> ${flash}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </c:if>
+
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <div class="card p-4">
+                                <form action="${pageContext.request.contextPath}${staffBorrowBase}/inperson" method="post" id="mainBorrowForm">
+
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label fw-bold">Email Độc giả</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                            <input type="email" name="email" id="email" class="form-control" 
+                                                   placeholder="Nhập địa chỉ email của độc giả..." required>
+                                        </div>
+                                        <div id="userPreview" class="mt-2" style="display:none;">
+                                            <div class="alert alert-info py-1 small">
+                                                <i class="fas fa-check-circle text-success"></i> 
+                                                Đang chọn: <strong id="previewName"></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="barcodes" class="form-label fw-bold">Danh sách Mã vạch</label>
+                                        <textarea name="barcodes" id="barcodes" class="form-control" rows="5" 
+                                                  placeholder="Quét mã vạch tại đây..." required></textarea>
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-save"></i> Hoàn tất cho mượn
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="card p-4" id="previewArea">
+                                <h5 class="card-title border-bottom pb-2 mb-3 text-secondary">
+                                    <i class="fas fa-search me-2"></i> Kiểm tra thông tin nhanh
+                                </h5>
+
+                                <div id="emptyState" class="text-center py-5 opacity-50">
+                                    <i class="fas fa-id-card-alt fa-4x mb-3"></i>
+                                    <p>Thông tin độc giả và sách sẽ hiển thị tại đây khi bạn nhập mã</p>
+                                </div>
+
+                                <div id="userResult" class="preview-card p-3 mb-4 shadow-sm" style="display:none;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-light p-3 rounded-circle me-3">
+                                            <i class="fas fa-user fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="mb-0" id="res-userName">...</h4>
+                                            <p class="text-muted mb-0">ID: <span id="res-userId" class="fw-bold"></span></p>
+                                            <span id="res-userStatus" class="badge rounded-pill mt-1">...</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="bookResult" style="display:none;">
+                                    <table class="table table-preview table-hover border">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã vạch</th>
+                                                <th>Tên sách</th>
+                                                <th class="text-center">Trạng thái</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="res-bookTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label>Ngày hẹn trả</label>
-                        <input type="date" name="dueDate" class="form-control" required>
-                        <small style="color: #64748b; margin-top: 5px; display: block;">Thời gian mượn mặc định là 14 ngày.</small>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 30px;">
-                        <button type="submit" class="btn-submit">
-                            <i class="fas fa-check-circle"></i> Xác nhận cho mượn
-                        </button>
-                    </div>
-                </div>
-
+                </main>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <script>
-        // Tự động đặt ngày hẹn trả là 14 ngày kể từ hôm nay
-        window.onload = function() {
-            let date = new Date();
-            date.setDate(date.getDate() + 14);
-            document.getElementsByName('dueDate')[0].valueAsDate = date;
-        }
-    </script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-</body>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                /**
+                 * Hàm gọi AJAX để kiểm tra thông tin Email và Sách
+                 */
+                function verifyBorrowData() {
+                    const emailInput = $('#email').val(); // Lấy giá trị từ ô Email
+                    const barcodesInput = $('#barcodes').val(); // Lấy danh sách mã vạch
+
+                    // Chỉ gọi AJAX nếu có ít nhất một thông tin được nhập
+                    if (!emailInput && !barcodesInput) {
+                        $('#emptyState').show();
+                        $('#userResult, #bookResult').hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        // Sửa lỗi 404 bằng cách gộp contextPath và staffBorrowBase
+                        url: '${pageContext.request.contextPath}${staffBorrowBase}/verifyData',
+                        method: 'GET',
+                        data: {
+                            email: emailInput,
+                            barcodes: barcodesInput
+                        },
+                        success: function (data) {
+                            $('#emptyState').hide();
+
+                            // 1. Cập nhật giao diện Độc giả
+                            if (data.user) {
+                                $('#userResult').fadeIn();
+                                $('#res-userName').text(data.user.fullName);
+                                $('#res-userIdDisplay').text(data.user.id); // Vẫn hiện ID để thủ thư biết
+
+                                const statusTag = $('#res-userStatus');
+                                statusTag.text(data.user.status);
+                                if (data.user.status === 'ACTIVE') {
+                                    statusTag.attr('class', 'badge bg-success rounded-pill');
+                                    $('#userResult').removeClass('error-border');
+                                } else {
+                                    statusTag.attr('class', 'badge bg-danger rounded-pill');
+                                    $('#userResult').addClass('error-border');
+                                }
+                            } else {
+                                $('#userResult').hide();
+                            }
+
+                            // 2. Cập nhật danh sách Sách xem trước
+                            if (data.copies && data.copies.length > 0) {
+                                $('#bookResult').fadeIn();
+                                let rows = '';
+                                data.copies.forEach(function (item) {
+                                    const isAvailable = (item.status === 'AVAILABLE');
+                                    const colorClass = isAvailable ? 'text-success' : 'text-danger fw-bold';
+
+                                    rows += `<tr>
+                                        <td><span class="badge bg-light text-dark border">${item.barcode}</span></td>
+                                        <td>${item.bookTitle || 'N/A'}</td>
+                                        <td class="text-center ${colorClass}">${item.status}</td>
+                                    </tr>`;
+                                });
+                                $('#res-bookTable').html(rows);
+                            } else {
+                                $('#bookResult').hide();
+                            }
+                        },
+                        error: function (xhr) {
+                            console.error("Lỗi xác thực dữ liệu: ", xhr.responseText);
+                        }
+                    });
+                }
+
+                // Lắng nghe sự kiện khi rời khỏi ô nhập Email hoặc Barcodes
+                $('#email, #barcodes').on('blur', function () {
+                    verifyBorrowData();
+                });
+
+                // Hỗ trợ máy quét mã vạch (thường gửi phím Enter sau khi quét)
+                $('#barcodes').on('keyup', function (e) {
+                    if (e.key === "Enter") {
+                        verifyBorrowData();
+                    }
+                });
+
+                // Kiểm tra lần cuối trước khi Submit form
+                $('#borrowForm').on('submit', function (e) {
+                    const status = $('#res-userStatus').text();
+                    if (status && status !== 'ACTIVE') {
+                        if (!confirm('Tài khoản độc giả này đang bị khóa. Bạn có chắc chắn muốn tiếp tục cho mượn?')) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            });
+        </script>
+    </body>
 </html>
