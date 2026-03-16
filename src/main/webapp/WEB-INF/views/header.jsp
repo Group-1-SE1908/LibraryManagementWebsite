@@ -248,6 +248,24 @@
         color: #ffffff;
     }
 
+    .admin-login-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 12px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #0f172a;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .admin-login-link:hover {
+        background: rgba(37, 99, 235, 0.08);
+    }
+
     /* User profile trigger */
     .header-user {
         position: relative;
@@ -723,6 +741,9 @@
                             <line x1="15" y1="12" x2="3" y2="12"/>
                         </svg>
                         <fmt:message key="nav.login"/>
+                    </a>
+                    <a href="${pageContext.request.contextPath}/adminlogin" class="admin-login-link">
+                        Đăng nhập nhân viên
                     </a>
                 </c:otherwise>
             </c:choose>

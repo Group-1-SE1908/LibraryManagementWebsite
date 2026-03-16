@@ -25,7 +25,7 @@ public class StaffFilter implements Filter {
         HttpSession session = req.getSession(false);
         User currentUser = session == null ? null : (User) session.getAttribute("currentUser");
         if (currentUser == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/adminlogin");
             return;
         }
 
