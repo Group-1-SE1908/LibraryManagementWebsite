@@ -166,7 +166,20 @@ CREATE INDEX IX_Res_UserId ON reservations (user_id);
 CREATE INDEX IX_Res_BookId ON reservations (book_id);
 CREATE INDEX IX_Res_Status  ON reservations (status);
 GO
-
+-- Gán lại queue_position cho các bản ghi WAITING đang NULL
+WITH ranked AS (
+    SELECT id,
+           ROW_NUMBER() OVER (
+               PARTITION BY book_id
+               ORDER BY created_at
+           ) AS rn
+    FROM reservations
+    WHERE status = 'WAITING'
+)
+UPDATE r
+SET r.queue_position = rk.rn
+    FROM reservations r
+JOIN ranked rk ON r.id = rk.id;
 -- Bảng thông báo
 CREATE TABLE notifications (
                                id         BIGINT IDENTITY(1,1) PRIMARY KEY,

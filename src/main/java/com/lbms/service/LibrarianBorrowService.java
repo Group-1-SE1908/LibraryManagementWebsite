@@ -16,6 +16,7 @@ public class LibrarianBorrowService {
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
+    private final ReservationService reservationService = new ReservationService();
 
     public BigDecimal returnBook(long borrowId, String inputBarcode) throws SQLException {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
@@ -91,6 +92,13 @@ public class LibrarianBorrowService {
                 BigDecimal fineAmount = calculateFine(dueDate, returnDate);
 
                 c.commit();
+                // Gọi ngoài transaction để tránh deadlock
+                try {
+                    reservationService.onBookReturned(bookId);
+                } catch (Exception e) {
+                    // Chỉ log, không làm hỏng luồng trả sách
+                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId + ": " + e.getMessage());
+                }
                 return fineAmount;
             } catch (Exception e) {
                 c.rollback();

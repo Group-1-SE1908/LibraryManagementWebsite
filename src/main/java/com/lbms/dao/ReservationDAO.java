@@ -143,6 +143,11 @@ public class ReservationDAO {
 
     // ── markAvailable: set status=AVAILABLE, notified_at=now, expired_at=now+3days ──
     public void markAvailable(long reservationId) throws SQLException {
+        // Bước 1: Lấy thông tin reservation để biết book_id và queue_position hiện tại
+        Reservation res = getById(reservationId);
+        if (res == null) return;
+
+        // Bước 2: Set AVAILABLE cho người đầu hàng
         String sql = "UPDATE reservations " +
                 "SET status = 'AVAILABLE', " +
                 "    notified_at = GETDATE(), " +
@@ -155,8 +160,21 @@ public class ReservationDAO {
             ps.setLong(1, reservationId);
             ps.executeUpdate();
         }
-    }
 
+        // Bước 3 (FIX): Reorder những người còn lại trong hàng WAITING
+        // Tất cả queue_position > 1 của book này phải giảm xuống 1
+        String reorderSql = "UPDATE reservations " +
+                "SET queue_position = queue_position - 1, " +
+                "    updated_at = GETDATE() " +
+                "WHERE book_id = ? " +
+                "AND status = 'WAITING' " +
+                "AND queue_position > 1";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(reorderSql)) {
+            ps.setLong(1, res.getBookId());
+            ps.executeUpdate();
+        }
+    }
     // ── getFirstWaiting: lấy người đầu tiên trong hàng chờ của 1 cuốn sách ──
     public Reservation getFirstWaiting(long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
@@ -166,7 +184,7 @@ public class ReservationDAO {
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
                 "WHERE r.book_id = ? AND r.status = 'WAITING' " +
-                "ORDER BY r.queue_position ASC, r.created_at ASC";
+                "ORDER BY ISNULL(r.queue_position, 99999) ASC, r.created_at ASC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, bookId);

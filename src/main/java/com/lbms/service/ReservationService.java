@@ -144,16 +144,16 @@ public class ReservationService {
      */
     public void processExpiredReservations() throws SQLException {
         List<Reservation> expired = reservationDAO.findExpiredAvailable();
-
         for (Reservation res : expired) {
-            // Hủy reservation hết hạn
             reservationDAO.updateStatus(res.getId(), "EXPIRED");
-
-            // Gửi thông báo cho user bị hủy
             notifService.notifyReservationExpired(res.getUserId(), res.getBookTitle());
 
-            // Chuyển sang người tiếp theo trong hàng chờ
-            onBookReturned(res.getBookId());
+            // Chỉ notify người tiếp nếu sách đang có sẵn (availability > 0)
+            Book book = bookDAO.findById(res.getBookId());
+            if (book != null && book.getQuantity() > 0) {
+                onBookReturned(res.getBookId());
+            }
+            // Nếu không còn sách → người tiếp vẫn ở WAITING, đợi đến khi sách thực sự được trả
         }
     }
 

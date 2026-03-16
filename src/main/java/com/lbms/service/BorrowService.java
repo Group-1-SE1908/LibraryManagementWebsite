@@ -70,7 +70,7 @@ public class BorrowService {
             try {
                 // Tăng availability của sách
                 try (var ps = c.prepareStatement(
-                        "UPDATE Book SET availability = availability + 1 WHERE book_id = ?")) {
+                        "UPDATE Book SET availability = availability + 1, quantity = quantity + 1 WHERE book_id = ?")) {
                     ps.setLong(1, bookId);
                     ps.executeUpdate();
                 }
