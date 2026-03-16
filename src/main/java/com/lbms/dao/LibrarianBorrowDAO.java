@@ -53,8 +53,7 @@ public class LibrarianBorrowDAO {
     public long createRequest(long userId, long bookId, String method, int qty, String groupCode) throws SQLException {
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity,group_code) "
                 + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
             ps.setString(3, method);
@@ -71,8 +70,7 @@ public class LibrarianBorrowDAO {
         try (Connection connection = DBConnection.getConnection()) {
             BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
             String sql = baseSelect(schema) + " ORDER BY br.id DESC";
-            try (PreparedStatement ps = connection.prepareStatement(sql);
-                    ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
             }
         }
@@ -93,8 +91,7 @@ public class LibrarianBorrowDAO {
 
     public int countActiveBorrows(long userId) throws SQLException {
         String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
@@ -118,8 +115,7 @@ public class LibrarianBorrowDAO {
 
     public void updateStatus(long id, String status) throws SQLException {
         String sql = "UPDATE borrow_records SET status = ? WHERE id = ?";
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setLong(2, id);
             ps.executeUpdate();
@@ -128,8 +124,7 @@ public class LibrarianBorrowDAO {
 
     public void markReturned(long id, LocalDate returnDate, BigDecimal fineAmount) throws SQLException {
         String sql = "UPDATE borrow_records SET status='RETURNED', return_date=?, fine_amount=? WHERE id = ?";
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(returnDate));
             ps.setBigDecimal(2, fineAmount);
             ps.setLong(3, id);
@@ -142,8 +137,7 @@ public class LibrarianBorrowDAO {
             BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
             String sql = baseSelect(schema)
                     + " WHERE br.status = 'BORROWED' AND br.due_date < GETDATE() ORDER BY br.due_date ASC";
-            try (PreparedStatement ps = connection.prepareStatement(sql);
-                    ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
                 return mapList(rs);
             }
         }
@@ -284,8 +278,7 @@ public class LibrarianBorrowDAO {
                 + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
                 + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
 
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int i = 1; i <= 5; i++) {
                 ps.setLong(i, userId);
             }
@@ -305,8 +298,7 @@ public class LibrarianBorrowDAO {
 
     public void rejectRequest(long id, String reason) throws SQLException {
         String sql = "UPDATE borrow_records SET status = 'REJECTED', reject_reason = ? WHERE id = ?";
-        try (Connection connection = DBConnection.getConnection();
-                PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, reason);
             ps.setLong(2, id);
             ps.executeUpdate();
@@ -327,5 +319,33 @@ public class LibrarianBorrowDAO {
                 }
             }
         }
+    }
+
+    public com.lbms.model.BookCopy findCopyByBarcode(String barcode) throws SQLException {
+        // Câu lệnh SQL JOIN để lấy cả thông tin bản sao và tên sách từ bảng Book
+        String sql = "SELECT bc.*, b.title as book_title "
+                + "FROM BookCopy bc "
+                + "JOIN Book b ON bc.book_id = b.book_id "
+                + "WHERE bc.barcode = ?";
+
+        try (Connection conn = com.lbms.util.DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, barcode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    com.lbms.model.BookCopy copy = new com.lbms.model.BookCopy();
+                    copy.setCopyId(rs.getInt("copy_id"));
+                    copy.setBookId(rs.getInt("book_id"));
+                    copy.setBarcode(rs.getString("barcode"));
+                    copy.setStatus(rs.getString("status"));
+                    copy.setBookTitle(rs.getString("book_title"));
+
+                    // Lưu ý: Nếu model BookCopy của bạn chưa có trường bookTitle, 
+                    // bạn có thể in trực tiếp hoặc tạo thêm trường trong model.
+                    // Ở đây tôi giả định bạn dùng để hiển thị thông tin sách.
+                    return copy;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -16,69 +16,6 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
               rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <style>
-            .catalog-popup {
-                position: fixed;
-                inset: 0;
-                background: rgba(15, 23, 42, 0.55);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 999;
-                padding: 24px;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.25s ease;
-            }
-            .catalog-popup--visible {
-                opacity: 1;
-                pointer-events: all;
-            }
-            .catalog-popup__panel {
-                width: min(460px, 100%);
-                border-radius: 22px;
-                padding: 34px 30px 24px;
-                background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-                box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
-                border: 1px solid rgba(59, 130, 246, 0.35);
-                transform: translateY(-8px);
-            }
-            .catalog-popup__title {
-                font-size: 1.25rem;
-                letter-spacing: 0.3em;
-                text-transform: uppercase;
-                margin-bottom: 8px;
-                color: #0f172a;
-            }
-            .catalog-popup__message {
-                font-size: 1rem;
-                color: #1f2937;
-                margin-bottom: 22px;
-                line-height: 1.4;
-            }
-            .catalog-popup__actions {
-                display: flex;
-                justify-content: flex-end;
-                gap: 10px;
-            }
-            .catalog-popup__actions .btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-                letter-spacing: 0.08em;
-                border-radius: 12px;
-                border: none;
-                cursor: pointer;
-            }
-            .catalog-popup__actions .btn-primary {
-                background: linear-gradient(135deg, #0ea5e9, #2563eb);
-                color: #fff;
-            }
-            .catalog-popup__actions .btn-outline {
-                background: transparent;
-                border: 1px solid rgba(15, 23, 42, 0.2);
-                color: #0f172a;
-            }
-        </style>
     
     </head>
 
@@ -199,25 +136,6 @@
                     </c:forEach>
                 </div>
             </section>
-
-            <c:if test="${not empty param.cartSuccess || not empty param.cartError}">
-                <div id="catalog-popup" class="catalog-popup ${not empty param.cartError ? 'catalog-popup--error' : ''}">
-                    <div class="catalog-popup__panel">
-                        <div class="catalog-popup__title">
-                            <c:choose>
-                                <c:when test="${not empty param.cartError}">Lỗi giỏ hàng</c:when>
-                                <c:otherwise>Đã thêm vào giỏ hàng</c:otherwise>
-                            </c:choose>
-                        </div>
-                        <p class="catalog-popup__message">
-                            <c:out value="${not empty param.cartError ? param.cartError : param.cartSuccess}"/>
-                        </p>
-                        <div class="catalog-popup__actions">
-                            <button type="button" class="btn btn-outline" data-popup-close>Đóng</button>
-                        </div>
-                    </div>
-                </div>
-            </c:if>
 
             <section class="catalog-results container">
                 <div class="results-info">
@@ -433,29 +351,6 @@
                                                                 }
                                                             });
                                                         }
-        </script>
-        <script>
-            (function () {
-                const popup = document.getElementById('catalog-popup');
-                if (!popup) {
-                    return;
-                }
-                const closeBtn = popup.querySelector('[data-popup-close]');
-
-                const hidePopup = () => popup.classList.remove('catalog-popup--visible');
-
-                popup.classList.add('catalog-popup--visible');
-
-                popup.addEventListener('click', (event) => {
-                    if (event.target === popup) {
-                        hidePopup();
-                    }
-                });
-
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', hidePopup);
-                }
-            })();
         </script>
     </body>
 

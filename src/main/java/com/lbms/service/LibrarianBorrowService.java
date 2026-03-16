@@ -105,9 +105,9 @@ public class LibrarianBorrowService {
             try {
                 String bookTitle = "N/A";
                 String userName = "N/A";
-                String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br " +
-                        "JOIN Book b ON br.book_id = b.book_id " +
-                        "JOIN [User] u ON br.user_id = u.user_id WHERE br.id = ?";
+                String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br "
+                        + "JOIN Book b ON br.book_id = b.book_id "
+                        + "JOIN [User] u ON br.user_id = u.user_id WHERE br.id = ?";
                 try (PreparedStatement psInfo = c.prepareStatement(sqlInfo)) {
                     psInfo.setLong(1, borrowId);
                     try (ResultSet rs = psInfo.executeQuery()) {
@@ -401,7 +401,7 @@ public class LibrarianBorrowService {
         String note = trimmedNote != null ? trimmedNote : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
                 "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
-                        + note);
+                + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
@@ -418,5 +418,15 @@ public class LibrarianBorrowService {
         }
         long lateDays = java.time.temporal.ChronoUnit.DAYS.between(dueDate, returnDate);
         return BorrowService.FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
+    }
+
+    public com.lbms.model.BookCopy getBookByBarcode(String barcode) {
+        try {
+            // Gọi hàm vừa tạo ở DAO
+            return libDAO.findCopyByBarcode(barcode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

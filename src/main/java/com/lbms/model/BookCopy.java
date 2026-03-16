@@ -10,12 +10,21 @@ public class BookCopy {
     private String status;
     private String condition;
     private LocalDateTime createdAt;
+    private String bookTitle;
 
     public BookCopy() {
     }
 
     public int getCopyId() {
         return copyId;
+    }
+
+    public String getBookTitle() {
+        return bookTitle;
+    }
+
+    public void setBookTitle(String bookTitle) {
+        this.bookTitle = bookTitle;
     }
 
     public void setCopyId(int copyId) {
