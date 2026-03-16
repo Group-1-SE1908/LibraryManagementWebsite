@@ -145,62 +145,44 @@ CREATE INDEX IX_RenewalRequest_BorrowId ON renewal_requests (borrow_id);
 CREATE INDEX IX_RenewalRequest_Status ON renewal_requests (status);
 GO
 
--- Bảng 8: Đặt trước sách (Reservations)
+-- Bảng 8: Đặt trước sách
 CREATE TABLE reservations (
-                              id BIGINT IDENTITY(1,1) PRIMARY KEY,
-                              user_id INT NOT NULL,
-                              book_id INT NOT NULL,
-                              status VARCHAR(20) DEFAULT 'WAITING',
-                              created_at DATETIME DEFAULT GETDATE(),
+                              id             BIGINT IDENTITY(1,1) PRIMARY KEY,
+                              user_id        INT           NOT NULL,
+                              book_id        INT           NOT NULL,
+                              status         VARCHAR(20)   NOT NULL DEFAULT 'WAITING',
+                              queue_position INT           NULL,
+                              note           NVARCHAR(255) NULL,
+                              notified_at    DATETIME      NULL,
+                              expired_at     DATETIME      NULL,
+                              created_at     DATETIME      NOT NULL DEFAULT GETDATE(),
+                              updated_at     DATETIME      NULL,
                               CONSTRAINT FK_Res_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
                               CONSTRAINT FK_Res_Book FOREIGN KEY (book_id) REFERENCES Book(book_id)
 );
 GO
--- =============================================
--- CẬP NHẬT BẢNG reservations (phiên bản mới)
--- =============================================
 
-
-
-
--- Xóa bảng cũ nếu tồn tại
-IF OBJECT_ID('reservations', 'U') IS NOT NULL
-DROP TABLE reservations;
+CREATE INDEX IX_Res_UserId ON reservations (user_id);
+CREATE INDEX IX_Res_BookId ON reservations (book_id);
+CREATE INDEX IX_Res_Status  ON reservations (status);
 GO
 
-CREATE TABLE reservations (
-                              id            BIGINT IDENTITY(1,1) PRIMARY KEY,
-                              user_id       INT            NOT NULL,
-                              book_id       INT            NOT NULL,
-                              status        VARCHAR(20)    NOT NULL DEFAULT 'WAITING',
-    -- WAITING   : đang chờ sách được trả
-    -- AVAILABLE : sách đã có, đang chờ member đến lấy
-    -- BORROWED  : member đã mượn sau khi reserve
-    -- CANCELLED : member tự hủy
-    -- EXPIRED   : quá hạn không đến lấy
-                              note          NVARCHAR(255)  NULL,          -- ghi chú thêm nếu cần
-                              notified_at   DATETIME       NULL,          -- thời điểm hệ thống gửi thông báo "sách đã có"
-                              expired_at    DATETIME       NULL,          -- hạn cuối member phải đến lấy (set khi status -> AVAILABLE)
-                              created_at    DATETIME       NOT NULL DEFAULT GETDATE(),
-                              updated_at    DATETIME       NULL,
-
-                              CONSTRAINT FK_Res_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
-                              CONSTRAINT FK_Res_Book FOREIGN KEY (book_id) REFERENCES Book(book_id),
-
-    -- Mỗi member chỉ được reserve 1 lần cho 1 cuốn sách (khi đang WAITING/AVAILABLE)
-                              CONSTRAINT UQ_Res_User_Book UNIQUE (user_id, book_id)
+-- Bảng thông báo
+CREATE TABLE notifications (
+                               id         BIGINT IDENTITY(1,1) PRIMARY KEY,
+                               user_id    INT            NOT NULL,
+                               type       VARCHAR(50)    NOT NULL,
+                               title      NVARCHAR(255)  NOT NULL,
+                               message    NVARCHAR(1000) NOT NULL,
+                               is_read    BIT            NOT NULL DEFAULT 0,
+                               created_at DATETIME       NOT NULL DEFAULT GETDATE(),
+                               CONSTRAINT FK_Notif_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
 );
 GO
 
--- Index hỗ trợ query theo user và status
-CREATE INDEX IX_Res_UserId   ON reservations (user_id);
-CREATE INDEX IX_Res_BookId   ON reservations (book_id);
-CREATE INDEX IX_Res_Status   ON reservations (status);
+CREATE INDEX IX_Notif_UserId ON notifications (user_id);
+CREATE INDEX IX_Notif_IsRead ON notifications (user_id, is_read);
 GO
-
-PRINT 'Table reservations updated successfully.';
-GO
-
 -- Bảng 8: Giỏ hàng (Cart)
 CREATE TABLE Cart (
                       cart_id BIGINT IDENTITY(1,1) PRIMARY KEY,
