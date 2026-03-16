@@ -16,6 +16,7 @@ public class LibrarianBorrowService {
     private final LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
+    private final ReservationService reservationService = new ReservationService();
 
     public BigDecimal returnBook(long borrowId, String inputBarcode) throws SQLException {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
@@ -91,6 +92,13 @@ public class LibrarianBorrowService {
                 BigDecimal fineAmount = calculateFine(dueDate, returnDate);
 
                 c.commit();
+                // Gọi ngoài transaction để tránh deadlock
+                try {
+                    reservationService.onBookReturned(bookId);
+                } catch (Exception e) {
+                    // Chỉ log, không làm hỏng luồng trả sách
+                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId + ": " + e.getMessage());
+                }
                 return fineAmount;
             } catch (Exception e) {
                 c.rollback();
@@ -105,9 +113,9 @@ public class LibrarianBorrowService {
             try {
                 String bookTitle = "N/A";
                 String userName = "N/A";
-                String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br " +
-                        "JOIN Book b ON br.book_id = b.book_id " +
-                        "JOIN [User] u ON br.user_id = u.user_id WHERE br.id = ?";
+                String sqlInfo = "SELECT b.title, u.full_name FROM borrow_records br "
+                        + "JOIN Book b ON br.book_id = b.book_id "
+                        + "JOIN [User] u ON br.user_id = u.user_id WHERE br.id = ?";
                 try (PreparedStatement psInfo = c.prepareStatement(sqlInfo)) {
                     psInfo.setLong(1, borrowId);
                     try (ResultSet rs = psInfo.executeQuery()) {
@@ -392,6 +400,13 @@ public class LibrarianBorrowService {
             }
         }
 
+
+        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
+        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
+        String note = trimmedNote != null ? trimmedNote : "Không có lý do";
+        logDAO.addActivityLog((int) staffId,
+                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
+                + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
@@ -408,5 +423,15 @@ public class LibrarianBorrowService {
         }
         long lateDays = java.time.temporal.ChronoUnit.DAYS.between(dueDate, returnDate);
         return BorrowService.FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
+    }
+
+    public com.lbms.model.BookCopy getBookByBarcode(String barcode) {
+        try {
+            // Gọi hàm vừa tạo ở DAO
+            return libDAO.findCopyByBarcode(barcode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

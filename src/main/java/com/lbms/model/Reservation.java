@@ -6,14 +6,15 @@ public class Reservation {
     private long id;
     private int userId;
     private int bookId;
-    private String status;      // WAITING | AVAILABLE | BORROWED | CANCELLED | EXPIRED
+    private String status;          // WAITING | AVAILABLE | BORROWED | CANCELLED | EXPIRED
     private String note;
     private Timestamp notifiedAt;
     private Timestamp expiredAt;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private Integer queuePosition;  // Vị trí trong hàng chờ (null nếu không còn active)
 
-
+    // Join fields
     private String bookTitle;
     private String bookAuthor;
     private String bookImage;
@@ -27,7 +28,34 @@ public class Reservation {
         this.status = "WAITING";
     }
 
-    // ── Getters & Setters ──────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    /** Kiểm tra reservation còn hạn hay không */
+    public boolean isExpired() {
+        return expiredAt != null && expiredAt.before(new java.util.Date());
+    }
+
+    /** Số ngày còn lại đến hạn lấy sách (âm = đã quá hạn) */
+    public long getDaysUntilExpiry() {
+        if (expiredAt == null) return Long.MAX_VALUE;
+        long diff = expiredAt.getTime() - System.currentTimeMillis();
+        return diff / (1000 * 60 * 60 * 24);
+    }
+
+    /** Label tiếng Việt cho status */
+    public String getStatusLabel() {
+        if (status == null) return "";
+        return switch (status) {
+            case "WAITING"   -> "Đang chờ";
+            case "AVAILABLE" -> "Sẵn sàng nhận";
+            case "BORROWED"  -> "Đã mượn";
+            case "CANCELLED" -> "Đã hủy";
+            case "EXPIRED"   -> "Hết hạn";
+            default          -> status;
+        };
+    }
+
+    // ── Getters & Setters ─────────────────────────────────────────────────
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
@@ -55,6 +83,9 @@ public class Reservation {
 
     public Timestamp getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public Integer getQueuePosition() { return queuePosition; }
+    public void setQueuePosition(Integer queuePosition) { this.queuePosition = queuePosition; }
 
     public String getBookTitle() { return bookTitle; }
     public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }

@@ -99,7 +99,7 @@
             flex-wrap: wrap;
             gap: 10px;
             margin: 0 0 24px;
-            justify-content: flex-start;
+            justify-content: center;
         }
 
         .history-filter__pill {
@@ -125,11 +125,13 @@
 
         .history-stack {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(3, minmax(220px, 1fr));
             grid-auto-rows: minmax(520px, auto);
             gap: 24px;
             align-items: stretch;
             align-content: stretch;
+            justify-content: center;
+            justify-items: center;
         }
 
         @media (max-width: 1100px) {
@@ -157,6 +159,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             box-shadow: 0 35px 60px rgba(15, 23, 42, 0.15), 0 15px 25px rgba(15, 23, 42, 0.08);
             align-self: stretch;
+            width: min(360px, 100%);
         }
 
         .history-card:hover {
