@@ -22,41 +22,41 @@ import java.util.List;
 import java.util.Locale;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive",
-    "/staff/borrowlibrary/verifyData",
-    "/staff/renewal",
-    "/staff/renewal/approve",
-    "/staff/renewal/reject",
-    "/staff/renewal/view",
-    "/staff/borrowlibrary/ship_fee",
-    "/staff/borrowlibrary/ship_confirm",
-    "/admin/borrowlibrary",
-    "/admin/borrowlibrary/approve",
-    "/admin/borrowlibrary/reject",
-    "/admin/borrowlibrary/return",
-    "/admin/borrowlibrary/detail",
-    "/admin/borrowlibrary/inperson",
-    "/admin/borrowlibrary/receive",
-    "/admin/borrowlibrary/verifyData",
-    "/admin/renewal",
-    "/admin/renewal/approve",
-    "/admin/renewal/reject",
-    "/admin/renewal/view",
-    "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm",
-    "/admin/books",
-    "/admin/books/approve",
-    "/admin/books/reject",
-    "/admin/books/return",
-    "/admin/books/detail",
-    "/admin/books/inperson",
-    "/admin/books/receive"
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/staff/borrowlibrary/verifyData",
+        "/staff/renewal",
+        "/staff/renewal/approve",
+        "/staff/renewal/reject",
+        "/staff/renewal/view",
+        "/staff/borrowlibrary/ship_fee",
+        "/staff/borrowlibrary/ship_confirm",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/borrowlibrary/verifyData",
+        "/admin/renewal",
+        "/admin/renewal/approve",
+        "/admin/renewal/reject",
+        "/admin/renewal/view",
+        "/admin/borrowlibrary/ship_fee",
+        "/admin/borrowlibrary/ship_confirm",
+        "/admin/books",
+        "/admin/books/approve",
+        "/admin/books/reject",
+        "/admin/books/return",
+        "/admin/books/detail",
+        "/admin/books/inperson",
+        "/admin/books/receive"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -170,7 +170,6 @@ public class LibrarianBorrowController extends HttpServlet {
             } else if ("import".equals(action)) {
                 req.getRequestDispatcher("book_restock.jsp").forward(req, resp);
                 return;
-                
 
             } else if ("verifyData".equals(action)) {
                 try {
@@ -335,7 +334,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu. Lý do: " + reason);
 
             } else if ("inperson".equals(action)) {
-//                long userId = Long.parseLong(req.getParameter("userId"));
+                // long userId = Long.parseLong(req.getParameter("userId"));
                 String email = req.getParameter("email");
                 String rawBarcodes = req.getParameter("barcodes");
 
@@ -364,7 +363,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash", "Đã cho mượn thành công cho độc giả " + user.getFullName());
 
                 resp.sendRedirect(req.getContextPath() + redirectBase);
-                
+
                 return;
             } else if ("ship_confirm".equals(action)) {
                 String groupCode = req.getParameter("groupCode");
