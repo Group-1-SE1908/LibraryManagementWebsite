@@ -89,9 +89,56 @@
 
     <section class="wallet-history">
         <h3><fmt:message key="wallet.history.title"/></h3>
-        <div class="wallet-history-empty">
-            <p><fmt:message key="wallet.history.empty"/></p>
-        </div>
+        <c:choose>
+            <c:when test="${not empty walletHistory}">
+                <ul class="wallet-history-list">
+                    <c:forEach var="entry" items="${walletHistory}">
+                        <li class="wallet-history-entry">
+                            <div class="wallet-history-entry__header">
+                                <div>
+                                    <div class="wallet-history-entry__title">
+                                        <c:choose>
+                                            <c:when test="${entry.type == 'TOPUP'}">
+                                                <fmt:message key="wallet.history.entry.topup">
+                                                    <fmt:param value="${entry.source}"/>
+                                                </fmt:message>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <fmt:message key="wallet.history.entry.other"/>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <c:if test="${not empty entry.description}">
+                                        <p class="wallet-history-entry__context">${entry.description}</p>
+                                    </c:if>
+                                </div>
+                                <span class="wallet-history-entry__amount ${entry.credit ? 'wallet-history-entry__amount--credit' : 'wallet-history-entry__amount--debit'}">
+                                    <fmt:formatNumber value="${entry.amount}" type="number" groupingUsed="true" maxFractionDigits="0"/>
+                                    <span class="wallet-history-entry__currency">₫</span>
+                                </span>
+                            </div>
+                            <div class="wallet-history-entry__meta">
+                                <span class="wallet-history-entry__date">
+                                    <fmt:formatDate value="${entry.createdAt}" pattern="dd MMM yyyy, HH:mm"/>
+                                </span>
+                                <c:if test="${not empty entry.reference}">
+                                    <span class="wallet-history-entry__reference">
+                                        <fmt:message key="wallet.history.entry.reference">
+                                            <fmt:param value="${entry.reference}"/>
+                                        </fmt:message>
+                                    </span>
+                                </c:if>
+                            </div>
+                        </li>
+                    </c:forEach>
+                </ul>
+            </c:when>
+            <c:otherwise>
+                <div class="wallet-history-empty">
+                    <p><fmt:message key="wallet.history.empty"/></p>
+                </div>
+            </c:otherwise>
+        </c:choose>
     </section>
 </main>
 

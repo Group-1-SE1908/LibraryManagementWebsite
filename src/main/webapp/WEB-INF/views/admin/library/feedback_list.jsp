@@ -1,469 +1,255 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý phản hồi - LBMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
-    <style>
-        body { display: flex; flex-direction: column; min-height: 100vh; background: #f8fafc; }
-        main { flex: 1; }
-        .container-page { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .panel { background: white; padding: 28px; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05); }
-        h2 { margin-bottom: 6px; font-size: 22px; }
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+    <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+        <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+            <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+                <!DOCTYPE html>
+                <html lang="vi">
 
-        /* MAIN TABS */
-        .tab-bar {
-            display: flex; gap: 8px; margin: 20px 0 0;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .tab-btn {
-            padding: 9px 20px; border-radius: 8px 8px 0 0;
-            border: 1.5px solid transparent; border-bottom: none;
-            background: transparent; cursor: pointer;
-            font-weight: 600; font-size: 13px; color: #6b7280;
-            text-decoration: none; transition: 0.2s;
-            position: relative; bottom: -2px;
-        }
-        .tab-btn:hover { color: #0b57d0; background: #f0f4ff; }
-        .tab-btn.active { background: white; color: #0b57d0; border-color: #e5e7eb; border-bottom-color: white; }
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Quản lý phản hồi - LBMS</title>
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
 
-        .badge {
-            display: inline-block; background: #ef4444; color: white;
-            border-radius: 99px; font-size: 11px; font-weight: 700;
-            padding: 1px 7px; margin-left: 6px; vertical-align: middle;
-        }
+                    <style>
+                        body {
+                            display: flex;
+                            flex-direction: column;
+                            min-height: 100vh;
+                            background: #f8fafc;
+                        }
 
-        .tab-content { display: none; padding-top: 24px; }
-        .tab-content.active { display: block; }
+                        main {
+                            flex: 1;
+                        }
 
-        /* SUB FILTER (dùng cho tab reports) */
-        .sub-filter-bar {
-            display: flex; gap: 8px; margin-bottom: 20px;
-        }
-        .sub-filter-btn {
-            padding: 6px 16px; border-radius: 20px;
-            border: 1.5px solid #e5e7eb; background: white;
-            cursor: pointer; font-weight: 600; font-size: 12px;
-            color: #6b7280; text-decoration: none; transition: 0.2s;
-        }
-        .sub-filter-btn:hover { border-color: #0b57d0; color: #0b57d0; }
-        .sub-filter-btn.active { background: #0b57d0; color: white; border-color: #0b57d0; }
+                        .container-page {
+                            max-width: 1100px;
+                            margin: 40px auto;
+                            padding: 0 20px;
+                        }
 
-        /* FEEDBACK ROWS */
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .filter-btn {
-            padding: 8px 18px; border-radius: 20px;
-            border: 1.5px solid #e5e7eb; background: white;
-            cursor: pointer; font-weight: 600; font-size: 13px;
-            transition: 0.2s; text-decoration: none; color: #374151;
-        }
-        .filter-btn:hover { border-color: #0b57d0; color: #0b57d0; }
-        .filter-btn.active { background: #0b57d0; color: white; border-color: #0b57d0; }
+                        .panel {
+                            background: white;
+                            padding: 28px;
+                            border-radius: 16px;
+                            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+                        }
 
-        .feedback-row {
-            display: flex; justify-content: space-between; gap: 20px;
-            padding: 18px 0; border-bottom: 1px solid #f1f5f9;
-        }
-        .feedback-row:last-child { border-bottom: none; }
-        .feedback-content { flex: 1; }
-        .feedback-title { font-weight: 600; font-size: 15px; }
-        .feedback-meta { font-size: 12px; color: #9ca3af; margin-top: 6px; }
-        .feedback-text { margin-top: 10px; color: #4b5563; line-height: 1.6; }
-        .star { color: #fbbf24; font-size: 13px; letter-spacing: 2px; margin-top: 6px; }
-        .feedback-actions { display: flex; gap: 10px; align-items: flex-start; }
+                        h2 {
+                            margin-bottom: 6px;
+                            font-size: 22px;
+                        }
 
-        /* REPORT TABLE */
-        .report-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .report-table th {
-            text-align: left; padding: 10px 14px; background: #f8fafc;
-            color: #6b7280; font-weight: 600; font-size: 12px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .report-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-        .report-table tr:last-child td { border-bottom: none; }
-        .report-table tr:hover td { background: #fafbff; }
+                        .filter-bar {
+                            display: flex;
+                            gap: 10px;
+                            margin: 20px 0 30px;
+                        }
 
-        .comment-box {
-            background: #f8fafc; border-left: 3px solid #e5e7eb;
-            padding: 8px 12px; border-radius: 4px;
-            color: #374151; font-size: 13px; line-height: 1.5; max-width: 250px;
-        }
-        .comment-author { font-size: 12px; color: #9ca3af; margin-top: 4px; }
-        .reporter-name { font-weight: 600; color: #111827; }
+                        .filter-btn {
+                            padding: 8px 18px;
+                            border-radius: 20px;
+                            border: 1.5px solid #e5e7eb;
+                            background: white;
+                            cursor: pointer;
+                            font-weight: 600;
+                            font-size: 13px;
+                            transition: 0.2s;
+                            text-decoration: none;
+                            color: #374151;
+                        }
 
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-        .status-PENDING  { background: #fef3c7; color: #d97706; }
-        .status-RESOLVED { background: #d1fae5; color: #059669; }
-        .status-IGNORED  { background: #f3f4f6; color: #6b7280; }
+                        .filter-btn:hover {
+                            border-color: #0b57d0;
+                            color: #0b57d0;
+                        }
 
-        .reason-tag {
-            display: inline-block; background: #fef2f2; color: #dc2626;
-            border: 1px solid #fecaca; border-radius: 6px;
-            padding: 3px 10px; font-size: 12px; font-weight: 600;
-        }
-        .desc-text { font-size: 12px; color: #6b7280; margin-top: 4px; font-style: italic; }
+                        .filter-btn.active {
+                            background: #0b57d0;
+                            color: white;
+                            border-color: #0b57d0;
+                        }
 
-        /* BUTTONS */
-        .btn {
-            background: #0b57d0; color: white; padding: 7px 13px;
-            border-radius: 8px; text-decoration: none; font-size: 12px;
-            font-weight: 600; transition: 0.2s; border: none;
-            cursor: pointer; white-space: nowrap; display: inline-block;
-        }
-        .btn:hover { background: #0946a8; }
-        .btn-danger { background: white; color: #ef4444; border: 1px solid #ef4444; }
-        .btn-danger:hover { background: #ef4444; color: white; }
-        .btn-muted { background: white; color: #6b7280; border: 1px solid #d1d5db; }
-        .btn-muted:hover { background: #6b7280; color: white; }
-        .btn-orange { background: white; color: #f97316; border: 1px solid #f97316; }
-        .btn-orange:hover { background: #f97316; color: white; }
+                        .feedback-row {
+                            display: flex;
+                            justify-content: space-between;
+                            gap: 20px;
+                            padding: 18px 0;
+                            border-bottom: 1px solid #f1f5f9;
+                        }
 
-        .action-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+                        .feedback-row:last-child {
+                            border-bottom: none;
+                        }
 
-        /* LOCK DROPDOWN */
-        .lock-wrapper { position: relative; display: inline-block; }
-        .lock-dropdown {
-            display: none; position: absolute; top: calc(100% + 6px); left: 0;
-            background: white; border: 1px solid #e5e7eb;
-            border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            z-index: 100; min-width: 200px; padding: 8px 0;
-        }
-        .lock-wrapper:hover .lock-dropdown,
-        .lock-wrapper.open .lock-dropdown { display: block; }
-        .lock-option {
-            display: block; padding: 9px 16px; font-size: 13px;
-            color: #374151; cursor: pointer; transition: 0.15s;
-            border: none; background: none; width: 100%; text-align: left;
-        }
-        .lock-option:hover { background: #f0f4ff; color: #0b57d0; }
-        .lock-option-label {
-            font-size: 11px; color: #9ca3af; padding: 6px 16px 2px;
-            text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
-        }
-        .lock-divider { border: none; border-top: 1px solid #f1f5f9; margin: 4px 0; }
+                        .feedback-content {
+                            flex: 1;
+                        }
 
-        .empty-state { text-align: center; color: #9ca3af; padding: 50px 0; }
-    </style>
-</head>
-<body>
+                        .feedback-title {
+                            font-weight: 600;
+                            font-size: 15px;
+                        }
 
-<jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+                        .feedback-meta {
+                            font-size: 12px;
+                            color: #9ca3af;
+                            margin-top: 6px;
+                        }
 
-<main>
-    <div class="container-page">
-        <div class="panel">
+                        .feedback-text {
+                            margin-top: 10px;
+                            color: #4b5563;
+                            line-height: 1.6;
+                        }
 
-            <h2>Quản lý phản hồi sách</h2>
-            <p style="color:#6b7280;">Quản lý bình luận và báo cáo từ độc giả.</p>
+                        .star {
+                            color: #fbbf24;
+                            font-size: 13px;
+                            letter-spacing: 2px;
+                            margin-top: 6px;
+                        }
 
-            <%-- Đếm badge --%>
-            <c:set var="pendingCount" value="${0}"/>
-            <c:forEach var="r" items="${reports}">
-                <c:if test="${r.status eq 'PENDING'}">
-                    <c:set var="pendingCount" value="${pendingCount + 1}"/>
-                </c:if>
-            </c:forEach>
-            <c:set var="unrepliedCount" value="${not empty comments ? comments.size() : 0}"/>
+                        .feedback-actions {
+                            display: flex;
+                            gap: 10px;
+                            align-items: flex-start;
+                        }
 
-            <!-- MAIN TAB BAR -->
-            <div class="tab-bar">
-                <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=${empty filter ? 'all' : filter}"
-                   class="tab-btn ${empty activeTab || activeTab eq 'feedback' ? 'active' : ''}">
-                    Phản hồi cần trả lời
-                    <c:if test="${filter eq 'unreplied' && unrepliedCount > 0}">
-                        <span class="badge">${unrepliedCount}</span>
-                    </c:if>
-                </a>
-                <a href="${pageContext.request.contextPath}/admin/feedback?tab=reports"
-                   class="tab-btn ${activeTab eq 'reports' ? 'active' : ''}">
-                    Bình luận bị báo cáo
-                    <c:if test="${pendingCount > 0}">
-                        <span class="badge">${pendingCount}</span>
-                    </c:if>
-                </a>
-            </div>
+                        .btn {
+                            background: #0b57d0;
+                            color: white;
+                            padding: 8px 14px;
+                            border-radius: 8px;
+                            text-decoration: none;
+                            font-size: 13px;
+                            font-weight: 600;
+                            transition: 0.2s;
+                            border: none;
+                            cursor: pointer;
+                        }
 
-            <!-- ===== TAB 1: PHẢN HỒI CẦN TRẢ LỜI ===== -->
-            <div id="tab-feedback"
-                 class="tab-content ${empty activeTab || activeTab eq 'feedback' ? 'active' : ''}">
+                        .btn:hover {
+                            background: #0946a8;
+                        }
 
-                <div class="filter-bar">
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=all"
-                       class="filter-btn ${filter eq 'all' || empty filter ? 'active' : ''}">Tất cả</a>
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=unreplied"
-                       class="filter-btn ${filter eq 'unreplied' ? 'active' : ''}">Chưa phản hồi</a>
-                    <a href="${pageContext.request.contextPath}/admin/feedback?tab=feedback&filter=replied"
-                       class="filter-btn ${filter eq 'replied' ? 'active' : ''}">Đã phản hồi</a>
-                </div>
+                        .btn-delete {
+                            background: white;
+                            color: #ef4444;
+                            border: 1px solid #ef4444;
+                        }
 
-                <c:choose>
-                    <c:when test="${not empty comments}">
-                        <c:forEach var="cmt" items="${comments}">
-                            <div class="feedback-row">
-                                <div class="feedback-content">
-                                    <div class="feedback-title">#${cmt.commentId} — ${cmt.fullName}</div>
-                                    <div class="star">
-                                        <c:forEach begin="1" end="${cmt.rating}">★</c:forEach>
-                                        <c:forEach begin="${cmt.rating + 1}" end="5"><span style="color:#e5e7eb;">★</span></c:forEach>
-                                    </div>
-                                    <div class="feedback-text">${cmt.content}</div>
-                                    <div class="feedback-meta">
-                                        Sách ID: ${cmt.bookId} •
-                                        <fmt:formatDate value="${cmt.createdAt}" type="both" dateStyle="medium" timeStyle="short"/>
-                                    </div>
+                        .btn-delete:hover {
+                            background: #ef4444;
+                            color: white;
+                        }
+
+                        .empty-state {
+                            text-align: center;
+                            color: #9ca3af;
+                            padding: 50px 0;
+                        }
+                    </style>
+                </head>
+
+                <body>
+
+                    <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+                    <c:set var="defaultFeedbackBase"
+                        value="${fn:startsWith(pageContext.request.servletPath, '/admin/') ? '/admin/feedback' : '/staff/feedback'}" />
+                    <c:set var="feedbackBasePath"
+                        value="${not empty feedbackBasePath ? feedbackBasePath : defaultFeedbackBase}" />
+
+                    <main>
+                        <div class="container-page">
+                            <div class="panel">
+
+                                <h2>Quản lý phản hồi sách</h2>
+                                <p style="color:#6b7280;">Danh sách phản hồi (bình luận) từ độc giả.</p>
+
+                                <!-- Filter -->
+                                <div class="filter-bar">
+                                    <a href="${pageContext.request.contextPath}${feedbackBasePath}?action=list&filter=all"
+                                        class="filter-btn ${filter == 'all' || empty filter ? 'active' : ''}">
+                                        Tất cả
+                                    </a>
+
+                                    <a href="${pageContext.request.contextPath}${feedbackBasePath}?action=list&filter=unreplied"
+                                        class="filter-btn ${filter == 'unreplied' ? 'active' : ''}">
+                                        Chưa phản hồi
+                                    </a>
+
+                                    <a href="${pageContext.request.contextPath}${feedbackBasePath}?action=list&filter=replied"
+                                        class="filter-btn ${filter == 'replied' ? 'active' : ''}">
+                                        Đã phản hồi
+                                    </a>
                                 </div>
-                                <div class="feedback-actions">
-                                    <a href="${pageContext.request.contextPath}/admin/feedback?action=view&id=${cmt.commentId}" class="btn">Xem & Trả lời</a>
-                                    <form action="${pageContext.request.contextPath}/admin/feedback" method="post"
-                                          onsubmit="return confirm('Xóa phản hồi này?');">
-                                        <input type="hidden" name="action" value="delete"/>
-                                        <input type="hidden" name="id" value="${cmt.commentId}"/>
-                                        <button type="submit" class="btn btn-danger">Xóa</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="empty-state">Không có phản hồi nào.</div>
-                    </c:otherwise>
-                </c:choose>
-            </div>
 
-            <!-- ===== TAB 2: BÌNH LUẬN BỊ BÁO CÁO ===== -->
-            <div id="tab-reports"
-                 class="tab-content ${activeTab eq 'reports' ? 'active' : ''}">
+                                <c:choose>
+                                    <c:when test="${not empty comments}">
+                                        <c:forEach var="cmt" items="${comments}">
 
-                <!-- SUB FILTER: Chưa xử lý / Đã xử lý -->
-                <div class="sub-filter-bar">
-                    <a href="#" class="sub-filter-btn active"
-                       onclick="filterReports('pending', this); return false;">
-                        Chưa xử lý
-                        <c:if test="${pendingCount > 0}">
-                            <span class="badge" style="background:#f97316;">${pendingCount}</span>
-                        </c:if>
-                    </a>
-                    <a href="#" class="sub-filter-btn"
-                       onclick="filterReports('done', this); return false;">
-                        Đã xử lý
-                    </a>
-                </div>
+                                            <div class="feedback-row">
+                                                <div class="feedback-content">
 
-                <c:choose>
-                    <c:when test="${not empty reports}">
-                        <table class="report-table">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Người báo cáo</th>
-                                <th>Bình luận bị báo cáo</th>
-                                <th>Lý do</th>
-                                <th>Thời gian</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <c:forEach var="report" items="${reports}">
-                                <tr class="report-row"
-                                    data-status="${report.status}">
+                                                    <div class="feedback-title">
+                                                        #${cmt.commentId} — ${cmt.fullName}
+                                                    </div>
 
-                                    <td style="color:#9ca3af; font-size:13px;">#${report.reportId}</td>
+                                                    <div class="star">
+                                                        <c:forEach begin="1" end="${cmt.rating}">★</c:forEach>
+                                                        <c:forEach begin="${cmt.rating + 1}" end="5">
+                                                            <span style="color:#e5e7eb;">★</span>
+                                                        </c:forEach>
+                                                    </div>
 
-                                    <td><div class="reporter-name">${report.reporterFullName}</div></td>
+                                                    <div class="feedback-text">
+                                                        ${cmt.content}
+                                                    </div>
 
-                                    <td>
-                                        <div class="comment-box">${report.commentContent}</div>
-                                        <div class="comment-author">Bởi: ${report.commentUserFullName}</div>
-                                    </td>
-
-                                    <td>
-                                    <span class="reason-tag">
-                                        <c:choose>
-                                            <c:when test="${report.reason eq 'Harassment'}">Quấy rối</c:when>
-                                            <c:when test="${report.reason eq 'Spam'}">Spam</c:when>
-                                            <c:when test="${report.reason eq 'Hate Speech'}">Ngôn từ thù địch</c:when>
-                                            <c:when test="${report.reason eq 'False Information'}">Thông tin sai lệch</c:when>
-                                            <c:when test="${report.reason eq 'Inappropriate Content'}">Nội dung không phù hợp</c:when>
-                                            <c:when test="${report.reason eq 'Violence'}">Bạo lực</c:when>
-                                            <c:otherwise>${report.reason}</c:otherwise>
-                                        </c:choose>
-                                    </span>
-                                        <c:if test="${not empty report.description}">
-                                            <div class="desc-text">${report.description}</div>
-                                        </c:if>
-                                    </td>
-
-                                    <td style="font-size:13px; color:#6b7280; white-space:nowrap;">
-                                        <fmt:formatDate value="${report.reportTime}" pattern="dd/MM/yyyy HH:mm"/>
-                                    </td>
-
-                                    <td>
-                                    <span class="status-badge status-${report.status}">
-                                        <c:choose>
-                                            <c:when test="${report.status eq 'PENDING'}">Chờ xử lý</c:when>
-                                            <c:when test="${report.status eq 'RESOLVED'}">Đã xử lý</c:when>
-                                            <c:when test="${report.status eq 'IGNORED'}">Bỏ qua</c:when>
-                                            <c:otherwise>${report.status}</c:otherwise>
-                                        </c:choose>
-                                    </span>
-                                            <%-- Chi tiết hành động xử lý --%>
-                                        <c:if test="${not empty report.description && (report.status eq 'RESOLVED' || report.status eq 'IGNORED')}">
-                                            <div style="font-size:11px; color:#6b7280; margin-top:5px; font-style:italic; max-width:160px;">
-                                                ↳ ${report.description}
-                                            </div>
-                                        </c:if>
-                                    </td>
-
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${report.status eq 'PENDING'}">
-                                                <div class="action-group">
-
-                                                    <!-- Xóa bình luận -->
-                                                    <form action="${pageContext.request.contextPath}/admin/feedback"
-                                                          method="post"
-                                                          onsubmit="return confirm('Xóa bình luận này?');">
-                                                        <input type="hidden" name="action" value="deleteComment"/>
-                                                        <input type="hidden" name="reportId" value="${report.reportId}"/>
-                                                        <button type="submit" class="btn btn-danger">Xóa BL</button>
-                                                    </form>
-
-                                                    <!-- Bỏ qua -->
-                                                    <form action="${pageContext.request.contextPath}/admin/feedback"
-                                                          method="post">
-                                                        <input type="hidden" name="action" value="ignore"/>
-                                                        <input type="hidden" name="reportId" value="${report.reportId}"/>
-                                                        <button type="submit" class="btn btn-muted">Bỏ qua</button>
-                                                    </form>
-
-                                                    <!-- Khóa comment (dropdown) -->
-                                                    <div class="lock-wrapper" id="lock-${report.reportId}">
-                                                        <button type="button" class="btn btn-orange"
-                                                                onclick="toggleLock('lock-${report.reportId}')">
-                                                            🔒 Khóa comment
-                                                        </button>
-                                                        <div class="lock-dropdown">
-                                                            <div class="lock-option-label">Thời gian khóa</div>
-
-                                                            <form action="${pageContext.request.contextPath}/admin/feedback"
-                                                                  method="post"
-                                                                  onsubmit="return confirm('Khóa comment người dùng này 3 ngày và xóa toàn bộ comment cũ?');">
-                                                                <input type="hidden" name="action" value="lockComment"/>
-                                                                <input type="hidden" name="reportId" value="${report.reportId}"/>
-                                                                <input type="hidden" name="lockDays" value="3"/>
-                                                                <button type="submit" class="lock-option">🕒 3 ngày</button>
-                                                            </form>
-
-                                                            <form action="${pageContext.request.contextPath}/admin/feedback"
-                                                                  method="post"
-                                                                  onsubmit="return confirm('Khóa comment người dùng này 7 ngày và xóa toàn bộ comment cũ?');">
-                                                                <input type="hidden" name="action" value="lockComment"/>
-                                                                <input type="hidden" name="reportId" value="${report.reportId}"/>
-                                                                <input type="hidden" name="lockDays" value="7"/>
-                                                                <button type="submit" class="lock-option">🕒 7 ngày</button>
-                                                            </form>
-
-                                                            <hr class="lock-divider"/>
-
-                                                            <form action="${pageContext.request.contextPath}/admin/feedback"
-                                                                  method="post"
-                                                                  onsubmit="return confirm('Khóa comment người dùng này 30 ngày và xóa toàn bộ comment cũ?');">
-                                                                <input type="hidden" name="action" value="lockComment"/>
-                                                                <input type="hidden" name="reportId" value="${report.reportId}"/>
-                                                                <input type="hidden" name="lockDays" value="30"/>
-                                                                <button type="submit" class="lock-option" style="color:#ef4444;">🔴 30 ngày</button>
-                                                            </form>
-                                                        </div>
+                                                    <div class="feedback-meta">
+                                                        Sách ID: ${cmt.bookId} •
+                                                        <fmt:formatDate value="${cmt.createdAt}" type="both"
+                                                            dateStyle="medium" timeStyle="short" />
                                                     </div>
 
                                                 </div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span style="color:#9ca3af; font-size:12px;">—</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="empty-state">Không có báo cáo nào.</div>
-                    </c:otherwise>
-                </c:choose>
-            </div>
 
-        </div>
-    </div>
-</main>
+                                                <div class="feedback-actions">
+                                                    <a href="${pageContext.request.contextPath}${feedbackBasePath}?action=view&id=${cmt.commentId}"
+                                                        class="btn">
+                                                        Xem & Trả lời
+                                                    </a>
 
-<jsp:include page="/WEB-INF/views/footer.jsp"/>
+                                                    <form action="${pageContext.request.contextPath}${feedbackBasePath}"
+                                                        method="post" onsubmit="return confirm('Xóa phản hồi này?');">
 
-<script>
-    // ── Main tab switch (chỉ dùng khi click, không dùng sessionStorage) ──
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-' + tabName).classList.add('active');
-        const activeBtn = document.querySelector('.tab-btn[href*="tab=' + tabName + '"]');
-        if (activeBtn) activeBtn.classList.add('active');
-    }
+                                                        <input type="hidden" name="action" value="delete" />
+                                                        <input type="hidden" name="id" value="${cmt.commentId}" />
 
-    // ── Sub filter (Chưa xử lý / Đã xử lý) ──────────────────────
-    function filterReports(type, btn) {
-        const rows = document.querySelectorAll('.report-row');
-        rows.forEach(row => {
-            const status = row.dataset.status;
-            row.style.display = (type === 'pending')
-                ? (status === 'PENDING' ? '' : 'none')
-                : (status === 'RESOLVED' || status === 'IGNORED' ? '' : 'none');
-        });
-        document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
+                                                        <button type="submit" class="btn btn-delete">
+                                                            Xóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
 
-    // ── Lock dropdown toggle ──────────────────────────────────────
-    function toggleLock(id) {
-        const el = document.getElementById(id);
-        el.classList.toggle('open');
-    }
+                                        </c:forEach>
+                                    </c:when>
 
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.lock-wrapper')) {
-            document.querySelectorAll('.lock-wrapper').forEach(el => el.classList.remove('open'));
-        }
-    });
+                                    <c:otherwise>
+                                        <div class="empty-state">
+                                            Không có phản hồi nào.
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
 
-    // ── Init on load: đọc tab từ URL param ───────────────────────
-    window.addEventListener('DOMContentLoaded', function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlTab = urlParams.get('tab') || 'feedback';
+                            </div>
+                        </div>
+                    </main>
 
-        // Activate correct main tab
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        const tabEl = document.getElementById('tab-' + urlTab);
-        if (tabEl) tabEl.classList.add('active');
-        const tabBtn = document.querySelector('.tab-btn[href*="tab=' + urlTab + '"]');
-        if (tabBtn) tabBtn.classList.add('active');
+                    <jsp:include page="/WEB-INF/views/footer.jsp" />
 
-        // Init sub-filter cho tab reports
-        const subBtns = document.querySelectorAll('.sub-filter-btn');
-        if (subBtns.length >= 2) {
-            const hasPending = Array.from(document.querySelectorAll('.report-row'))
-                .some(r => r.dataset.status === 'PENDING');
-            const defaultFilter = hasPending ? 'pending' : 'done';
-            const targetBtn = defaultFilter === 'done' ? subBtns[1] : subBtns[0];
-            filterReports(defaultFilter, targetBtn);
-        }
-    });
-</script>
+                </body>
 
-</body>
-</html>
+                </html>

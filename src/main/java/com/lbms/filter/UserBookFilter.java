@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter(urlPatterns = { "/books/new", "/books/edit", "/books/delete", "/books/restock" })
-public class RoleFilter implements Filter {
+@WebFilter(urlPatterns = { "/books", "/books/*" })
+public class UserBookFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -25,16 +25,16 @@ public class RoleFilter implements Filter {
 
         HttpSession session = req.getSession(false);
         User currentUser = session == null ? null : (User) session.getAttribute("currentUser");
-        if (currentUser == null) {
-            resp.sendRedirect(req.getContextPath() + "/adminlogin");
-            return;
-        }
-
-        String role = currentUser.getRole() == null ? null : currentUser.getRole().getName();
-        boolean isLibrarian = "LIBRARIAN".equalsIgnoreCase(role);
-        if (!isLibrarian) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
+        if (currentUser != null && currentUser.getRole() != null) {
+            String role = currentUser.getRole().getName();
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                resp.sendRedirect(req.getContextPath() + "/admin");
+                return;
+            }
+            if ("LIBRARIAN".equalsIgnoreCase(role)) {
+                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+                return;
+            }
         }
 
         chain.doFilter(request, response);

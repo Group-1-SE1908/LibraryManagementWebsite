@@ -1,7 +1,6 @@
 package com.lbms.filter;
 
 import com.lbms.model.User;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,8 +13,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter(urlPatterns = { "/books/new", "/books/edit", "/books/delete", "/books/restock" })
-public class RoleFilter implements Filter {
+@WebFilter(urlPatterns = { "/staff/*" })
+public class StaffFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

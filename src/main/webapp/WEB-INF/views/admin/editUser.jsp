@@ -452,29 +452,19 @@
                                                                         </div>
                                                                     </div>
                                                         </div>
-                                                        <div class="grid-passwords">
-                                                            <div class="form-group">
-                                                                <label class="label">Mật khẩu mới</label>
-                                                                <div class="input-wrapper">
-                                                                    <div class="icon-box">
-                                                                        <span class="material-icons">lock</span>
-                                                                    </div>
-                                                                    <input type="password" name="password"
-                                                                        placeholder="Bỏ trống nếu không đổi"
-                                                                        class="input-field">
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <label class="label">Xác nhận</label>
-                                                                <div class="input-wrapper">
-                                                                    <div class="icon-box">
-                                                                        <span class="material-icons">lock_reset</span>
-                                                                    </div>
-                                                                    <input type="password" name="confirmPassword"
-                                                                        placeholder="Nhập lại mật khẩu"
-                                                                        class="input-field">
-                                                                </div>
-                                                            </div>
+                                                        <div class="form-group">
+                                                            <label class="label">Mật khẩu</label>
+
+                                                            <label style="display:flex;align-items:center;gap:8px;">
+                                                                <input type="checkbox" name="resetPassword"
+                                                                    value="true">
+                                                                Reset mật khẩu cho người dùng
+                                                            </label>
+
+                                                            <small style="color:#6B7280;">
+                                                                Nếu chọn, hệ thống sẽ tự tạo mật khẩu mới và gửi qua
+                                                                email.
+                                                            </small>
                                                         </div>
 
                                                         <div class="form-group">

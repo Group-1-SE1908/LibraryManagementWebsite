@@ -121,15 +121,14 @@ public class CommentReportDAO {
     // Get reports for a specific book (for librarians)
     public List<CommentReport> getReportsByBook(long bookId) throws SQLException {
         List<CommentReport> reports = new ArrayList<>();
-        String sql = "SELECT cr.*, u1.full_name AS reporter_full_name, c.content AS comment_content, u2.full_name AS comment_user_full_name "
-                +
-                "FROM CommentReport cr " +
-                "JOIN [User] u1 ON cr.reporter_user_id = u1.user_id " +
-                "JOIN Comment c ON cr.comment_id = c.comment_id " +
-                "JOIN [User] u2 ON c.user_id = u2.user_id " +
-                "JOIN Book b ON c.book_id = b.book_id " +
-                "WHERE b.book_id = ? " +
-                "ORDER BY cr.report_time DESC";
+        String sql = "SELECT cr.*, u1.full_name AS reporter_full_name, c.content AS comment_content, u2.full_name AS comment_user_full_name " +
+                     "FROM CommentReport cr " +
+                     "JOIN [User] u1 ON cr.reporter_user_id = u1.user_id " +
+                     "JOIN Comment c ON cr.comment_id = c.comment_id " +
+                     "JOIN [User] u2 ON c.user_id = u2.user_id " +
+                     "JOIN Book b ON c.book_id = b.book_id " +
+                     "WHERE b.book_id = ? " +
+                     "ORDER BY cr.report_time DESC";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@WebServlet(urlPatterns = { "/login", "/register", "/logout", "/verify-email" })
+@WebServlet(urlPatterns = { "/login", "/register", "/logout", "/verify-email", "/adminlogin" })
 public class AuthController extends HttpServlet {
 
     private AuthService authService;
@@ -48,6 +48,13 @@ public class AuthController extends HttpServlet {
                 }
                 req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
                 break;
+            case "/adminlogin":
+                if (isAuthenticated(req)) {
+                    redirectToHome(req, resp);
+                    return;
+                }
+                req.getRequestDispatcher("/WEB-INF/views/admin_login.jsp").forward(req, resp);
+                break;
             case "/verify-email":
                 handleVerifyGet(req, resp);
                 break;
@@ -65,7 +72,7 @@ public class AuthController extends HttpServlet {
         String path = req.getServletPath();
         req.setCharacterEncoding("UTF-8");
 
-        if (("/login".equals(path) || "/register".equals(path)) && isAuthenticated(req)) {
+        if (("/login".equals(path) || "/register".equals(path) || "/adminlogin".equals(path)) && isAuthenticated(req)) {
             redirectToHome(req, resp);
             return;
         }
@@ -73,7 +80,8 @@ public class AuthController extends HttpServlet {
         try {
             switch (path) {
                 case "/login":
-                    handleLogin(req, resp);
+                case "/adminlogin":
+                    handleLogin(req, resp, path);
                     break;
                 case "/register":
                     handleRegister(req, resp);
@@ -89,20 +97,20 @@ public class AuthController extends HttpServlet {
             req.setAttribute("error", ex.getMessage());
             if ("/login".equals(path)) {
                 req.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(req, resp);
+            } else if ("/adminlogin".equals(path)) {
+                req.getRequestDispatcher("/WEB-INF/views/admin_login.jsp").forward(req, resp);
+            } else if ("/verify-email".equals(path)) {
+                req.setAttribute("email", req.getParameter("email"));
+                req.getRequestDispatcher("/WEB-INF/views/verify_email.jsp").forward(req, resp);
             } else {
-                if ("/verify-email".equals(path)) {
-                    req.setAttribute("email", req.getParameter("email"));
-                    req.getRequestDispatcher("/WEB-INF/views/verify_email.jsp").forward(req, resp);
-                } else {
-                    req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
-                }
+                req.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(req, resp);
             }
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
     }
 
-    private void handleLogin(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+    private void handleLogin(HttpServletRequest req, HttpServletResponse resp, String path) throws Exception {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
@@ -115,16 +123,23 @@ public class AuthController extends HttpServlet {
             throw new IllegalArgumentException("Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa");
         }
 
+        String role = user.getRole() == null ? null : user.getRole().getName();
+
+        if ("/login".equals(path) && isOperationalRole(role)) {
+            throw new IllegalArgumentException("Trang này chỉ dành cho bạn đọc. Vui lòng dùng trang đăng nhập nhân viên.");
+        }
+        if ("/adminlogin".equals(path) && !isOperationalRole(role)) {
+            throw new IllegalArgumentException("Chỉ nhân viên hoặc quản trị viên được phép đăng nhập tại đây.");
+        }
+
         HttpSession session = req.getSession(true);
         session.setAttribute("currentUser", user);
-
-        String role = user.getRole() == null ? null : user.getRole().getName();
 
         // THÊM DÒNG NÀY ĐỂ KIỂM TRA
         System.out.println(">>> LOGIN SUCCESS: " + email + " | Role: [" + role + "]");
 
         if ("ADMIN".equalsIgnoreCase(role)) {
-            resp.sendRedirect(req.getContextPath() + "/admin/users");
+            resp.sendRedirect(req.getContextPath() + "/admin");
         } else if ("LIBRARIAN".equalsIgnoreCase(role)) {
 
             resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
@@ -198,6 +213,28 @@ public class AuthController extends HttpServlet {
     }
 
     private void redirectToHome(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser != null && currentUser.getRole() != null) {
+                String role = currentUser.getRole().getName();
+                if ("ADMIN".equalsIgnoreCase(role)) {
+                    resp.sendRedirect(req.getContextPath() + "/admin");
+                    return;
+                }
+                if ("LIBRARIAN".equalsIgnoreCase(role)) {
+                    resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+                    return;
+                }
+            }
+        }
         resp.sendRedirect(req.getContextPath() + "/");
+    }
+
+    private boolean isOperationalRole(String roleName) {
+        if (roleName == null) {
+            return false;
+        }
+        return "ADMIN".equalsIgnoreCase(roleName) || "LIBRARIAN".equalsIgnoreCase(roleName);
     }
 }

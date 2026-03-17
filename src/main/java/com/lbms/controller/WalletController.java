@@ -2,6 +2,7 @@ package com.lbms.controller;
 
 import com.lbms.config.VNPayConfig;
 import com.lbms.model.User;
+import com.lbms.model.WalletTransaction;
 import com.lbms.service.WalletService;
 
 import jakarta.servlet.ServletException;
@@ -60,6 +61,8 @@ public class WalletController extends HttpServlet {
             BigDecimal balance = freshUser.getWalletBalance() != null ? freshUser.getWalletBalance()
                     : BigDecimal.ZERO;
             req.setAttribute("walletBalance", balance);
+            List<WalletTransaction> history = walletService.getRecentTransactions(freshUser.getId());
+            req.setAttribute("walletHistory", history);
 
             Object flash = req.getSession().getAttribute("flash");
             Object flashType = req.getSession().getAttribute("flashType");
@@ -189,7 +192,7 @@ public class WalletController extends HttpServlet {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
         return formatter.format(amount);
     }
 

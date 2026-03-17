@@ -413,23 +413,14 @@
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div class="grid-inputs">
-                                            <div class="form-group">
-                                                <label class="label">Mật khẩu</label>
-                                                <div class="relative">
-                                                    <span class="material-icons input-icon">lock</span>
-                                                    <input type="password" name="password" required class="form-control"
-                                                        placeholder="Nhập mật khẩu" />
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="label">Xác nhận</label>
-                                                <div class="relative">
-                                                    <span class="material-icons input-icon">lock_reset</span>
-                                                    <input type="password" name="confirmPassword" required
-                                                        class="form-control" placeholder="Xác nhận mât khẩu" />
-                                                </div>
+                                        <div class="form-group">
+                                            <label class="label">Mật khẩu</label>
+                                            <div
+                                                style="display: flex; align-items: center; gap: 6px; color: var(--gray-600); font-size: 0.875rem; padding: 0.5rem 0;">
+                                                <span class="material-icons"
+                                                    style="font-size: 1.1rem; color: var(--primary);">info</span>
+                                                <span>Mật khẩu sẽ được <strong>hệ thống tự động tạo ngẫu nhiên</strong>
+                                                    và gửi trực tiếp đến Email người dùng.</span>
                                             </div>
                                         </div>
 

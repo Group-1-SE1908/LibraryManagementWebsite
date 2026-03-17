@@ -97,7 +97,8 @@ public class LibrarianBorrowService {
                     reservationService.onBookReturned(bookId);
                 } catch (Exception e) {
                     // Chỉ log, không làm hỏng luồng trả sách
-                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId + ": " + e.getMessage());
+                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId
+                            + ": " + e.getMessage());
                 }
                 return fineAmount;
             } catch (Exception e) {
@@ -360,10 +361,6 @@ public class LibrarianBorrowService {
             }
         }
 
-        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
-        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
-        logDAO.addActivityLog((int) staffId,
-                "Phê duyệt gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "]");
     }
 
     public void rejectRenewalRequest(long renewalId, String reason, long staffId) throws SQLException {
@@ -409,7 +406,7 @@ public class LibrarianBorrowService {
         String note = trimmedNote != null ? trimmedNote : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
                 "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
-                + note);
+                        + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {

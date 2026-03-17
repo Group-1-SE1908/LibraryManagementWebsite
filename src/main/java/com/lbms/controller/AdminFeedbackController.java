@@ -1,4 +1,5 @@
 package com.lbms.controller;
+
 import com.lbms.model.CommentReply;
 import com.lbms.dao.CommentDAO;
 import com.lbms.dao.CommentReplyDAO;
@@ -17,10 +18,10 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
+
 import java.util.logging.Logger;
 
-
-@WebServlet(name = "AdminFeedbackController", urlPatterns = {"/admin/feedback"})
+@WebServlet(name = "AdminFeedbackController", urlPatterns = { "/staff/feedback", "/admin/feedback" })
 public class AdminFeedbackController extends HttpServlet {
     private CommentReportDAO reportDAO;
     private CommentReplyDAO commentReplyDAO;
@@ -31,7 +32,7 @@ public class AdminFeedbackController extends HttpServlet {
     public void init() {
         this.reportDAO = new CommentReportDAO();
         this.commentDAO = new CommentDAO();
-        this.commentReplyDAO = new CommentReplyDAO() ;
+        this.commentReplyDAO = new CommentReplyDAO();
         this.userDAO = new UserDAO();
     }
 
@@ -41,7 +42,6 @@ public class AdminFeedbackController extends HttpServlet {
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
-
         if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
                 !"LIBRARIAN".equals(user.getRole().getName()))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
@@ -72,7 +72,8 @@ public class AdminFeedbackController extends HttpServlet {
 
             // Load comments (tab Phản hồi cần trả lời)
             String filter = request.getParameter("filter");
-            if (filter == null || filter.isEmpty()) filter = "all";
+            if (filter == null || filter.isEmpty())
+                filter = "all";
 
             List<Comment> comments;
             if ("unreplied".equals(filter)) {
@@ -109,7 +110,6 @@ public class AdminFeedbackController extends HttpServlet {
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("currentUser");
-
         if (user == null || (!"ADMIN".equals(user.getRole().getName()) &&
                 !"LIBRARIAN".equals(user.getRole().getName()))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
@@ -148,7 +148,8 @@ public class AdminFeedbackController extends HttpServlet {
                     userDAO.lockCommentAccess(commentOwnerId, lockDays);
                     commentDAO.deleteAllCommentsByUser(commentOwnerId);
                     reportDAO.updateReportStatus(reportId, "RESOLVED");
-                    reportDAO.updateDescription(reportId, "Đã khóa comment " + lockDays + " ngày và xóa toàn bộ bình luận");
+                    reportDAO.updateDescription(reportId,
+                            "Đã khóa comment " + lockDays + " ngày và xóa toàn bộ bình luận");
                 }
                 response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=reports");
 
@@ -158,8 +159,7 @@ public class AdminFeedbackController extends HttpServlet {
                 commentDAO.deleteComment(commentId, (int) user.getId(), true);
                 response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=feedback");
 
-            }
-            else if ("reply".equals(action)) {
+            } else if ("reply".equals(action)) {
                 long commentId = Long.parseLong(request.getParameter("commentId"));
                 String replyContent = request.getParameter("replyContent");
 
@@ -171,11 +171,9 @@ public class AdminFeedbackController extends HttpServlet {
                 commentReplyDAO.insertReply(reply);
 
                 response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=feedback");
-            }
-            else {
+            } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action");
             }
-
         } catch (Exception e) {
             Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
@@ -195,4 +193,5 @@ public class AdminFeedbackController extends HttpServlet {
         }
         return null;
     }
+
 }

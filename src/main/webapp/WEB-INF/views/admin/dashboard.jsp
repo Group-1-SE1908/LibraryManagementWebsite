@@ -72,15 +72,15 @@
                             }
 
                             .wrapper {
-                                display: flex;
+
                                 width: 100%;
                             }
 
                             .main-content {
-                                flex: 1;
-                                margin-left: var(--sidebar-width);
                                 padding: 2rem;
                                 min-height: 100vh;
+                                margin-left: var(--sidebar-width);
+                                width: calc(100% - var(--sidebar-width));
                             }
 
                             .dashboard-toolbar {
@@ -275,18 +275,34 @@
                                 }
                             }
 
-                            @media (max-width: 1100px) {
-                                .charts-row {
-                                    grid-template-columns: 1fr;
-                                }
+                            @media (max-width:1100px) {
 
                                 .main-content {
-                                    margin-left: 0;
+                                    margin-left: 80px;
+                                    width: calc(100% - 80px);
+                                }
+
+                                .charts-row {
+                                    grid-template-columns: 1fr;
                                 }
 
                                 .stats-grid {
                                     grid-template-columns: repeat(2, 1fr);
                                 }
+
+                            }
+
+                            @media (max-width: 768px) {
+
+                                .main-content {
+                                    margin-left: 0;
+                                    padding: 1.25rem;
+                                }
+
+                                .stats-grid {
+                                    grid-template-columns: 1fr;
+                                }
+
                             }
                         </style>
                     </head>

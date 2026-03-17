@@ -4,6 +4,8 @@ import com.lbms.dao.RoleDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Role;
 import com.lbms.model.User;
+import com.lbms.service.EmailService;
+
 import org.mindrot.jbcrypt.BCrypt;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -14,6 +16,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.security.SecureRandom;
 
 @WebServlet(urlPatterns = {
         "/admin/users",
@@ -27,11 +30,13 @@ public class AdminUserController extends HttpServlet {
 
     private UserDAO userDAO;
     private RoleDAO roleDAO;
+    private EmailService emailService;
 
     @Override
     public void init() throws ServletException {
         userDAO = new UserDAO();
         roleDAO = new RoleDAO();
+        emailService = new EmailService();
     }
 
     @Override
@@ -148,20 +153,20 @@ public class AdminUserController extends HttpServlet {
             throws ServletException, IOException, SQLException {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
-        String password = request.getParameter("password");
-        String confirmPassword = request.getParameter("confirmPassword");
         String roleIdStr = request.getParameter("roleId");
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
 
-        List<String> errors = validateUserInput(name, email, password, phone, address, confirmPassword, roleIdStr, true,
-                0);
+        String randomPassword = generateRandomPassword();
+
+        List<String> errors = validateUserInput(name, email, randomPassword, phone, address, randomPassword, roleIdStr,
+                true, 0);
 
         if (errors.isEmpty()) {
             User user = new User();
             user.setFullName(name.trim());
             user.setEmail(email.trim());
-            user.setPasswordHash(hashPassword(password));
+            user.setPasswordHash(hashPassword(randomPassword));
             user.setPhone(phone.trim());
             user.setAddress(address.trim());
 
@@ -170,7 +175,35 @@ public class AdminUserController extends HttpServlet {
             user.setRole(role);
 
             if (userDAO.createUserAccount(user)) {
-                request.getSession().setAttribute("flash", "Thêm người dùng mới thành công!");
+                final String finalEmail = email.trim();
+                final String finalPassword = randomPassword;
+                final String finalName = name.trim();
+
+                new Thread(() -> {
+                    try {
+                        String subject = "Tài khoản hệ thống LBMS của bạn đã sẵn sàng";
+                        StringBuilder htmlBody = new StringBuilder();
+                        htmlBody.append("<html><body style='font-family: Arial, sans-serif;'>");
+                        htmlBody.append("<h2 style='color: #2c3e50;'>Chào mừng ").append(finalName).append("!</h2>");
+                        htmlBody.append("<p>Tài khoản của bạn đã được khởi tạo tự động trên hệ thống <b>LBMS</b>.</p>");
+                        htmlBody.append("<div style='background: #f8f9fa; padding: 15px; border-radius: 5px;'>");
+                        htmlBody.append("<p><b>Thông tin đăng nhập của bạn:</b></p>");
+                        htmlBody.append("<p>Email: <span style='color: #e74c3c;'>").append(finalEmail)
+                                .append("</span></p>");
+                        htmlBody.append("<p>Mật khẩu hệ thống cấp: <span style='color: #e74c3c; font-weight: bold;'>")
+                                .append(finalPassword).append("</span></p>");
+                        htmlBody.append("</div>");
+                        htmlBody.append("<p><i>Vui lòng đăng nhập và đổi mật khẩu ngay để bảo mật tài khoản.</i></p>");
+                        htmlBody.append("</body></html>");
+
+                        emailService.send(finalEmail, subject, htmlBody.toString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                request.getSession().setAttribute("flash",
+                        "Thêm thành công! Mật khẩu đã được gửi tới email người dùng.");
                 response.sendRedirect(request.getContextPath() + "/admin/users");
                 return;
             }
@@ -204,45 +237,61 @@ public class AdminUserController extends HttpServlet {
         User existingUser = userDAO.findById(userId);
 
         if (existingUser == null) {
-            request.getSession().setAttribute("flash", "Lỗi : Không tìm thấy người dùng!");
+            request.getSession().setAttribute("flash", "Lỗi: Không tìm thấy người dùng!");
             response.sendRedirect(request.getContextPath() + "/admin/users");
             return;
         }
 
         String name = request.getParameter("name");
-        String email = request.getParameter("email");
-        String password = request.getParameter("password");
-        String confirmPassword = request.getParameter("confirmPassword");
+        String newEmail = request.getParameter("email").trim();
         String roleIdStr = request.getParameter("roleId");
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
 
-        String p = request.getParameter("page");
-        String k = request.getParameter("keyword");
-
-        List<String> errors = validateUserInput(name, email, password, phone, address, confirmPassword, roleIdStr,
-                false, userId);
+        boolean isResetRequested = "true".equals(request.getParameter("resetPassword"));
+        String oldEmail = existingUser.getEmail();
+        String generatedPwd = null;
+        List<String> errors = validateUserInput(name, newEmail, isResetRequested ? "PROTECTED" : null,
+                phone, address, isResetRequested ? "PROTECTED" : null,
+                roleIdStr, false, userId);
 
         if (errors.isEmpty()) {
             User user = new User();
             user.setId(userId);
             user.setFullName(name.trim());
-            user.setEmail(email.trim());
+            user.setEmail(newEmail);
             user.setPhone(phone.trim());
             user.setAddress(address.trim());
-            boolean isPasswordEmpty = (password == null || password.trim().isEmpty());
-            user.setPasswordHash(isPasswordEmpty ? existingUser.getPasswordHash() : hashPassword(password));
+
+            if (isResetRequested) {
+                generatedPwd = generateRandomPassword();
+                user.setPasswordHash(hashPassword(generatedPwd));
+            } else {
+                user.setPasswordHash(existingUser.getPasswordHash());
+            }
 
             Role role = new Role();
             role.setId(Integer.parseInt(roleIdStr));
             user.setRole(role);
 
             if (userDAO.updateUser(user)) {
-                request.getSession().setAttribute("flash", "Cập nhật thông tin người dùng thành công!");
+                final String finalPwd = generatedPwd;
+                final String finalName = name.trim();
+                final boolean wasReset = isResetRequested;
 
-                String target = request.getContextPath() + "/admin/users?page=" + p + "&keyword=" + k;
+                new Thread(() -> {
+                    try {
+                        sendUpdateEmail(newEmail, oldEmail, finalName, finalPwd, wasReset);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
 
-                response.sendRedirect(target);
+                request.getSession().setAttribute("flash",
+                        wasReset ? "Cập nhật thành công! Mật khẩu mới đã được gửi tới " + newEmail
+                                : "Cập nhật thành công!");
+
+                response.sendRedirect(request.getContextPath() + "/admin/users");
                 return;
             }
         }
@@ -251,6 +300,34 @@ public class AdminUserController extends HttpServlet {
         request.setAttribute("roleList", roleDAO.getAllRoles());
         request.setAttribute("errors", errors);
         request.getRequestDispatcher("/WEB-INF/views/admin/editUser.jsp").forward(request, response);
+    }
+
+    private void sendUpdateEmail(String newEmail, String oldEmail, String name, String newPwd, boolean wasReset) {
+        String subject = "Thông báo cập nhật tài khoản LBMS";
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body style='font-family: sans-serif;'>");
+        html.append("<h2>Xin chào ").append(name).append(",</h2>");
+        html.append("<p>Thông tin tài khoản của bạn trên hệ thống đã được quản trị viên cập nhật.</p>");
+
+        if (wasReset) {
+            html.append(
+                    "<div style='background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba;'>");
+            html.append(
+                    "<p><b>Mật khẩu đăng nhập mới của bạn là:</b> <span style='color: #d63384; font-size: 1.2rem;'>")
+                    .append(newPwd).append("</span></p>");
+            html.append("<p><i>Vui lòng đăng nhập và thay đổi mật khẩu ngay để bảo mật.</i></p>");
+            html.append("</div>");
+        }
+
+        html.append("<p>Email đăng nhập hiện tại: <b>").append(newEmail).append("</b></p>");
+        html.append("</body></html>");
+
+        emailService.send(newEmail, subject, html.toString());
+
+        if (!newEmail.equalsIgnoreCase(oldEmail)) {
+            emailService.send(oldEmail, "Cảnh báo bảo mật LBMS",
+                    "Email tài khoản của bạn đã được thay đổi sang: " + newEmail);
+        }
     }
 
     private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response)
@@ -330,7 +407,7 @@ public class AdminUserController extends HttpServlet {
             phone = phone.trim();
             if (!phone.matches("^0\\d{9,10}$")) {
                 errors.add("Số điện thoại không hợp lệ (phải bắt đầu bằng số 0, từ 10-11 chữ số).");
-            } else if (userDAO.isPhoneExists(phone, excludeUserId)) { // THÊM DÒNG NÀY
+            } else if (userDAO.isPhoneExists(phone, excludeUserId)) {
                 errors.add("Số điện thoại này đã được sử dụng bởi một tài khoản khác.");
             }
         }
@@ -365,6 +442,19 @@ public class AdminUserController extends HttpServlet {
 
     private String hashPassword(String password) {
         return BCrypt.hashpw(password, BCrypt.gensalt());
+    }
+
+    private String generateRandomPassword() {
+
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+        StringBuilder sb = new StringBuilder();
+
+        SecureRandom random = new SecureRandom();
+
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Override
