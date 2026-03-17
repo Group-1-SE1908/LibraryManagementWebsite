@@ -108,8 +108,8 @@ public class BookDAO {
     }
 
     public long create(Book b, long userId) throws SQLException {
-        String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image,description) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, b.getTitle());
@@ -127,7 +127,8 @@ public class BookDAO {
                 isbn = "ISBN-" + isbn;
             }
             ps.setString(6, isbn);
-            ps.setString(7, b.getImage()); // Lưu đường dẫn ảnh
+            ps.setString(7, b.getImage());
+            ps.setString(8, b.getDescription());
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -144,7 +145,7 @@ public class BookDAO {
 
     public void update(Book b, long userId) throws SQLException {
 
-        String sql = "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=? WHERE book_id=?";
+        String sql = "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=?, description=? WHERE book_id=?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, b.getTitle());
             ps.setString(2, b.getAuthor());
@@ -160,7 +161,8 @@ public class BookDAO {
             }
 
             ps.setString(7, b.getIsbn());
-            ps.setLong(8, b.getId());
+            ps.setString(8, b.getDescription());
+            ps.setLong(9, b.getId());
             // Lấy tên sách trước khi cập nhật để log
             int rowAffected = ps.executeUpdate();
             if (rowAffected > 0) {
@@ -207,6 +209,7 @@ public class BookDAO {
         b.setQuantity(rs.getInt("quantity"));
         b.setAvailability(b.getQuantity() > 0);
         b.setImage(rs.getString("image"));
+        b.setDescription(rs.getString("description"));
 
         b.setCategoryId(rs.getObject("category_id") != null ? rs.getLong("category_id") : null);
         return b;

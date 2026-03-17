@@ -4,6 +4,7 @@ import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.RenewalRequestDAO;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.RenewalRequest;
+import com.lbms.model.Reservation;
 import com.lbms.util.DBConnection;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -319,6 +320,10 @@ public class LibrarianBorrowService {
             request.setBorrowRecord(record);
         }
         return request;
+    }
+
+    public List<Reservation> listWaitingReservations(long bookId) throws SQLException {
+        return reservationService.listWaitingQueue(bookId);
     }
 
     public void approveRenewalRequest(long renewalId, long staffId) throws SQLException {

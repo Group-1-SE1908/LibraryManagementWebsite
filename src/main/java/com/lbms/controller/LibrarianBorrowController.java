@@ -6,6 +6,7 @@ import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.Reservation;
 import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
 import com.lbms.model.UserBorrowingSummary;
@@ -440,6 +441,12 @@ public class LibrarianBorrowController extends HttpServlet {
             throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
         }
         req.setAttribute("renewalTicket", ticket);
+        List<Reservation> reservationQueue = java.util.Collections.emptyList();
+        BorrowRecord record = ticket.getBorrowRecord();
+        if (record != null && record.getBook() != null) {
+            reservationQueue = libService.listWaitingReservations(record.getBook().getId());
+        }
+        req.setAttribute("reservationQueue", reservationQueue);
         req.setAttribute("renewalActionPrefix", renewalBase);
         req.setAttribute("staffBorrowBase", borrowBase);
         req.setAttribute("staffRenewalBase", renewalBase);
