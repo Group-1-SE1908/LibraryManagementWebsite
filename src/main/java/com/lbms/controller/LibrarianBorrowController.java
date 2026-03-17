@@ -164,7 +164,7 @@ public class LibrarianBorrowController extends HttpServlet {
             } else if ("inperson".equals(action)) {
                 List<Book> allBooks = new BookService().search("");
                 req.setAttribute("books", allBooks);
-                req.setAttribute("staffBorrowBase", STAFF_BORROW_BASE);
+                req.setAttribute("staffBorrowBase", borrowBase);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_inperson.jsp").forward(req, resp);
 
             } else if ("import".equals(action)) {
@@ -242,7 +242,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     renewalLookup.put(pending.getBorrowId(), pending);
                 }
                 req.setAttribute("pendingRenewalMap", renewalLookup);
-                req.setAttribute("staffBorrowBase", STAFF_BORROW_BASE);
+                req.setAttribute("staffBorrowBase", borrowBase);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
             }
 
