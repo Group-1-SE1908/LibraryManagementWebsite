@@ -18,12 +18,21 @@ public class Book {
     private Instant createdAt;
     private Instant updatedAt;
     private String image;
+    private String description;
 
     public Book() {
     }
 
     public long getId() {
         return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setId(long id) {

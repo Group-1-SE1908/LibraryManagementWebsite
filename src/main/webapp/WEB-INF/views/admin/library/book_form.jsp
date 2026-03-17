@@ -136,6 +136,11 @@
                                             <label class="form-label">Giá tiền (VND)</label>
                                             <input type="number" name="price" class="form-control" value="${book.price}" placeholder="0">
                                         </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Mô tả sách</label>
+                                            <textarea name="description" class="form-control" rows="2" 
+                                                      placeholder="Nhập giới thiệu ngắn về nội dung sách...">${book.description}</textarea>
+                                        </div>
 
                                         <div class="col-12">
                                             <label class="form-label">Ảnh bìa sách</label>

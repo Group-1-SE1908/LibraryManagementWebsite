@@ -329,6 +329,7 @@ public class BookController extends HttpServlet {
         b.setIsbn(req.getParameter("isbn"));
         b.setTitle(req.getParameter("title"));
         b.setAuthor(req.getParameter("author"));
+        b.setDescription(req.getParameter("description"));
 
         String priceStr = req.getParameter("price");
         if (priceStr != null && !priceStr.isBlank()) {
