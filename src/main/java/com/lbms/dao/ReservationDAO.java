@@ -311,6 +311,32 @@ public class ReservationDAO {
         return list;
     }
 
+    public List<Reservation> listWaitingQueue(long bookId) throws SQLException {
+        String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
+                "r.note, r.notified_at, r.expired_at, " +
+                "r.created_at, r.updated_at, " +
+                "ROW_NUMBER() OVER (ORDER BY CASE WHEN r.status = 'AVAILABLE' THEN 0 ELSE 1 END, r.created_at ASC) AS queue_position, " +
+                "b.title AS book_title, b.author AS book_author, b.image AS book_image, " +
+                "u.full_name AS user_name, u.email AS user_email, u.phone AS user_phone " +
+                "FROM reservations r " +
+                "INNER JOIN Book b ON r.book_id = b.book_id " +
+                "INNER JOIN [User] u ON r.user_id = u.user_id " +
+                "WHERE r.book_id = ? " +
+                "AND r.status IN ('WAITING', 'AVAILABLE') " +
+                "ORDER BY queue_position";
+        List<Reservation> queue = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    queue.add(mapRowWithUser(rs));
+                }
+            }
+        }
+        return queue;
+    }
+
     // ── getById ──────────────────────────────────────────────────────────────
     public Reservation getById(long id) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
@@ -347,6 +373,14 @@ public class ReservationDAO {
         // queue_position có thể NULL
         int qp = rs.getInt("queue_position");
         r.setQueuePosition(rs.wasNull() ? null : qp);
+        return r;
+    }
+
+    private Reservation mapRowWithUser(ResultSet rs) throws SQLException {
+        Reservation r = mapRow(rs);
+        r.setUserName(rs.getString("user_name"));
+        r.setUserEmail(rs.getString("user_email"));
+        r.setUserPhone(rs.getString("user_phone"));
         return r;
     }
 }

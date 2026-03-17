@@ -181,6 +181,10 @@ public class ReservationService {
         return reservationDAO.listAll();
     }
 
+    public List<Reservation> listWaitingQueue(long bookId) throws SQLException {
+        return reservationDAO.listWaitingQueue(bookId);
+    }
+
     public int getMaxReservations() {
         return MAX_RESERVATIONS;
     }

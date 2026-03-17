@@ -6,6 +6,7 @@ import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
 import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.Reservation;
 import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
 import com.lbms.model.UserBorrowingSummary;
@@ -444,6 +445,12 @@ public class LibrarianBorrowController extends HttpServlet {
         }
         String actionPrefix = req.getServletPath().startsWith("/admin/") ? ADMIN_RENEWAL_BASE : STAFF_RENEWAL_BASE;
         req.setAttribute("renewalTicket", ticket);
+        List<Reservation> reservationQueue = java.util.Collections.emptyList();
+        BorrowRecord record = ticket.getBorrowRecord();
+        if (record != null && record.getBook() != null) {
+            reservationQueue = libService.listWaitingReservations(record.getBook().getId());
+        }
+        req.setAttribute("reservationQueue", reservationQueue);
         req.setAttribute("renewalActionPrefix", actionPrefix);
         req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_request_detail.jsp").forward(req, resp);
     }
