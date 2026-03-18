@@ -12,13 +12,6 @@
                     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
                     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <style>
-                        .renewal-main {
-                            margin-left: 280px;
-                            min-height: 100vh;
-                            padding: 32px;
-                            background: #f4f7f6;
-                        }
-
                         .renewal-header {
                             display: flex;
                             justify-content: space-between;
@@ -113,28 +106,28 @@
                             color: #475569;
                             font-weight: 600;
                         }
-
-                        @media (max-width: 1024px) {
-                            .renewal-main {
-                                margin-left: 0;
-                                padding: 16px;
-                            }
-                        }
                     </style>
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
-</head>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+                        rel="stylesheet">
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+                </head>
 
                 <body class="panel-body">
                     <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
                     <c:set var="borrowBase"
                         value="${not empty staffBorrowBase ? staffBorrowBase : '/staff/borrowlibrary'}" />
 
-                    <main class="renewal-main">
-                        <div class="renewal-header">
-                            <h1>🧾 Yêu cầu gia hạn chờ xử lý</h1>
-                            <a class="btn-modern secondary" href="${pageContext.request.contextPath}${borrowBase}">Quay
-                                lại mượn trả</a>
+                    <main class="panel-main">
+                        <div class="pm-header"
+                            style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h1 class="pm-title">Yêu cầu gia hạn</h1>
+                                <p class="pm-subtitle">Xét duyệt các yêu cầu gia hạn đang chờ xử lý từ độc giả.</p>
+                            </div>
+                            <a class="btn-modern secondary" href="${pageContext.request.contextPath}${borrowBase}"
+                                style="margin-top:4px;">
+                                ← Quay lại mượn trả
+                            </a>
                         </div>
 
                         <c:if test="${not empty flash}">

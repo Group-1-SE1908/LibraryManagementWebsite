@@ -12,11 +12,7 @@
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
                 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                 <style>
-                    .admin-main-content {
-                        margin-left: 280px;
-                        min-height: 100vh;
-                        padding: 24px 32px;
-                        box-sizing: border-box;
+                    .panel-main {
                         background: #f4f7fb;
                     }
 
@@ -270,22 +266,16 @@
                         font-size: 13px;
                         line-height: 1.5;
                     }
-
-                    @media (max-width: 1024px) {
-                        .admin-main-content {
-                            margin-left: 0;
-                            padding: 16px;
-                        }
-                    }
                 </style>
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
-</head>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+                    rel="stylesheet">
+                <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+            </head>
 
             <body class="panel-body">
                 <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
 
-                <main class="admin-main-content">
+                <main class="panel-main">
                     <div class="page-shell">
                         <section class="page-hero">
                             <h1>💸 Quản lý Tiền phạt</h1>

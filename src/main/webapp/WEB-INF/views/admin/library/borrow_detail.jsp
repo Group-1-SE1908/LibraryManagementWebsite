@@ -98,30 +98,17 @@
                     flex-direction: column;
                     justify-content: center;
                 }
-
-                .admin-main-content {
-                    margin-left: 280px;
-                    min-height: 100vh;
-                    padding: 24px 32px;
-                    box-sizing: border-box;
-                }
-
-                @media (max-width: 1024px) {
-                    .admin-main-content {
-                        margin-left: 0;
-                        padding: 16px;
-                    }
-                }
             </style>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
-</head>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+                rel="stylesheet">
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+        </head>
 
         <body class="panel-body bg-light">
             <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
             <c:set var="borrowBase" value="${not empty staffBorrowBase ? staffBorrowBase : '/staff/borrowlibrary'}" />
 
-            <main class="admin-main-content">
+            <main class="panel-main">
                 <div class="container py-4">
 
                     <div class="d-flex justify-content-between align-items-center mb-4">

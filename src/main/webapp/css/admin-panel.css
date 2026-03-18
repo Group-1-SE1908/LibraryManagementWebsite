@@ -714,6 +714,95 @@ body.panel-body {
     pointer-events: none;
 }
 
+/* ── Buttons (legacy btn-modern compatibility) ── */
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: var(--panel-transition);
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.btn-modern.primary {
+    background: #0b57d0;
+    color: #fff;
+}
+
+.btn-modern.primary:hover {
+    background: #0842a0;
+    box-shadow: 0 2px 6px rgba(11, 87, 208, .3);
+}
+
+.btn-modern.success {
+    background: #10b981;
+    color: #fff;
+}
+
+.btn-modern.success:hover {
+    background: #059669;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, .3);
+}
+
+.btn-modern.danger {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-modern.danger:hover {
+    background: #fecaca;
+}
+
+.btn-modern.secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-modern.secondary:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ── Empty state (legacy) ── */
+.empty-state {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--panel-text-sub);
+}
+
+/* ── Chips / filter tabs ── */
+.pm-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+    border: 1.5px solid var(--panel-border);
+    background: var(--panel-card);
+    cursor: pointer;
+    color: var(--panel-text-sub);
+    text-decoration: none;
+    transition: var(--panel-transition);
+}
+
+.pm-chip:hover,
+.pm-chip.active {
+    border-color: var(--panel-accent);
+    color: var(--panel-accent);
+    background: rgba(99, 102, 241, .06);
+}
+
 /* ── Toast / Alert ── */
 .pm-toast {
     padding: 14px 20px;
