@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -108,35 +109,43 @@ public class BookDAO {
     }
 
     public long create(Book b, long userId) throws SQLException {
-        String sql = "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image,description) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = DBConnection.getConnection()) {
+            boolean hasDescriptionColumn = hasColumn(c, "Book", "description");
+            String sql = hasDescriptionColumn
+                    ? "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image, description) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    : "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-            ps.setString(1, b.getTitle());
-            ps.setString(2, b.getAuthor());
-            if (b.getCategoryId() != null) {
-                ps.setLong(3, b.getCategoryId());
-            } else {
-                ps.setNull(3, Types.INTEGER);
-            }
-            ps.setBigDecimal(4, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
-            ps.setInt(5, b.getQuantity());
-            // ps.setString(6, b.getIsbn());
-            String isbn = b.getIsbn();
-            if (isbn != null && !isbn.isBlank() && !isbn.startsWith("ISBN-")) {
-                isbn = "ISBN-" + isbn;
-            }
-            ps.setString(6, isbn);
-            ps.setString(7, b.getImage());
-            ps.setString(8, b.getDescription());
+            try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    long newId = rs.getLong(1);
-                    // Ghi log hoạt động sau khi tạo sách mới
-                    logDAO.addActivityLog((int) userId, "Thêm sách mới: " + b.getTitle() + " [ID:" + newId + "]");
-                    return newId;
+                ps.setString(1, b.getTitle());
+                ps.setString(2, b.getAuthor());
+                if (b.getCategoryId() != null) {
+                    ps.setLong(3, b.getCategoryId());
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setBigDecimal(4, BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
+                ps.setInt(5, b.getQuantity());
+                String isbn = b.getIsbn();
+                if (isbn != null && !isbn.isBlank() && !isbn.startsWith("ISBN-")) {
+                    isbn = "ISBN-" + isbn;
+                }
+                ps.setString(6, isbn);
+                ps.setString(7, b.getImage());
+                if (hasDescriptionColumn) {
+                    ps.setString(8, b.getDescription());
+                }
+
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        long newId = rs.getLong(1);
+                        // Ghi log hoạt động sau khi tạo sách mới
+                        logDAO.addActivityLog((int) userId, "Thêm sách mới: " + b.getTitle() + " [ID:" + newId + "]");
+                        return newId;
+                    }
                 }
             }
         }
@@ -145,28 +154,39 @@ public class BookDAO {
 
     public void update(Book b, long userId) throws SQLException {
 
-        String sql = "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=?, description=? WHERE book_id=?";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, b.getTitle());
-            ps.setString(2, b.getAuthor());
+        try (Connection c = DBConnection.getConnection()) {
+            boolean hasDescriptionColumn = hasColumn(c, "Book", "description");
+            String sql = hasDescriptionColumn
+                    ? "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=?, description=? WHERE book_id=?"
+                    : "UPDATE Book SET title=?, author=?, price=?, quantity=?, image=?, category_id=?, isbn=? WHERE book_id=?";
 
-            ps.setBigDecimal(3, java.math.BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
-            ps.setInt(4, b.getQuantity());
-            ps.setString(5, b.getImage());
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setString(1, b.getTitle());
+                ps.setString(2, b.getAuthor());
 
-            if (b.getCategoryId() != null && b.getCategoryId() > 0) {
-                ps.setLong(6, b.getCategoryId());
-            } else {
-                ps.setNull(6, java.sql.Types.INTEGER);
-            }
+                ps.setBigDecimal(3, java.math.BigDecimal.valueOf(b.getPrice() != null ? b.getPrice() : 0));
+                ps.setInt(4, b.getQuantity());
+                ps.setString(5, b.getImage());
 
-            ps.setString(7, b.getIsbn());
-            ps.setString(8, b.getDescription());
-            ps.setLong(9, b.getId());
-            // Lấy tên sách trước khi cập nhật để log
-            int rowAffected = ps.executeUpdate();
-            if (rowAffected > 0) {
-                logDAO.addActivityLog((int) userId, "Cập nhật sách: " + b.getTitle() + " [ID:" + b.getId() + "]");
+                if (b.getCategoryId() != null && b.getCategoryId() > 0) {
+                    ps.setLong(6, b.getCategoryId());
+                } else {
+                    ps.setNull(6, java.sql.Types.INTEGER);
+                }
+
+                ps.setString(7, b.getIsbn());
+                if (hasDescriptionColumn) {
+                    ps.setString(8, b.getDescription());
+                    ps.setLong(9, b.getId());
+                } else {
+                    ps.setLong(8, b.getId());
+                }
+
+                // Lấy tên sách trước khi cập nhật để log
+                int rowAffected = ps.executeUpdate();
+                if (rowAffected > 0) {
+                    logDAO.addActivityLog((int) userId, "Cập nhật sách: " + b.getTitle() + " [ID:" + b.getId() + "]");
+                }
             }
         }
     }
@@ -209,10 +229,29 @@ public class BookDAO {
         b.setQuantity(rs.getInt("quantity"));
         b.setAvailability(b.getQuantity() > 0);
         b.setImage(rs.getString("image"));
-        b.setDescription(rs.getString("description"));
+        b.setDescription(readOptionalColumn(rs, "description"));
 
         b.setCategoryId(rs.getObject("category_id") != null ? rs.getLong("category_id") : null);
         return b;
+    }
+
+    private boolean hasColumn(Connection connection, String tableName, String columnName) throws SQLException {
+        try (ResultSet rs = connection.getMetaData().getColumns(null, null, tableName, columnName)) {
+            return rs.next();
+        }
+    }
+
+    private String readOptionalColumn(ResultSet rs, String columnName) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int index = 1; index <= columnCount; index++) {
+            String label = metaData.getColumnLabel(index);
+            String name = metaData.getColumnName(index);
+            if (columnName.equalsIgnoreCase(label) || columnName.equalsIgnoreCase(name)) {
+                return rs.getString(columnName);
+            }
+        }
+        return null;
     }
 
     public boolean existsByIsbn(String isbn) {
@@ -230,18 +269,19 @@ public class BookDAO {
         return false;
     }
 
-//    public boolean restockBook(int bookId, int additionalQuantity) {
-//        String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
-//        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-//            ps.setInt(1, additionalQuantity);
-//            ps.setInt(2, bookId);
-//            return ps.executeUpdate() > 1;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return false;
-//    }
-    public boolean restockBook(int bookId, int additionalQuantity, long userId) { 
+    // public boolean restockBook(int bookId, int additionalQuantity) {
+    // String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
+    // try (Connection conn = DBConnection.getConnection(); PreparedStatement ps =
+    // conn.prepareStatement(sql)) {
+    // ps.setInt(1, additionalQuantity);
+    // ps.setInt(2, bookId);
+    // return ps.executeUpdate() > 1;
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    // }
+    // return false;
+    // }
+    public boolean restockBook(int bookId, int additionalQuantity, long userId) {
         String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, additionalQuantity);

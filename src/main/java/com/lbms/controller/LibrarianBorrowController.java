@@ -50,14 +50,7 @@ import java.util.Locale;
         "/admin/renewal/reject",
         "/admin/renewal/view",
         "/admin/borrowlibrary/ship_fee",
-        "/admin/borrowlibrary/ship_confirm",
-        "/admin/books",
-        "/admin/books/approve",
-        "/admin/books/reject",
-        "/admin/books/return",
-        "/admin/books/detail",
-        "/admin/books/inperson",
-        "/admin/books/receive"
+        "/admin/borrowlibrary/ship_confirm"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -407,7 +400,7 @@ public class LibrarianBorrowController extends HttpServlet {
         }
 
         String action = path.substring(lastSlash + 1);
-        if ("borrowlibrary".equals(action) || "books".equals(action)) {
+        if ("borrowlibrary".equals(action)) {
             return "";
         }
         return action;
