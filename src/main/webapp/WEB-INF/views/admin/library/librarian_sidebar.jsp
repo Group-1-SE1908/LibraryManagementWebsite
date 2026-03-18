@@ -90,74 +90,74 @@
                         </nav>
 
                         <i class="fas fa-globe"></i> <span>Yeu cau truc tuyen</span>
-                    </a>
+                        </a>
 
-                    <a href="${pageContext.request.contextPath}${borrowBase}/inperson"
-                        class="${activeUri.contains('/inperson') ? 'active' : ''}">
-                        <i class="fas fa-plus"></i> <span>Muon tai quay</span>
-                    </a>
+                        <a href="${pageContext.request.contextPath}${borrowBase}/inperson"
+                            class="${activeUri.contains('/inperson') ? 'active' : ''}">
+                            <i class="fas fa-plus"></i> <span>Muon tai quay</span>
+                        </a>
 
-                    <a href="${pageContext.request.contextPath}${borrowBase}?filter=OVERDUE"
-                        class="${currentFilter == 'OVERDUE' ? 'active' : ''}">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Don qua han</span>
-                        <span class="badge-count">!</span>
-                    </a>
+                        <a href="${pageContext.request.contextPath}${borrowBase}?filter=OVERDUE"
+                            class="${currentFilter == 'OVERDUE' ? 'active' : ''}">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Don qua han</span>
+                            <span class="badge-count">!</span>
+                        </a>
 
-                    <a href="${pageContext.request.contextPath}${staffRenewalBase}"
-                        class="${fn:contains(activeUri, '/renewal') ? 'active' : ''}">
-                        <i class="fas fa-calendar-days"></i>
-                        <span>Danh sach gia han</span>
-                    </a>
+                        <a href="${pageContext.request.contextPath}${staffRenewalBase}"
+                            class="${fn:contains(activeUri, '/renewal') ? 'active' : ''}">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>Danh sach gia han</span>
+                        </a>
 
-                    <a href="${pageContext.request.contextPath}${finesBase}"
-                        class="${activeUri.contains('/fines') ? 'active' : ''}">
-                        <i class="fas fa-coins"></i>
-                        <span>Tien phat</span>
-                    </a>
-                </div>
-            </div>
+                        <a href="${pageContext.request.contextPath}${finesBase}"
+                            class="${activeUri.contains('/fines') ? 'active' : ''}">
+                            <i class="fas fa-coins"></i>
+                            <span>Tien phat</span>
+                        </a>
+                        </div>
+                        </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Kho sach</div>
-                <div class="sidebar-nav">
-                    <a href="${pageContext.request.contextPath}${booksBase}/new" class="btn-add-sidebar">
-                        + Them sach moi
-                    </a>
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">Kho sach</div>
+                            <div class="sidebar-nav">
+                                <a href="${pageContext.request.contextPath}${booksBase}/new" class="btn-add-sidebar">
+                                    + Them sach moi
+                                </a>
 
-                    <a href="${pageContext.request.contextPath}${booksBase}?action=viewImportList"
-                        class="${param.action == 'viewImportList' ? 'active' : ''}">
-                        <i class="fas fa-plus-circle"></i> <span>Nhap kho</span>
-                    </a>
+                                <a href="${pageContext.request.contextPath}${booksBase}?action=viewImportList"
+                                    class="${param.action == 'viewImportList' ? 'active' : ''}">
+                                    <i class="fas fa-plus-circle"></i> <span>Nhap kho</span>
+                                </a>
 
-                    <a href="${pageContext.request.contextPath}${booksBase}"
-                        class="${fn:contains(activeUri, booksBase) ? 'active' : ''}">
-                        <i class="fas fa-book"></i> <span>Kho sach</span>
-                    </a>
+                                <a href="${pageContext.request.contextPath}${booksBase}"
+                                    class="${fn:contains(activeUri, booksBase) ? 'active' : ''}">
+                                    <i class="fas fa-book"></i> <span>Kho sach</span>
+                                </a>
 
-                    <a href="${pageContext.request.contextPath}${feedbackBase}"
-                        class="${activeUri.contains('/feedback') ? 'active' : ''}">
-                        <i class="fas fa-comment"></i> <span>Phan hoi ve sach</span>
-                    </a>
-                </div>
-            </div>
+                                <a href="${pageContext.request.contextPath}${feedbackBase}"
+                                    class="${activeUri.contains('/feedback') ? 'active' : ''}">
+                                    <i class="fas fa-comment"></i> <span>Phan hoi ve sach</span>
+                                </a>
+                            </div>
+                        </div>
 
-            <div class="sidebar-footer">
-                <div class="profile-card">
-                    <div class="avatar-small">${userInitial.toUpperCase()}</div>
-                    <div class="user-info">
-                        <span class="user-name">${userName}</span>
-                    </div>
-                </div>
-                <div class="footer-actions">
-                    <a href="${pageContext.request.contextPath}/profile" class="btn-action btn-profile">
-                        <i class="fa-solid fa-user-gear"></i> Ho so
-                    </a>
-                    <a href="${pageContext.request.contextPath}/logout" class="btn-action btn-logout">
-                        <i class="fa-solid fa-power-off"></i> Thoat
-                    </a>
-                </div>
-            </div>
+                        <div class="sidebar-footer">
+                            <div class="profile-card">
+                                <div class="avatar-small">${userInitial.toUpperCase()}</div>
+                                <div class="user-info">
+                                    <span class="user-name">${userName}</span>
+                                </div>
+                            </div>
+                            <div class="footer-actions">
+                                <a href="${pageContext.request.contextPath}/profile" class="btn-action btn-profile">
+                                    <i class="fa-solid fa-user-gear"></i> Ho so
+                                </a>
+                                <a href="${pageContext.request.contextPath}/logout" class="btn-action btn-logout">
+                                    <i class="fa-solid fa-power-off"></i> Thoat
+                                </a>
+                            </div>
+                        </div>
 
                         <div class="ps-footer">
                             <div class="ps-profile">
