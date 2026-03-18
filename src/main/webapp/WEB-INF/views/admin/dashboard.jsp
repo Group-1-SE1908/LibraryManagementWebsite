@@ -10,483 +10,197 @@
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <title>Admin Dashboard | LBMS</title>
-
                         <link rel="stylesheet"
                             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
                             rel="stylesheet">
+                        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
                         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
                         <style>
                             :root {
-                                --sidebar-width: 280px;
-                                --primary: #4f46e5;
-                                --success: #10b981;
-                                --danger: #ef4444;
-                                --warning: #f59e0b;
-                                --info: #0ea5e9;
-                                --bg-body: #f3f4f6;
-                                --text-main: #1f2937;
-                                --text-sub: #6b7280;
-                                --white: #ffffff;
-                                --border: #e5e7eb;
-                            }
-
-                            * {
-                                box-sizing: border-box;
-                            }
-
-                            body {
-                                font-family: 'Inter', sans-serif;
-                                background: var(--bg-body);
-                                margin: 0;
-                                color: var(--text-main);
-                            }
-
-                            #loader {
-                                position: fixed;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                                background: rgba(255, 255, 255, 0.7);
-                                display: none;
-                                justify-content: center;
-                                align-items: center;
-                                z-index: 9999;
-                            }
-
-                            .spinner {
-                                width: 40px;
-                                height: 40px;
-                                border: 4px solid #f3f3f3;
-                                border-top: 4px solid var(--primary);
-                                border-radius: 50%;
-                                animation: spin 1s linear infinite;
-                            }
-
-                            @keyframes spin {
-                                100% {
-                                    transform: rotate(360deg);
-                                }
-                            }
-
-                            .wrapper {
-
-                                width: 100%;
-                            }
-
-                            .main-content {
-                                padding: 2rem;
-                                min-height: 100vh;
-                                margin-left: var(--sidebar-width);
-                                width: calc(100% - var(--sidebar-width));
-                            }
-
-                            .dashboard-toolbar {
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                margin-bottom: 2rem;
-                                background: var(--white);
-                                padding: 1rem 1.5rem;
-                                border-radius: 12px;
-                                border: 1px solid var(--border);
-                                flex-wrap: wrap;
-                                gap: 1rem;
-                            }
-
-                            .filter-form {
-                                display: flex;
-                                align-items: center;
-                                gap: 0.75rem;
-                            }
-
-                            .input-group {
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                                color: var(--text-sub);
-                                font-size: 0.875rem;
-                            }
-
-                            .form-control {
-                                padding: 8px 12px;
-                                border: 1px solid var(--border);
-                                border-radius: 6px;
-                            }
-
-                            .btn {
-                                padding: 8px 16px;
-                                border-radius: 6px;
-                                font-weight: 500;
-                                cursor: pointer;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 8px;
-                                border: none;
-                                transition: 0.2s;
-                            }
-
-                            .btn-primary {
-                                background: var(--primary);
-                                color: white;
-                            }
-
-                            .btn-success {
-                                background: #15803d;
-                                color: white;
-                            }
-
-                            .btn-outline {
-                                background: transparent;
-                                border: 1px solid var(--border);
-                                color: var(--text-sub);
-                            }
-
-                            .btn:hover {
-                                opacity: 0.9;
-                            }
-
-                            .stats-grid {
-                                display: grid;
-                                grid-template-columns: repeat(3, 1fr);
-                                gap: 1.25rem;
-                                margin-bottom: 2rem;
-                            }
-
-                            .stat-card {
-                                background: var(--white);
-                                padding: 1.25rem;
-                                border-radius: 12px;
-                                border: 1px solid var(--border);
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                transition: transform 0.2s;
-                            }
-
-                            .stat-card:hover {
-                                transform: translateY(-3px);
-                            }
-
-                            .stat-value {
-                                font-size: 1.35rem;
-                                font-weight: 700;
-                                margin-top: 0.5rem;
-                            }
-
-                            .stat-label {
-                                color: var(--text-sub);
-                                font-size: 0.875rem;
-                                font-weight: 500;
-                            }
-
-                            .stat-icon {
-                                width: 44px;
-                                height: 44px;
-                                border-radius: 10px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 1.1rem;
-                            }
-
-                            .charts-row {
-                                display: grid;
-                                grid-template-columns: 1.5fr 1fr;
-                                gap: 1.5rem;
-                                margin-bottom: 2rem;
-                            }
-
-                            .card {
-                                background: var(--white);
-                                border-radius: 12px;
-                                border: 1px solid var(--border);
-                                padding: 1.5rem;
-                            }
-
-                            .card-header {
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                margin-bottom: 1.5rem;
-                            }
-
-                            table {
-                                width: 100%;
-                                border-collapse: collapse;
-                            }
-
-                            th {
-                                text-align: left;
-                                padding: 12px;
-                                color: var(--text-sub);
-                                font-size: 0.75rem;
-                                border-bottom: 2px solid var(--border);
-                                text-transform: uppercase;
-                            }
-
-                            td {
-                                padding: 12px;
-                                border-bottom: 1px solid var(--border);
-                                font-size: 0.9rem;
-                            }
-
-                            .avatar-box {
-                                width: 36px;
-                                height: 36px;
-                                border-radius: 50%;
-                                overflow: hidden;
-                                background-color: #E5E7EB;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                border: 1px solid var(--border);
-                                flex-shrink: 0;
-                            }
-
-                            .user-flex {
-                                display: flex;
-                                align-items: center;
-                                gap: 12px;
-                            }
-
-                            .badge {
-                                padding: 4px 10px;
-                                border-radius: 20px;
-                                font-size: 0.75rem;
-                                font-weight: 600;
-                            }
-
-                            .bg-success {
-                                background: #dcfce7;
-                                color: #15803d;
-                            }
-
-                            .bg-danger {
-                                background: #fee2e2;
-                                color: #991b1b;
-                            }
-
-                            @media (max-width: 1400px) {
-                                .stats-grid {
-                                    grid-template-columns: repeat(3, 1fr);
-                                }
-                            }
-
-                            @media (max-width:1100px) {
-
-                                .main-content {
-                                    margin-left: 80px;
-                                    width: calc(100% - 80px);
+                                .filter-form {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.75rem;
+                                    flex-wrap: wrap;
                                 }
 
-                                .charts-row {
-                                    grid-template-columns: 1fr;
+                                .input-group {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                    font-size: .875rem;
+                                    color: var(--panel-text-sub);
                                 }
-
-                                .stats-grid {
-                                    grid-template-columns: repeat(2, 1fr);
-                                }
-
-                            }
-
-                            @media (max-width: 768px) {
-
-                                .main-content {
-                                    margin-left: 0;
-                                    padding: 1.25rem;
-                                }
-
-                                .stats-grid {
-                                    grid-template-columns: 1fr;
-                                }
-
-                            }
                         </style>
                     </head>
 
-                    <body>
-                        <div id="loader">
-                            <div class="spinner"></div>
+                    <body class="panel-body">
+                        <div class="panel-loader" id="loader">
+                            <div class="panel-spinner"></div>
                         </div>
 
-                        <div class="wrapper">
-                            <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+                        <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
 
-                            <div class="main-content">
-                                <header style="margin-bottom: 1.5rem;">
-                                    <h1 style="margin: 0; font-size: 1.75rem; font-weight: 700;">Báo cáo tổng quát</h1>
-                                    <small id="currentDateDisplay" style="color: var(--text-sub)"></small>
-                                </header>
+                        <main class="panel-main">
+                            <div class="pm-header">
+                                <h1 class="pm-title">Báo cáo tổng quát</h1>
+                                <p class="pm-subtitle" id="currentDateDisplay"></p>
+                            </div>
 
-                                <div class="dashboard-toolbar">
-                                    <form id="statsForm" action="${pageContext.request.contextPath}/admin/dashboard"
-                                        method="GET" class="filter-form">
-                                        <c:set var="today" value="<%= LocalDate.now().toString() %>" />
-                                        <div class="input-group">
-                                            <span>Từ:</span>
-                                            <input type="date" name="startDate" id="startDate" class="form-control"
-                                                max="${today}" value="${startDate}">
-                                        </div>
-                                        <div class="input-group">
-                                            <span>Đến:</span>
-                                            <input type="date" name="endDate" id="endDate" class="form-control"
-                                                max="${today}" value="${endDate}">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i>
-                                            Lọc</button>
-                                        <button type="button" onclick="resetFilter()" class="btn btn-outline"><i
-                                                class="fas fa-undo"></i> Reset</button>
-                                    </form>
+                            <div class="pm-toolbar">
+                                <form id="statsForm" action="${pageContext.request.contextPath}/admin/dashboard"
+                                    method="GET" class="filter-form">
+                                    <c:set var="today" value="<%= LocalDate.now().toString() %>" />
+                                    <div class="input-group">
+                                        <span>Từ:</span>
+                                        <input type="date" name="startDate" id="startDate" class="pm-input"
+                                            max="${today}" value="${startDate}">
+                                    </div>
+                                    <div class="input-group">
+                                        <span>Đến:</span>
+                                        <input type="date" name="endDate" id="endDate" class="pm-input" max="${today}"
+                                            value="${endDate}">
+                                    </div>
+                                    <button type="submit" class="pm-btn pm-btn-primary"><i class="fas fa-filter"></i>
+                                        Lọc</button>
+                                    <button type="button" onclick="resetFilter()" class="pm-btn pm-btn-outline"><i
+                                            class="fas fa-undo"></i> Reset</button>
+                                </form>
+                                <button onclick="handleExportExcel('export')" class="pm-btn pm-btn-success">
+                                    <i class="fas fa-file-excel"></i> Xuất File Excel
+                                </button>
+                            </div>
 
-                                    <button onclick="handleExportExcel('export')" class="btn btn-success">
-                                        <i class="fas fa-file-excel"></i> Xuất File Excel
-                                    </button>
+                            <div class="pm-stats">
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Tổng số sách</div>
+                                        <div class="pm-stat-value">${dashboardData.totalBooks}</div>
+                                    </div>
+                                    <div class="pm-stat-icon" style="background:#ede9fe;color:#6366f1;"><i
+                                            class="fas fa-book"></i></div>
                                 </div>
-
-                                <div class="stats-grid">
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Tổng số sách</div>
-                                            <div class="stat-value">${dashboardData.totalBooks}</div>
-                                        </div>
-                                        <div class="stat-icon" style="background: #e0e7ff; color: #4338ca;"><i
-                                                class="fas fa-book"></i></div>
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Bạn đọc</div>
+                                        <div class="pm-stat-value">${dashboardData.activeUsers}</div>
                                     </div>
-
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Bạn đọc</div>
-                                            <div class="stat-value">${dashboardData.activeUsers}</div>
-                                        </div>
-                                        <div class="stat-icon" style="background: #dcfce7; color: #15803d;"><i
-                                                class="fas fa-users"></i></div>
-                                    </div>
-
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Đang mượn</div>
-                                            <div class="stat-value" style="color: var(--info);">
-                                                ${dashboardData.pendingReturns}</div>
-                                        </div>
-                                        <div class="stat-icon" style="background: #e0f2fe; color: #0369a1;"><i
-                                                class="fas fa-book-reader"></i></div>
-                                    </div>
-
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Quá hạn</div>
-                                            <div class="stat-value" style="color: var(--danger);">
-                                                ${dashboardData.overdueBooks}</div>
-                                        </div>
-                                        <div class="stat-icon" style="background: #fee2e2; color: #ef4444;"><i
-                                                class="fas fa-history"></i></div>
-                                    </div>
-
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Tiền phạt đã thu</div>
-                                            <div class="stat-value" style="color: #15803d;">
-                                                <fmt:formatNumber value="${dashboardData.finesCollected}"
-                                                    pattern="#,##0" />
-                                                ₫
-                                            </div>
-                                        </div>
-                                        <div class="stat-icon" style="background: #dcfce7; color: #15803d;">
-                                            <i class="fas fa-hand-holding-usd"></i>
-                                        </div>
-                                    </div>
-                                    <div class="stat-card">
-                                        <div>
-                                            <div class="stat-label">Tiền phạt chưa thu</div>
-                                            <div class="stat-value" style="color:#f59e0b;">
-                                                <fmt:formatNumber value="${dashboardData.finesPending}"
-                                                    pattern="#,##0 '₫'" />
-                                            </div>
-                                        </div>
-                                        <div class="stat-icon" style="background:#fef3c7;color:#b45309;">
-                                            <i class="fas fa-clock"></i>
-                                        </div>
-                                    </div>
+                                    <div class="pm-stat-icon" style="background:#dcfce7;color:#15803d;"><i
+                                            class="fas fa-users"></i></div>
                                 </div>
-
-
-                                <div class="charts-row">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h3 style="margin:0; font-size:1rem;">Top 5 sách mượn nhiều nhất</h3>
-                                        </div>
-                                        <div style="height: 300px;"><canvas id="bookChart"></canvas></div>
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Đang mượn</div>
+                                        <div class="pm-stat-value" style="color:var(--panel-info);">
+                                            ${dashboardData.pendingReturns}</div>
                                     </div>
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h3 style="margin:0; font-size:1rem;">Phân bổ tiền phạt</h3>
-                                        </div>
-                                        <div style="height: 250px;"><canvas id="fineChart"></canvas></div>
-                                    </div>
+                                    <div class="pm-stat-icon" style="background:#e0f2fe;color:#0369a1;"><i
+                                            class="fas fa-book-reader"></i></div>
                                 </div>
-
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h3 style="margin:0; font-size:1rem;">Thành viên hoạt động tích cực</h3>
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Quá hạn</div>
+                                        <div class="pm-stat-value" style="color:var(--panel-danger);">
+                                            ${dashboardData.overdueBooks}</div>
                                     </div>
-                                    <div style="overflow-x: auto;">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>STT</th>
-                                                    <th>Thành viên</th>
-                                                    <th>Vai trò</th>
-                                                    <th>Trạng thái</th>
-                                                    <th style="text-align: center;">Tổng lượt mượn</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <c:forEach items="${dashboardData.topUsers}" var="u" varStatus="loop">
-                                                    <tr>
-                                                        <td>${loop.index + 1}</td>
-                                                        <td>
-                                                            <div class="user-flex">
-                                                                <div class="avatar-box">
-                                                                    <c:choose>
-                                                                        <c:when test="${not empty u.avatar}">
-                                                                            <img src="${pageContext.request.contextPath}/${u.avatar}"
-                                                                                style="width:100%; height:100%; object-fit:cover;">
-                                                                        </c:when>
-                                                                        <c:otherwise>
-                                                                            <span
-                                                                                style="font-weight:600;">${fn:substring(u.fullName,
-                                                                                0, 1).toUpperCase()}</span>
-                                                                        </c:otherwise>
-                                                                    </c:choose>
-                                                                </div>
-                                                                <div>
-                                                                    <strong>${u.fullName}</strong><br>
-                                                                    <small
-                                                                        style="color:var(--text-sub)">${u.email}</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>${u.roleName}</td>
-                                                        <td>
-                                                            <span
-                                                                class="badge ${u.status == 'ACTIVE' ? 'bg-success' : 'bg-danger'}">
-                                                                ${u.status == 'ACTIVE' ? 'Hoạt động' : 'Khóa'}
-                                                            </span>
-                                                        </td>
-                                                        <td style="text-align: center;">
-                                                            <strong>${u.totalBorrows}</strong>
-                                                        </td>
-                                                    </tr>
-                                                </c:forEach>
-                                            </tbody>
-                                        </table>
+                                    <div class="pm-stat-icon" style="background:#fee2e2;color:#ef4444;"><i
+                                            class="fas fa-history"></i></div>
+                                </div>
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Tiền phạt đã thu</div>
+                                        <div class="pm-stat-value" style="color:#15803d;">
+                                            <fmt:formatNumber value="${dashboardData.finesCollected}" pattern="#,##0" />
+                                            ₫
+                                        </div>
                                     </div>
+                                    <div class="pm-stat-icon" style="background:#dcfce7;color:#15803d;"><i
+                                            class="fas fa-hand-holding-usd"></i></div>
+                                </div>
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Tiền phạt chưa thu</div>
+                                        <div class="pm-stat-value" style="color:#f59e0b;">
+                                            <fmt:formatNumber value="${dashboardData.finesPending}"
+                                                pattern="#,##0 '₫'" />
+                                        </div>
+                                    </div>
+                                    <div class="pm-stat-icon" style="background:#fef3c7;color:#b45309;"><i
+                                            class="fas fa-clock"></i></div>
                                 </div>
                             </div>
-                        </div>
+
+                            <div class="pm-charts">
+                                <div class="pm-card">
+                                    <div class="pm-card-header">
+                                        <h3 class="pm-card-title">Top 5 sách mượn nhiều nhất</h3>
+                                    </div>
+                                    <div style="height:300px;"><canvas id="bookChart"></canvas></div>
+                                </div>
+                                <div class="pm-card">
+                                    <div class="pm-card-header">
+                                        <h3 class="pm-card-title">Phân bổ tiền phạt</h3>
+                                    </div>
+                                    <div style="height:250px;"><canvas id="fineChart"></canvas></div>
+                                </div>
+                            </div>
+
+                            <div class="pm-card">
+                                <div class="pm-card-header">
+                                    <h3 class="pm-card-title">Thành viên hoạt động tích cực</h3>
+                                </div>
+                                <div class="pm-table-wrap">
+                                    <table class="pm-table">
+                                        <thead>
+                                            <tr>
+                                                <th>STT</th>
+                                                <th>Thành viên</th>
+                                                <th>Vai trò</th>
+                                                <th>Trạng thái</th>
+                                                <th style="text-align:center;">Tổng lượt mượn</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${dashboardData.topUsers}" var="u" varStatus="loop">
+                                                <tr>
+                                                    <td>${loop.index + 1}</td>
+                                                    <td>
+                                                        <div class="pm-user">
+                                                            <div class="pm-user-avatar">
+                                                                <c:choose>
+                                                                    <c:when test="${not empty u.avatar}">
+                                                                        <img src="${pageContext.request.contextPath}/${u.avatar}"
+                                                                            alt="">
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        ${fn:substring(u.fullName, 0, 1).toUpperCase()}
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </div>
+                                                            <div>
+                                                                <strong>${u.fullName}</strong><br>
+                                                                <small
+                                                                    style="color:var(--panel-text-sub);">${u.email}</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>${u.roleName}</td>
+                                                    <td>
+                                                        <span
+                                                            class="pm-badge ${u.status == 'ACTIVE' ? 'pm-badge-success' : 'pm-badge-danger'}">
+                                                            ${u.status == 'ACTIVE' ? 'Hoạt động' : 'Khóa'}
+                                                        </span>
+                                                    </td>
+                                                    <td style="text-align:center;"><strong>${u.totalBorrows}</strong>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </main>
 
                         <script>
                             document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('vi-VN', {
@@ -571,6 +285,7 @@
                                     }
                                 });
                             });
+
                         </script>
                     </body>
 

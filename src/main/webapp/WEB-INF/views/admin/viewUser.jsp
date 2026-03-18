@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib uri="jakarta.tags.core" prefix="c" %>
         <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
             <!DOCTYPE html>
@@ -280,9 +280,11 @@
                         }
                     }
                 </style>
-            </head>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+</head>
 
-            <body>
+            <body class="panel-body">
                 <div class="app-container">
                     <jsp:include page="sidebar.jsp" />
 

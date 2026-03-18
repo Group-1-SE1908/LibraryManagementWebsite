@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
     <%@ taglib uri="jakarta.tags.core" prefix="c" %>
         <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
             <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
@@ -363,9 +363,11 @@
                             }
                         }
                     </style>
-                </head>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+</head>
 
-                <body>
+                <body class="panel-body">
                     <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
 
                     <main class="main-content">

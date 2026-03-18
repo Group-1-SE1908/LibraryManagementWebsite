@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <!DOCTYPE html>
         <html lang="vi">
@@ -125,9 +125,11 @@
                     background: #cbd5e1;
                 }
             </style>
-        </head>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+</head>
 
-        <body>
+        <body class="panel-body">
 
             <jsp:include page="librarian_sidebar.jsp" />
             <c:set var="booksBasePath" value="${not empty booksBasePath ? booksBasePath : '/staff/books'}" />

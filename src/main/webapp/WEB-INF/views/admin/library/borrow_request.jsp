@@ -1,4 +1,4 @@
-  <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿  <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
   <%@ taglib prefix="c" uri="jakarta.tags.core" %>
   <!DOCTYPE html>
   <html lang="vi">
@@ -15,8 +15,10 @@
       .err{color:#b00020;margin:10px 0;}
       .muted{color:#666;}
     </style>
-  </head>
-  <body>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+</head>
+  <body class="panel-body">
     <div class="top">
       <div>
         <h2>LBMS - Tạo yêu cầu mượn</h2>

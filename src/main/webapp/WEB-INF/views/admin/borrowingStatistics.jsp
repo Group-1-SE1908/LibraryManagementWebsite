@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
             <%@ page import="java.time.LocalDate" %>
@@ -191,199 +191,195 @@
                             box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
                         }
                     </style>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+                        rel="stylesheet">
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
                 </head>
 
-                <body>
-                    <div class="loading-overlay" id="loader">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="sr-only">Đang tải...</span>
-                        </div>
+                <body class="panel-body">
+                    <div class="panel-loader" id="loader">
+                        <div class="panel-spinner"></div>
                     </div>
 
-                    <div class="app-wrapper">
-                        <div class="sidebar-container">
-                            <jsp:include page="sidebar.jsp" />
-                        </div>
+                    <jsp:include page="sidebar.jsp" />
 
-                        <div id="content">
-                            <div class="container-fluid">
-                                <div
-                                    class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-                                    <div>
-                                        <h2 class="page-title mb-1">Thống Kê Mượn Trả</h2>
-                                        <p class="text-muted small mb-0">Theo dõi hoạt động thư viện trong thời gian
-                                            thực</p>
-                                    </div>
-                                    <div class="mt-3 mt-md-0">
-                                        <span
-                                            class="text-muted small font-weight-600 bg-white px-3 py-2 rounded shadow-sm border">
-                                            <i class="far fa-calendar-alt mr-2 text-primary"></i>
-                                            <span id="currentDateDisplay"></span>
-                                        </span>
-                                    </div>
+                    <div id="content">
+                        <div class="container-fluid">
+                            <div
+                                class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+                                <div>
+                                    <h2 class="page-title mb-1">Thống Kê Mượn Trả</h2>
+                                    <p class="text-muted small mb-0">Theo dõi hoạt động thư viện trong thời gian
+                                        thực</p>
                                 </div>
-
-                                <div class="filter-box">
-                                    <form action="${pageContext.request.contextPath}/admin/statistics" method="GET"
-                                        id="statsForm" class="row align-items-end">
-                                        <c:set var="today" value="<%= LocalDate.now().toString() %>" />
-                                        <div class="col-sm-6 col-md-3">
-                                            <label class="small font-weight-bold text-uppercase text-muted">Từ
-                                                ngày</label>
-                                            <input type="date" name="startDate" id="startDate" class="form-control"
-                                                max="${today}" value="${startDate}">
-                                        </div>
-                                        <div class="col-sm-6 col-md-3">
-                                            <label class="small font-weight-bold text-uppercase text-muted">Đến
-                                                ngày</label>
-                                            <input type="date" name="endDate" id="endDate" class="form-control"
-                                                max="${today}" value="${endDate}">
-                                        </div>
-                                        <div class="col-md-6 d-flex flex-wrap justify-content-md-end mt-3 mt-md-0">
-                                            <button type="submit" class="btn btn-primary font-weight-bold mr-2 px-4">
-                                                <i class="fas fa-filter mr-2"></i> Lọc dữ liệu
-                                            </button>
-                                            <button type="button" onclick="resetFilter()"
-                                                class="btn btn-light border font-weight-bold mr-2">
-                                                <i class="fas fa-undo"></i>
-                                            </button>
-                                            <button type="button" onclick="handleExportExcel('export')"
-                                                class="btn btn-export-full font-weight-bold px-4">
-                                                <i class="fas fa-file-excel mr-2"></i> Xuất Excel
-                                            </button>
-                                        </div>
-                                    </form>
+                                <div class="mt-3 mt-md-0">
+                                    <span
+                                        class="text-muted small font-weight-600 bg-white px-3 py-2 rounded shadow-sm border">
+                                        <i class="far fa-calendar-alt mr-2 text-primary"></i>
+                                        <span id="currentDateDisplay"></span>
+                                    </span>
                                 </div>
-
-                                <div class="row">
-                                    <c:set var="colors" value="${['primary', 'success', 'warning', 'danger']}" />
-                                    <c:set var="labels" value="${['Tổng sách', 'Bạn đọc', 'Lượt mượn', 'Quá hạn']}" />
-                                    <c:set var="vals"
-                                        value="${[stats.totalBooks, stats.activeUsers, stats.totalBorrows, stats.overdueBooks]}" />
-                                    <c:set var="icons" value="${['book', 'users', 'exchange-alt', 'clock']}" />
-
-                                    <c:forEach var="i" begin="0" end="3">
-                                        <div class="col-6 col-md-6 col-xl-3 mb-4">
-                                            <div class="card stat-card bg-${colors[i]} text-white">
-                                                <div class="card-body p-4">
-                                                    <div class="small text-uppercase font-weight-bold mb-1"
-                                                        style="opacity: 0.85; font-size: 0.75rem;">
-                                                        ${labels[i]}
-                                                    </div>
-                                                    <h2 class="font-weight-bold mb-0">${vals[i]}</h2>
-                                                    <i class="fas fa-${icons[i]}"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </c:forEach>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-lg-5 col-xl-4 mb-4">
-                                        <div class="main-card h-100">
-                                            <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Tỉ lệ
-                                                trạng thái mượn</h6>
-                                            <div class="chart-wrapper">
-                                                <canvas id="statusChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-lg-7 col-xl-8 mb-4">
-                                        <div class="main-card h-100">
-                                            <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Top 5
-                                                sách mượn nhiều nhất</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-borderless">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Tên đầu sách</th>
-                                                            <th class="d-none d-sm-table-cell">Thể loại</th>
-                                                            <th class="text-right">Lượt mượn</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <c:forEach items="${stats.topBooks}" var="b">
-                                                            <tr>
-                                                                <td><span
-                                                                        class="text-truncate-custom font-weight-600 text-dark">${b.title}</span>
-                                                                </td>
-                                                                <td class="d-none d-sm-table-cell"><span
-                                                                        class="badge badge-light text-muted">${b.category}</span>
-                                                                </td>
-                                                                <td class="text-right">
-                                                                    <span
-                                                                        class="badge badge-primary px-3 py-2">${b.borrowCount}</span>
-                                                                </td>
-                                                            </tr>
-                                                        </c:forEach>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="main-card">
-                                            <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Nhật ký
-                                                mượn trả chi tiết</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Mã</th>
-                                                            <th>Người mượn</th>
-                                                            <th>Sách / Barcode</th>
-                                                            <th class="d-none d-md-table-cell">Ngày mượn</th>
-                                                            <th>Hạn trả</th>
-                                                            <th>Phạt</th>
-                                                            <th>Trạng thái</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <c:forEach items="${stats.detailedRecords}" var="d">
-                                                            <tr>
-                                                                <td><code class="text-muted">#${d.orderId}</code></td>
-                                                                <td>
-                                                                    <div class="font-weight-bold small">
-                                                                        ${d.borrowerName}</div>
-                                                                    <div class="small text-muted d-none d-sm-block">
-                                                                        ${d.email}</div>
-                                                                </td>
-                                                                <td>
-                                                                    <div
-                                                                        class="text-truncate-custom small font-weight-600">
-                                                                        ${d.bookTitle}</div>
-                                                                    <div><small class="text-primary">${d.barcode != null
-                                                                            ? d.barcode : 'N/A'}</small></div>
-                                                                </td>
-                                                                <td class="d-none d-md-table-cell"><span
-                                                                        class="small">${d.borrowDate}</span></td>
-                                                                <td><span class="small">${d.returnDate != null ?
-                                                                        d.returnDate : '-'}</span></td>
-                                                                <td class="text-danger font-weight-bold small">
-                                                                    <fmt:formatNumber value="${d.fineAmount}"
-                                                                        type="currency" currencySymbol="₫" />
-                                                                </td>
-                                                                <td>
-                                                                    <span class="status-badge"
-                                                                        style="${d.status == 'RETURNED' ? 'background:#dcfce7;color:#166534' : 
-                                                                  (d.status == 'OVERDUE' ? 'background:#fee2e2;color:#991b1b' : 'background:#fef3c7;color:#92400e')}">
-                                                                        ${d.status}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        </c:forEach>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                             </div>
+
+                            <div class="filter-box">
+                                <form action="${pageContext.request.contextPath}/admin/statistics" method="GET"
+                                    id="statsForm" class="row align-items-end">
+                                    <c:set var="today" value="<%= LocalDate.now().toString() %>" />
+                                    <div class="col-sm-6 col-md-3">
+                                        <label class="small font-weight-bold text-uppercase text-muted">Từ
+                                            ngày</label>
+                                        <input type="date" name="startDate" id="startDate" class="form-control"
+                                            max="${today}" value="${startDate}">
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <label class="small font-weight-bold text-uppercase text-muted">Đến
+                                            ngày</label>
+                                        <input type="date" name="endDate" id="endDate" class="form-control"
+                                            max="${today}" value="${endDate}">
+                                    </div>
+                                    <div class="col-md-6 d-flex flex-wrap justify-content-md-end mt-3 mt-md-0">
+                                        <button type="submit" class="btn btn-primary font-weight-bold mr-2 px-4">
+                                            <i class="fas fa-filter mr-2"></i> Lọc dữ liệu
+                                        </button>
+                                        <button type="button" onclick="resetFilter()"
+                                            class="btn btn-light border font-weight-bold mr-2">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        <button type="button" onclick="handleExportExcel('export')"
+                                            class="btn btn-export-full font-weight-bold px-4">
+                                            <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="row">
+                                <c:set var="colors" value="${['primary', 'success', 'warning', 'danger']}" />
+                                <c:set var="labels" value="${['Tổng sách', 'Bạn đọc', 'Lượt mượn', 'Quá hạn']}" />
+                                <c:set var="vals"
+                                    value="${[stats.totalBooks, stats.activeUsers, stats.totalBorrows, stats.overdueBooks]}" />
+                                <c:set var="icons" value="${['book', 'users', 'exchange-alt', 'clock']}" />
+
+                                <c:forEach var="i" begin="0" end="3">
+                                    <div class="col-6 col-md-6 col-xl-3 mb-4">
+                                        <div class="card stat-card bg-${colors[i]} text-white">
+                                            <div class="card-body p-4">
+                                                <div class="small text-uppercase font-weight-bold mb-1"
+                                                    style="opacity: 0.85; font-size: 0.75rem;">
+                                                    ${labels[i]}
+                                                </div>
+                                                <h2 class="font-weight-bold mb-0">${vals[i]}</h2>
+                                                <i class="fas fa-${icons[i]}"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-5 col-xl-4 mb-4">
+                                    <div class="main-card h-100">
+                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Tỉ lệ
+                                            trạng thái mượn</h6>
+                                        <div class="chart-wrapper">
+                                            <canvas id="statusChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-7 col-xl-8 mb-4">
+                                    <div class="main-card h-100">
+                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Top 5
+                                            sách mượn nhiều nhất</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Tên đầu sách</th>
+                                                        <th class="d-none d-sm-table-cell">Thể loại</th>
+                                                        <th class="text-right">Lượt mượn</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <c:forEach items="${stats.topBooks}" var="b">
+                                                        <tr>
+                                                            <td><span
+                                                                    class="text-truncate-custom font-weight-600 text-dark">${b.title}</span>
+                                                            </td>
+                                                            <td class="d-none d-sm-table-cell"><span
+                                                                    class="badge badge-light text-muted">${b.category}</span>
+                                                            </td>
+                                                            <td class="text-right">
+                                                                <span
+                                                                    class="badge badge-primary px-3 py-2">${b.borrowCount}</span>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="main-card">
+                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Nhật ký
+                                            mượn trả chi tiết</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Người mượn</th>
+                                                        <th>Sách / Barcode</th>
+                                                        <th class="d-none d-md-table-cell">Ngày mượn</th>
+                                                        <th>Hạn trả</th>
+                                                        <th>Phạt</th>
+                                                        <th>Trạng thái</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <c:forEach items="${stats.detailedRecords}" var="d">
+                                                        <tr>
+                                                            <td><code class="text-muted">#${d.orderId}</code></td>
+                                                            <td>
+                                                                <div class="font-weight-bold small">
+                                                                    ${d.borrowerName}</div>
+                                                                <div class="small text-muted d-none d-sm-block">
+                                                                    ${d.email}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="text-truncate-custom small font-weight-600">
+                                                                    ${d.bookTitle}</div>
+                                                                <div><small class="text-primary">${d.barcode != null
+                                                                        ? d.barcode : 'N/A'}</small></div>
+                                                            </td>
+                                                            <td class="d-none d-md-table-cell"><span
+                                                                    class="small">${d.borrowDate}</span></td>
+                                                            <td><span class="small">${d.returnDate != null ?
+                                                                    d.returnDate : '-'}</span></td>
+                                                            <td class="text-danger font-weight-bold small">
+                                                                <fmt:formatNumber value="${d.fineAmount}"
+                                                                    type="currency" currencySymbol="₫" />
+                                                            </td>
+                                                            <td>
+                                                                <span class="status-badge"
+                                                                    style="${d.status == 'RETURNED' ? 'background:#dcfce7;color:#166534' : 
+                                                                  (d.status == 'OVERDUE' ? 'background:#fee2e2;color:#991b1b' : 'background:#fef3c7;color:#92400e')}">
+                                                                    ${d.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 

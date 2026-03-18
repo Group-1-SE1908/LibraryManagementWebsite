@@ -1,10 +1,8 @@
 package com.lbms.controller;
 
-import com.google.gson.Gson;
 import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Book;
-import com.lbms.model.BookCopy;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.Reservation;
 import com.lbms.model.RenewalRequest;
@@ -18,7 +16,6 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -479,6 +476,7 @@ public class LibrarianBorrowController extends HttpServlet {
         return formatter.format(amount);
     }
 
+    @SuppressWarnings("unused")
     private static class VerificationResult {
 
         User user;

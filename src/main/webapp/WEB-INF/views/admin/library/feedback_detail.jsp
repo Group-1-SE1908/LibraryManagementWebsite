@@ -149,9 +149,11 @@
                             font-size: 12px;
                         }
                     </style>
-                </head>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+</head>
 
-                <body>
+                <body class="panel-body">
                     <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
                     <c:set var="defaultFeedbackBase"
                         value="${fn:startsWith(pageContext.request.servletPath, '/admin/') ? '/admin/feedback' : '/staff/feedback'}" />
