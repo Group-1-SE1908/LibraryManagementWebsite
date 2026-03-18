@@ -255,7 +255,6 @@
                 <form action="${pageContext.request.contextPath}${renewalActionPrefix}/approve" method="post">
                     <input type="hidden" name="renewalId" value="${renewalTicket.id}">
                     <button type="submit" class="btn-modern btn-approve">
-                        <span>✅</span>
                         <span>Phê duyệt gia hạn</span>
                     </button>
                 </form>
@@ -263,7 +262,6 @@
                     <input type="hidden" name="renewalId" value="${renewalTicket.id}">
                     <textarea name="reason" placeholder="Ghi chú từ chối (tùy ý)"></textarea>
                     <button type="submit" class="btn-modern btn-reject">
-                        <span>✖️</span>
                         <span>Từ chối yêu cầu</span>
                     </button>
                 </form>

@@ -236,6 +236,12 @@
                         <span class="badge-count">!</span>
                     </a>
 
+                    <a href="${pageContext.request.contextPath}${staffRenewalBase}"
+                        class="${fn:contains(activeUri, '/renewal') ? 'active' : ''}">
+                        <i class="fas fa-calendar-days"></i>
+                        <span>Danh sach gia han</span>
+                    </a>
+
                     <a href="${pageContext.request.contextPath}${finesBase}"
                         class="${activeUri.contains('/fines') ? 'active' : ''}">
                         <i class="fas fa-coins"></i>

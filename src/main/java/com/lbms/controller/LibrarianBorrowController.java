@@ -87,6 +87,12 @@ public class LibrarianBorrowController extends HttpServlet {
             if (path.contains("/renewal") && "view".equals(action)) {
                 handleRenewalDetail(req, resp, borrowBase, renewalBase);
                 return;
+            } else if ("renewal".equals(action)) {
+                List<RenewalRequest> renewalTickets = libService.listPendingRenewalRequests();
+                req.setAttribute("renewalTickets", renewalTickets);
+                req.setAttribute("renewalActionPrefix", renewalBase);
+                req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_requests.jsp").forward(req, resp);
+                return;
             } else if ("detail".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
 
