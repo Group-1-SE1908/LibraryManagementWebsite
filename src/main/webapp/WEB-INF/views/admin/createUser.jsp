@@ -1,463 +1,155 @@
 ﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="vi">
 
         <head>
-            <meta charset="utf-8" />
-            <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-            <title>LBMS - Thêm người dùng mới</title>
-
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>LBMS – Thêm người dùng mới</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
                 rel="stylesheet" />
-            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-
-            <style>
-                :root {
-                    --primary: #1E40AF;
-                    --primary-hover: #1e3a8a;
-                    --background-light: #F3F4F6;
-                    --white: #FFFFFF;
-                    --gray-100: #F3F4F6;
-                    --gray-300: #D1D5DB;
-                    --gray-400: #9CA3AF;
-                    --gray-500: #6B7280;
-                    --gray-600: #4B5563;
-                    --gray-700: #374151;
-                    --gray-900: #111827;
-                    --blue-100: #DBEAFE;
-                    --blue-200: #BFDBFE;
-                    --red-50: #FEF2F2;
-                    --red-500: #EF4444;
-                    --red-700: #B91C1C;
-                    --green-400: #4ADE80;
-                }
-
-                body {
-                    margin: 0;
-                    padding: 0;
-                    font-family: 'Inter', sans-serif;
-                    background-color: var(--background-light);
-                }
-
-                .app-container {
-                    display: flex;
-                    min-height: 100vh;
-                }
-
-                .main-wrapper {
-                    flex: 1;
-                    margin-left: 280px;
-                    background-color: var(--background-light);
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .content-area {
-                    padding: 2rem;
-                    flex: 1;
-                }
-
-                .max-w-5xl {
-                    max-width: 64rem;
-                    margin: 0 auto;
-                }
-
-                .mx-auto {
-                    margin-left: auto;
-                    margin-right: auto;
-                }
-
-                .mb-6 {
-                    margin-bottom: 1.5rem;
-                }
-
-                .mb-8 {
-                    margin-bottom: 2rem;
-                }
-
-                .mb-2 {
-                    margin-bottom: 0.5rem;
-                }
-
-                .back-link {
-                    display: flex;
-                    align-items: center;
-                    color: var(--gray-600);
-                    text-decoration: none;
-                    transition: color 0.2s;
-                }
-
-                .back-link:hover {
-                    color: var(--primary);
-                }
-
-                .mr-1 {
-                    margin-right: 0.25rem;
-                }
-
-
-                .form-card {
-                    background-color: var(--white);
-                    border-radius: 1rem;
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                    min-height: 600px;
-                }
-
-
-                .sidebar-decor {
-                    display: none;
-                    position: relative;
-                }
-
-                .sidebar-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background-color: rgba(30, 64, 175, 0.9);
-                    z-index: 10;
-                }
-
-                .sidebar-img {
-                    position: absolute;
-                    inset: 0;
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-
-                .sidebar-content {
-                    position: relative;
-                    z-index: 20;
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    padding: 2.5rem;
-                    color: white;
-                    box-sizing: border-box;
-                }
-
-
-                .form-body {
-                    width: 100%;
-                    padding: 2rem;
-                    box-sizing: border-box;
-                }
-
-
-                .form-group {
-                    margin-bottom: 1.25rem;
-                }
-
-                .label {
-                    display: block;
-                    font-size: 0.875rem;
-                    font-weight: 600;
-                    color: var(--gray-700);
-                    margin-bottom: 0.25rem;
-                }
-
-                .relative {
-                    position: relative;
-                }
-
-                .input-icon {
-                    position: absolute;
-                    left: 0.75rem;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: var(--gray-400);
-                    font-size: 1.125rem !important;
-                }
-
-                .form-control {
-                    width: 100%;
-                    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
-                    border: 1px solid var(--gray-300);
-                    border-radius: 0.5rem;
-                    font-size: 0.875rem;
-                    box-sizing: border-box;
-                    transition: all 0.2s;
-                }
-
-                .form-control:focus {
-                    outline: none;
-                    border-color: var(--primary);
-                    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
-                }
-
-
-                .select-wrapper::after {
-                    content: 'expand_more';
-                    font-family: 'Material Icons';
-                    position: absolute;
-                    right: 0.75rem;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: var(--gray-400);
-                    pointer-events: none;
-                    font-size: 1.25rem;
-                }
-
-                .grid-inputs {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 1rem;
-                }
-
-
-                .btn-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.75rem;
-                    margin-top: 1rem;
-                }
-
-                .btn-submit {
-                    flex: 1;
-                    padding: 0.625rem;
-                    background-color: var(--primary);
-                    color: white;
-                    border: none;
-                    border-radius: 0.5rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                    transition: all 0.2s;
-                }
-
-                .btn-submit:hover {
-                    background-color: var(--primary-hover);
-                }
-
-                .btn-submit:active {
-                    transform: scale(0.95);
-                }
-
-                .btn-cancel {
-                    flex: 1;
-                    padding: 0.625rem;
-                    border: 1px solid var(--gray-300);
-                    background: transparent;
-                    color: var(--gray-700);
-                    text-align: center;
-                    text-decoration: none;
-                    border-radius: 0.5rem;
-                    font-weight: 700;
-                    transition: background 0.2s;
-                }
-
-                .btn-cancel:hover {
-                    background-color: #F9FAFB;
-                }
-
-
-                .error-container {
-                    margin-bottom: 1.5rem;
-                    padding: 1rem;
-                    background-color: var(--red-50);
-                    border-left: 4px solid var(--red-500);
-                    color: var(--red-700);
-                    border-radius: 0 0.5rem 0.5rem 0;
-                    transition: opacity 0.5s;
-                }
-
-
-                @media (min-width: 1024px) {
-                    .form-card {
-                        flex-direction: row;
-                    }
-
-                    .sidebar-decor {
-                        display: block;
-                        width: 41.666667%;
-                    }
-
-                    .form-body {
-                        width: 58.333333%;
-                        padding: 3rem;
-                    }
-
-                    .grid-inputs {
-                        grid-template-columns: 1fr 1fr;
-                    }
-                }
-
-                @media (min-width: 640px) {
-                    .btn-group {
-                        flex-direction: row;
-                    }
-                }
-
-                @media (max-width: 768px) {
-                    .main-wrapper {
-                        margin-left: 0;
-                    }
-                }
-            </style>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
-</head>
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
+        </head>
 
         <body class="panel-body">
 
-            <div class="app-container">
-                <jsp:include page="sidebar.jsp" />
+            <jsp:include page="sidebar.jsp" />
 
-                <main class="main-wrapper">
-                    <div class="content-area">
-                        <div class="max-w-5xl">
+            <main class="panel-main">
 
-                            <div class="mb-6">
-                                <a href="${pageContext.request.contextPath}/admin/users" class="back-link">
-                                    <span class="material-icons mr-1">arrow_back</span>
-                                    Quay lại danh sách
-                                </a>
-                            </div>
+                <a href="${pageContext.request.contextPath}/admin/users" class="pm-back-link">
+                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                </a>
 
-                            <div class="form-card">
-                                <div class="sidebar-decor">
-                                    <div class="sidebar-overlay"></div>
-                                    <img alt="Admin Panel" class="sidebar-img"
-                                        src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000" />
-                                    <div class="sidebar-content">
-                                        <div>
-                                            <div
-                                                style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                                <span class="material-icons"
-                                                    style="font-size: 1.875rem;">admin_panel_settings</span>
-                                                <h1
-                                                    style="font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.025em;">
-                                                    LBMS ADMIN</h1>
-                                            </div>
-                                            <p
-                                                style="color: var(--blue-100); font-size: 0.875rem; font-weight: 500; margin: 0;">
-                                                Hệ thống quản lý người dùng</p>
-                                        </div>
-                                        <div>
-                                            <h2
-                                                style="font-size: 1.875rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.25;">
-                                                Thêm thành viên mới cho thư viện.</h2>
-                                            <p style="color: var(--blue-100); line-height: 1.625;">Vui lòng đảm bảo
-                                                thông tin chính xác. Tài khoản mới sẽ mặc định ở trạng thái <span
-                                                    style="font-weight: 700; color: var(--green-400);">HOẠT ĐỘNG</span>.
-                                            </p>
-                                        </div>
-                                        <div style="font-size: 0.75rem; color: var(--blue-200);">© 2026 LBMS </div>
-                                    </div>
+                <div class="pm-form-card">
+                    <%-- Decorative side --%>
+                        <div class="pm-form-card-side">
+                            <div>
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                    <i class="fas fa-book-open" style="font-size:1.75rem;"></i>
+                                    <span style="font-size:1.25rem;font-weight:700;">LBMS Admin</span>
                                 </div>
+                                <p style="opacity:.8;font-size:.875rem;margin:0;">Hệ thống quản lý người dùng</p>
+                            </div>
+                            <div>
+                                <p class="pm-form-card-side-title">Thêm thành viên mới cho thư viện.</p>
+                                <p class="pm-form-card-side-sub">Vui lòng đảm bảo thông tin chính xác. Tài khoản mới sẽ
+                                    mặc định ở trạng thái HOẠT ĐỘNG.</p>
+                                <div class="pm-form-card-side-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    Mật khẩu sẽ được hệ thống tạo ngẫu nhiên và gửi qua email người dùng.
+                                </div>
+                            </div>
+                            <div style="font-size:.75rem;opacity:.6;">© 2026 LBMS</div>
+                        </div>
 
-                                <div class="form-body">
-                                    <div class="mb-8">
-                                        <h2
-                                            style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin: 0 0 0.5rem 0;">
-                                            Đăng ký người dùng</h2>
-                                        <p style="color: var(--gray-500); font-size: 0.875rem; margin: 0;">Điền đầy đủ
-                                            các thông tin dưới đây để tạo tài khoản.</p>
-                                    </div>
+                        <%-- Form body --%>
+                            <div class="pm-form-card-body">
+                                <h2
+                                    style="font-size:1.375rem;font-weight:700;margin:0 0 .5rem;color:var(--panel-text);">
+                                    Đăng ký người dùng</h2>
+                                <p style="color:var(--panel-text-sub);font-size:.875rem;margin:0 0 1.5rem;">Điền đầy đủ
+                                    thông tin bên dưới để tạo tài khoản.</p>
 
-                                    <c:if test="${not empty errors}">
-                                        <div id="error-box" class="error-container">
-                                            <div
-                                                style="display: flex; align-items: center; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.875rem;">
-                                                <span class="material-icons"
-                                                    style="font-size: 1rem; margin-right: 0.5rem;">error</span> Có lỗi
-                                                xảy ra:
-                                            </div>
-                                            <ul
-                                                style="list-style: disc; list-style-position: inside; font-size: 0.75rem; margin: 0; padding: 0;">
+                                <c:if test="${not empty errors}">
+                                    <div id="error-box" class="pm-toast pm-toast-danger" style="margin-bottom:1.25rem;">
+                                        <div>
+                                            <div style="font-weight:700;margin-bottom:4px;"><i
+                                                    class="fas fa-circle-exclamation"></i> Có lỗi xảy ra:</div>
+                                            <ul style="margin:0;padding-left:1.2rem;font-size:.8125rem;">
                                                 <c:forEach items="${errors}" var="err">
-                                                    <li style="margin-bottom: 4px;">${err}</li>
+                                                    <li>${err}</li>
                                                 </c:forEach>
                                             </ul>
                                         </div>
-                                    </c:if>
+                                    </div>
+                                </c:if>
 
-                                    <form action="${pageContext.request.contextPath}/admin/users/create" method="POST"
-                                        style="display: flex; flex-direction: column; gap: 1.25rem;">
-                                        <div class="form-group">
-                                            <label class="label">Họ và tên</label>
-                                            <div class="relative">
-                                                <span class="material-icons input-icon">person</span>
-                                                <input type="text" name="name" value="${param.name}" required
-                                                    class="form-control" placeholder="Nhập tên đầy đủ" />
-                                            </div>
+                                <form action="${pageContext.request.contextPath}/admin/users/create" method="POST">
+                                    <div class="pm-form-group">
+                                        <label class="pm-label">Họ và tên</label>
+                                        <div class="pm-input-group">
+                                            <i class="fas fa-user pm-input-icon"></i>
+                                            <input type="text" name="name" value="${param.name}" required
+                                                class="pm-input" placeholder="Nhập tên đầy đủ" />
                                         </div>
+                                    </div>
 
-                                        <div class="form-group">
-                                            <label class="label">Email</label>
-                                            <div class="relative">
-                                                <span class="material-icons input-icon">email</span>
-                                                <input type="email" name="email" value="${param.email}" required
-                                                    class="form-control" placeholder="email@example.com" />
-                                            </div>
+                                    <div class="pm-form-group">
+                                        <label class="pm-label">Email</label>
+                                        <div class="pm-input-group">
+                                            <i class="fas fa-envelope pm-input-icon"></i>
+                                            <input type="email" name="email" value="${param.email}" required
+                                                class="pm-input" placeholder="email@example.com" />
                                         </div>
-                                        <div class="grid-inputs"
-                                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                            <div class="form-group">
-                                                <label class="label">Số điện thoại</label>
-                                                <div class="relative">
-                                                    <span class="material-icons input-icon">phone</span>
-                                                    <input type="text" name="phone" value="${param.phone}"
-                                                        class="form-control" placeholder="09xx xxx xxx" />
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="label">Địa chỉ</label>
-                                                <div class="relative">
-                                                    <span class="material-icons input-icon">home</span>
-                                                    <input type="text" name="address" value="${param.address}"
-                                                        class="form-control" placeholder="Số nhà, tên đường..." />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="label">Mật khẩu</label>
-                                            <div
-                                                style="display: flex; align-items: center; gap: 6px; color: var(--gray-600); font-size: 0.875rem; padding: 0.5rem 0;">
-                                                <span class="material-icons"
-                                                    style="font-size: 1.1rem; color: var(--primary);">info</span>
-                                                <span>Mật khẩu sẽ được <strong>hệ thống tự động tạo ngẫu nhiên</strong>
-                                                    và gửi trực tiếp đến Email người dùng.</span>
-                                            </div>
-                                        </div>
+                                    </div>
 
-                                        <div class="form-group">
-                                            <label class="label">Vai trò</label>
-                                            <div class="relative select-wrapper">
-                                                <span class="material-icons input-icon">badge</span>
-                                                <select name="roleId" required class="form-control"
-                                                    style="appearance: none; -webkit-appearance: none; background-color: white; cursor: pointer;">
-                                                    <c:forEach items="${roleList}" var="r">
-                                                        <option value="${r.id}" ${param.roleId==r.id ? 'selected' : ''
-                                                            }>${r.name}</option>
-                                                    </c:forEach>
-                                                </select>
+                                    <div class="pm-form-row">
+                                        <div class="pm-form-group">
+                                            <label class="pm-label">Số điện thoại</label>
+                                            <div class="pm-input-group">
+                                                <i class="fas fa-phone pm-input-icon"></i>
+                                                <input type="text" name="phone" value="${param.phone}" class="pm-input"
+                                                    placeholder="09xx xxx xxx" />
                                             </div>
                                         </div>
-
-                                        <div class="btn-group">
-                                            <button type="submit" class="btn-submit">Lưu người dùng</button>
-                                            <a href="${pageContext.request.contextPath}/admin/users"
-                                                class="btn-cancel">Hủy</a>
+                                        <div class="pm-form-group">
+                                            <label class="pm-label">Địa chỉ</label>
+                                            <div class="pm-input-group">
+                                                <i class="fas fa-location-dot pm-input-icon"></i>
+                                                <input type="text" name="address" value="${param.address}"
+                                                    class="pm-input" placeholder="Số nhà, tên đường..." />
+                                            </div>
                                         </div>
-                                    </form>
-                                </div>
+                                    </div>
+
+                                    <div class="pm-form-group">
+                                        <label class="pm-label">Mật khẩu</label>
+                                        <div class="pm-toast pm-toast-info" style="padding:10px 14px;">
+                                            <i class="fas fa-circle-info"></i>
+                                            <span style="font-size:.8125rem;">Mật khẩu sẽ được <strong>hệ thống tạo ngẫu
+                                                    nhiên</strong> và gửi đến email người dùng.</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="pm-form-group">
+                                        <label class="pm-label">Vai trò</label>
+                                        <div class="pm-input-group">
+                                            <i class="fas fa-id-badge pm-input-icon"></i>
+                                            <select name="roleId" required class="pm-select"
+                                                style="padding-left:38px;width:100%;">
+                                                <c:forEach items="${roleList}" var="r">
+                                                    <option value="${r.id}" ${param.roleId==r.id ? 'selected' : '' }>
+                                                        ${r.name}</option>
+                                                </c:forEach>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;">
+                                        <button type="submit" class="pm-btn pm-btn-primary"
+                                            style="flex:1;justify-content:center;">
+                                            <i class="fas fa-floppy-disk"></i> Lưu người dùng
+                                        </button>
+                                        <a href="${pageContext.request.contextPath}/admin/users"
+                                            class="pm-btn pm-btn-outline" style="flex:1;justify-content:center;">
+                                            Hủy
+                                        </a>
+                                    </div>
+                                </form>
                             </div>
-                        </div>
-                    </div>
-                </main>
-            </div>
+                </div>
+
+            </main>
 
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
                     const errorBox = document.getElementById('error-box');
                     if (errorBox) {
                         setTimeout(() => {
+                            errorBox.style.transition = 'opacity .5s';
                             errorBox.style.opacity = '0';
                             setTimeout(() => errorBox.remove(), 500);
                         }, 5000);

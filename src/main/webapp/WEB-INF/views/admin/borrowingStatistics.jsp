@@ -1,390 +1,290 @@
 ﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-    <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-        <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+    <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+        <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
             <%@ page import="java.time.LocalDate" %>
-
                 <!DOCTYPE html>
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Thống Kê Thư Viện </title>
-
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>LBMS – Thống kê mượn trả</title>
+                    <link rel="stylesheet"
+                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
                     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
+                        rel="stylesheet" />
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
                     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
                     <style>
-                        :root {
-                            --sidebar-width: 260px;
-                            --primary-color: #4f46e5;
-                            --bg-light: #f8fafc;
-                            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                        .chart-section {
+                            display: grid;
+                            grid-template-columns: 2fr 3fr;
+                            gap: 20px;
+                            margin-bottom: 24px;
                         }
 
-                        body {
-                            background: var(--bg-light);
-                            font-family: 'Inter', sans-serif;
-                            color: #1e293b;
-                            margin: 0;
-                            overflow-x: hidden;
-                        }
-
-                        /* Layout Structure */
-                        .app-wrapper {
-                            display: flex;
-                            min-height: 100vh;
-                        }
-
-                        .sidebar-container {
-                            width: var(--sidebar-width);
-                            flex-shrink: 0;
-                            background: #1e293b;
-                            z-index: 1000;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        }
-
-                        #content {
-                            flex-grow: 1;
-                            min-width: 0;
-
-                            padding: 2rem 1.5rem;
-                        }
-
-                        /* Responsive Sidebar */
-                        @media (max-width: 992px) {
-                            .sidebar-container {
-                                width: 70px;
-                            }
-
-                            .sidebar-text {
-                                display: none;
-                            }
-                        }
-
-                        @media (max-width: 768px) {
-                            .sidebar-container {
-                                display: none;
-                            }
-
-                            #content {
-                                padding: 1rem;
-                            }
-                        }
-
-                        .page-title {
-                            font-weight: 700;
-                            letter-spacing: -0.025em;
-                            color: #0f172a;
-                        }
-
-                        /* Cards */
-                        .stat-card {
-                            border: none;
-                            border-radius: 12px;
+                        .chart-wrap {
                             position: relative;
-                            overflow: hidden;
-                            box-shadow: var(--card-shadow);
-                            transition: all 0.3s ease;
-                            height: 100%;
+                            height: 280px;
                         }
 
-                        .stat-card:hover {
-                            transform: translateY(-4px);
-                            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                        @media (max-width: 900px) {
+                            .chart-section {
+                                grid-template-columns: 1fr;
+                            }
                         }
 
-                        .stat-card i {
-                            position: absolute;
-                            right: -5px;
-                            bottom: -5px;
-                            font-size: 3rem;
-                            opacity: 0.2;
-                            transform: rotate(-15deg);
+                        .stat-icon-books {
+                            background: rgba(79, 70, 229, .12);
+                            color: #4f46e5;
                         }
 
-                        .filter-box,
-                        .main-card {
-                            background: #fff;
-                            padding: 1.5rem;
-                            border-radius: 12px;
-                            border: 1px solid #e2e8f0;
-                            margin-bottom: 1.5rem;
-                            box-shadow: var(--card-shadow);
+                        .stat-icon-users {
+                            background: rgba(16, 185, 129, .12);
+                            color: #10b981;
                         }
 
-                        /* Table Styling */
-                        .table thead th {
-                            background-color: #f1f5f9;
-                            text-transform: uppercase;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            letter-spacing: 0.05em;
-                            color: #64748b;
-                            border: none;
-                            padding: 12px 15px;
+                        .stat-icon-borrows {
+                            background: rgba(245, 158, 11, .12);
+                            color: #f59e0b;
                         }
 
-                        .table td {
-                            vertical-align: middle;
-                            padding: 12px 15px;
-                            border-top: 1px solid #f1f5f9;
+                        .stat-icon-overdue {
+                            background: rgba(239, 68, 68, .12);
+                            color: #ef4444;
                         }
 
-                        .text-truncate-custom {
-                            display: inline-block;
-                            max-width: 200px;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
+                        .stat-val-books {
+                            color: #4f46e5;
                         }
 
-                        /* Status Badges */
-                        .status-badge {
-                            font-size: 0.7rem;
-                            font-weight: 600;
-                            padding: 0.35rem 0.75rem;
-                            border-radius: 9999px;
-                            text-transform: uppercase;
+                        .stat-val-users {
+                            color: #10b981;
                         }
 
-                        /* Chart */
-                        .chart-wrapper {
-                            position: relative;
-                            height: 300px;
-                            width: 100%;
+                        .stat-val-borrows {
+                            color: #f59e0b;
                         }
 
-                        /* Loading Overlay */
-                        .loading-overlay {
-                            display: none;
-                            position: fixed;
-                            inset: 0;
-                            background: rgba(255, 255, 255, 0.7);
-                            backdrop-filter: blur(4px);
-                            z-index: 9999;
-                            justify-content: center;
-                            align-items: center;
-                        }
-
-                        .btn-export-full {
-                            background: #10b981;
-                            color: white;
-                            border: none;
-                            transition: 0.2s;
-                        }
-
-                        .btn-export-full:hover {
-                            background: #059669;
-                            color: white;
-                            transform: translateY(-1px);
-                        }
-
-                        .form-control:focus {
-                            border-color: var(--primary-color);
-                            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+                        .stat-val-overdue {
+                            color: #ef4444;
                         }
                     </style>
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-                        rel="stylesheet">
-                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
                 </head>
 
                 <body class="panel-body">
+
                     <div class="panel-loader" id="loader">
                         <div class="panel-spinner"></div>
                     </div>
 
                     <jsp:include page="sidebar.jsp" />
 
-                    <div id="content">
-                        <div class="container-fluid">
-                            <div
-                                class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-                                <div>
-                                    <h2 class="page-title mb-1">Thống Kê Mượn Trả</h2>
-                                    <p class="text-muted small mb-0">Theo dõi hoạt động thư viện trong thời gian
-                                        thực</p>
-                                </div>
-                                <div class="mt-3 mt-md-0">
-                                    <span
-                                        class="text-muted small font-weight-600 bg-white px-3 py-2 rounded shadow-sm border">
-                                        <i class="far fa-calendar-alt mr-2 text-primary"></i>
-                                        <span id="currentDateDisplay"></span>
-                                    </span>
-                                </div>
-                            </div>
+                    <main class="panel-main">
 
-                            <div class="filter-box">
+                        <div class="pm-page-header">
+                            <div>
+                                <h1 class="pm-title"><i class="fas fa-chart-bar"
+                                        style="color:var(--panel-accent);margin-right:8px;"></i>Thống kê mượn trả</h1>
+                                <p class="pm-subtitle">Theo dõi hoạt động thư viện — <span
+                                        id="currentDateDisplay"></span></p>
+                            </div>
+                        </div>
+
+                        <%-- Filter --%>
+                            <div class="pm-card" style="margin-bottom:20px;">
                                 <form action="${pageContext.request.contextPath}/admin/statistics" method="GET"
-                                    id="statsForm" class="row align-items-end">
+                                    id="statsForm" class="pm-toolbar"
+                                    style="flex-wrap:wrap;gap:12px;align-items:flex-end;">
                                     <c:set var="today" value="<%= LocalDate.now().toString() %>" />
-                                    <div class="col-sm-6 col-md-3">
-                                        <label class="small font-weight-bold text-uppercase text-muted">Từ
-                                            ngày</label>
-                                        <input type="date" name="startDate" id="startDate" class="form-control"
-                                            max="${today}" value="${startDate}">
+                                    <div class="pm-filter-group">
+                                        <label class="pm-label">Từ ngày</label>
+                                        <input type="date" name="startDate" id="startDate" class="pm-input"
+                                            max="${today}" value="${startDate}" />
                                     </div>
-                                    <div class="col-sm-6 col-md-3">
-                                        <label class="small font-weight-bold text-uppercase text-muted">Đến
-                                            ngày</label>
-                                        <input type="date" name="endDate" id="endDate" class="form-control"
-                                            max="${today}" value="${endDate}">
+                                    <div class="pm-filter-group">
+                                        <label class="pm-label">Đến ngày</label>
+                                        <input type="date" name="endDate" id="endDate" class="pm-input" max="${today}"
+                                            value="${endDate}" />
                                     </div>
-                                    <div class="col-md-6 d-flex flex-wrap justify-content-md-end mt-3 mt-md-0">
-                                        <button type="submit" class="btn btn-primary font-weight-bold mr-2 px-4">
-                                            <i class="fas fa-filter mr-2"></i> Lọc dữ liệu
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <button type="submit" class="pm-btn pm-btn-primary">
+                                            <i class="fas fa-filter"></i> Lọc dữ liệu
                                         </button>
-                                        <button type="button" onclick="resetFilter()"
-                                            class="btn btn-light border font-weight-bold mr-2">
+                                        <button type="button" onclick="resetFilter()" class="pm-btn"
+                                            style="background:var(--panel-bg);border:1px solid var(--panel-border);">
                                             <i class="fas fa-undo"></i>
                                         </button>
                                         <button type="button" onclick="handleExportExcel('export')"
-                                            class="btn btn-export-full font-weight-bold px-4">
-                                            <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                                            class="pm-btn pm-btn-success">
+                                            <i class="fas fa-file-excel"></i> Xuất Excel
                                         </button>
                                     </div>
                                 </form>
                             </div>
 
-                            <div class="row">
-                                <c:set var="colors" value="${['primary', 'success', 'warning', 'danger']}" />
-                                <c:set var="labels" value="${['Tổng sách', 'Bạn đọc', 'Lượt mượn', 'Quá hạn']}" />
-                                <c:set var="vals"
-                                    value="${[stats.totalBooks, stats.activeUsers, stats.totalBorrows, stats.overdueBooks]}" />
-                                <c:set var="icons" value="${['book', 'users', 'exchange-alt', 'clock']}" />
+                            <%-- Stat cards --%>
+                                <div class="pm-stats">
+                                    <div class="pm-stat">
+                                        <div>
+                                            <div class="pm-stat-label">Tổng sách</div>
+                                            <div class="pm-stat-value stat-val-books">${stats.totalBooks}</div>
+                                        </div>
+                                        <div class="pm-stat-icon stat-icon-books"><i class="fas fa-book"></i></div>
+                                    </div>
+                                    <div class="pm-stat">
+                                        <div>
+                                            <div class="pm-stat-label">Bạn đọc</div>
+                                            <div class="pm-stat-value stat-val-users">${stats.activeUsers}</div>
+                                        </div>
+                                        <div class="pm-stat-icon stat-icon-users"><i class="fas fa-users"></i></div>
+                                    </div>
+                                    <div class="pm-stat">
+                                        <div>
+                                            <div class="pm-stat-label">Lượt mượn</div>
+                                            <div class="pm-stat-value stat-val-borrows">${stats.totalBorrows}</div>
+                                        </div>
+                                        <div class="pm-stat-icon stat-icon-borrows"><i class="fas fa-exchange-alt"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pm-stat">
+                                        <div>
+                                            <div class="pm-stat-label">Quá hạn</div>
+                                            <div class="pm-stat-value stat-val-overdue">${stats.overdueBooks}</div>
+                                        </div>
+                                        <div class="pm-stat-icon stat-icon-overdue"><i class="fas fa-clock"></i></div>
+                                    </div>
+                                </div>
 
-                                <c:forEach var="i" begin="0" end="3">
-                                    <div class="col-6 col-md-6 col-xl-3 mb-4">
-                                        <div class="card stat-card bg-${colors[i]} text-white">
-                                            <div class="card-body p-4">
-                                                <div class="small text-uppercase font-weight-bold mb-1"
-                                                    style="opacity: 0.85; font-size: 0.75rem;">
-                                                    ${labels[i]}
-                                                </div>
-                                                <h2 class="font-weight-bold mb-0">${vals[i]}</h2>
-                                                <i class="fas fa-${icons[i]}"></i>
+                                <%-- Chart + Top books --%>
+                                    <div class="chart-section">
+                                        <div class="pm-card">
+                                            <h6
+                                                style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--panel-accent);margin:0 0 16px;">
+                                                Tỉ lệ trạng thái mượn
+                                            </h6>
+                                            <div class="chart-wrap">
+                                                <canvas id="statusChart"></canvas>
+                                            </div>
+                                        </div>
+                                        <div class="pm-card">
+                                            <h6
+                                                style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--panel-accent);margin:0 0 16px;">
+                                                Top 5 sách mượn nhiều nhất
+                                            </h6>
+                                            <div class="pm-table-wrap">
+                                                <table class="pm-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Tên đầu sách</th>
+                                                            <th>Thể loại</th>
+                                                            <th style="text-align:right;">Lượt mượn</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <c:forEach items="${stats.topBooks}" var="b">
+                                                            <tr>
+                                                                <td
+                                                                    style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;">
+                                                                    ${b.title}</td>
+                                                                <td><span
+                                                                        class="pm-badge pm-badge-neutral">${b.category}</span>
+                                                                </td>
+                                                                <td style="text-align:right;"><span
+                                                                        class="pm-badge pm-badge-primary">${b.borrowCount}</span>
+                                                                </td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
-                                </c:forEach>
-                            </div>
 
-                            <div class="row">
-                                <div class="col-lg-5 col-xl-4 mb-4">
-                                    <div class="main-card h-100">
-                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Tỉ lệ
-                                            trạng thái mượn</h6>
-                                        <div class="chart-wrapper">
-                                            <canvas id="statusChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-7 col-xl-8 mb-4">
-                                    <div class="main-card h-100">
-                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Top 5
-                                            sách mượn nhiều nhất</h6>
-                                        <div class="table-responsive">
-                                            <table class="table table-borderless">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Tên đầu sách</th>
-                                                        <th class="d-none d-sm-table-cell">Thể loại</th>
-                                                        <th class="text-right">Lượt mượn</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <c:forEach items="${stats.topBooks}" var="b">
+                                    <%-- Detailed records --%>
+                                        <div class="pm-card">
+                                            <h6
+                                                style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--panel-accent);margin:0 0 16px;">
+                                                Nhật ký mượn trả chi tiết
+                                            </h6>
+                                            <div class="pm-table-wrap">
+                                                <table class="pm-table">
+                                                    <thead>
                                                         <tr>
-                                                            <td><span
-                                                                    class="text-truncate-custom font-weight-600 text-dark">${b.title}</span>
-                                                            </td>
-                                                            <td class="d-none d-sm-table-cell"><span
-                                                                    class="badge badge-light text-muted">${b.category}</span>
-                                                            </td>
-                                                            <td class="text-right">
-                                                                <span
-                                                                    class="badge badge-primary px-3 py-2">${b.borrowCount}</span>
-                                                            </td>
+                                                            <th style="width:70px;">Mã</th>
+                                                            <th>Người mượn</th>
+                                                            <th>Sách / Barcode</th>
+                                                            <th>Ngày mượn</th>
+                                                            <th>Hạn trả</th>
+                                                            <th>Phạt</th>
+                                                            <th>Trạng thái</th>
                                                         </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        <c:forEach items="${stats.detailedRecords}" var="d">
+                                                            <tr>
+                                                                <td><code
+                                                                        style="color:var(--panel-text-sub);">#${d.orderId}</code>
+                                                                </td>
+                                                                <td>
+                                                                    <div style="font-weight:600;font-size:.875rem;">
+                                                                        ${d.borrowerName}</div>
+                                                                    <div
+                                                                        style="font-size:.75rem;color:var(--panel-text-sub);">
+                                                                        ${d.email}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <div
+                                                                        style="font-weight:600;font-size:.875rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                                                        ${d.bookTitle}</div>
+                                                                    <div
+                                                                        style="font-size:.75rem;color:var(--panel-accent);">
+                                                                        ${d.barcode != null ? d.barcode : 'N/A'}</div>
+                                                                </td>
+                                                                <td
+                                                                    style="font-size:.8rem;color:var(--panel-text-sub);">
+                                                                    ${d.borrowDate}</td>
+                                                                <td
+                                                                    style="font-size:.8rem;color:var(--panel-text-sub);">
+                                                                    ${d.returnDate != null ? d.returnDate : '—'}</td>
+                                                                <td
+                                                                    style="color:var(--panel-danger);font-weight:700;font-size:.875rem;">
+                                                                    <fmt:formatNumber value="${d.fineAmount}"
+                                                                        type="currency" currencySymbol="₫" />
+                                                                </td>
+                                                                <td>
+                                                                    <span
+                                                                        class="pm-badge ${d.status == 'RETURNED' ? 'pm-badge-success' : (d.status == 'OVERDUE' ? 'pm-badge-danger' : 'pm-badge-warning')}">
+                                                                        <c:choose>
+                                                                            <c:when test="${d.status == 'RETURNED'}">Đã
+                                                                                trả</c:when>
+                                                                            <c:when test="${d.status == 'OVERDUE'}">Quá
+                                                                                hạn</c:when>
+                                                                            <c:when test="${d.status == 'BORROWING'}">
+                                                                                Đang mượn</c:when>
+                                                                            <c:otherwise>${d.status}</c:otherwise>
+                                                                        </c:choose>
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                        <c:if test="${empty stats.detailedRecords}">
+                                                            <tr>
+                                                                <td colspan="7">
+                                                                    <div class="pm-empty"><i class="fas fa-inbox"></i>
+                                                                        <p>Không có dữ liệu.</p>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </c:if>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="main-card">
-                                        <h6 class="font-weight-bold text-uppercase small mb-4 text-primary">Nhật ký
-                                            mượn trả chi tiết</h6>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Mã</th>
-                                                        <th>Người mượn</th>
-                                                        <th>Sách / Barcode</th>
-                                                        <th class="d-none d-md-table-cell">Ngày mượn</th>
-                                                        <th>Hạn trả</th>
-                                                        <th>Phạt</th>
-                                                        <th>Trạng thái</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <c:forEach items="${stats.detailedRecords}" var="d">
-                                                        <tr>
-                                                            <td><code class="text-muted">#${d.orderId}</code></td>
-                                                            <td>
-                                                                <div class="font-weight-bold small">
-                                                                    ${d.borrowerName}</div>
-                                                                <div class="small text-muted d-none d-sm-block">
-                                                                    ${d.email}</div>
-                                                            </td>
-                                                            <td>
-                                                                <div class="text-truncate-custom small font-weight-600">
-                                                                    ${d.bookTitle}</div>
-                                                                <div><small class="text-primary">${d.barcode != null
-                                                                        ? d.barcode : 'N/A'}</small></div>
-                                                            </td>
-                                                            <td class="d-none d-md-table-cell"><span
-                                                                    class="small">${d.borrowDate}</span></td>
-                                                            <td><span class="small">${d.returnDate != null ?
-                                                                    d.returnDate : '-'}</span></td>
-                                                            <td class="text-danger font-weight-bold small">
-                                                                <fmt:formatNumber value="${d.fineAmount}"
-                                                                    type="currency" currencySymbol="₫" />
-                                                            </td>
-                                                            <td>
-                                                                <span class="status-badge"
-                                                                    style="${d.status == 'RETURNED' ? 'background:#dcfce7;color:#166534' : 
-                                                                  (d.status == 'OVERDUE' ? 'background:#fee2e2;color:#991b1b' : 'background:#fef3c7;color:#92400e')}">
-                                                                    ${d.status}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
+                    </main>
 
                     <script>
-
                         document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('vi-VN', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                         });
@@ -416,7 +316,6 @@
                             document.getElementById('loader').style.display = 'flex';
                         };
 
-
                         const dataMap = {};
                         <c:forEach items="${stats.statusCounts}" var="e">
                             dataMap["${e.key}"] = ${e.value};
@@ -434,10 +333,7 @@
                                     labels: ['Không có dữ liệu'],
                                     datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 0 }]
                                 },
-                                options: {
-                                    cutout: '80%',
-                                    plugins: { legend: { display: false } }
-                                }
+                                options: { cutout: '80%', plugins: { legend: { display: false } } }
                             });
                         } else {
                             new Chart(ctx, {

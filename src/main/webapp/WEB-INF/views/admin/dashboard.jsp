@@ -17,21 +17,20 @@
                         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
                         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                         <style>
-                            :root {
-                                .filter-form {
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 0.75rem;
-                                    flex-wrap: wrap;
-                                }
+                            .filter-form {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.75rem;
+                                flex-wrap: wrap;
+                            }
 
-                                .input-group {
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 0.5rem;
-                                    font-size: .875rem;
-                                    color: var(--panel-text-sub);
-                                }
+                            .input-group {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                                font-size: .875rem;
+                                color: var(--panel-text-sub);
+                            }
                         </style>
                     </head>
 
