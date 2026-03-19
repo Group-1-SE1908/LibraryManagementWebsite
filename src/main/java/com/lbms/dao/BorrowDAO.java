@@ -129,7 +129,7 @@ public class BorrowDAO {
             BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
             String sql = schema.hasQuantity()
                     ? "SELECT SUM(CASE WHEN quantity IS NULL OR quantity <= 0 THEN 1 ELSE quantity END) AS c FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED')"
-                    : "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED')";
+                    : "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED','SHIPPING','RECEIVED')";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setLong(1, userId);
                 try (ResultSet rs = ps.executeQuery()) {
