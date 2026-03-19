@@ -74,6 +74,108 @@
                             color: #1e293b;
                         }
 
+                        .renewal-queue {
+                            border: 1px solid #dbeafe;
+                            background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+                            border-radius: 10px;
+                            padding: 14px;
+                            display: grid;
+                            gap: 10px;
+                        }
+
+                        .renewal-queue__head {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            gap: 10px;
+                            flex-wrap: wrap;
+                        }
+
+                        .renewal-queue__title {
+                            margin: 0;
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #1e3a8a;
+                        }
+
+                        .renewal-queue__summary {
+                            font-size: 12px;
+                            color: #64748b;
+                        }
+
+                        .renewal-queue__badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 4px 10px;
+                            border-radius: 999px;
+                            font-size: 11px;
+                            font-weight: 700;
+                            letter-spacing: 0.03em;
+                            text-transform: uppercase;
+                            border: 1px solid transparent;
+                        }
+
+                        .renewal-queue__badge--waiting {
+                            background: #fffbeb;
+                            color: #92400e;
+                            border-color: #fcd34d;
+                        }
+
+                        .renewal-queue__badge--clear {
+                            background: #f0fdf4;
+                            color: #166534;
+                            border-color: #86efac;
+                        }
+
+                        .renewal-queue__list {
+                            display: grid;
+                            gap: 8px;
+                        }
+
+                        .renewal-queue__item {
+                            display: grid;
+                            grid-template-columns: auto 1fr auto;
+                            gap: 12px;
+                            align-items: center;
+                            padding: 10px 12px;
+                            border-radius: 8px;
+                            background: rgba(255, 255, 255, 0.72);
+                            border: 1px solid #e2e8f0;
+                        }
+
+                        .renewal-queue__pos {
+                            min-width: 34px;
+                            height: 34px;
+                            border-radius: 999px;
+                            background: #dbeafe;
+                            color: #1d4ed8;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: 700;
+                            font-size: 13px;
+                        }
+
+                        .renewal-queue__name {
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: #0f172a;
+                            margin: 0;
+                        }
+
+                        .renewal-queue__meta {
+                            font-size: 12px;
+                            color: #64748b;
+                            margin-top: 2px;
+                        }
+
+                        .renewal-queue__empty {
+                            font-size: 13px;
+                            color: #475569;
+                            margin: 0;
+                        }
+
                         .renewal-actions {
                             display: flex;
                             gap: 10px;
@@ -204,6 +306,48 @@
                                     <div class="renewal-card__reason">
                                         <strong>Lý do gia hạn:</strong>
                                         <p style="margin-top:6px;">${fn:escapeXml(ticket.reason)}</p>
+                                    </div>
+                                    <c:set var="reservationQueue"
+                                        value="${reservationQueueMap[record.book.id]}" />
+                                    <div class="renewal-queue">
+                                        <div class="renewal-queue__head">
+                                            <div>
+                                                <p class="renewal-queue__title">Hàng chờ của cuốn sách này</p>
+                                                <div class="renewal-queue__summary">Có ${fn:length(reservationQueue)} người đang chờ</div>
+                                            </div>
+                                            <span class="renewal-queue__badge ${empty reservationQueue ? 'renewal-queue__badge--clear' : 'renewal-queue__badge--waiting'}">
+                                                ${empty reservationQueue ? 'Không có người chờ' : 'Đang có hàng chờ'}
+                                            </span>
+                                        </div>
+                                        <c:choose>
+                                            <c:when test="${empty reservationQueue}">
+                                                <p class="renewal-queue__empty">Hiện chưa có độc giả nào trong hàng chờ cho cuốn sách này.</p>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="renewal-queue__list">
+                                                    <c:forEach var="res" items="${reservationQueue}">
+                                                        <div class="renewal-queue__item">
+                                                            <div class="renewal-queue__pos">
+                                                                <c:out value="${not empty res.queuePosition ? res.queuePosition : '—'}" />
+                                                            </div>
+                                                            <div>
+                                                                <p class="renewal-queue__name">
+                                                                    <c:out value="${not empty res.userName ? res.userName : 'Độc giả không xác định'}" />
+                                                                </p>
+                                                                <div class="renewal-queue__meta">
+                                                                    <c:out value="${not empty res.userEmail ? res.userEmail : 'Không có email'}" />
+                                                                    ·
+                                                                    <c:out value="${not empty res.userPhone ? res.userPhone : 'Không có số điện thoại'}" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="renewal-queue__meta" style="text-align:right;white-space:nowrap;">
+                                                                <c:out value="${fn:escapeXml(res.statusLabel)}" />
+                                                            </div>
+                                                        </div>
+                                                    </c:forEach>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                     <div class="renewal-actions">
                                         <form action="${pageContext.request.contextPath}${actionPrefix}/approve"

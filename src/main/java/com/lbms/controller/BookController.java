@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 )
 public class BookController extends HttpServlet {
 
-    private static final int BOOKS_PER_PAGE = 8;
+    private static final int BOOKS_PER_PAGE = 12;
     private UserDAO userDAO;
     private BookService bookService;
     private CategoryDAO categoryDAO;

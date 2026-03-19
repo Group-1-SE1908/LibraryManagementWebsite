@@ -16,8 +16,10 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @WebServlet(urlPatterns = {
         "/staff/borrowlibrary",
@@ -86,7 +88,23 @@ public class LibrarianBorrowController extends HttpServlet {
                 return;
             } else if ("renewal".equals(action)) {
                 List<RenewalRequest> renewalTickets = libService.listPendingRenewalRequests();
+                Map<Long, List<Reservation>> reservationQueueMap = new HashMap<>();
+                for (RenewalRequest ticket : renewalTickets) {
+                    BorrowRecord record = ticket.getBorrowRecord();
+                    if (record == null || record.getBook() == null) {
+                        continue;
+                    }
+                    long bookId = record.getBook().getId();
+                    reservationQueueMap.computeIfAbsent(bookId, id -> {
+                        try {
+                            return libService.listWaitingReservations(id);
+                        } catch (Exception e) {
+                            return java.util.Collections.emptyList();
+                        }
+                    });
+                }
                 req.setAttribute("renewalTickets", renewalTickets);
+                req.setAttribute("reservationQueueMap", reservationQueueMap);
                 req.setAttribute("renewalActionPrefix", renewalBase);
                 req.getRequestDispatcher("/WEB-INF/views/admin/library/renewal_requests.jsp").forward(req, resp);
                 return;

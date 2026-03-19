@@ -282,6 +282,15 @@ public class BookDAO {
     // return false;
     // }
     public boolean restockBook(int bookId, int additionalQuantity, long userId) {
+        String bookTitle = "N/A";
+        try {
+            Book b = findById(bookId);
+            if (b != null) {
+                bookTitle = b.getTitle();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         String sql = "UPDATE Book SET quantity = quantity + ? WHERE book_id = ?";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, additionalQuantity);
@@ -289,7 +298,8 @@ public class BookDAO {
             int affected = ps.executeUpdate();
             if (affected > 0) {
                 // Ghi log nghiệp vụ nhập kho
-                logDAO.addActivityLog((int) userId, "Nhập thêm " + additionalQuantity + " cuốn cho sách ID: " + bookId);
+                logDAO.addActivityLog((int) userId,
+                        "Nhập thêm " + additionalQuantity + " quyển sách: " + bookTitle + " [ID:" + bookId + "]");
                 return true;
             }
         } catch (Exception e) {

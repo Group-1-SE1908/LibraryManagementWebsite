@@ -18,13 +18,12 @@
             <jsp:include page="sidebar.jsp" />
 
             <main class="panel-main">
-
                 <a href="${pageContext.request.contextPath}/admin/users" class="pm-back-link">
                     <i class="fas fa-arrow-left"></i> Quay lại danh sách
                 </a>
 
                 <div class="pm-form-card">
-                    <%-- Decorative side --%>
+                    <%-- Decorative side (Giữ nguyên phần trang trí của bạn) --%>
                         <div class="pm-form-card-side">
                             <div>
                                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -45,7 +44,7 @@
                             <div style="font-size:.75rem;opacity:.6;">© 2026 LBMS</div>
                         </div>
 
-                        <%-- Form body --%>
+                        <%-- Form body với Class mới --%>
                             <div class="pm-form-card-body">
                                 <h2
                                     style="font-size:1.375rem;font-weight:700;margin:0 0 .5rem;color:var(--panel-text);">
@@ -55,71 +54,69 @@
 
                                 <c:if test="${not empty errors}">
                                     <div id="error-box" class="pm-toast pm-toast-danger" style="margin-bottom:1.25rem;">
-                                        <div>
-                                            <div style="font-weight:700;margin-bottom:4px;"><i
-                                                    class="fas fa-circle-exclamation"></i> Có lỗi xảy ra:</div>
-                                            <ul style="margin:0;padding-left:1.2rem;font-size:.8125rem;">
-                                                <c:forEach items="${errors}" var="err">
-                                                    <li>${err}</li>
-                                                </c:forEach>
-                                            </ul>
-                                        </div>
+                                        <div style="font-weight:700;margin-bottom:4px;"><i
+                                                class="fas fa-circle-exclamation"></i> Có lỗi xảy ra:</div>
+                                        <ul style="margin:0;padding-left:1.2rem;font-size:.8125rem;">
+                                            <c:forEach items="${errors}" var="err">
+                                                <li>${err}</li>
+                                            </c:forEach>
+                                        </ul>
                                     </div>
                                 </c:if>
 
                                 <form action="${pageContext.request.contextPath}/admin/users/create" method="POST">
-                                    <div class="pm-form-group">
+
+                                    <div class="lbm-group">
                                         <label class="pm-label">Họ và tên</label>
-                                        <div class="pm-input-group">
-                                            <i class="fas fa-user pm-input-icon"></i>
-                                            <input type="text" name="name" value="${param.name}" required
-                                                class="pm-input" placeholder="Nhập tên đầy đủ" />
+                                        <div class="lbm-input-wrapper">
+                                            <i class="fas fa-user lbm-icon"></i>
+                                            <input type="text" name="name" value="${param.name}" class="lbm-input"
+                                                placeholder="Nhập tên đầy đủ" required />
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-group">
+                                    <div class="lbm-group">
                                         <label class="pm-label">Email</label>
-                                        <div class="pm-input-group">
-                                            <i class="fas fa-envelope pm-input-icon"></i>
-                                            <input type="email" name="email" value="${param.email}" required
-                                                class="pm-input" placeholder="email@example.com" />
+                                        <div class="lbm-input-wrapper">
+                                            <i class="fas fa-envelope lbm-icon"></i>
+                                            <input type="email" name="email" value="${param.email}" class="lbm-input"
+                                                placeholder="email@example.com" required />
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-row">
-                                        <div class="pm-form-group">
+                                    <div class="lbm-row">
+                                        <div class="lbm-col">
                                             <label class="pm-label">Số điện thoại</label>
-                                            <div class="pm-input-group">
-                                                <i class="fas fa-phone pm-input-icon"></i>
-                                                <input type="text" name="phone" value="${param.phone}" class="pm-input"
+                                            <div class="lbm-input-wrapper">
+                                                <i class="fas fa-phone lbm-icon"></i>
+                                                <input type="text" name="phone" value="${param.phone}" class="lbm-input"
                                                     placeholder="09xx xxx xxx" />
                                             </div>
                                         </div>
-                                        <div class="pm-form-group">
+                                        <div class="lbm-col">
                                             <label class="pm-label">Địa chỉ</label>
-                                            <div class="pm-input-group">
-                                                <i class="fas fa-location-dot pm-input-icon"></i>
+                                            <div class="lbm-input-wrapper">
+                                                <i class="fas fa-location-dot lbm-icon"></i>
                                                 <input type="text" name="address" value="${param.address}"
-                                                    class="pm-input" placeholder="Số nhà, tên đường..." />
+                                                    class="lbm-input" placeholder="Số nhà, tên đường..." />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-group">
+                                    <div class="lbm-group">
                                         <label class="pm-label">Mật khẩu</label>
-                                        <div class="pm-toast pm-toast-info" style="padding:10px 14px;">
+                                        <div class="lbm-info-box">
                                             <i class="fas fa-circle-info"></i>
-                                            <span style="font-size:.8125rem;">Mật khẩu sẽ được <strong>hệ thống tạo ngẫu
-                                                    nhiên</strong> và gửi đến email người dùng.</span>
+                                            <span>Mật khẩu sẽ được <strong>hệ thống tạo ngẫu nhiên</strong> và gửi đến
+                                                email.</span>
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-group">
+                                    <div class="lbm-group">
                                         <label class="pm-label">Vai trò</label>
-                                        <div class="pm-input-group">
-                                            <i class="fas fa-id-badge pm-input-icon"></i>
-                                            <select name="roleId" required class="pm-select"
-                                                style="padding-left:38px;width:100%;">
+                                        <div class="lbm-input-wrapper">
+                                            <i class="fas fa-id-badge lbm-icon"></i>
+                                            <select name="roleId" required class="lbm-select">
                                                 <c:forEach items="${roleList}" var="r">
                                                     <option value="${r.id}" ${param.roleId==r.id ? 'selected' : '' }>
                                                         ${r.name}</option>
@@ -128,20 +125,16 @@
                                         </div>
                                     </div>
 
-                                    <div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;">
-                                        <button type="submit" class="pm-btn pm-btn-primary"
-                                            style="flex:1;justify-content:center;">
+                                    <div class="lbm-actions">
+                                        <button type="submit" class="pm-btn pm-btn-primary lbm-btn-wide">
                                             <i class="fas fa-floppy-disk"></i> Lưu người dùng
                                         </button>
                                         <a href="${pageContext.request.contextPath}/admin/users"
-                                            class="pm-btn pm-btn-outline" style="flex:1;justify-content:center;">
-                                            Hủy
-                                        </a>
+                                            class="pm-btn pm-btn-outline lbm-btn-wide">Hủy</a>
                                     </div>
                                 </form>
                             </div>
                 </div>
-
             </main>
 
             <script>

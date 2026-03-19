@@ -12,374 +12,82 @@
                         <fmt:message key="fines.hero.title" />
                     </title>
                     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
-                    <style>
-                        :root {
-                            --fines-gradient: linear-gradient(135deg, #3023ae, #c86dd7, #f18d55);
-                            --fines-panel-bg: #ffffff;
-                            --fines-border: #e3e8f1;
-                            --fines-shadow: 0 20px 40px rgba(13, 52, 117, 0.15);
-                            --fines-text-muted: #4b5e7c;
-                            --pill-paid: #22c55e;
-                            --pill-pending: #f97316;
-                        }
-
-                        body {
-                            background: #eff2ff;
-                            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-                            margin: 0;
-                        }
-
-                        main {
-                            padding-bottom: 80px;
-                        }
-
-                        .fines-hero {
-                            padding: 80px 0 60px;
-                            background: var(--fines-gradient);
-                            color: white;
-                            position: relative;
-                            overflow: hidden;
-                        }
-
-                        .fines-hero::after {
-                            content: '';
-                            position: absolute;
-                            inset: 0;
-                            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 65%);
-                        }
-
-                        .fines-hero .hero-wrapper {
-                            position: relative;
-                            max-width: 1100px;
-                            margin: 0 auto;
-                            padding: 0 20px;
-                            display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                            gap: 24px;
-                        }
-
-                        .fines-hero h1 {
-                            font-size: 2.8rem;
-                            margin: 0 0 12px;
-                        }
-
-                        .fines-hero p {
-                            font-size: 1.05rem;
-                            color: rgba(255, 255, 255, 0.9);
-                            margin-top: 0;
-                        }
-
-                        .hero-stats {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 14px;
-                            margin-top: 16px;
-                        }
-
-                        .hero-stat {
-                            background: rgba(255, 255, 255, 0.15);
-                            border: 1px solid rgba(255, 255, 255, 0.3);
-                            padding: 20px;
-                            border-radius: 16px;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 6px;
-                            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-                        }
-
-                        .hero-stat .label {
-                            font-size: 0.85rem;
-                            letter-spacing: 0.2em;
-                            text-transform: uppercase;
-                            opacity: 0.8;
-                        }
-
-                        .hero-stat .value {
-                            font-size: 1.9rem;
-                            font-weight: 600;
-                        }
-
-                        .hero-stat .detail {
-                            font-size: 0.9rem;
-                            color: rgba(255, 255, 255, 0.85);
-                        }
-
-                        .fines-content {
-                            max-width: 1200px;
-                            margin: 0 auto;
-                            padding: 40px 20px 0;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 30px;
-                        }
-
-                        .flash-notice {
-                            background: #eef2ff;
-                            border: 1px solid #c7d3ff;
-                            border-radius: 12px;
-                            padding: 14px 18px;
-                            color: #1b1f3b;
-                            font-weight: 600;
-                            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-                        }
-
-                        .fines-grid {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                            gap: 24px;
-                        }
-
-                        .fines-panel {
-                            background: var(--fines-panel-bg);
-                            border-radius: 24px;
-                            border: 1px solid var(--fines-border);
-                            box-shadow: var(--fines-shadow);
-                            padding: 24px;
-                            display: flex;
-                            flex-direction: column;
-                            min-height: 420px;
-                        }
-
-                        .fines-panel header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: baseline;
-                            margin-bottom: 18px;
-                        }
-
-                        .fines-panel header h2 {
-                            margin: 0;
-                            font-size: 1.4rem;
-                        }
-
-                        .badge-pill {
-                            font-size: 0.75rem;
-                            text-transform: uppercase;
-                            letter-spacing: 0.2em;
-                            padding: 6px 14px;
-                            border-radius: 999px;
-                            background: #eef0ff;
-                            color: #3b3d60;
-                        }
-
-                        .fine-card {
-                            border: 1px solid #f1f1f3;
-                            border-radius: 18px;
-                            padding: 18px;
-                            margin-bottom: 14px;
-                            background: #fff;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 12px;
-                        }
-
-                        .panel-body {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 14px;
-                        }
-
-                        .fine-card__top {
-                            display: flex;
-                            justify-content: space-between;
-                            gap: 10px;
-                        }
-
-                        .fine-card__top h3 {
-                            margin: 0;
-                            font-size: 1.1rem;
-                        }
-
-                        .fine-card__top span {
-                            font-size: 0.75rem;
-                            letter-spacing: 0.18em;
-                            text-transform: uppercase;
-                            padding: 5px 12px;
-                            border-radius: 999px;
-                            border: 1px solid var(--pill-pending);
-                            color: var(--pill-pending);
-                        }
-
-                        .fine-card__body {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                            gap: 10px;
-                        }
-
-                        .fine-card__body div {
-                            background: #f9f9ff;
-                            border-radius: 14px;
-                            padding: 10px 12px;
-                        }
-
-                        .fine-card__body strong {
-                            display: block;
-                            font-size: 1.1rem;
-                            margin-top: 4px;
-                        }
-
-                        .fine-card__actions {
-                            display: flex;
-                            justify-content: flex-end;
-                        }
-
-                        .fine-card__actions .btn {
-                            padding: 10px 18px;
-                            border-radius: 14px;
-                            background: #0b5ef7;
-                            color: white;
-                            text-decoration: none;
-                            font-weight: 600;
-                            box-shadow: 0 12px 20px rgba(11, 94, 247, 0.4);
-                        }
-
-                        .empty-state {
-                            border: 2px dashed #d0d6ff;
-                            border-radius: 18px;
-                            padding: 30px;
-                            text-align: center;
-                            color: var(--fines-text-muted);
-                        }
-
-                        .history-table {
-                            border-collapse: collapse;
-                            width: 100%;
-                            font-size: 0.95rem;
-                        }
-
-                        .history-table th,
-                        .history-table td {
-                            padding: 10px;
-                            text-align: left;
-                        }
-
-                        .history-table th {
-                            font-weight: 600;
-                            color: #4c5b79;
-                            font-size: 0.85rem;
-                            letter-spacing: 0.1em;
-                            text-transform: uppercase;
-                        }
-
-                        .history-table tbody tr {
-                            border-top: 1px solid #eef2ff;
-                        }
-
-                        .status-pill {
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                            padding: 4px 12px;
-                            border-radius: 999px;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                        }
-
-                        .status-paid {
-                            background: rgba(34, 197, 94, 0.15);
-                            color: var(--pill-paid);
-                        }
-
-                        .status-pending {
-                            background: rgba(249, 115, 22, 0.15);
-                            color: var(--pill-pending);
-                        }
-
-                        @media (max-width: 768px) {
-                            .fines-hero {
-                                padding: 60px 0 40px;
-                            }
-
-                            .fines-panel {
-                                min-height: auto;
-                            }
-
-                            .fine-card__top {
-                                flex-direction: column;
-                                align-items: flex-start;
-                            }
-
-                            .fine-card__actions {
-                                justify-content: flex-start;
-                            }
-                        }
-                    </style>
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/member-pages.css" />
                 </head>
 
-                <body>
+                <body class="mp-body">
                     <jsp:include page="header.jsp" />
 
                     <main>
                         <c:set var="historyCount" value="${not empty historyRecords ? fn:length(historyRecords) : 0}" />
-                        <section class="fines-hero">
-                            <div class="hero-wrapper">
+                        <section class="mp-hero">
+                            <div class="mp-hero__inner">
                                 <div>
-                                    <p class="badge-pill">Financial wellbeing</p>
-                                    <h1>
+                                    <p class="mp-hero__eyebrow">💳 Quản lý phí phạt</p>
+                                    <h1 class="mp-hero__title">
                                         <fmt:message key="fines.hero.title" />
                                     </h1>
-                                    <p>
+                                    <p class="mp-hero__subtitle">
                                         <fmt:message key="fines.hero.subtitle" />
                                     </p>
                                 </div>
-                                <div class="hero-stats">
-                                    <div class="hero-stat">
-                                        <span class="label">
+                                <div class="mp-hero__cards">
+                                    <div class="mp-hero__card">
+                                        <p class="mp-hero__card-label">
                                             <fmt:message key="fines.outstanding.title" />
-                                        </span>
-                                        <span class="value">
+                                        </p>
+                                        <p class="mp-hero__card-value">
                                             <fmt:formatNumber value="${totalOutstanding}" pattern="#,##0" /> ₫
-                                        </span>
-                                        <span class="detail">
+                                        </p>
+                                        <p class="mp-hero__card-detail">
                                             <fmt:message key="fines.hero.stripe" />
-                                        </span>
+                                        </p>
                                     </div>
-                                    <div class="hero-stat">
-                                        <span class="label">
+                                    <div class="mp-hero__card">
+                                        <p class="mp-hero__card-label">
                                             <fmt:message key="fines.history.title" />
-                                        </span>
-                                        <span class="value">${historyCount}</span>
-                                        <span class="detail">
+                                        </p>
+                                        <p class="mp-hero__card-value">${historyCount}</p>
+                                        <p class="mp-hero__card-detail">
                                             <fmt:message key="fines.hero.history_detail" />
-                                        </span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        <section class="fines-content">
+                        <section class="mp-content">
                             <c:if test="${not empty flash}">
-                                <div class="flash-notice">${flash}</div>
+                                <div class="mp-flash">${flash}</div>
                             </c:if>
 
-                            <div class="fines-grid">
-                                <article class="fines-panel outstanding">
-                                    <header>
+                            <div class="mp-panels">
+                                <article class="mp-panel">
+                                    <div class="mp-panel__header">
                                         <h2>
                                             <fmt:message key="fines.outstanding.title" />
                                         </h2>
-                                        <span class="badge-pill">
+                                        <span class="mp-panel__badge">
                                             <fmt:message key="fines.outstanding.subtitle" />
                                         </span>
-                                    </header>
+                                    </div>
 
-                                    <div class="panel-body">
+                                    <div class="mp-panel__body">
                                         <c:choose>
                                             <c:when test="${not empty unpaidRecords}">
                                                 <c:forEach items="${unpaidRecords}" var="record">
-                                                    <article class="fine-card">
-                                                        <div class="fine-card__top">
+                                                    <article class="mp-fine">
+                                                        <div class="mp-fine__top">
                                                             <div>
                                                                 <p class="eyebrow">Phiếu #${record.id}</p>
                                                                 <h3>${record.book.title}</h3>
-                                                                <p style="margin: 0; color: var(--fines-text-muted);">
-                                                                    ${record.book.author}</p>
+                                                                <p class="mp-fine__author">${record.book.author}</p>
                                                             </div>
-                                                            <span>
+                                                            <span class="mp-fine__status">
                                                                 <fmt:message key="fines.label.pending" />
                                                             </span>
                                                         </div>
-                                                        <div class="fine-card__body">
+                                                        <div class="mp-fine__grid">
                                                             <div>
                                                                 <small>
                                                                     <fmt:message key="fines.field.overdue" />
@@ -412,7 +120,7 @@
                                                                 </strong>
                                                             </div>
                                                         </div>
-                                                        <div class="fine-card__actions">
+                                                        <div class="mp-fine__actions">
                                                             <a href="${pageContext.request.contextPath}/checkout?borrowId=${record.id}&mode=fine"
                                                                 class="btn">
                                                                 <fmt:message key="fines.action.pay" />
@@ -422,7 +130,7 @@
                                                 </c:forEach>
                                             </c:when>
                                             <c:otherwise>
-                                                <div class="empty-state">
+                                                <div class="mp-empty mp-empty--dashed">
                                                     <strong>
                                                         <fmt:message key="fines.empty" />
                                                     </strong>
@@ -435,17 +143,17 @@
                                     </div>
                                 </article>
 
-                                <article class="fines-panel history-panel">
-                                    <header>
+                                <article class="mp-panel">
+                                    <div class="mp-panel__header">
                                         <h2>
                                             <fmt:message key="fines.history.title" />
                                         </h2>
-                                        <span class="badge-pill">
+                                        <span class="mp-panel__badge">
                                             <fmt:message key="fines.history.subtitle" />
                                         </span>
-                                    </header>
+                                    </div>
                                     <div class="table-wrapper">
-                                        <table class="history-table">
+                                        <table class="mp-htable">
                                             <thead>
                                                 <tr>
                                                     <th>Phiếu</th>
@@ -474,7 +182,7 @@
                                                         </td>
                                                         <td>
                                                             <span
-                                                                class="status-pill ${record.paid ? 'status-paid' : 'status-pending'}">
+                                                                class="mp-badge ${record.paid ? 'mp-badge--paid' : 'mp-badge--pending'}">
                                                                 <fmt:message
                                                                     key="${record.paid ? 'fines.label.paid' : 'fines.label.pending'}" />
                                                             </span>
@@ -484,8 +192,7 @@
                                                 </c:forEach>
                                                 <c:if test="${empty historyRecords}">
                                                     <tr>
-                                                        <td colspan="5"
-                                                            style="text-align:center; color:var(--fines-text-muted);">
+                                                        <td colspan="5" style="text-align:center; color:#6b7280;">
                                                             <fmt:message key="fines.history.empty" />
                                                         </td>
                                                     </tr>

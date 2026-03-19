@@ -75,39 +75,39 @@
                                     <input type="hidden" name="page" value="${param.page}">
                                     <input type="hidden" name="keyword" value="${param.keyword}">
 
-                                    <div class="pm-form-group">
+                                    <div class="lbm-group">
                                         <label class="pm-label">Họ và tên</label>
-                                        <div class="pm-input-group">
-                                            <i class="fas fa-user pm-input-icon"></i>
-                                            <input type="text" name="name" value="${user.fullName}" required
-                                                class="pm-input" />
+                                        <div class="lbm-input-wrapper">
+                                            <i class="fas fa-user lbm-icon"></i>
+                                            <input type="text" name="name" value="${user.fullName}" class="lbm-input"
+                                                required />
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-group">
+                                    <div class="lbm-group">
                                         <label class="pm-label">Địa chỉ Email</label>
-                                        <div class="pm-input-group">
-                                            <i class="fas fa-envelope pm-input-icon"></i>
-                                            <input type="email" name="email" value="${user.email}" required
-                                                class="pm-input" />
+                                        <div class="lbm-input-wrapper">
+                                            <i class="fas fa-envelope lbm-icon"></i>
+                                            <input type="email" name="email" value="${user.email}" class="lbm-input"
+                                                required />
                                         </div>
                                     </div>
 
-                                    <div class="pm-form-row">
-                                        <div class="pm-form-group">
+                                    <div class="lbm-row">
+                                        <div class="lbm-col">
                                             <label class="pm-label">Số điện thoại</label>
-                                            <div class="pm-input-group">
-                                                <i class="fas fa-phone pm-input-icon"></i>
-                                                <input type="text" name="phone" value="${user.phone}" class="pm-input"
+                                            <div class="lbm-input-wrapper">
+                                                <i class="fas fa-phone lbm-icon"></i>
+                                                <input type="text" name="phone" value="${user.phone}" class="lbm-input"
                                                     placeholder="Nhập số điện thoại" />
                                             </div>
                                         </div>
-                                        <div class="pm-form-group">
+                                        <div class="lbm-col">
                                             <label class="pm-label">Địa chỉ</label>
-                                            <div class="pm-input-group">
-                                                <i class="fas fa-location-dot pm-input-icon"></i>
+                                            <div class="lbm-input-wrapper">
+                                                <i class="fas fa-location-dot lbm-icon"></i>
                                                 <input type="text" name="address" value="${user.address}"
-                                                    class="pm-input" placeholder="Nhập địa chỉ thường trú" />
+                                                    class="lbm-input" placeholder="Nhập địa chỉ" />
                                             </div>
                                         </div>
                                     </div>
