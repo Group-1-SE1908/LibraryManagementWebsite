@@ -599,7 +599,7 @@ textarea {
 
 /* ============ CATALOG HERO & CONTROLS ============ */
 .catalog-hero {
-    background: linear-gradient(135deg, #030f3f 0%, #141b52 55%, #1d2f66 100%);
+    background: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
     color: #f8fbff;
     padding: 90px 0 80px;
     position: relative;
@@ -609,9 +609,9 @@ textarea {
 .catalog-hero::after {
     content: '';
     position: absolute;
-    inset: 16px 0 0;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.18), transparent 55%);
-    opacity: 0.75;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 55%);
+    opacity: 1;
     pointer-events: none;
     z-index: 0;
 }
@@ -638,7 +638,7 @@ textarea {
     font-size: 14px;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: #7dd3fc;
+    color: rgba(255, 255, 255, 0.85);
     margin-bottom: 12px;
 }
 
@@ -683,11 +683,11 @@ textarea {
 .catalog-hero__panel {
     position: relative;
     border-radius: 24px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(15, 23, 42, 0.85));
+    background: rgba(255, 255, 255, 0.15);
     padding: 28px;
-    min-height: 220px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 20px 45px rgba(1, 1, 30, 0.35);
+    min-height: 180px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 35px rgba(12, 108, 208, 0.35);
     overflow: hidden;
 }
 
@@ -695,8 +695,8 @@ textarea {
     content: '';
     position: absolute;
     inset: -20px;
-    background: radial-gradient(circle at 20% -10%, rgba(59, 130, 246, 0.25), transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.35), transparent 45%);
+    background: radial-gradient(circle at 20% -10%, rgba(255, 255, 255, 0.15), transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15), transparent 45%);
     z-index: 0;
 }
 
@@ -1199,38 +1199,66 @@ textarea {
 
 /* Cart Page */
 .cart-page {
-    background: #eef2ff;
-    padding: 40px 20px;
+    background: #f4f6fb;
+    padding: 0 0 60px;
 }
 
 .cart-hero {
+    background: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
+    color: #fff;
+    padding: 60px 0 50px;
+    position: relative;
+    overflow: hidden;
+    display: block;
+    margin-bottom: 0;
+}
+
+.cart-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 55%);
+    pointer-events: none;
+}
+
+.cart-hero .container {
+    position: relative;
+    z-index: 1;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 40px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #4f46e5, #6366f1 60%, #a78bfa);
-    color: #fff;
-    display: flex;
-    gap: 30px;
-    align-items: stretch;
-    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 28px;
+    align-items: center;
 }
 
 .hero-content {
-    flex: 2;
+    color: white;
+}
+
+.hero-content .eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
 }
 
 .hero-content h1 {
-    font-size: 36px;
+    font-size: clamp(26px, 4vw, 42px);
+    font-weight: 700;
+    line-height: 1.2;
     margin-bottom: 12px;
+    color: white;
 }
 
 .hero-subtitle {
     max-width: 520px;
     font-size: 16px;
-    opacity: 0.85;
-    line-height: 1.5;
-    margin-bottom: 18px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.55;
+    margin-bottom: 20px;
 }
 
 .hero-actions {
@@ -1240,43 +1268,44 @@ textarea {
 }
 
 .hero-summary {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
 }
 
 .hero-card {
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
-    padding: 18px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    min-height: 130px;
+    border-radius: 20px;
+    padding: 22px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 35px rgba(12, 108, 208, 0.35);
+    color: white;
 }
 
 .hero-card .label {
-    font-size: 12px;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.8;
-    margin-bottom: 6px;
+    opacity: 0.85;
+    margin: 0 0 8px;
 }
 
 .hero-card .value {
-    font-size: 28px;
-    font-weight: bold;
-    margin-bottom: 6px;
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    line-height: 1;
 }
 
-.hero-card .currency {
-    font-size: 16px;
-    margin-left: 6px;
+.hero-card small {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .cart-grid-section {
     max-width: 1200px;
-    margin: 40px auto 0;
+    margin: 0 auto;
+    padding: 40px 20px 0;
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
@@ -1304,7 +1333,7 @@ textarea {
     width: 70px;
     height: 110px;
     border-radius: 18px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #0c6cd0, #7c3aed);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1768,7 +1797,8 @@ body.modal-open {
 
 .cart-empty {
     max-width: 800px;
-    margin: 40px auto;
+    margin: 60px auto;
+    padding: 0 20px;
 }
 
 .empty-card {
@@ -1808,8 +1838,8 @@ body.modal-open {
 }
 
 @media (max-width: 960px) {
-    .cart-hero {
-        flex-direction: column;
+    .cart-hero .container {
+        grid-template-columns: 1fr;
     }
 
     .cart-grid-section {

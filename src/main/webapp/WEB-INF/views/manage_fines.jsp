@@ -14,7 +14,7 @@
                     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
                     <style>
                         :root {
-                            --fines-gradient: linear-gradient(135deg, #3023ae, #c86dd7, #f18d55);
+                            --fines-gradient: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
                             --fines-panel-bg: #ffffff;
                             --fines-border: #e3e8f1;
                             --fines-shadow: 0 20px 40px rgba(13, 52, 117, 0.15);
@@ -24,7 +24,7 @@
                         }
 
                         body {
-                            background: #eff2ff;
+                            background: #f4f6fb;
                             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
                             margin: 0;
                         }
@@ -34,7 +34,7 @@
                         }
 
                         .fines-hero {
-                            padding: 80px 0 60px;
+                            padding: 60px 0 50px;
                             background: var(--fines-gradient);
                             color: white;
                             position: relative;
@@ -59,8 +59,9 @@
                         }
 
                         .fines-hero h1 {
-                            font-size: 2.8rem;
+                            font-size: clamp(28px, 4vw, 44px);
                             margin: 0 0 12px;
+                            line-height: 1.2;
                         }
 
                         .fines-hero p {
@@ -79,12 +80,12 @@
                         .hero-stat {
                             background: rgba(255, 255, 255, 0.15);
                             border: 1px solid rgba(255, 255, 255, 0.3);
-                            padding: 20px;
-                            border-radius: 16px;
+                            padding: 20px 24px;
+                            border-radius: 20px;
                             display: flex;
                             flex-direction: column;
                             gap: 6px;
-                            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+                            box-shadow: 0 20px 35px rgba(12, 108, 208, 0.35);
                         }
 
                         .hero-stat .label {
@@ -107,7 +108,7 @@
                         .fines-content {
                             max-width: 1200px;
                             margin: 0 auto;
-                            padding: 40px 20px 0;
+                            padding: 40px 20px 60px;
                             display: flex;
                             flex-direction: column;
                             gap: 30px;
