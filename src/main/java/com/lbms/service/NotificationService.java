@@ -99,6 +99,24 @@ public class NotificationService {
     }
 
     // ════════════════════════════════════════════════════════════════
+    //  SỰ KIỆN 5: Đặt trước đã được chuyển thành mượn
+    // ════════════════════════════════════════════════════════════════
+    public void notifyReservationBorrowed(long userId, String bookTitle) throws SQLException {
+        String title   = "Đặt trước đã được xác nhận";
+        String message = "Bạn đã nhận sách \"" + bookTitle + "\" thành công. Thời hạn mượn là 7 ngày.";
+        insertNotification(userId, "RESERVATION_BORROWED", title, message);
+        try {
+            sendEmail(userId, "✅ " + title, buildEmailHtml(
+                    "✅ Xác nhận nhận sách",
+                    "Bạn đã nhận sách <strong>\"" + bookTitle + "\"</strong> thành công từ thư viện.",
+                    "⏰ Thời hạn mượn: <strong>7 ngày</strong>. Vui lòng trả sách đúng hạn để tránh phạt.",
+                    "#22c55e", "📖 Xem sách của tôi"));
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "[Notification] Bỏ qua lỗi email userId=" + userId + ": " + e.getMessage());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
     //  QUERY METHODS
     // ════════════════════════════════════════════════════════════════
 

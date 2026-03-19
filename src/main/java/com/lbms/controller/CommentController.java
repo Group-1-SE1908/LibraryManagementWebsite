@@ -9,6 +9,7 @@ import com.lbms.dao.CommentReplyDAO;
 import com.lbms.dao.CommentReportDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.Comment;
+import com.lbms.model.CommentReply;
 import com.lbms.model.CommentReport;
 import com.lbms.model.User;
 import jakarta.servlet.ServletException;
@@ -73,6 +74,8 @@ public class CommentController extends HttpServlet {
                 handleUpdateComment(request, response);
             } else if ("delete".equals(action)) {
                 handleDeleteComment(request, response);
+            } else if ("reply".equals(action)) {
+                handleReply(request, response);
             } else {
                 response.sendError(404);
             }
@@ -241,6 +244,48 @@ public class CommentController extends HttpServlet {
         } else {
             response.sendError(403, "Forbidden - You can only delete your own comments");
         }
+    }
+
+    /**
+     * Xử lý phản hồi comment từ thủ thư
+     */
+    private void handleReply(HttpServletRequest request, HttpServletResponse response)
+            throws Exception {
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("currentUser");
+
+        if (user == null) {
+            response.sendError(401, "Unauthorized - User not logged in");
+            return;
+        }
+
+        boolean isAdmin = (user.getRole() != null &&
+                ("ADMIN".equals(user.getRole().getName()) ||
+                        "LIBRARIAN".equals(user.getRole().getName())));
+
+        if (!isAdmin) {
+            response.sendError(403, "Forbidden - Only librarians and admins can reply");
+            return;
+        }
+
+        long commentId = Long.parseLong(request.getParameter("commentId"));
+        String content = request.getParameter("content");
+        int bookId = Integer.parseInt(request.getParameter("bookId"));
+
+        if (content == null || content.trim().isEmpty()) {
+            response.sendError(400, "Content is required");
+            return;
+        }
+
+        CommentReply reply = new CommentReply();
+        reply.setCommentId(commentId);
+        reply.setAdminId((int) user.getId());
+        reply.setContent(content.trim());
+
+        replyDAO.insertReply(reply);
+
+        session.setAttribute("message", "Phản hồi đã được gửi thành công!");
+        response.sendRedirect(request.getContextPath() + "/books/detail?id=" + bookId);
     }
 
     @Override

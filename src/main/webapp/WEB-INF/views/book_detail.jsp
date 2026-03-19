@@ -252,54 +252,53 @@
                                                                 </p>
                                                             </div>
                                                         </c:if>
-                                                        <div class="comment-form-wrapper">
-                                                            <h3 class="comment-form-title">Chia sẻ suy nghĩ của bạn</h3>
-                                                            <form action="${pageContext.request.contextPath}/comment"
-                                                                method="POST" ${hasCommented
-                                                                ? 'onsubmit="return false;"' : '' }>
-                                                                <input type="hidden" name="action" value="add">
-                                                                <input type="hidden" name="bookId" value="${book.id}">
+                                                        <c:if test="${isCommentLocked}">
+                                                            <div class="already-commented-message" style="background-color: #fee2e2; border-color: #fca5a5; color: #991b1b;">
+                                                                <p>⚠️ Tài khoản của bạn đang bị hạn chế bình luận. Vui lòng thử lại sau.</p>
+                                                            </div>
+                                                        </c:if>
+                                                        <c:if test="${!hasCommented && !isCommentLocked}">
+                                                            <div class="comment-form-wrapper">
+                                                                <h3 class="comment-form-title">Chia sẻ suy nghĩ của bạn</h3>
+                                                                <form action="${pageContext.request.contextPath}/comment"
+                                                                    method="POST">
+                                                                    <input type="hidden" name="action" value="add">
+                                                                    <input type="hidden" name="bookId" value="${book.id}">
 
-                                                                <div class="form-group">
-                                                                    <label for="content">Bình luận của bạn</label>
-                                                                    <textarea id="content" name="content" required
-                                                                        placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..."
-                                                                        ${hasCommented ? 'disabled' : '' }></textarea>
-                                                                </div>
-
-                                                                <div class="form-group rating-group">
-                                                                    <label>Đánh giá</label>
-                                                                    <div class="star-rating" role="radiogroup">
-                                                                        <input type="radio" id="rate1" name="rating"
-                                                                            value="1" required ${hasCommented
-                                                                            ? 'disabled' : '' }>
-                                                                        <label for="rate1" aria-label="1 sao">★</label>
-                                                                        <input type="radio" id="rate2" name="rating"
-                                                                            value="2" ${hasCommented ? 'disabled' : ''
-                                                                            }>
-                                                                        <label for="rate2" aria-label="2 sao">★</label>
-                                                                        <input type="radio" id="rate3" name="rating"
-                                                                            value="3" ${hasCommented ? 'disabled' : ''
-                                                                            }>
-                                                                        <label for="rate3" aria-label="3 sao">★</label>
-                                                                        <input type="radio" id="rate4" name="rating"
-                                                                            value="4" ${hasCommented ? 'disabled' : ''
-                                                                            }>
-                                                                        <label for="rate4" aria-label="4 sao">★</label>
-                                                                        <input type="radio" id="rate5" name="rating"
-                                                                            value="5" ${hasCommented ? 'disabled' : ''
-                                                                            }>
-                                                                        <label for="rate5" aria-label="5 sao">★</label>
+                                                                    <div class="form-group">
+                                                                        <label for="content">Bình luận của bạn</label>
+                                                                        <textarea id="content" name="content" required
+                                                                            placeholder="Chia sẻ suy nghĩ của bạn về cuốn sách này..."></textarea>
                                                                     </div>
-                                                                </div>
 
-                                                                <div class="form-actions">
-                                                                    <button type="submit" class="btn primary"
-                                                                        ${hasCommented ? 'disabled' : '' }>Gửi bình
-                                                                        luận</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
+                                                                    <div class="form-group rating-group">
+                                                                        <label>Đánh giá</label>
+                                                                        <div class="star-rating" role="radiogroup">
+                                                                            <input type="radio" id="rate1" name="rating"
+                                                                                value="1" required>
+                                                                            <label for="rate1" aria-label="1 sao">★</label>
+                                                                            <input type="radio" id="rate2" name="rating"
+                                                                                value="2">
+                                                                            <label for="rate2" aria-label="2 sao">★</label>
+                                                                            <input type="radio" id="rate3" name="rating"
+                                                                                value="3">
+                                                                            <label for="rate3" aria-label="3 sao">★</label>
+                                                                            <input type="radio" id="rate4" name="rating"
+                                                                                value="4">
+                                                                            <label for="rate4" aria-label="4 sao">★</label>
+                                                                            <input type="radio" id="rate5" name="rating"
+                                                                                value="5">
+                                                                            <label for="rate5" aria-label="5 sao">★</label>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="form-actions">
+                                                                        <button type="submit" class="btn primary">Gửi bình
+                                                                            luận</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </c:if>
                                                     </c:when>
                                                     <c:otherwise>
                                                         <div class="login-prompt">
@@ -417,6 +416,18 @@
                                                                                 </c:forEach>
                                                                             </div>
                                                                         </c:if>
+                                                                        <!-- Reply form for librarians -->
+                                                                        <c:if test="${not empty sessionScope.currentUser && (fn:toUpperCase(sessionScope.currentUser.role.name) == 'LIBRARIAN' || fn:toUpperCase(sessionScope.currentUser.role.name) == 'ADMIN')}">
+                                                                            <div class="reply-form" style="margin-top: 10px; padding: 10px; border-top: 1px solid #e5e7eb;">
+                                                                                <form action="${pageContext.request.contextPath}/comment" method="POST">
+                                                                                    <input type="hidden" name="action" value="reply">
+                                                                                    <input type="hidden" name="commentId" value="${comment.commentId}">
+                                                                                    <input type="hidden" name="bookId" value="${book.id}">
+                                                                                    <textarea name="content" placeholder="Phản hồi của thủ thư..." required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;"></textarea>
+                                                                                    <button type="submit" style="margin-top: 5px; padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px;">Gửi phản hồi</button>
+                                                                                </form>
+                                                                            </div>
+                                                                        </c:if>
                                                                     </article>
                                                                 </c:forEach>
                                                             </div>
@@ -433,71 +444,76 @@
                                                     <c:set var="reportsBasePath"
                                                         value="${not empty reportsBasePath ? reportsBasePath : '/staff/reports'}" />
                                                     <c:if
-                                                        test="${not empty sessionScope.currentUser && (sessionScope.currentUser.role.name == 'LIBRARIAN' || sessionScope.currentUser.role.name == 'ADMIN') && not empty bookReports}">
+                                                        test="${not empty sessionScope.currentUser && (fn:toUpperCase(sessionScope.currentUser.role.name) == 'LIBRARIAN' || fn:toUpperCase(sessionScope.currentUser.role.name) == 'ADMIN')}">
                                                         <div class="reports-section">
                                                             <h3 class="reports-title">Bình luận bị báo cáo</h3>
                                                             <p class="message-note">Các bình luận bị báo cáo cần được
                                                                 xem xét.</p>
-                                                            <div class="reports-list">
-                                                                <c:forEach var="report" items="${bookReports}">
-                                                                    <div class="report-card">
-                                                                        <div class="report-header">
-                                                                            <span class="report-reason"><strong>Lý
-                                                                                    do:</strong> ${report.reason}</span>
-                                                                            <span class="report-time">
-                                                                                <fmt:formatDate
-                                                                                    value="${report.reportTime}"
-                                                                                    type="both" dateStyle="short"
-                                                                                    timeStyle="short" />
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="report-details">
-                                                                            <p><strong>Người báo cáo:</strong>
-                                                                                ${report.reporterFullName}</p>
-                                                                            <p><strong>Bình luận:</strong>
-                                                                                ${report.commentContent}</p>
-                                                                            <p><strong>Người viết:</strong>
-                                                                                ${report.commentUserFullName}</p>
-                                                                        </div>
-                                                                        <div class="report-actions">
-                                                                            <form method="post"
-                                                                                action="${pageContext.request.contextPath}${reportsBasePath}"
-                                                                                style="display: inline;">
-                                                                                <input type="hidden" name="action"
-                                                                                    value="resolve">
-                                                                                <input type="hidden" name="reportId"
-                                                                                    value="${report.reportId}">
-                                                                                <button type="submit"
-                                                                                    class="btn btn-success">Giải
-                                                                                    quyết</button>
-                                                                            </form>
-                                                                            <form method="post"
-                                                                                action="${pageContext.request.contextPath}${reportsBasePath}"
-                                                                                style="display: inline;">
-                                                                                <input type="hidden" name="action"
-                                                                                    value="ignore">
-                                                                                <input type="hidden" name="reportId"
-                                                                                    value="${report.reportId}">
-                                                                                <button type="submit"
-                                                                                    class="btn btn-secondary">Bỏ
-                                                                                    qua</button>
-                                                                            </form>
-                                                                            <form method="post"
-                                                                                action="${pageContext.request.contextPath}${reportsBasePath}"
-                                                                                style="display: inline;"
-                                                                                onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?')">
-                                                                                <input type="hidden" name="action"
-                                                                                    value="delete">
-                                                                                <input type="hidden" name="reportId"
-                                                                                    value="${report.reportId}">
-                                                                                <button type="submit"
-                                                                                    class="btn btn-danger">Xóa bình
-                                                                                    luận</button>
-                                                                            </form>
-                                                                        </div>
+                                                            <c:choose>
+                                                                <c:when test="${not empty bookReports}">
+                                                                    <div class="reports-list">
+                                                                        <c:forEach var="report" items="${bookReports}">
+                                                                            <div class="report-card">
+                                                                                <div class="report-header">
+                                                                                    <span class="report-reason"><strong>Lý
+                                                                                            do:</strong> ${report.reason}</span>
+                                                                                    <span class="report-time">
+                                                                                        <fmt:formatDate
+                                                                                            value="${report.reportTime}"
+                                                                                            type="both" dateStyle="short"
+                                                                                            timeStyle="short" />
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div class="report-details">
+                                                                                    <p><strong>Người báo cáo:</strong>
+                                                                                        ${report.reporterFullName}</p>
+                                                                                    <p><strong>Bình luận:</strong>
+                                                                                        ${report.commentContent}</p>
+                                                                                    <p><strong>Người viết:</strong>
+                                                                                        ${report.commentUserFullName}</p>
+                                                                                </div>
+                                                                                <div class="report-actions">
+                                                                                    <form method="post"
+                                                                                        action="${pageContext.request.contextPath}${reportsBasePath}"
+                                                                                        style="display: inline;">
+                                                                                        <input type="hidden" name="action"
+                                                                                            value="resolve">
+                                                                                        <input type="hidden" name="reportId"
+                                                                                            value="${report.reportId}">
+                                                                                        <button type="submit"
+                                                                                            class="btn btn-success">Giải quyết</button>
+                                                                                    </form>
+                                                                                    <form method="post"
+                                                                                        action="${pageContext.request.contextPath}${reportsBasePath}"
+                                                                                        style="display: inline;">
+                                                                                        <input type="hidden" name="action"
+                                                                                            value="ignore">
+                                                                                        <input type="hidden" name="reportId"
+                                                                                            value="${report.reportId}">
+                                                                                        <button type="submit"
+                                                                                            class="btn btn-secondary">Bỏ qua</button>
+                                                                                    </form>
+                                                                                    <form method="post"
+                                                                                        action="${pageContext.request.contextPath}${reportsBasePath}"
+                                                                                        style="display: inline;"
+                                                                                        onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?')">
+                                                                                        <input type="hidden" name="action"
+                                                                                            value="delete">
+                                                                                        <input type="hidden" name="reportId"
+                                                                                            value="${report.reportId}">
+                                                                                        <button type="submit"
+                                                                                            class="btn btn-danger">Xóa bình
+                                                                                            luận</button>
+                                                                                    </form>
+                                                                                </div>
+                                                                            </div>
+                                                                        </c:forEach>
                                                                     </div>
-                                                                </c:forEach>
-                                                            </div>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <p>Không có bình luận bị báo cáo nào.</p>
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </div>
                                                     </c:if>
                                             </section>

@@ -11,6 +11,7 @@ import java.util.List;
 
 public class CommentReplyDAO {
 
+    // Insert a new reply into the CommentReply table
     public void insertReply(CommentReply reply) throws Exception {
         String sql = "INSERT INTO CommentReply(comment_id, admin_id, content, created_at) VALUES (?, ?, ?, GETDATE())";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {

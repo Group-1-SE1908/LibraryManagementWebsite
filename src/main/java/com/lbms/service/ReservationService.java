@@ -5,8 +5,13 @@ import com.lbms.dao.BorrowDAO;
 import com.lbms.dao.ReservationDAO;
 import com.lbms.model.Book;
 import com.lbms.model.Reservation;
+import com.lbms.util.DBConnection;
 
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -108,6 +113,91 @@ public class ReservationService {
         if (res != null) {
             notifService.notifyReservationCancelled(userId, res.getBookTitle());
         }
+    }
+
+    /**
+     * Từ chối đặt trước từ phía thủ thư (librarian rejects)
+     * @param reservationId ID của reservation
+     * @param reason Lý do từ chối
+     */
+    public void rejectReservation(long reservationId, String reason) throws SQLException {
+        Reservation res = reservationDAO.getById(reservationId);
+        if (res == null) return;
+
+        // Set status = CANCELLED
+        reservationDAO.updateStatus(reservationId, "CANCELLED");
+
+        // Notify user about rejection
+        notifService.notifyReservationCancelled(res.getUserId(), 
+                "Đặt trước sách \"" + res.getBookTitle() + "\" đã bị từ chối" + 
+                (reason != null && !reason.isEmpty() ? "Lý do: " + reason : ""));
+
+        // Move next person in queue
+        onBookReturned(res.getBookId());
+    }
+
+    /**
+     * Xác nhận user đã lấy sách - chuyển AVAILABLE → BORROWED
+     * Tạo một BorrowRecord trong hệ thống để user thấy trong lịch sử mượn
+     * @param reservationId ID của reservation
+     */
+    public void confirmReservationPickup(long reservationId) throws SQLException {
+        Reservation res = reservationDAO.getById(reservationId);
+        if (res == null) return;
+
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                LocalDate today = LocalDate.now();
+                LocalDate dueDate = today.plusDays(7);
+
+                // 1. Tạo BorrowRecord trong hệ thống (reservation → borrow conversion)
+                long borrowId = borrowDAO.createRequest(res.getUserId(), res.getBookId(), 1, "IN_PERSON", null);
+
+                // 2. Update borrow_record: Set status = BORROWED + dates
+                String sql = "UPDATE borrow_records SET status = 'BORROWED', borrow_date = ?, due_date = ? WHERE id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setDate(1, Date.valueOf(today));
+                    ps.setDate(2, Date.valueOf(dueDate));
+                    ps.setLong(3, borrowId);
+                    ps.executeUpdate();
+                }
+
+                // 3. Update reservation status = BORROWED
+                reservationDAO.updateStatus(reservationId, "BORROWED");
+
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+
+        // 4. Notify user that reservation has been converted to borrow
+        notifService.notifyReservationBorrowed(res.getUserId(), res.getBookTitle());
+    }
+
+    /**
+     * Verify barcode trên sách - check if barcode matches book in reservation
+     * @param reservationId ID của reservation
+     * @param barcode Mã barcode đã scan
+     * @return true nếu barcode hợp lệ
+     */
+    public boolean verifyBookBarcode(long reservationId, String barcode) throws SQLException {
+        Reservation res = reservationDAO.getById(reservationId);
+        if (res == null) return false;
+
+        // Fetch book to check barcode/ISBN
+        Book book = bookDAO.findById(res.getBookId());
+        if (book == null) return false;
+
+        // Compare barcode with ISBN (using ISBN as barcode)
+        String storedISBN = book.getIsbn();
+        if (storedISBN == null) return false;
+
+        return storedISBN.equals(barcode.trim());
     }
 
     // ════════════════════════════════════════════════════════════════

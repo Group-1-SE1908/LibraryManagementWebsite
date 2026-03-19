@@ -118,6 +118,10 @@ public class Comment {
         this.replies = replies;
     }
 
+    public boolean getHasReply() {
+        return replies != null && !replies.isEmpty();
+    }
+
     public boolean isHasReply() {
         return replies != null && !replies.isEmpty();
     }

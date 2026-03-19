@@ -87,6 +87,10 @@
                                     class="${param.action == 'viewImportList' ? 'active' : ''}">
                                     <i class="fas fa-truck-loading"></i> <span>Nhập kho</span>
                                 </a>
+                                <a href="${pageContext.request.contextPath}${routePrefix}/reservation"
+                                    class="${activeUri.contains('/reservation') ? 'active' : ''}">
+                                    <i class="fas fa-hourglass-end"></i> <span>Quản lý đặt trước</span>
+                                </a>
                                 <a href="${pageContext.request.contextPath}${feedbackBase}"
                                     class="${activeUri.contains('/feedback') ? 'active' : ''}">
                                     <i class="fas fa-comment-dots"></i> <span>Phản hồi về sách</span>

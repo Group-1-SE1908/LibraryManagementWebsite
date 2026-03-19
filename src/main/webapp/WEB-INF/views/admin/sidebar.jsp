@@ -52,6 +52,10 @@
                             class="${fn:contains(activeUri, '/admin/borrowlibrary/inperson') ? 'active' : ''}">
                             <i class="fas fa-hand-holding"></i> <span>Mượn tại quầy</span>
                         </a>
+                        <a href="${pageContext.request.contextPath}/admin/reservation"
+                            class="${fn:contains(activeUri, '/admin/reservation') ? 'active' : ''}">
+                            <i class="fas fa-hourglass-end"></i> <span>Quản lý đặt trước</span>
+                        </a>
                         <a href="${pageContext.request.contextPath}/admin/fines"
                             class="${fn:contains(activeUri, '/admin/fines') ? 'active' : ''}">
                             <i class="fas fa-coins"></i> <span>Tiền phạt</span>

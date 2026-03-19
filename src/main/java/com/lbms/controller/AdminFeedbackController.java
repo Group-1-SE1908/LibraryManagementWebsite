@@ -51,6 +51,22 @@ public class AdminFeedbackController extends HttpServlet {
         try {
             String action = request.getParameter("action");
 
+            // Xử lý action=viewReport (Xem chi tiết báo cáo)
+            if ("viewReport".equals(action)) {
+                long reportId = Long.parseLong(request.getParameter("id"));
+                CommentReport report = getReportById(reportId);
+
+                if (report != null) {
+                    request.setAttribute("report", report);
+                    request.setAttribute("reportReasonVN", getReasonInVietnamese(report.getReason()));
+                    request.getRequestDispatcher("/WEB-INF/views/admin/library/report_detail.jsp")
+                            .forward(request, response);
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Report not found");
+                }
+                return;
+            }
+
             // Xử lý action=view (Xem & Trả lời)
             if ("view".equals(action)) {
                 long commentId = Long.parseLong(request.getParameter("id"));
@@ -89,11 +105,12 @@ public class AdminFeedbackController extends HttpServlet {
             List<Comment> unrepliedComments = commentDAO.getCommentsWithoutReplies();
             request.setAttribute("unrepliedCount", unrepliedComments.size());
 
-            // Giữ tab active nếu redirect từ POST
+            // Giữ tab active nếu redirect từ POST, mặc định là "feedback"
             String activeTab = request.getParameter("tab");
-            if (activeTab != null) {
-                request.setAttribute("activeTab", activeTab);
+            if (activeTab == null || activeTab.isEmpty()) {
+                activeTab = "feedback";
             }
+            request.setAttribute("activeTab", activeTab);
 
             request.getRequestDispatcher("/WEB-INF/views/admin/library/feedback_list.jsp")
                     .forward(request, response);
@@ -117,17 +134,23 @@ public class AdminFeedbackController extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+        
+        // Determine base path based on user role or servlet path
+        String basePath = "/admin/feedback";
+        if (request.getServletPath().startsWith("/staff/")) {
+            basePath = "/staff/feedback";
+        }
 
         try {
             if ("resolve".equals(action)) {
                 long reportId = Long.parseLong(request.getParameter("reportId"));
                 reportDAO.updateReportStatus(reportId, "RESOLVED");
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=reports");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=reports");
 
             } else if ("ignore".equals(action)) {
                 long reportId = Long.parseLong(request.getParameter("reportId"));
                 reportDAO.updateReportStatus(reportId, "IGNORED");
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=reports");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=reports");
 
             } else if ("deleteComment".equals(action)) {
                 long reportId = Long.parseLong(request.getParameter("reportId"));
@@ -137,7 +160,7 @@ public class AdminFeedbackController extends HttpServlet {
                     reportDAO.updateReportStatus(reportId, "RESOLVED");
                     reportDAO.updateDescription(reportId, "Đã xóa bình luận vi phạm");
                 }
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=reports");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=reports");
 
             } else if ("lockComment".equals(action)) {
                 long reportId = Long.parseLong(request.getParameter("reportId"));
@@ -151,13 +174,13 @@ public class AdminFeedbackController extends HttpServlet {
                     reportDAO.updateDescription(reportId,
                             "Đã khóa comment " + lockDays + " ngày và xóa toàn bộ bình luận");
                 }
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=reports");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=reports");
 
             } else if ("delete".equals(action)) {
                 // Xóa comment từ tab phản hồi
                 long commentId = Long.parseLong(request.getParameter("id"));
                 commentDAO.deleteComment(commentId, (int) user.getId(), true);
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=feedback");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=feedback");
 
             } else if ("reply".equals(action)) {
                 long commentId = Long.parseLong(request.getParameter("commentId"));
@@ -170,7 +193,7 @@ public class AdminFeedbackController extends HttpServlet {
 
                 commentReplyDAO.insertReply(reply);
 
-                response.sendRedirect(request.getContextPath() + "/admin/feedback?tab=feedback");
+                response.sendRedirect(request.getContextPath() + basePath + "?tab=feedback");
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action");
             }
@@ -192,6 +215,27 @@ public class AdminFeedbackController extends HttpServlet {
             Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
+    }
+
+    private String getReasonInVietnamese(String reason) {
+        if (reason == null) {
+            return "Không xác định";
+        }
+        
+        switch (reason.toLowerCase()) {
+            case "spam":
+                return "Spam";
+            case "offensive language":
+                return "Ngôn ngữ thô tục";
+            case "harassment":
+                return "Quấy rối";
+            case "false information":
+                return "Thông tin sai lệch";
+            case "other":
+                return "Khác";
+            default:
+                return reason;
+        }
     }
 
 }
