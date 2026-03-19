@@ -9,9 +9,10 @@
                 <meta charset="UTF-8" />
                 <title>Giỏ hàng</title>
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
+                <link rel="stylesheet" href="${pageContext.request.contextPath}/css/member-pages.css" />
             </head>
 
-            <body>
+            <body class="mp-body">
 
                 <jsp:include page="/WEB-INF/views/header.jsp" />
 
@@ -32,28 +33,28 @@
                 <c:url value="/checkout" var="checkoutUrlValue" />
 
                 <c:if test="${itemCount > 0}">
-                    <section class="cart-hero">
-                        <div class="container">
-                            <div class="hero-content">
-                                <p class="eyebrow">Giỏ hàng</p>
-                                <h1>Những cuốn sách bạn đang giữ</h1>
-                                <p class="hero-subtitle">Gửi yêu cầu mượn ngay khi bạn sẵn sàng. Chúng tôi sẽ giữ kho
-                                    sách và hỗ trợ gia hạn nếu cần.</p>
-                                <div class="hero-actions">
+                    <section class="mp-hero">
+                        <div class="mp-hero__inner">
+                            <div>
+                                <p class="mp-hero__eyebrow">🛒 Giỏ mượn sách</p>
+                                <h1 class="mp-hero__title">Những cuốn sách bạn sắp mượn</h1>
+                                <p class="mp-hero__subtitle">Kiểm tra lại danh sách và gửi yêu cầu mượn ngay. Chọn
+                                    phương thức nhận và chúng tôi sẽ chuẩn bị sách cho bạn.</p>
+                                <div class="mp-hero__actions">
                                     <a href="${pageContext.request.contextPath}/books" class="btn secondary">Tiếp tục
                                         khám phá</a>
                                 </div>
                             </div>
-                            <div class="hero-summary">
-                                <div class="hero-card">
-                                    <p class="label">Loại sách trong giỏ</p>
-                                    <p class="value">${itemCount}</p>
-                                    <small>nhóm sách đang chờ duyệt</small>
+                            <div class="mp-hero__cards">
+                                <div class="mp-hero__card">
+                                    <p class="mp-hero__card-label">Loại sách trong giỏ</p>
+                                    <p class="mp-hero__card-value">${itemCount}</p>
+                                    <p class="mp-hero__card-detail">nhóm sách đang chờ duyệt</p>
                                 </div>
-                                <div class="hero-card">
-                                    <p class="label">Tổng số lượng</p>
-                                    <p class="value">${totalQuantity}</p>
-                                    <small>cuốn bạn vừa thêm</small>
+                                <div class="mp-hero__card">
+                                    <p class="mp-hero__card-label">Tổng số lượng</p>
+                                    <p class="mp-hero__card-value">${totalQuantity}</p>
+                                    <p class="mp-hero__card-detail">cuốn bạn vừa thêm</p>
                                 </div>
                             </div>
                         </div>
@@ -69,14 +70,13 @@
                     </c:if>
 
                     <c:if test="${itemCount == 0}">
-                        <section class="cart-empty">
-                            <div class="empty-card">
-                                <h2>Giỏ hàng trống</h2>
-                                <p>Bạn chưa thêm cuốn sách nào vào giỏ. Hãy khám phá thư viện và chọn vài cuốn bạn muốn
-                                    mượn.</p>
-                                <a href="${pageContext.request.contextPath}/books" class="btn primary">Bắt đầu chọn
-                                    sách</a>
-                            </div>
+                        <section class="mp-empty" style="margin:40px auto;max-width:600px;">
+                            <div class="mp-empty__icon">📚</div>
+                            <h2>Giỏ hàng trống</h2>
+                            <p>Bạn chưa thêm cuốn sách nào vào giỏ. Hãy khám phá thư viện và chọn vài cuốn bạn muốn
+                                mượn.</p>
+                            <a href="${pageContext.request.contextPath}/books" class="btn primary">Bắt đầu chọn
+                                sách</a>
                         </section>
                     </c:if>
 

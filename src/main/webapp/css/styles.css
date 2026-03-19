@@ -599,7 +599,7 @@ textarea {
 
 /* ============ CATALOG HERO & CONTROLS ============ */
 .catalog-hero {
-    background: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #0a2463 100%);
     color: #f8fbff;
     padding: 90px 0 80px;
     position: relative;
@@ -1204,7 +1204,7 @@ textarea {
 }
 
 .cart-hero {
-    background: linear-gradient(135deg, #0c6cd0 0%, #2f49f5 65%, #7c3aed 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #0a2463 100%);
     color: #fff;
     padding: 60px 0 50px;
     position: relative;

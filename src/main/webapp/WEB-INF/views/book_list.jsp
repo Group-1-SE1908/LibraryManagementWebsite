@@ -13,14 +13,18 @@
                         <fmt:message key="catalog.title" /> | LBMS Library
                     </title>
                     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css">
+                    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/member-pages.css">
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
                         rel="stylesheet">
                     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <style>
+                        /* Catalog popup – polished modal */
                         .catalog-popup {
                             position: fixed;
                             inset: 0;
-                            background: rgba(15, 23, 42, 0.55);
+                            background: rgba(15, 23, 42, 0.6);
+                            backdrop-filter: blur(6px);
+                            -webkit-backdrop-filter: blur(6px);
                             display: flex;
                             align-items: center;
                             justify-content: center;
@@ -37,28 +41,41 @@
                         }
 
                         .catalog-popup__panel {
-                            width: min(460px, 100%);
-                            border-radius: 22px;
-                            padding: 34px 30px 24px;
-                            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-                            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
-                            border: 1px solid rgba(59, 130, 246, 0.35);
-                            transform: translateY(-8px);
+                            width: min(480px, 100%);
+                            border-radius: 24px;
+                            padding: 36px 32px 26px;
+                            background: #fff;
+                            box-shadow: 0 32px 80px rgba(15, 23, 42, 0.32);
+                            border: 1.5px solid rgba(37, 99, 235, 0.18);
+                            transform: translateY(0);
+                            animation: catalogPopupIn .25s cubic-bezier(.34, 1.56, .64, 1);
+                        }
+
+                        @keyframes catalogPopupIn {
+                            from {
+                                opacity: 0;
+                                transform: translateY(12px) scale(.97);
+                            }
+
+                            to {
+                                opacity: 1;
+                                transform: translateY(0) scale(1);
+                            }
                         }
 
                         .catalog-popup__title {
-                            font-size: 1.25rem;
-                            letter-spacing: 0.3em;
-                            text-transform: uppercase;
+                            font-size: 1.15rem;
+                            font-weight: 800;
+                            letter-spacing: -0.01em;
                             margin-bottom: 8px;
                             color: #0f172a;
                         }
 
                         .catalog-popup__message {
-                            font-size: 1rem;
-                            color: #1f2937;
-                            margin-bottom: 22px;
-                            line-height: 1.4;
+                            font-size: 0.95rem;
+                            color: #475569;
+                            margin-bottom: 24px;
+                            line-height: 1.55;
                         }
 
                         .catalog-popup__actions {
@@ -68,23 +85,34 @@
                         }
 
                         .catalog-popup__actions .btn {
-                            padding: 10px 20px;
-                            font-size: 0.85rem;
-                            letter-spacing: 0.08em;
-                            border-radius: 12px;
+                            padding: 10px 22px;
+                            font-size: 0.84rem;
+                            font-weight: 700;
+                            border-radius: 999px;
                             border: none;
                             cursor: pointer;
+                            transition: all .2s ease;
                         }
 
                         .catalog-popup__actions .btn-primary {
-                            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+                            background: linear-gradient(135deg, #2563eb, #4f46e5);
                             color: #fff;
+                            box-shadow: 0 6px 20px rgba(37, 99, 235, .35);
+                        }
+
+                        .catalog-popup__actions .btn-primary:hover {
+                            box-shadow: 0 10px 28px rgba(37, 99, 235, .45);
+                            transform: translateY(-1px);
                         }
 
                         .catalog-popup__actions .btn-outline {
                             background: transparent;
-                            border: 1px solid rgba(15, 23, 42, 0.2);
-                            color: #0f172a;
+                            border: 1.5px solid rgba(15, 23, 42, 0.18);
+                            color: #475569;
+                        }
+
+                        .catalog-popup__actions .btn-outline:hover {
+                            background: #f8faff;
                         }
                     </style>
 
@@ -136,7 +164,7 @@
                                 </div>
                                 <h1 class="catalog-hero__title">Thư viện số LBMS</h1>
                                 <p class="catalog-hero__subtitle">Khám phá hàng ngàn cuốn sách tri thức, được tuyển chọn
-                                    mỗi ngày.</p>
+                                    mỗi ngày để nâng tầm trí thức của bạn.</p>
                                 <div class="catalog-hero__stats">
                                     <div class="catalog-hero__stat">
                                         <span class="catalog-hero__stat-value">
@@ -150,17 +178,22 @@
                                         </span>
                                         <span class="catalog-hero__stat-label">thể loại</span>
                                     </div>
+                                    <div class="catalog-hero__stat">
+                                        <span class="catalog-hero__stat-value">∞</span>
+                                        <span class="catalog-hero__stat-label">kiến thức</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="catalog-hero__panel" aria-hidden="true">
                                 <div class="catalog-hero__panel-content">
-                                    <p class="catalog-hero__panel-title">Gợi ý hôm nay</p>
-                                    <p class="catalog-hero__panel-subtitle">Những đầu sách được bạn đọc yêu thích đang
-                                        chờ bạn khám phá.</p>
+                                    <p class="catalog-hero__panel-title">✨ Gợi ý hôm nay</p>
+                                    <p class="catalog-hero__panel-subtitle">Những đầu sách được bạn đọc yêu thích nhất
+                                        đang chờ bạn khám phá.</p>
                                     <div class="catalog-hero__panel-badges">
                                         <span>📘 Cổ điển</span>
                                         <span>🌿 Phát triển bản thân</span>
                                         <span>🔬 Khoa học</span>
+                                        <span>🎭 Văn học</span>
                                     </div>
                                 </div>
                             </div>
