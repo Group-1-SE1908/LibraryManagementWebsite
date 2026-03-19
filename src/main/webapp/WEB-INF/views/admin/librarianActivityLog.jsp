@@ -100,8 +100,8 @@
                                                             <c:set var="roleName"
                                                                 value="${fn:toUpperCase(log.user.role.name)}" />
                                                             <span
-                                                                class="pm-badge ${roleName == 'ADMIN' ? 'pm-badge-danger' : (roleName == 'LIBRARIAN' ? 'pm-badge-primary' : 'pm-badge-neutral')}">
-                                                                <i class="fa-solid fa-shield-halved"></i>
+                                                                class="pm-badge ${roleName == 'ADMIN' ? 'pm-badge-danger' : (roleName == 'LIBRARIAN' ? 'pm-badge pm-badge-info' : 'pm-badge-neutral')}">
+                                                                <i class="fas fa-book"></i>
                                                                 ${log.user.role.name}
                                                             </span>
                                                         </td>
@@ -160,7 +160,7 @@
 
                     </main>
 
-                    <%-- Detail modal (AJAX) --%>
+                    <%-- Detail modal --%>
                         <div id="detailModal" class="pm-modal-overlay">
                             <div class="pm-modal" style="max-width:600px;">
                                 <div class="pm-modal-header">

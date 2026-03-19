@@ -157,14 +157,16 @@
                         <div class="detail-row">
                             <div class="detail-label">Ngày mượn</div>
                             <div class="detail-value">
-                                <fmt:formatDate value="${record.borrowDate}" pattern="dd/MM/yyyy" />
+
+                                ${record.formattedBorrowDate}
                             </div>
                         </div>
 
                         <div class="detail-row">
                             <div class="detail-label">Hạn trả</div>
                             <div class="detail-value">
-                                <fmt:formatDate value="${record.dueDate}" pattern="dd/MM/yyyy" />
+
+                                ${record.formattedDueDate}
                             </div>
                         </div>
 
@@ -172,18 +174,9 @@
                             <div class="detail-label">Ngày trả</div>
                             <div class="detail-value">
 
-                                <c:choose>
-                                    <c:when test="${not empty record.returnDate}">
-                                        <fmt:formatDate value="${record.returnDate}" pattern="dd/MM/yyyy" />
-                                    </c:when>
-                                    <c:otherwise>
-                                        Chưa trả
-                                    </c:otherwise>
-                                </c:choose>
-
+                                ${record.formattedReturnDate}
                             </div>
                         </div>
-
                         <div class="detail-row">
                             <div class="detail-label">Trạng thái</div>
                             <div class="detail-value">
