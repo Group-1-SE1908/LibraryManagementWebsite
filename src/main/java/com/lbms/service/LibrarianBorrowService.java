@@ -406,12 +406,6 @@ public class LibrarianBorrowService {
             }
         }
 
-        String bookTitle = record.getBook() != null ? record.getBook().getTitle() : "N/A";
-        String userName = record.getUser() != null ? record.getUser().getFullName() : "N/A";
-        String note = trimmedNote != null ? trimmedNote : "Không có lý do";
-        logDAO.addActivityLog((int) staffId,
-                "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
-                        + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
