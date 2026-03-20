@@ -32,11 +32,15 @@ public class LibrarianBorrowService {
             try {
                 // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
                 // trong DB)
-                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status, br.due_date "
-                        + "FROM borrow_records br "
-                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
-                        + "WHERE br.id = ?";
+//                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status, br.due_date "
+//                        + "FROM borrow_records br "
+//                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+//                        + "WHERE br.id = ?";
 
+                String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode "
+                        + "FROM borrow_records br "
+                        + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+                        + "WHERE br.id = ? AND br.status IN ('BORROWED', 'RECEIVED', 'RETURN_REQUESTED')";
                 String correctBarcode = "";
                 long bookId = -1;
                 LocalDate dueDate = null;
@@ -411,7 +415,7 @@ public class LibrarianBorrowService {
         String note = trimmedNote != null ? trimmedNote : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
                 "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
-                        + note);
+                + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
@@ -438,5 +442,25 @@ public class LibrarianBorrowService {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public void confirmReceiveOnline(long borrowId) throws SQLException {
+        LocalDate today = LocalDate.now();
+        // Chốt ngày mượn là hôm nay, ngày trả là 14 ngày sau
+        LocalDate dueDate = today.plusDays(14);
+
+        try (Connection c = DBConnection.getConnection()) {
+            String sql = "UPDATE borrow_records SET status = 'RECEIVED', borrow_date = ?, due_date = ? WHERE id = ?";
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setDate(1, java.sql.Date.valueOf(today));
+                ps.setDate(2, java.sql.Date.valueOf(dueDate));
+                ps.setLong(3, borrowId);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    public void updateStatus(long id, String status) throws SQLException {
+        libDAO.updateStatus(id, status); // Gọi hàm updateStatus đã có trong LibrarianBorrowDAO
     }
 }

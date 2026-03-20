@@ -90,7 +90,7 @@ public class LibrarianBorrowDAO {
     }
 
     public int countActiveBorrows(long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('APPROVED','BORROWED')";
+        String sql = "SELECT COUNT(*) AS c FROM borrow_records WHERE user_id = ? AND status IN ('REQUESTED','APPROVED','BORROWED','SHIPPING','RECEIVED','RETURN_REQUESTED')";
         try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -280,7 +280,7 @@ public class LibrarianBorrowDAO {
             
                 String sql = "SELECT "
             + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
-            + " AND status IN ('REQUESTED', 'APPROVED', 'SHIPPING', 'RECEIVED', 'BORROWED')) as current_borrowed, "
+            + " AND status IN ('REQUESTED', 'APPROVED', 'SHIPPING', 'RECEIVED', 'BORROWED','RETURN_REQUESTED')) as current_borrowed, "
             + "(SELECT CASE WHEN EXISTS (SELECT 1 FROM borrow_records WHERE user_id = ? "
             + " AND (status = 'RECEIVED' OR status = 'BORROWED' OR status = 'SHIPPING') "
             + " AND due_date < GETDATE()) THEN 1 ELSE 0 END) as has_overdue, "
