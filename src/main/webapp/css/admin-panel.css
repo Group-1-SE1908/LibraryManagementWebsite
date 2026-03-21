@@ -2244,6 +2244,95 @@ body.panel-body .admin-header {
     display: none;
 }
 
+/* Layout */
+.lbm-group {
+    margin-bottom: 1.25rem;
+}
+
+.lbm-row {
+    display: flex;
+    gap: 16px;
+}
+
+.lbm-col {
+    flex: 1;
+}
+
+/* Container cho Input và Icon */
+.lbm-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Icon định vị tuyệt đối */
+.lbm-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Ô nhập liệu */
+.lbm-input,
+.lbm-select {
+    width: 100% !important;
+    height: 44px;
+    padding: 8px 12px 8px 42px !important;
+    /* Quan trọng: 42px để né icon */
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.lbm-input:focus,
+.lbm-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Box thông báo mật khẩu */
+.lbm-info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 4px;
+    color: #1e40af;
+    font-size: 0.85rem;
+}
+
+/* Button */
+.lbm-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+.lbm-btn-wide {
+    flex: 1;
+    justify-content: center;
+    height: 44px;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 600px) {
+    .lbm-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .lbm-actions {
+        flex-direction: column;
+    }
+}
+
 /* ============================================================
    LEGACY RESPONSIVE
    ============================================================ */
