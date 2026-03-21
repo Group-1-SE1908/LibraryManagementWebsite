@@ -99,10 +99,10 @@ public class NotificationService {
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  SỰ KIỆN 5: Đặt trước đã được chuyển thành mượn
+    // SỰ KIỆN 5: Đặt trước đã được chuyển thành mượn
     // ════════════════════════════════════════════════════════════════
     public void notifyReservationBorrowed(long userId, String bookTitle) throws SQLException {
-        String title   = "Đặt trước đã được xác nhận";
+        String title = "Đặt trước đã được xác nhận";
         String message = "Bạn đã nhận sách \"" + bookTitle + "\" thành công. Thời hạn mượn là 7 ngày.";
         insertNotification(userId, "RESERVATION_BORROWED", title, message);
         try {
@@ -117,7 +117,7 @@ public class NotificationService {
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  QUERY METHODS
+    // QUERY METHODS
     // ════════════════════════════════════════════════════════════════
 
     public int countUnread(long userId) throws SQLException {

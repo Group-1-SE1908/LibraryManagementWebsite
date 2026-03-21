@@ -32,10 +32,11 @@ public class LibrarianBorrowService {
             try {
                 // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
                 // trong DB)
-//                String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id, br.status, br.due_date "
-//                        + "FROM borrow_records br "
-//                        + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
-//                        + "WHERE br.id = ?";
+                // String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id,
+                // br.status, br.due_date "
+                // + "FROM borrow_records br "
+                // + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+                // + "WHERE br.id = ?";
 
                 String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode "
                         + "FROM borrow_records br "
@@ -415,7 +416,7 @@ public class LibrarianBorrowService {
         String note = trimmedNote != null ? trimmedNote : "Không có lý do";
         logDAO.addActivityLog((int) staffId,
                 "Từ chối gia hạn: " + bookTitle + " - Độc giả: " + userName + " [Phiếu " + record.getId() + "] - "
-                + note);
+                        + note);
     }
 
     public List<BorrowRecord> searchBorrowings(String keyword, String status, String method) throws SQLException {
