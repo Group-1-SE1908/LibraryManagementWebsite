@@ -22,34 +22,34 @@ import java.util.Locale;
 import java.util.Map;
 
 @WebServlet(urlPatterns = {
-        "/staff/borrowlibrary",
-        "/staff/borrowlibrary/approve",
-        "/staff/borrowlibrary/reject",
-        "/staff/borrowlibrary/return",
-        "/staff/borrowlibrary/detail",
-        "/staff/borrowlibrary/inperson",
-        "/staff/borrowlibrary/receive",
-        "/staff/borrowlibrary/verifyData",
-        "/staff/renewal",
-        "/staff/renewal/approve",
-        "/staff/renewal/reject",
-        "/staff/renewal/view",
-        "/staff/borrowlibrary/ship_fee",
-        "/staff/borrowlibrary/ship_confirm",
-        "/admin/borrowlibrary",
-        "/admin/borrowlibrary/approve",
-        "/admin/borrowlibrary/reject",
-        "/admin/borrowlibrary/return",
-        "/admin/borrowlibrary/detail",
-        "/admin/borrowlibrary/inperson",
-        "/admin/borrowlibrary/receive",
-        "/admin/borrowlibrary/verifyData",
-        "/admin/renewal",
-        "/admin/renewal/approve",
-        "/admin/renewal/reject",
-        "/admin/renewal/view",
-        "/admin/borrowlibrary/ship_fee",
-        "/admin/borrowlibrary/ship_confirm"
+    "/staff/borrowlibrary",
+    "/staff/borrowlibrary/approve",
+    "/staff/borrowlibrary/reject",
+    "/staff/borrowlibrary/return",
+    "/staff/borrowlibrary/detail",
+    "/staff/borrowlibrary/inperson",
+    "/staff/borrowlibrary/receive",
+    "/staff/borrowlibrary/verifyData",
+    "/staff/renewal",
+    "/staff/renewal/approve",
+    "/staff/renewal/reject",
+    "/staff/renewal/view",
+    "/staff/borrowlibrary/ship_fee",
+    "/staff/borrowlibrary/ship_confirm",
+    "/admin/borrowlibrary",
+    "/admin/borrowlibrary/approve",
+    "/admin/borrowlibrary/reject",
+    "/admin/borrowlibrary/return",
+    "/admin/borrowlibrary/detail",
+    "/admin/borrowlibrary/inperson",
+    "/admin/borrowlibrary/receive",
+    "/admin/borrowlibrary/verifyData",
+    "/admin/renewal",
+    "/admin/renewal/approve",
+    "/admin/renewal/reject",
+    "/admin/renewal/view",
+    "/admin/borrowlibrary/ship_fee",
+    "/admin/borrowlibrary/ship_confirm"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -282,6 +282,9 @@ public class LibrarianBorrowController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         String action = getAction(path);
+        if (action == null || action.isEmpty()) {
+            action = req.getParameter("action");
+        }
         String redirectBase = resolveRedirectBase(path);
 
         try {
@@ -333,15 +336,16 @@ public class LibrarianBorrowController extends HttpServlet {
                 if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
                     req.getSession().setAttribute("flash",
                             "Đã nhận trả sách thành công. Phiếu này phát sinh tiền phạt "
-                                    + formatCurrency(fineAmount)
-                                    + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
+                            + formatCurrency(fineAmount)
+                            + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
                 } else {
                     req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
                 }
             } else if ("receive".equals(action)) {
-                long id = Long.parseLong(req.getParameter("id"));
-                libService.confirmReceive(id);
-                req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành công.");
+//                long id = Long.parseLong(req.getParameter("id"));
+//                libService.confirmReceive(id);
+//                req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành công.");
+                handleReceive(req, resp);
             } else if ("reject".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
                 String reason = req.getParameter("reason"); // Lấy lý do từ form
@@ -485,6 +489,23 @@ public class LibrarianBorrowController extends HttpServlet {
         if (!isLibrarian && !isAdmin) {
             throw new IllegalArgumentException("Bạn không có quyền truy cập chức năng này.");
         }
+    }
+
+    private void handleReceive(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        long id = Long.parseLong(req.getParameter("id"));
+        BorrowRecord record = libService.getDetail(id);
+
+        if (record != null) {
+            if ("ONLINE".equalsIgnoreCase(record.getBorrowMethod())) {
+                // Luồng Online: Cập nhật ngày mượn/trả thực tế
+                libService.confirmReceiveOnline(id);
+            } else {
+                // Luồng tại chỗ: Chỉ cập nhật trạng thái
+                libService.updateStatus(id, "RECEIVED");
+            }
+            req.getSession().setAttribute("flash", "Khách đã nhận thành công!.");
+        }
+        //resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
     }
 
     private String formatCurrency(BigDecimal amount) {

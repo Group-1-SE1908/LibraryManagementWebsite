@@ -338,7 +338,7 @@ public class UserDAO {
     public void lockCommentAccess(long userId, int days) throws SQLException {
         String sql = "UPDATE [User] SET comment_banned_until = DATEADD(day, ?, GETDATE()) WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, days);
             ps.setLong(2, userId);
             ps.executeUpdate();
@@ -351,12 +351,13 @@ public class UserDAO {
     public boolean isCommentLocked(long userId) throws SQLException {
         String sql = "SELECT comment_banned_until FROM [User] WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Timestamp bannedUntil = rs.getTimestamp("comment_banned_until");
-                    if (bannedUntil == null) return false;
+                    if (bannedUntil == null)
+                        return false;
                     return bannedUntil.after(new Timestamp(System.currentTimeMillis()));
                 }
             }
@@ -364,6 +365,38 @@ public class UserDAO {
         return false;
     }
 
+    public List<User> findAllActiveExceptMe(long currentUserId) throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT u.user_id, u.full_name, u.email, r.role_name " +
+                "FROM [User] u " +
+                "INNER JOIN Role r ON u.role_id = r.role_id " +
+                "WHERE u.status = 'ACTIVE' AND u.user_id <> ? " +
+                "ORDER BY u.email ASC";
 
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getInt("user_id"));
+                    user.setFullName(rs.getString("full_name"));
+                    user.setEmail(rs.getString("email"));
+
+                    Role role = new Role();
+                    role.setName(rs.getString("role_name"));
+                    user.setRole(role);
+
+                    list.add(user);
+                }
+            }
+        } catch (SQLException e) {
+
+            throw e;
+        }
+        return list;
+
+    }
 
 }

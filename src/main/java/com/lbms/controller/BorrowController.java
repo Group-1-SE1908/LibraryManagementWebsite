@@ -23,11 +23,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = { "/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
-        "/borrow/return",
-        "/borrow/renew",
-        "/borrow/renew/cancel",
-        "/history", "/renew-history" })
+@WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
+    "/borrow/return",
+    "/borrow/renew",
+    "/borrow/renew/cancel",
+    "/history", "/renew-history","/borrow/returnOnline"})
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -103,6 +103,9 @@ public class BorrowController extends HttpServlet {
                     req.setAttribute("records", overdueRecords);
                     req.setAttribute("isOverduePage", true); // Äá»ƒ Ä‘Ã¡nh dáº¥u trÃªn giao diá»‡n
                     req.getRequestDispatcher("/WEB-INF/views/borrow_list.jsp").forward(req, resp);
+                    break;
+                case "/borrow/returnOnline":
+                    handleReturnOnlineRequest(req, resp);
                     break;
                 default:
                     resp.sendError(404);
@@ -215,16 +218,16 @@ public class BorrowController extends HttpServlet {
             if (remainingSlots <= 0) {
                 req.getSession().setAttribute("flash",
                         "Bạn đang có " + currentActiveBorrows
-                                + " cuốn đang mượn/đang chờ duyệt (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS
-                                + " cuốn). Vui lòng trả sách hoặc hủy yêu cầu trước khi mượn thêm.");
+                        + " cuốn đang mượn/đang chờ duyệt (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS
+                        + " cuốn). Vui lòng trả sách hoặc hủy yêu cầu trước khi mượn thêm.");
                 resp.sendRedirect(req.getContextPath() + "/borrow/request");
                 return;
             }
             if (quantity > remainingSlots) {
                 req.getSession().setAttribute("flash",
                         "Bạn vừa yêu cầu mượn " + quantity
-                                + " cuốn nhưng chỉ có thể mượn thêm tối đa " + remainingSlots
-                                + " cuốn nữa (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn).");
+                        + " cuốn nhưng chỉ có thể mượn thêm tối đa " + remainingSlots
+                        + " cuốn nữa (giới hạn " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn).");
                 resp.sendRedirect(req.getContextPath() + "/borrow/request");
                 return;
             }
@@ -435,7 +438,7 @@ public class BorrowController extends HttpServlet {
     private List<String> statusesForFilter(String normalized) {
         switch (normalized) {
             case "borrowing":
-                return List.of("BORROWED", "RECEIVED");
+                return List.of("BORROWED", "RECEIVED", "SHIPPING", "RETURN_REQUESTED");
             case "pending":
                 return List.of("REQUESTED", "RENEWAL_REQUESTED");
             case "returned":
@@ -458,5 +461,19 @@ public class BorrowController extends HttpServlet {
         }
         String r = u.getRole().getName();
         return "ADMIN".equalsIgnoreCase(r) || "LIBRARIAN".equalsIgnoreCase(r);
+    }
+
+    private void handleReturnOnlineRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            long id = Long.parseLong(req.getParameter("id"));
+            // Cập nhật trạng thái sang RETURN_REQUESTED
+            // Bạn có thể dùng hàm updateStatus có sẵn trong borrowDAO
+            borrowDAO.updateStatus(id, "RETURN_REQUESTED");
+
+            req.getSession().setAttribute("flash", "Yêu cầu trả sách đã được gửi. Vui lòng chờ thư viện xác nhận.");
+        } catch (Exception e) {
+            req.getSession().setAttribute("flash", "Lỗi: " + e.getMessage());
+        }
+        resp.sendRedirect(req.getContextPath() + "/history");
     }
 }
