@@ -197,182 +197,159 @@ BEGIN TRY
 	DECLARE @member8Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member8@gmail.com');
 
 	-- Seed thÃªm sáº¡ch má»›i Ä‘á»ƒ hiá»ƒn thá»‹ kho sáº£n pháº©m demo.
-	DECLARE @catTech INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Công nghệ thông tin');
-	DECLARE @catLit INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Văn học Việt Nam');
-	DECLARE @catSkills INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Kỹ năng sống');
-	DECLARE @catHighSchool INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Giáo trình THPT');
+	-- Seed sách mới từ Open Library (dữ liệu thực).
+	-- 3 sách ban đầu đã được tạo bởi schema.sql:
+	--   9780132350884  Clean Code              (Lập trình & Công nghệ)
+	--   9780451524935  Nineteen Eighty-Four    (Văn học thế giới)
+	--   9780156012195  The Little Prince       (Văn học thế giới)
 
+	DECLARE @catTech   INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Lập trình & Công nghệ');
+	DECLARE @catLit    INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Văn học thế giới');
+	DECLARE @catSkills INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Phát triển bản thân');
+	DECLARE @catSci    INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Khoa học & Tự nhiên');
+	DECLARE @catHist   INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Lịch sử & Văn minh');
+	DECLARE @catEcon   INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Kinh tế & Kinh doanh');
+	DECLARE @catSciFi  INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Khoa học viễn tưởng');
+	DECLARE @catKids   INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Thiếu nhi');
+
+	-- ── Lập trình & Công nghệ ─────────────────────────────────────────
 	IF @catTech IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-004')
-		BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780135957059')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Lập trình Python nâng cao', N'Hoàng Vũ', @catTech, 170000, 8, 'ISBN-004', 'assets/images/books/python.jpg');
-		END;
+			VALUES ('The Pragmatic Programmer', 'David Thomas, Andy Hunt', @catTech, 320000, 6, '9780135957059', 'https://covers.openlibrary.org/b/id/10143650-M.jpg');
 
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-005')
-		BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780201633610')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Thiết kế hệ thống microservices', N'Nguyễn Thị Hạ', @catTech, 190000, 6, 'ISBN-005', 'assets/images/books/microservices.jpg');
-		END;
+			VALUES ('Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', @catTech, 380000, 5, '9780201633610', 'https://covers.openlibrary.org/b/id/10827044-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780262033848')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', @catTech, 450000, 4, '9780262033848', 'https://covers.openlibrary.org/b/id/11106524-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780596517748')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('JavaScript: The Good Parts', 'Douglas Crockford', @catTech, 280000, 7, '9780596517748', 'https://covers.openlibrary.org/b/id/2536428-M.jpg');
 	END;
 
+	-- ── Văn học thế giới ──────────────────────────────────────────────
 	IF @catLit IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-006')
-		BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780062315007')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Truyện Kiều', N'Nguyễn Du', @catLit, 110000, 12, 'ISBN-006', 'assets/images/books/truyen_kieu.jpg');
-		END;
+			VALUES ('The Alchemist', 'Paulo Coelho', @catLit, 108000, 11, '9780062315007', 'https://covers.openlibrary.org/b/id/15091614-M.jpg');
 
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-007')
-		BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780060883287')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Dế Mèn phiêu lưu ký', N'Tạ Duy Anh', @catLit, 85000, 10, 'ISBN-007', 'assets/images/books/de_men.jpg');
-		END;
+			VALUES ('One Hundred Years of Solitude', 'Gabriel García Márquez', @catLit, 145000, 9, '9780060883287', 'https://covers.openlibrary.org/b/isbn/9780060883287-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780141439518')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Pride and Prejudice', 'Jane Austen', @catLit, 85000, 14, '9780141439518', 'https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg');
 	END;
 
+	-- ── Phát triển bản thân ───────────────────────────────────────────
 	IF @catSkills IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-008')
-		BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780671027032')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Kỹ năng mềm cho sinh viên', N'Hoàng Minh Sơn', @catSkills, 95000, 9, 'ISBN-008', 'assets/images/books/soft_skills.jpg');
-		END;
+			VALUES ('How to Win Friends and Influence People', 'Dale Carnegie', @catSkills, 155000, 14, '9780671027032', 'https://covers.openlibrary.org/b/isbn/9780671027032-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780735211292')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Atomic Habits', 'James Clear', @catSkills, 178000, 10, '9780735211292', 'https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780743269513')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('The 7 Habits of Highly Effective People', 'Stephen R. Covey', @catSkills, 168000, 8, '9780743269513', 'https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780374533557')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Thinking, Fast and Slow', 'Daniel Kahneman', @catSkills, 225000, 7, '9780374533557', 'https://covers.openlibrary.org/b/isbn/9780374533557-M.jpg');
 	END;
 
-	IF @catHighSchool IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-009')
-		BEGIN
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Giáo trình Toán cao cấp', N'Lê Thị Bình', @catHighSchool, 130000, 7, 'ISBN-009', 'assets/images/books/giaotrinh_toan.jpg');
-		END;
-	END;
-
-	-- ── Thêm danh mục mới ────────────────────────────────────────────
-	IF NOT EXISTS (SELECT 1 FROM Category WHERE category_name = N'Kinh tế - Tài chính')
-		INSERT INTO Category (category_name) VALUES (N'Kinh tế - Tài chính');
-
-	IF NOT EXISTS (SELECT 1 FROM Category WHERE category_name = N'Khoa học tự nhiên')
-		INSERT INTO Category (category_name) VALUES (N'Khoa học tự nhiên');
-
-	IF NOT EXISTS (SELECT 1 FROM Category WHERE category_name = N'Lịch sử - Địa lý')
-		INSERT INTO Category (category_name) VALUES (N'Lịch sử - Địa lý');
-
-	IF NOT EXISTS (SELECT 1 FROM Category WHERE category_name = N'Ngoại ngữ')
-		INSERT INTO Category (category_name) VALUES (N'Ngoại ngữ');
-
-	DECLARE @catEcon INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Kinh tế - Tài chính');
-	DECLARE @catSci INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Khoa học tự nhiên');
-	DECLARE @catHist INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Lịch sử - Địa lý');
-	DECLARE @catLang INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Ngoại ngữ');
-
-	-- ── Sách bổ sung (ISBN-010 → ISBN-022) ───────────────────────────
-	IF @catTech IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-010')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Lập trình Web với React.js', N'Nguyễn Hoàng Nam', @catTech, 185000, 6, 'ISBN-010', 'assets/images/books/react.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-011')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Clean Code – Viết code sạch', N'Robert C. Martin', @catTech, 210000, 4, 'ISBN-011', 'assets/images/books/clean_code.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-012')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Docker & Kubernetes thực chiến', N'Trần Đức Anh', @catTech, 220000, 5, 'ISBN-012', 'assets/images/books/docker_k8s.jpg');
-	END;
-
-	IF @catLit IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-013')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Số đỏ', N'Vũ Trọng Phụng', @catLit, 75000, 9, 'ISBN-013', 'assets/images/books/so_do.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-014')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Chí Phèo và các truyện ngắn', N'Nam Cao', @catLit, 80000, 11, 'ISBN-014', 'assets/images/books/chi_pheo.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-015')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Bỉ vỏ', N'Nguyên Hồng', @catLit, 69000, 8, 'ISBN-015', 'assets/images/books/bi_vo.jpg');
-	END;
-
-	IF @catSkills IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-016')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Đắc nhân tâm', N'Dale Carnegie', @catSkills, 98000, 15, 'ISBN-016', 'assets/images/books/dac_nhan_tam.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-017')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'7 thói quen của người thành đạt', N'Stephen R. Covey', @catSkills, 115000, 7, 'ISBN-017', 'assets/images/books/7_habits.jpg');
-	END;
-
-	IF @catHighSchool IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-018')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Lý thuyết Hóa học lớp 12', N'Phạm Văn Hùng', @catHighSchool, 125000, 6, 'ISBN-018', 'assets/images/books/hoa12.jpg');
-	END;
-
-	IF @catEcon IS NOT NULL
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-019')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Kinh tế học vi mô', N'Nguyễn Thu Hương', @catEcon, 145000, 8, 'ISBN-019', 'assets/images/books/kinh_te_vi_mo.jpg');
-
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-020')
-			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Phân tích tài chính doanh nghiệp', N'Bùi Thị Ngọc', @catEcon, 168000, 5, 'ISBN-020', 'assets/images/books/tai_chinh.jpg');
-	END;
-
+	-- ── Khoa học & Tự nhiên ───────────────────────────────────────────
 	IF @catSci IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-021')
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780553380163')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Vật lý đại cương – Tập 1', N'Lương Duyên Bình', @catSci, 138000, 7, 'ISBN-021', 'assets/images/books/vat_ly.jpg');
+			VALUES ('A Brief History of Time', 'Stephen Hawking', @catSci, 132000, 9, '9780553380163', 'https://covers.openlibrary.org/b/id/14589690-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780198788607')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('The Selfish Gene', 'Richard Dawkins', @catSci, 165000, 6, '9780198788607', 'https://covers.openlibrary.org/b/isbn/9780198788607-M.jpg');
 	END;
 
+	-- ── Lịch sử & Văn minh ────────────────────────────────────────────
 	IF @catHist IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-022')
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780062316097')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Đại cương lịch sử Việt Nam – Tập 2', N'Trương Hữu Quýnh', @catHist, 105000, 10, 'ISBN-022', 'assets/images/books/lich_su.jpg');
+			VALUES ('Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', @catHist, 210000, 8, '9780062316097', 'https://covers.openlibrary.org/b/id/14369194-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780393061314')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Guns, Germs, and Steel', 'Jared Diamond', @catHist, 200000, 6, '9780393061314', 'https://covers.openlibrary.org/b/isbn/9780393061314-M.jpg');
 	END;
 
-	IF @catLang IS NOT NULL
+	-- ── Kinh tế & Kinh doanh ──────────────────────────────────────────
+	IF @catEcon IS NOT NULL
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-023')
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9781612680194')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'TOEIC 900+ – Chinh phục điểm tối đa', N'Dương Thị Mai', @catLang, 155000, 6, 'ISBN-023', 'assets/images/books/toeic.jpg');
+			VALUES ('Rich Dad Poor Dad', 'Robert T. Kiyosaki', @catEcon, 175000, 11, '9781612680194', 'https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg');
 
-		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-024')
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780307887894')
 			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-			VALUES (N'Tiếng Nhật sơ cấp – Minna no Nihongo', N'3A Corporation', @catLang, 172000, 4, 'ISBN-024', 'assets/images/books/nihongo.jpg');
+			VALUES ('The Lean Startup', 'Eric Ries', @catEcon, 195000, 7, '9780307887894', 'https://covers.openlibrary.org/b/isbn/9780307887894-M.jpg');
 	END;
 
-	DECLARE @bookJava INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-001');
-	DECLARE @bookSql INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-002');
-	DECLARE @bookTatDen INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-003');
-	DECLARE @bookPython INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-004');
-	DECLARE @bookMicro INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-005');
-	DECLARE @bookKieu INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-006');
-	DECLARE @bookDeMen INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-007');
-	DECLARE @bookSkills INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-008');
-	DECLARE @bookToan INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-009');
-	DECLARE @bookReact INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-010');
-	DECLARE @bookClean INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-011');
-	DECLARE @bookDocker INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-012');
-	DECLARE @bookSoDo INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-013');
-	DECLARE @bookChiPheo INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-014');
-	DECLARE @book7Habits INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-017');
-	DECLARE @bookToeic INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-023');
+	-- ── Khoa học viễn tưởng ───────────────────────────────────────────
+	IF @catSciFi IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780804139021')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('The Martian', 'Andy Weir', @catSciFi, 155000, 8, '9780804139021', 'https://covers.openlibrary.org/b/id/14641755-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780441013593')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Dune', 'Frank Herbert', @catSciFi, 145000, 7, '9780441013593', 'https://covers.openlibrary.org/b/isbn/9780441013593-M.jpg');
+	END;
+
+	-- ── Thiếu nhi ─────────────────────────────────────────────────────
+	IF @catKids IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780590353427')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Harry Potter and the Sorcerer''s Stone', 'J.K. Rowling', @catKids, 145000, 16, '9780590353427', 'https://covers.openlibrary.org/b/isbn/9780590353427-M.jpg');
+
+		IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780141439761')
+			INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+			VALUES ('Alice''s Adventures in Wonderland', 'Lewis Carroll', @catKids, 75000, 13, '9780141439761', 'https://covers.openlibrary.org/b/isbn/9780141439761-M.jpg');
+	END;
+
+	-- ── Biến sách cho borrow / comment / reservation demo ─────────────
+	-- (Tên biến giữ nguyên để không phải sửa toàn bộ phần demo bên dưới)
+	DECLARE @bookJava    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780132350884'); -- Clean Code
+	DECLARE @bookSql     INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780451524935'); -- Nineteen Eighty-Four
+	DECLARE @bookTatDen  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780156012195'); -- The Little Prince
+	DECLARE @bookPython  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780735211292'); -- Atomic Habits
+	DECLARE @bookMicro   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780062316097'); -- Sapiens
+	DECLARE @bookKieu    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780590353427'); -- Harry Potter
+	DECLARE @bookDeMen   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780062315007'); -- The Alchemist
+	DECLARE @bookSkills  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780671027032'); -- How to Win Friends
+	DECLARE @bookToan    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780262033848'); -- Introduction to Algorithms
+	DECLARE @bookReact   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780743269513'); -- The 7 Habits
+	DECLARE @bookClean   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780201633610'); -- Design Patterns
+	DECLARE @bookDocker  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780307887894'); -- The Lean Startup
+	DECLARE @bookSoDo    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780060883287'); -- One Hundred Years of Solitude
+	DECLARE @bookChiPheo INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780804139021'); -- The Martian
+	DECLARE @book7Habits INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9781612680194'); -- Rich Dad Poor Dad
+	DECLARE @bookToeic   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780553380163'); -- A Brief History of Time
 
 	IF @bookJava IS NULL OR @bookSql IS NULL OR @bookTatDen IS NULL
 	BEGIN
-		THROW 50002, N'Không tìm thấy sách mẫu ISBN-001 đến ISBN-003. Hãy chạy schema.sql bản hiện tại trước.', 1;
+		THROW 50002, N'Không tìm thấy sách từ schema.sql. Vui lòng chạy schema.sql bản hiện tại trước.', 1;
 	END;
 
 	-- =============================================
@@ -576,51 +553,51 @@ BEGIN TRY
 	IF OBJECT_ID('Comment', 'U') IS NOT NULL
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookJava AND user_id = @userId)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@userId,N'Sách rất hay, phù hợp cho người mới bắt đầu học Java. Giải thích rõ ràng, ví dụ thực tế.',5,'VISIBLE',DATEADD(DAY,-20,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@userId,N'Cuốn sách thay đổi cách tôi viết code. Mỗi chương là một bài học thực tiễn, áp dụng ngay vào dự án được luôn.',5,'VISIBLE',DATEADD(DAY,-20,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookJava AND user_id = @member2Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member2Id,N'Nội dung súc tích, dễ hiểu. Tuy nhiên thiếu phần về Java 17+ mới nhất.',4,'VISIBLE',DATEADD(DAY,-15,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member2Id,N'Một trong những cuốn sách lập trình hay nhất tôi từng đọc. Nguyên tắc SOLID được diễn giải rất dễ tiếp thu.',4,'VISIBLE',DATEADD(DAY,-15,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookJava AND user_id = @member5Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member5Id,N'Đọc lần hai vẫn thấy nhiều điều mới. Tác giả giải thích OOP rất tốt.',5,'VISIBLE',DATEADD(DAY,-8,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member5Id,N'Đọc lần hai vẫn thấy nhiều điều mới. Quy tắc đặt tên và single responsibility thay đổi hoàn toàn cách viết code của tôi.',5,'VISIBLE',DATEADD(DAY,-8,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookJava AND user_id = @member6Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member6Id,N'Sách ổn nhưng một số ví dụ code cần cập nhật theo chuẩn mới hơn.',3,'VISIBLE',DATEADD(DAY,-3,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookJava,@member6Id,N'Ví dụ code hơi cũ nhưng các nguyên tắc vẫn cực kỳ giá trị. Must-read cho mọi lập trình viên.',3,'VISIBLE',DATEADD(DAY,-3,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSql AND user_id = @userId)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@userId,N'30 ngày học SQL theo sách này thấy hiệu quả thực sự. Bài tập phong phú.',5,'VISIBLE',DATEADD(DAY,-19,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@userId,N'Tiểu thuyết dystopia kinh điển. Big Brother vẫn còn nguyên giá trị trong thời đại internet hôm nay.',5,'VISIBLE',DATEADD(DAY,-19,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSql AND user_id = @member3Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@member3Id,N'Nội dung tốt nhưng tập trung nhiều vào MySQL, thiếu phần SQL Server.',3,'VISIBLE',DATEADD(DAY,-10,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@member3Id,N'Đọc mà thấy ọn lạnh. Orwell viết về thế giới 1984 nhưng cảm giác như đang đọc về xã hội hiện tại.',3,'VISIBLE',DATEADD(DAY,-10,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSql AND user_id = @member7Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@member7Id,N'Phù hợp cả người học lẫn ôn luyện. Cách trình bày logic, dễ theo dõi.',4,'VISIBLE',DATEADD(DAY,-5,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSql,@member7Id,N'Một trong những cuốn sách có tầm ảnh hưởng lớn nhất thế kỷ 20. Đọc chậm từng trang mới thấm.',4,'VISIBLE',DATEADD(DAY,-5,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookTatDen AND user_id = @member4Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member4Id,N'Tác phẩm kinh điển, phản ánh chân thực xã hội phong kiến. Buồn mà đẹp.',5,'VISIBLE',DATEADD(DAY,-14,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member4Id,N'Câu chuyện thiếu nhi nhưng thực ra dành cho người lớn. Mỗi lần đọc lại hiểu thêm một tầng nghĩa mới.',5,'VISIBLE',DATEADD(DAY,-14,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookTatDen AND user_id = @member5Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member5Id,N'Đọc trong một buổi tối không dứt ra được. Ngô Tất Tố viết quá hay.',5,'VISIBLE',DATEADD(DAY,-9,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member5Id,N'Đọc trong một buổi chiều không dứt ra được. Câu chuyện về tình bạn và ý nghĩa cuộc sống cảm động vô cùng.',5,'VISIBLE',DATEADD(DAY,-9,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookTatDen AND user_id = @member6Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member6Id,N'Bản in này chất lượng tốt, chú thích đầy đủ cho từ cổ.',4,'VISIBLE',DATEADD(DAY,-2,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookTatDen,@member6Id,N'Mua bản có tranh minh hoạ màu sắc đẹp lắm. Những câu thoại của Hoàng tử bé vẫn khiến mình suy nghĩ mãi.',4,'VISIBLE',DATEADD(DAY,-2,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookPython AND user_id = @member5Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookPython,@member5Id,N'Phần decorator và generator được giải thích rất rõ. Học xong thấy code Python của mình sạch hơn nhiều.',5,'VISIBLE',DATEADD(DAY,-4,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookPython,@member5Id,N'Hệ thống 1% mỗi ngày thực sự thay đổi cách tôi hình thành thói quen. Đã áp dụng được 3 tháng rồi.',5,'VISIBLE',DATEADD(DAY,-4,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookPython AND user_id = @member7Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookPython,@member7Id,N'Tốt nhưng cần pre-requisite là đã biết Python cơ bản. Không phù hợp cho người mới.',3,'VISIBLE',DATEADD(DAY,-1,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookPython,@member7Id,N'Lý thuyết hay nhưng cần kiên nhẫn áp dụng thực tế. Không áp dụng thì chỉ là đọc cho vui thôi.',3,'VISIBLE',DATEADD(DAY,-1,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookMicro AND user_id = @member6Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookMicro,@member6Id,N'Sách lý thú, giúp tôi hiểu tại sao cần microservices và khi nào nên áp dụng.',4,'VISIBLE',DATEADD(DAY,-6,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookMicro,@member6Id,N'Harari nhìn lịch sử loài người từ góc độ hoàn toàn mới. Rất đáng đọc dù bạn theo ngành nào.',4,'VISIBLE',DATEADD(DAY,-6,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSkills AND user_id = @member5Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSkills,@member5Id,N'Đọc trong 2 buổi chiều. Lời khuyên thực tế, không hoa mỹ. Rất hữu ích cho sinh viên năm cuối.',4,'VISIBLE',DATEADD(DAY,-30,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSkills,@member5Id,N'Những nguyên tắc của Carnegie dù viết năm 1936 nhưng vẫn rất giá trị hôm nay. Thay đổi cách tôi giao tiếp với khách hàng.',4,'VISIBLE',DATEADD(DAY,-30,GETDATE()));
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSkills AND user_id = @member7Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSkills,@member7Id,N'Nội dung quen thuộc nhưng được trình bày mới mẻ, có ví dụ từ thực tiễn Việt Nam.',4,'VISIBLE',DATEADD(DAY,-18,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSkills,@member7Id,N'Cuốn sách kinh điển về kỹ năng giao tiếp. Ai cũng nên đọc ít nhất một lần trong đời.',4,'VISIBLE',DATEADD(DAY,-18,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookKieu AND user_id = @member6Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookKieu,@member6Id,N'Bản dịch mới này sát nghĩa hơn các bản cũ. Rất nên đọc.',5,'VISIBLE',DATEADD(DAY,-7,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookKieu,@member6Id,N'Đọc lại lần thứ 5 vẫn cực kỳ hấp dẫn. Hệ thống ma thuật của Rowling xây dựng chính xác và nhất quán quá mức.',5,'VISIBLE',DATEADD(DAY,-7,GETDATE()));
 
 		IF @bookClean IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookClean AND user_id = @member5Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookClean,@member5Id,N'Mỗi chương là một bài học quý giá về cách viết code mà đồng nghiệp còn hiểu được sau 6 tháng.',5,'VISIBLE',DATEADD(DAY,-3,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookClean,@member5Id,N'GoF kinh điển cho mọi kỹ sư phần mềm. Hiểu Design Patterns giúp code maintainable hơn rất nhiều.',5,'VISIBLE',DATEADD(DAY,-3,GETDATE()));
 
 		IF @bookSoDo IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSoDo AND user_id = @member6Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSoDo,@member6Id,N'Đọc mà cười ra nước mắt. Vũ Trọng Phụng châm biếm sắc bén quá!',5,'VISIBLE',DATEADD(DAY,-28,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSoDo,@member6Id,N'García Márquez xây dựng gia tộc Buendía qua 100 năm, đọc mà hoa mắt vì tên nhân vật trùng nhau nhưng rất cuốn!',5,'VISIBLE',DATEADD(DAY,-28,GETDATE()));
 		IF @bookSoDo IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookSoDo AND user_id = @member7Id)
-			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSoDo,@member7Id,N'Tái bản đẹp, có tranh minh họa. Cần thêm phần chú giải từ ngữ thời cũ.',4,'VISIBLE',DATEADD(DAY,-12,GETDATE()));
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at) VALUES (@bookSoDo,@member7Id,N'Tuyến sự kiện phức tạp nhưng cuốn không thể dừng. Magical realism ở tầm cao nhất của văn học.',4,'VISIBLE',DATEADD(DAY,-12,GETDATE()));
 	END;
 
 	-- =============================================
@@ -675,27 +652,27 @@ BEGIN TRY
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member3Id AND type = 'RESERVATION_AVAILABLE' AND title = N'Sách đã sẵn sàng để nhận!')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member3Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "Docker & Kubernetes thực chiến" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày. Nếu không đến đúng hạn, đặt trước sẽ bị hủy tự động.',0,DATEADD(DAY,-1,GETDATE()));
+			VALUES (@member3Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "The Lean Startup" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày. Nếu không đến đúng hạn, đặt trước sẽ bị hủy tự động.',0,DATEADD(DAY,-1,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member3Id AND type = 'RESERVATION_EXPIRING')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member3Id,'RESERVATION_EXPIRING',N'Sắp hết hạn nhận sách!',N'Bạn chỉ còn 1 ngày để nhận cuốn sách "Docker & Kubernetes thực chiến". Hạn cuối: 23:59 - ngày mai.',0,DATEADD(HOUR,-6,GETDATE()));
+			VALUES (@member3Id,'RESERVATION_EXPIRING',N'Sắp hết hạn nhận sách!',N'Bạn chỉ còn 1 ngày để nhận cuốn sách "The Lean Startup". Hạn cuối: 23:59 - ngày mai.',0,DATEADD(HOUR,-6,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member4Id AND type = 'RESERVATION_EXPIRED')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member4Id,'RESERVATION_EXPIRED',N'Đặt trước đã bị hủy do hết hạn',N'Đặt trước cho cuốn sách "Lập trình Web với React.js" đã bị hủy tự động vì bạn không đến nhận trong 3 ngày. Bạn có thể đặt trước lại nếu muốn.',1,DATEADD(DAY,-5,GETDATE()));
+			VALUES (@member4Id,'RESERVATION_EXPIRED',N'Đặt trước đã bị hủy do hết hạn',N'Đặt trước cho cuốn sách "The 7 Habits of Highly Effective People" đã bị hủy tự động vì bạn không đến nhận trong 3 ngày. Bạn có thể đặt trước lại nếu muốn.',1,DATEADD(DAY,-5,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member8Id AND type = 'RESERVATION_CANCELLED')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member8Id,'RESERVATION_CANCELLED',N'Đặt trước đã được hủy',N'Đặt trước cho cuốn sách "Lập trình Python nâng cao" đã được hủy thành công.',1,DATEADD(DAY,-15,GETDATE()));
+			VALUES (@member8Id,'RESERVATION_CANCELLED',N'Đặt trước đã được hủy',N'Đặt trước cho cuốn sách "Atomic Habits" đã được hủy thành công.',1,DATEADD(DAY,-15,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member5Id AND type = 'RESERVATION_AVAILABLE')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member5Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "Clean Code – Viết code sạch" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày.',0,DATEADD(HOUR,-2,GETDATE()));
+			VALUES (@member5Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "Design Patterns" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày.',0,DATEADD(HOUR,-2,GETDATE()));
 
 		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member2Id AND type = 'RESERVATION_AVAILABLE')
 			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
-			VALUES (@member2Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "Thiết kế hệ thống microservices" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày.',0,GETDATE());
+			VALUES (@member2Id,'RESERVATION_AVAILABLE',N'Sách đã sẵn sàng để nhận!',N'Cuốn sách "Sapiens: A Brief History of Humankind" bạn đặt trước đã có sẵn. Vui lòng đến thư viện nhận sách trong vòng 3 ngày.',0,GETDATE());
 	END;
 
 	-- =============================================

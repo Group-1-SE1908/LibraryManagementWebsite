@@ -359,13 +359,22 @@ INSERT INTO [User] (email, password, full_name, status, role_id, avatar) VALUES
     ('lib@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Thủ Thư', 'ACTIVE', 2, 'uploads/lib.png'),
     ('member@library.com', '$2a$10$EEMWWLX4kbl3U/UPiBn0R.WFU3u04UZjS47nwWkwRYh0AjDYjzpDa', N'Nguyễn Văn A', 'ACTIVE', 3, 'uploads/user.png');
 
-INSERT INTO Category (category_name) VALUES (N'Công nghệ thông tin'), (N'Văn học Việt Nam'), (N'Kỹ năng sống'), (N'Giáo trình THPT');
+INSERT INTO Category (category_name) VALUES
+    (N'Lập trình & Công nghệ'),
+    (N'Văn học thế giới'),
+    (N'Phát triển bản thân'),
+    (N'Khoa học & Tự nhiên'),
+    (N'Lịch sử & Văn minh'),
+    (N'Kinh tế & Kinh doanh'),
+    (N'Khoa học viễn tưởng'),
+    (N'Thiếu nhi');
 
--- Chèn sách sẽ tự động kích hoạt Trigger tạo BookCopy
+-- Chèn sách ban đầu – trigger tự động tạo BookCopy
+-- category_id: 1=Lập trình & Công nghệ  2=Văn học thế giới
 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) VALUES
-                                                                                (N'Lập trình Java cơ bản', N'Nguyễn Văn Minh', 1, 150000, 10, 'ISBN-001', 'assets/images/books/java.jpg'),
-                                                                                (N'Học SQL trong 30 ngày', N'Trần Hoàng', 1, 120000, 5, 'ISBN-002', 'assets/images/books/sql.jpg'),
-                                                                                (N'Tắt đèn', N'Ngô Tất Tố', 2, 60000, 8, 'ISBN-003', 'assets/images/books/tatden.jpg');
+    ('Clean Code', 'Robert C. Martin', 1, 350000, 8, '9780132350884', 'https://covers.openlibrary.org/b/id/15126503-M.jpg'),
+    ('Nineteen Eighty-Four', 'George Orwell', 2, 120000, 12, '9780451524935', 'https://covers.openlibrary.org/b/id/12054527-M.jpg'),
+    ('The Little Prince', 'Antoine de Saint-Exupéry', 2, 95000, 15, '9780156012195', 'https://covers.openlibrary.org/b/id/7268667-M.jpg');
 
 GO
 PRINT '--- DATABASE LIBRARYDB HAS BEEN FULLY ASSEMBLED ---';

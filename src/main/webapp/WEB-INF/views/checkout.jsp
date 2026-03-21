@@ -502,8 +502,17 @@
                                         <div class="co-book__cover">
                                             <c:choose>
                                                 <c:when test="${not empty borrowRecord.book.image}">
-                                                    <img src="${pageContext.request.contextPath}/${borrowRecord.book.image}"
-                                                        alt="${borrowRecord.book.title}" />
+                                                    <c:choose>
+                                                        <c:when
+                                                            test="${fn:startsWith(borrowRecord.book.image, 'http')}">
+                                                            <img src="${borrowRecord.book.image}"
+                                                                alt="${borrowRecord.book.title}" />
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${pageContext.request.contextPath}/${borrowRecord.book.image}"
+                                                                alt="${borrowRecord.book.title}" />
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:when>
                                                 <c:otherwise>📚</c:otherwise>
                                             </c:choose>

@@ -294,8 +294,15 @@
                                                 <div class="book-image">
                                                     <c:choose>
                                                         <c:when test="${not empty book.image}">
-                                                            <img src="${pageContext.request.contextPath}/${book.image}"
-                                                                alt="${book.title}">
+                                                            <c:choose>
+                                                                <c:when test="${fn:startsWith(book.image, 'http')}">
+                                                                    <img src="${book.image}" alt="${book.title}">
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <img src="${pageContext.request.contextPath}/${book.image}"
+                                                                        alt="${book.title}">
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="book-image__fallback">📖</div>

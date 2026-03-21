@@ -88,8 +88,16 @@
                                         <div class="cart-item-cover">
                                             <c:choose>
                                                 <c:when test="${not empty item.book.image}">
-                                                    <img src="${pageContext.request.contextPath}/${item.book.image}"
-                                                        alt="${item.book.title}" loading="lazy" />
+                                                    <c:choose>
+                                                        <c:when test="${fn:startsWith(item.book.image, 'http')}">
+                                                            <img src="${item.book.image}" alt="${item.book.title}"
+                                                                loading="lazy" />
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${pageContext.request.contextPath}/${item.book.image}"
+                                                                alt="${item.book.title}" loading="lazy" />
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:when>
                                                 <c:otherwise>
                                                     <span class="cover-placeholder">${fn:substring(item.book.title, 0,

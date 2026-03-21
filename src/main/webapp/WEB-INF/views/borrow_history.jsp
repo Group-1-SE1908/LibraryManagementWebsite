@@ -395,8 +395,15 @@
                                             <div class="mp-card__poster">
                                                 <c:choose>
                                                     <c:when test="${not empty r.book.image}">
-                                                        <img src="${pageContext.request.contextPath}/${r.book.image}"
-                                                            alt="${r.book.title}" />
+                                                        <c:choose>
+                                                            <c:when test="${fn:startsWith(r.book.image, 'http')}">
+                                                                <img src="${r.book.image}" alt="${r.book.title}" />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <img src="${pageContext.request.contextPath}/${r.book.image}"
+                                                                    alt="${r.book.title}" />
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </c:when>
                                                     <c:otherwise>
                                                         <div class="mp-card__poster-ph">📖</div>
