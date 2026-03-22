@@ -68,6 +68,29 @@ public class CategoryDAO {
         }
     }
 
+    public boolean existsByName(String name) throws SQLException {
+        String sql = "SELECT TOP 1 1 FROM Category WHERE category_name = ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean existsByNameExcludingId(String name, long excludeId) throws SQLException {
+        String sql = "SELECT TOP 1 1 FROM Category WHERE category_name = ? AND category_id <> ?";
+        try (Connection c = DBConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setLong(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public int countBooksByCategory(long categoryId) throws SQLException {
         String sql = "SELECT COUNT(*) as count FROM Book WHERE category_id = ?";
         try (Connection c = DBConnection.getConnection();

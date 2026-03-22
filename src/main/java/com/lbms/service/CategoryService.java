@@ -25,6 +25,14 @@ public class CategoryService {
         if (category.getName() == null || category.getName().isBlank()) {
             throw new IllegalArgumentException("Tên danh mục không được để trống");
         }
+        String trimmed = category.getName().trim();
+        if (trimmed.length() > 100) {
+            throw new IllegalArgumentException("Tên danh mục không được vượt quá 100 ký tự");
+        }
+        if (categoryDAO.existsByName(trimmed)) {
+            throw new IllegalArgumentException("Danh mục \"" + trimmed + "\" đã tồn tại");
+        }
+        category.setName(trimmed);
         return categoryDAO.create(category);
     }
 
@@ -35,12 +43,27 @@ public class CategoryService {
         if (category.getName() == null || category.getName().isBlank()) {
             throw new IllegalArgumentException("Tên danh mục không được để trống");
         }
+        String trimmed = category.getName().trim();
+        if (trimmed.length() > 100) {
+            throw new IllegalArgumentException("Tên danh mục không được vượt quá 100 ký tự");
+        }
+        Category existing = categoryDAO.findById(category.getId());
+        if (existing == null) {
+            throw new IllegalArgumentException("Danh mục không tồn tại");
+        }
+        if (categoryDAO.existsByNameExcludingId(trimmed, category.getId())) {
+            throw new IllegalArgumentException("Danh mục \"" + trimmed + "\" đã tồn tại");
+        }
+        category.setName(trimmed);
         categoryDAO.update(category);
     }
 
     public void deleteCategory(long id) throws SQLException {
         if (id <= 0) {
             throw new IllegalArgumentException("ID danh mục không hợp lệ");
+        }
+        if (categoryDAO.findById(id) == null) {
+            throw new IllegalArgumentException("Danh mục không tồn tại");
         }
         int bookCount = categoryDAO.countBooksByCategory(id);
         if (bookCount > 0) {
