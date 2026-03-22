@@ -1,5 +1,7 @@
 package com.lbms.controller;
 
+import com.lbms.dao.PaymentHistoryDAO;
+import com.lbms.model.PaymentHistory;
 import com.lbms.model.User;
 import com.lbms.service.ProfileService;
 
@@ -12,22 +14,20 @@ import java.io.File;
 import java.io.IOException;
 
 @WebServlet(urlPatterns = {
-    "/profile",
-    "/change-password",
-    "/upload-avatar"
+        "/profile",
+        "/change-password",
+        "/upload-avatar"
 })
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,
-        maxFileSize = 1024 * 1024 * 5,
-        maxRequestSize = 1024 * 1024 * 10
-)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 10)
 public class ProfileController extends HttpServlet {
 
     private ProfileService profileService;
+    private PaymentHistoryDAO paymentHistoryDAO;
 
     @Override
     public void init() {
         profileService = new ProfileService();
+        paymentHistoryDAO = new PaymentHistoryDAO();
     }
 
     // =========================
@@ -39,8 +39,7 @@ public class ProfileController extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            User currentUser
-                    = (User) req.getSession().getAttribute("currentUser");
+            User currentUser = (User) req.getSession().getAttribute("currentUser");
 
             if (currentUser == null) {
                 resp.sendRedirect(req.getContextPath() + "/login");
@@ -48,17 +47,22 @@ public class ProfileController extends HttpServlet {
             }
 
             // 🔥 LUÔN refresh từ DB
-            User freshUser
-                    = profileService.refreshUser(currentUser.getId());
+            User freshUser = profileService.refreshUser(currentUser.getId());
 
             req.getSession().setAttribute("currentUser", freshUser);
             req.setAttribute("user", freshUser);
 
+            // Load payment history
+            try {
+                java.util.List<PaymentHistory> paymentHistory = paymentHistoryDAO.findByUserId(freshUser.getId());
+                req.setAttribute("paymentHistory", paymentHistory);
+            } catch (Exception ignored) {
+                req.setAttribute("paymentHistory", new java.util.ArrayList<>());
+            }
+
             // Flash message
-            Object flash
-                    = req.getSession().getAttribute("flash");
-            Object flashType
-                    = req.getSession().getAttribute("flashType");
+            Object flash = req.getSession().getAttribute("flash");
+            Object flashType = req.getSession().getAttribute("flashType");
 
             if (flash != null) {
                 req.setAttribute("flash", flash);
@@ -128,8 +132,7 @@ public class ProfileController extends HttpServlet {
             HttpServletResponse resp)
             throws Exception {
 
-        User currentUser
-                = (User) req.getSession().getAttribute("currentUser");
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
 
         if (currentUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -144,12 +147,10 @@ public class ProfileController extends HttpServlet {
                 currentUser.getId(),
                 fullName,
                 phone,
-                address
-        );
+                address);
 
-        //  refresh session
-        User updatedUser
-                = profileService.refreshUser(currentUser.getId());
+        // refresh session
+        User updatedUser = profileService.refreshUser(currentUser.getId());
         req.getSession().setAttribute("currentUser", updatedUser);
 
         req.getSession().setAttribute("flash",
@@ -167,8 +168,7 @@ public class ProfileController extends HttpServlet {
             HttpServletResponse resp)
             throws Exception {
 
-        User currentUser
-                = (User) req.getSession().getAttribute("currentUser");
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
 
         if (currentUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -187,8 +187,7 @@ public class ProfileController extends HttpServlet {
         profileService.changePassword(
                 currentUser.getId(),
                 oldPassword,
-                newPassword
-        );
+                newPassword);
 
         req.getSession().setAttribute("flash",
                 "Đổi mật khẩu thành công.");
@@ -205,8 +204,7 @@ public class ProfileController extends HttpServlet {
             HttpServletResponse resp)
             throws Exception {
 
-        User currentUser
-                = (User) req.getSession().getAttribute("currentUser");
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
 
         if (currentUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -222,8 +220,7 @@ public class ProfileController extends HttpServlet {
         String originalName = filePart.getSubmittedFileName();
         String fileName = System.currentTimeMillis() + "_" + originalName;
 
-        String uploadPath
-                = getServletContext().getRealPath("/uploads");
+        String uploadPath = getServletContext().getRealPath("/uploads");
 
         File uploadDir = new File(uploadPath);
         if (!uploadDir.exists()) {
@@ -239,7 +236,7 @@ public class ProfileController extends HttpServlet {
         currentUser.setAvatar(avatarPath);
         req.getSession().setAttribute("currentUser", currentUser);
 
-        req.getSession().setAttribute("flash","Cập nhật avatar thành công.");
+        req.getSession().setAttribute("flash", "Cập nhật avatar thành công.");
         req.getSession().setAttribute("flashType",
                 "success");
 

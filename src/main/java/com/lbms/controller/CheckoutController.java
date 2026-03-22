@@ -1,8 +1,11 @@
 package com.lbms.controller;
 
+import com.lbms.dao.PaymentHistoryDAO;
 import com.lbms.model.BorrowRecord;
+import com.lbms.model.PaymentHistory;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
+import com.lbms.service.WalletService;
 import com.lbms.config.VNPayConfig;
 
 import jakarta.servlet.ServletException;
@@ -26,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-@WebServlet(urlPatterns = { "/checkout", "/checkout/process" })
+@WebServlet(urlPatterns = { "/checkout", "/checkout/process", "/checkout/pay-wallet" })
 public class CheckoutController extends HttpServlet {
     private BorrowService borrowService;
     private com.lbms.dao.BorrowDAO borrowDAO;
+    private WalletService walletService;
+    private PaymentHistoryDAO paymentHistoryDAO;
     private static final String MODE_RETURN = "return";
     private static final String MODE_FINE = "fine";
 
@@ -37,6 +42,8 @@ public class CheckoutController extends HttpServlet {
     public void init() {
         this.borrowService = new BorrowService();
         this.borrowDAO = new com.lbms.dao.BorrowDAO();
+        this.walletService = new WalletService();
+        this.paymentHistoryDAO = new PaymentHistoryDAO();
     }
 
     @Override
@@ -103,8 +110,13 @@ public class CheckoutController extends HttpServlet {
             return;
         }
 
-        if (!"/checkout/process".equals(req.getServletPath())) {
+        if (!"/checkout/process".equals(req.getServletPath()) && !"/checkout/pay-wallet".equals(req.getServletPath())) {
             resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            return;
+        }
+
+        if ("/checkout/pay-wallet".equals(req.getServletPath())) {
+            handleWalletPayment(req, resp, currentUser);
             return;
         }
 
@@ -125,7 +137,8 @@ public class CheckoutController extends HttpServlet {
                 return;
             }
 
-            if (!fineMode && (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus()))) {
+            if (!fineMode
+                    && (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus()))) {
                 resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
@@ -236,6 +249,134 @@ public class CheckoutController extends HttpServlet {
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private void handleWalletPayment(HttpServletRequest req, HttpServletResponse resp, User currentUser)
+            throws IOException, ServletException {
+        String borrowIdStr = req.getParameter("borrowId");
+        String mode = resolveMode(req.getParameter("mode"));
+        boolean fineMode = MODE_FINE.equals(mode);
+
+        if (borrowIdStr == null || borrowIdStr.isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/history");
+            return;
+        }
+
+        long borrowId;
+        try {
+            borrowId = Long.parseLong(borrowIdStr);
+        } catch (NumberFormatException e) {
+            req.getSession().setAttribute("flash", "ID phiếu mượn không hợp lệ.");
+            req.getSession().setAttribute("flashType", "error");
+            resp.sendRedirect(req.getContextPath() + (fineMode ? "/fines" : "/history"));
+            return;
+        }
+
+        try {
+            BorrowRecord br = borrowDAO.findById(borrowId);
+            if (br == null || br.getUser().getId() != currentUser.getId()) {
+                resp.sendRedirect(req.getContextPath() + "/history");
+                return;
+            }
+
+            BigDecimal fine;
+            if (fineMode) {
+                fine = br.getFineAmount() != null ? br.getFineAmount() : BigDecimal.ZERO;
+                if (fine.compareTo(BigDecimal.ZERO) <= 0 || br.isPaid()) {
+                    req.getSession().setAttribute("flash", "Bạn không có khoản phí nào cần thanh toán.");
+                    req.getSession().setAttribute("flashType", "error");
+                    resp.sendRedirect(req.getContextPath() + "/fines");
+                    return;
+                }
+            } else {
+                fine = borrowService.calculateFine(br.getDueDate(), java.time.LocalDate.now());
+            }
+
+            if (fine.compareTo(BigDecimal.ZERO) <= 0) {
+                // no fee — just return the book
+                borrowService.returnBook(borrowId);
+                recordPayment(currentUser.getId(), PaymentHistory.METHOD_WALLET,
+                        fineMode ? PaymentHistory.TYPE_FINE : PaymentHistory.TYPE_BOOK_RETURN,
+                        BigDecimal.ZERO, fineMode ? "Thanh toán phí phạt (miễn phí)" : "Trả sách (miễn phí)",
+                        null, borrowId);
+                req.getSession().setAttribute("flash", "Trả sách thành công!");
+                req.getSession().setAttribute("flashType", "success");
+                resp.sendRedirect(req.getContextPath() + "/history");
+                return;
+            }
+
+            // check wallet balance
+            User freshUser = walletService.refreshUser(currentUser.getId());
+            BigDecimal balance = freshUser.getWalletBalance() != null ? freshUser.getWalletBalance() : BigDecimal.ZERO;
+            if (balance.compareTo(fine) < 0) {
+                req.getSession().setAttribute("flash",
+                        "Số dư ví không đủ (" + formatVnd(balance) + "). Cần " + formatVnd(fine)
+                                + ". Vui lòng nạp thêm hoặc chọn thanh toán VNPay.");
+                req.getSession().setAttribute("flashType", "error");
+                String backUrl = req.getContextPath() + "/checkout?borrowId=" + borrowId;
+                if (fineMode)
+                    backUrl += "&mode=fine";
+                resp.sendRedirect(backUrl);
+                return;
+            }
+
+            String ref = "WALLET-PAY-" + borrowId + "-" + System.currentTimeMillis();
+            walletService.debitWallet(currentUser.getId(), fine,
+                    (fineMode ? "Thanh toán phí phạt phiếu #" : "Thanh toán trả sách phiếu #") + borrowId, ref);
+
+            if (fineMode) {
+                borrowService.markFinePaid(borrowId);
+                recordPayment(currentUser.getId(), PaymentHistory.METHOD_WALLET, PaymentHistory.TYPE_FINE,
+                        fine, "Thanh toán phí phạt phiếu #" + borrowId, ref, borrowId);
+                req.getSession().setAttribute("flash", "Thanh toán phí phạt thành công bằng ví!");
+            } else {
+                borrowService.returnBook(borrowId);
+                borrowService.markFinePaid(borrowId);
+                recordPayment(currentUser.getId(), PaymentHistory.METHOD_WALLET, PaymentHistory.TYPE_BOOK_RETURN,
+                        fine, "Trả sách & thanh toán phí phạt phiếu #" + borrowId, ref, borrowId);
+                req.getSession().setAttribute("flash", "Trả sách & thanh toán thành công bằng ví!");
+            }
+
+            // refresh session balance
+            User updated = walletService.refreshUser(currentUser.getId());
+            req.getSession().setAttribute("currentUser", updated);
+            req.getSession().setAttribute("flashType", "success");
+            resp.sendRedirect(req.getContextPath() + (fineMode ? "/fines" : "/history"));
+
+        } catch (IllegalStateException ex) {
+            req.getSession().setAttribute("flash", ex.getMessage());
+            req.getSession().setAttribute("flashType", "error");
+            String backUrl = req.getContextPath() + "/checkout?borrowId=" + borrowIdStr;
+            if (fineMode)
+                backUrl += "&mode=fine";
+            resp.sendRedirect(backUrl);
+        } catch (Exception ex) {
+            throw new ServletException(ex);
+        }
+    }
+
+    private void recordPayment(long userId, String method, String type, BigDecimal amount,
+            String description, String reference, long borrowId) {
+        try {
+            PaymentHistory ph = new PaymentHistory();
+            ph.setUserId(userId);
+            ph.setPaymentMethod(method);
+            ph.setPaymentType(type);
+            ph.setAmount(amount);
+            ph.setDescription(description);
+            ph.setReference(reference);
+            ph.setStatus(PaymentHistory.STATUS_SUCCESS);
+            ph.setBorrowId(borrowId);
+            paymentHistoryDAO.save(ph);
+        } catch (Exception e) {
+            System.err.println("[CheckoutController] recordPayment error: " + e.getMessage());
+        }
+    }
+
+    private String formatVnd(BigDecimal amount) {
+        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        fmt.setMaximumFractionDigits(0);
+        return fmt.format(amount) + " ₫";
     }
 
     private User getCurrentUser(HttpServletRequest req) {

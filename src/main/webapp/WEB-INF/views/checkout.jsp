@@ -391,6 +391,54 @@
                             gap: 8px;
                         }
 
+                        /* ── Wallet payment button ── */
+                        .co-btn-wallet {
+                            display: flex;
+                            width: 100%;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            padding: 13px 20px;
+                            border-radius: var(--mp-radius-sm);
+                            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                            color: #fff;
+                            border: none;
+                            font-size: 0.95rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            letter-spacing: 0.02em;
+                            box-shadow: 0 6px 18px rgba(22, 163, 74, .3);
+                            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+                            text-decoration: none;
+                            margin-top: 10px;
+                        }
+
+                        .co-btn-wallet:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 12px 28px rgba(22, 163, 74, .38);
+                            filter: brightness(1.05);
+                            color: #fff;
+                        }
+
+                        .co-payment-divider {
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin: 14px 0 4px;
+                            color: var(--mp-text-muted);
+                            font-size: 0.75rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.1em;
+                        }
+
+                        .co-payment-divider::before,
+                        .co-payment-divider::after {
+                            content: '';
+                            flex: 1;
+                            height: 1px;
+                            background: var(--mp-border);
+                        }
+
                         /* ── Fine-mode note ── */
                         .co-finemode-note {
                             padding: 10px 14px;
@@ -610,19 +658,34 @@
                                         <input type="hidden" name="borrowId" value="${borrowRecord.id}" />
                                         <input type="hidden" name="mode" value="${mode}" />
                                         <button type="submit" class="co-btn-confirm">
-                                            <c:choose>
-                                                <c:when test="${fineMode}">💳 Thanh toán phí phạt</c:when>
-                                                <c:otherwise>✔ Xác nhận trả sách</c:otherwise>
-                                            </c:choose>
+                                            💳 Thanh toán qua VNPay
                                         </button>
                                     </form>
+
+                                    <c:if test="${fineAmount != null && fineAmount > 0}">
+                                        <div class="co-payment-divider">hoặc</div>
+                                        <form action="${pageContext.request.contextPath}/checkout/pay-wallet"
+                                            method="post">
+                                            <input type="hidden" name="borrowId" value="${borrowRecord.id}" />
+                                            <input type="hidden" name="mode" value="${mode}" />
+                                            <button type="submit" class="co-btn-wallet">
+                                                💰 Thanh toán bằng Ví
+                                                <c:if test="${sessionScope.currentUser != null}">
+                                                    (
+                                                    <fmt:formatNumber
+                                                        value="${sessionScope.currentUser.walletBalance != null ? sessionScope.currentUser.walletBalance : 0}"
+                                                        pattern="#,##0" /> ₫)
+                                                </c:if>
+                                            </button>
+                                        </form>
+                                    </c:if>
 
                                     <a href="${pageContext.request.contextPath}/history" class="co-cancel">
                                         ← Hủy bỏ &amp; Quay lại
                                     </a>
 
                                     <div class="co-wallet-hint">
-                                        💡 Số dư ví sẽ được dùng để thanh toán tự động nếu đủ.
+                                        💡 Chọn thanh toán qua VNPay hoặc dùng số dư ví LBMS.
                                     </div>
                                 </div>
                             </div>

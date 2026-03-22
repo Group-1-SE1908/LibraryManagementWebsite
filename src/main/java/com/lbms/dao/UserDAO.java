@@ -322,6 +322,26 @@ public class UserDAO {
         }
     }
 
+    /**
+     * Trừ tiền ví. Ném IllegalStateException nếu số dư không đủ.
+     */
+    public void subtractFromWallet(long userId, BigDecimal amount) throws SQLException {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero.");
+        }
+        String sql = "UPDATE [User] SET wallet_balance = wallet_balance - ? "
+                + "WHERE user_id = ? AND ISNULL(wallet_balance, 0) >= ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setBigDecimal(1, amount);
+            ps.setLong(2, userId);
+            ps.setBigDecimal(3, amount);
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new IllegalStateException("Số dư ví không đủ để thực hiện giao dịch.");
+            }
+        }
+    }
+
     public void banUser(long userId, int days) throws SQLException {
         String sql = "UPDATE [User] SET banned_until = DATEADD(day, ?, GETDATE()) WHERE user_id = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
