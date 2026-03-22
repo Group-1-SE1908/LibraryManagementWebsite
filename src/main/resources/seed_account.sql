@@ -187,6 +187,55 @@ BEGIN TRY
 		role_id = @memberRoleId
 	WHERE email = 'member8@gmail.com';
 
+	-- ── Thủ thư thứ 2 ────────────────────────────────────────────────
+	IF NOT EXISTS (SELECT 1 FROM [User] WHERE email = 'librarian2@gmail.com')
+	BEGIN
+		INSERT INTO [User] (email, password, full_name, phone, address, status, role_id, avatar)
+		VALUES ('librarian2@gmail.com', @defaultPasswordHash, N'Nguyễn Thị Minh', '0901000011', N'22 Lê Duẩn, Quận 1, TP. Hồ Chí Minh', 'ACTIVE', @librarianRoleId, 'uploads/user.png');
+	END;
+	UPDATE [User]
+	SET password = @defaultPasswordHash, full_name = N'Nguyễn Thị Minh', phone = '0901000011',
+		address = N'22 Lê Duẩn, Quận 1, TP. Hồ Chí Minh', status = 'ACTIVE', role_id = @librarianRoleId
+	WHERE email = 'librarian2@gmail.com';
+
+	-- ── Thành viên trạng thái PENDING (chờ xác thực email) ──────────────
+	IF NOT EXISTS (SELECT 1 FROM [User] WHERE email = 'member9@gmail.com')
+	BEGIN
+		INSERT INTO [User] (email, password, full_name, phone, address, status, role_id, avatar)
+		VALUES ('member9@gmail.com', @defaultPasswordHash, N'Lý Thanh Sơn', '0901000012', N'30 Hai Bà Trưng, Quận 1, TP. Hồ Chí Minh', 'PENDING', @memberRoleId, 'uploads/user.png');
+	END;
+	UPDATE [User]
+	SET password = @defaultPasswordHash, full_name = N'Lý Thanh Sơn', phone = '0901000012',
+		address = N'30 Hai Bà Trưng, Quận 1, TP. Hồ Chí Minh', status = 'PENDING', role_id = @memberRoleId
+	WHERE email = 'member9@gmail.com';
+
+	-- ── Thành viên bị cấm bình luận (comment_banned_until) ─────────────
+	IF NOT EXISTS (SELECT 1 FROM [User] WHERE email = 'member10@gmail.com')
+	BEGIN
+		INSERT INTO [User] (email, password, full_name, phone, address, status, role_id, avatar, comment_banned_until)
+		VALUES ('member10@gmail.com', @defaultPasswordHash, N'Hoàng Văn Đức', '0901000013', N'45 Đinh Tiên Hoàng, Bình Thạnh, TP. Hồ Chí Minh', 'ACTIVE', @memberRoleId, 'uploads/user.png', DATEADD(DAY,7,GETDATE()));
+	END;
+	UPDATE [User]
+	SET password = @defaultPasswordHash, full_name = N'Hoàng Văn Đức', phone = '0901000013',
+		address = N'45 Đinh Tiên Hoàng, Bình Thạnh, TP. Hồ Chí Minh', status = 'ACTIVE',
+		role_id = @memberRoleId, comment_banned_until = DATEADD(DAY,7,GETDATE())
+	WHERE email = 'member10@gmail.com';
+
+	-- ── Thành viên bị khóa tạm thời (banned_until) ─────────────────────
+	IF NOT EXISTS (SELECT 1 FROM [User] WHERE email = 'member11@gmail.com')
+	BEGIN
+		INSERT INTO [User] (email, password, full_name, phone, address, status, role_id, avatar, banned_until, comment_banned_until)
+		VALUES ('member11@gmail.com', @defaultPasswordHash, N'Vũ Thị Thu', '0901000014', N'8 Nguyễn Thị Minh Khai, Đa Kao, Quận 1, TP. Hồ Chí Minh', 'LOCKED', @memberRoleId, 'uploads/user.png', DATEADD(DAY,14,GETDATE()), DATEADD(DAY,14,GETDATE()));
+	END;
+	UPDATE [User]
+	SET password = @defaultPasswordHash, full_name = N'Vũ Thị Thu', phone = '0901000014',
+		address = N'8 Nguyễn Thị Minh Khai, Đa Kao, Quận 1, TP. Hồ Chí Minh', status = 'LOCKED',
+		role_id = @memberRoleId, banned_until = DATEADD(DAY,14,GETDATE()), comment_banned_until = DATEADD(DAY,14,GETDATE())
+	WHERE email = 'member11@gmail.com';
+
+	-- Cập nhật member8: thêm banned_until để test tính năng ban có thời hạn
+	UPDATE [User] SET banned_until = DATEADD(DAY,30,GETDATE()) WHERE email = 'member8@gmail.com';
+
 	DECLARE @userId INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'user@gmail.com');
 	DECLARE @member2Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member2@gmail.com');
 	DECLARE @member3Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member3@gmail.com');
@@ -195,6 +244,11 @@ BEGIN TRY
 	DECLARE @member6Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member6@gmail.com');
 	DECLARE @member7Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member7@gmail.com');
 	DECLARE @member8Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member8@gmail.com');
+	DECLARE @adminUserId INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'admin@gmail.com');
+	DECLARE @lib2Id INT     = (SELECT TOP 1 user_id FROM [User] WHERE email = 'librarian2@gmail.com');
+	DECLARE @member9Id INT  = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member9@gmail.com');
+	DECLARE @member10Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member10@gmail.com');
+	DECLARE @member11Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member11@gmail.com');
 
 	-- Seed thÃªm sáº¡ch má»›i Ä‘á»ƒ hiá»ƒn thá»‹ kho sáº£n pháº©m demo.
 	-- Seed sách mới từ Open Library (dữ liệu thực).
@@ -383,7 +437,8 @@ BEGIN TRY
 	BEGIN
 		DELETE FROM Comment WHERE user_id IN (
 			@userId, @member2Id, @member3Id, @member4Id,
-			@member5Id, @member6Id, @member7Id, @member8Id
+			@member5Id, @member6Id, @member7Id, @member8Id,
+			@member9Id, @member10Id, @member11Id
 		);
 	END;
 
@@ -391,7 +446,8 @@ BEGIN TRY
 	BEGIN
 		DELETE FROM reservations WHERE user_id IN (
 			@userId, @member2Id, @member3Id, @member4Id,
-			@member5Id, @member6Id, @member7Id, @member8Id
+			@member5Id, @member6Id, @member7Id, @member8Id,
+			@member9Id, @member10Id, @member11Id
 		);
 	END;
 
@@ -404,7 +460,33 @@ BEGIN TRY
 	BEGIN
 		DELETE FROM notifications WHERE user_id IN (
 			@userId, @member2Id, @member3Id, @member4Id,
-			@member5Id, @member6Id, @member7Id, @member8Id
+			@member5Id, @member6Id, @member7Id, @member8Id,
+			@member9Id, @member10Id, @member11Id
+		);
+	END;
+
+	IF OBJECT_ID('CartItem', 'U') IS NOT NULL
+	BEGIN
+		DELETE ci FROM CartItem ci
+		INNER JOIN Cart c ON c.cart_id = ci.cart_id
+		WHERE c.user_id IN (
+			@userId, @member2Id, @member3Id, @member4Id,
+			@member5Id, @member6Id, @member7Id, @member8Id,
+			@member9Id, @member10Id, @member11Id
+		);
+	END;
+
+	IF OBJECT_ID('LibrarianActivityLog', 'U') IS NOT NULL
+	BEGIN
+		DELETE FROM LibrarianActivityLog WHERE user_id IN (
+			SELECT user_id FROM [User] WHERE email IN ('librarian@gmail.com', 'librarian2@gmail.com')
+		);
+	END;
+
+	IF OBJECT_ID('email_verification_token', 'U') IS NOT NULL
+	BEGIN
+		DELETE FROM email_verification_token WHERE user_id IN (
+			@member9Id, @member10Id, @member11Id
 		);
 	END;
 
@@ -689,11 +771,292 @@ BEGIN TRY
 			INSERT INTO password_reset_token (user_id,token,expired_at,used,created_at) VALUES (@member6Id,'DEMO-RESET-MEMBER6',DATEADD(MINUTE,30,GETDATE()),0,GETDATE());
 	END;
 
+	-- ============================================================
+	-- PHẦN BỔ SUNG: Dữ liệu mở rộng để test đầy đủ mọi trạng thái
+	-- ============================================================
+
+	-- ── Sách hết hàng (quantity = 0) ─────────────────────────────────
+	IF NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780136083252')
+	BEGIN
+		DECLARE @catTechExt INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Lập trình & Công nghệ');
+		INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
+		VALUES (N'Head First Design Patterns', N'Eric Freeman, Elisabeth Robson', @catTechExt, 320000, 0, '9780136083252', 'https://covers.openlibrary.org/b/isbn/9780596007126-M.jpg');
+	END;
+	DECLARE @bookOutOfStock INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780136083252');
+
+	-- ── Cập nhật BookCopy: LOST và DAMAGED ───────────────────────────
+	IF OBJECT_ID('BookCopy', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @lostCopyId INT = (SELECT TOP 1 copy_id FROM BookCopy WHERE book_id = @bookJava AND status = 'AVAILABLE' ORDER BY copy_id DESC);
+		IF @lostCopyId IS NOT NULL
+			UPDATE BookCopy SET status = 'LOST' WHERE copy_id = @lostCopyId;
+
+		DECLARE @damagedCopyId INT = (SELECT TOP 1 copy_id FROM BookCopy WHERE book_id = @bookSql AND status = 'AVAILABLE' ORDER BY copy_id DESC);
+		IF @damagedCopyId IS NOT NULL
+			UPDATE BookCopy SET status = 'DAMAGED' WHERE copy_id = @damagedCopyId;
+	END;
+
+	-- ── Borrow records: SHIPPING (đơn hàng đang giao) ────────────────
+	DECLARE @bkDune  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780441013593');
+	DECLARE @bkAlice INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780141439761');
+
+	IF @bkDune IS NOT NULL AND NOT EXISTS (SELECT 1 FROM borrow_records WHERE group_code = 'DEMO-SHIPPING-001' AND book_id = @bkDune)
+		INSERT INTO borrow_records (user_id,book_id,borrow_date,due_date,return_date,status,fine_amount,is_paid,reject_reason,borrow_method,quantity,deposit_amount,group_code,shipping_recipient,shipping_phone,shipping_street,shipping_residence,shipping_ward,shipping_district,shipping_city,created_at)
+		VALUES (@member2Id,@bkDune,NULL,NULL,NULL,'SHIPPING',0,0,NULL,'ONLINE',1,50000,'DEMO-SHIPPING-001',N'Phạm Thu Trang','0901000004',N'45 Điện Biên Phủ',N'Tòa nhà Pearl Plaza',N'Phường 25',N'Bình Thạnh',N'TP. Hồ Chí Minh',DATEADD(HOUR,-12,GETDATE()));
+
+	IF @bkAlice IS NOT NULL AND NOT EXISTS (SELECT 1 FROM borrow_records WHERE group_code = 'DEMO-SHIPPING-001' AND book_id = @bkAlice)
+		INSERT INTO borrow_records (user_id,book_id,borrow_date,due_date,return_date,status,fine_amount,is_paid,reject_reason,borrow_method,quantity,deposit_amount,group_code,shipping_recipient,shipping_phone,shipping_street,shipping_residence,shipping_ward,shipping_district,shipping_city,created_at)
+		VALUES (@member2Id,@bkAlice,NULL,NULL,NULL,'SHIPPING',0,0,NULL,'ONLINE',1,50000,'DEMO-SHIPPING-001',N'Phạm Thu Trang','0901000004',N'45 Điện Biên Phủ',N'Tòa nhà Pearl Plaza',N'Phường 25',N'Bình Thạnh',N'TP. Hồ Chí Minh',DATEADD(HOUR,-12,GETDATE()));
+
+	-- ── Borrow records: RETURN_REQUESTED (đã yêu cầu trả sách) ───────
+	IF NOT EXISTS (SELECT 1 FROM borrow_records WHERE group_code = 'DEMO-RETREQ-001' AND book_id = @bookMicro)
+		INSERT INTO borrow_records (user_id,book_id,borrow_date,due_date,return_date,status,fine_amount,is_paid,reject_reason,borrow_method,quantity,deposit_amount,group_code,shipping_recipient,shipping_phone,shipping_street,shipping_residence,shipping_ward,shipping_district,shipping_city,created_at)
+		VALUES (@member3Id,@bookMicro,DATEADD(DAY,-10,@today),DATEADD(DAY,4,@today),NULL,'RETURN_REQUESTED',0,0,NULL,'IN_PERSON',1,50000,'DEMO-RETREQ-001',NULL,NULL,NULL,NULL,NULL,NULL,NULL,DATEADD(DAY,-10,GETDATE()));
+
+	-- ── Shipments (vận đơn giao hàng) ────────────────────────────────
+	IF OBJECT_ID('shipments', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @shipBrId1 BIGINT = (SELECT TOP 1 id FROM borrow_records WHERE group_code = 'DEMO-SHIPPING-001' AND book_id = @bkDune);
+		IF @shipBrId1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM shipments WHERE borrow_record_id = @shipBrId1)
+			INSERT INTO shipments (borrow_record_id,tracking_code,status,address,phone,created_at,updated_at)
+			VALUES (@shipBrId1,'VN-TRACK-2025-001','SHIPPING',N'45 Điện Biên Phủ, Tòa nhà Pearl Plaza, Phường 25, Bình Thạnh, TP. Hồ Chí Minh','0901000004',DATEADD(HOUR,-11,GETDATE()),DATEADD(HOUR,-6,GETDATE()));
+
+		DECLARE @shipBrId2 BIGINT = (SELECT TOP 1 id FROM borrow_records WHERE group_code = 'DEMO-M6-APPROVED-001' AND book_id = @bookChiPheo);
+		IF @shipBrId2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM shipments WHERE borrow_record_id = @shipBrId2)
+			INSERT INTO shipments (borrow_record_id,tracking_code,status,address,phone,created_at,updated_at)
+			VALUES (@shipBrId2,'VN-TRACK-2025-002','DELIVERED',N'17 Bạch Đằng, Chung cư The Song, Phường Thuận Phước, Hải Châu, Đà Nẵng','0901000008',DATEADD(HOUR,-30,GETDATE()),DATEADD(HOUR,-4,GETDATE()));
+	END;
+
+	-- ── Renewal requests: APPROVED và REJECTED ───────────────────────
+	IF OBJECT_ID('renewal_requests', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @renewApprId BIGINT = (SELECT TOP 1 id FROM borrow_records WHERE group_code = 'DEMO-M5-BORROW-001' AND book_id = @bookPython);
+		IF @renewApprId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM renewal_requests WHERE borrow_id = @renewApprId)
+			INSERT INTO renewal_requests (borrow_id,user_id,reason,contact_name,contact_phone,contact_email,status,requested_at)
+			VALUES (@renewApprId,@member5Id,N'Cần thêm thời gian để hoàn thành bài đọc và ghi chú thực hành.',N'Đặng Thị Lan','0901000007','member5@gmail.com','APPROVED',DATEADD(DAY,-3,GETDATE()));
+
+		DECLARE @renewRejId BIGINT = (SELECT TOP 1 id FROM borrow_records WHERE group_code = 'DEMO-M6-OVERDUE-001' AND book_id = @bookMicro);
+		IF @renewRejId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM renewal_requests WHERE borrow_id = @renewRejId)
+			INSERT INTO renewal_requests (borrow_id,user_id,reason,contact_name,contact_phone,contact_email,status,requested_at)
+			VALUES (@renewRejId,@member6Id,N'Muốn đọc thêm một tuần nữa.',N'Bùi Quang Huy','0901000008','member6@gmail.com','REJECTED',DATEADD(DAY,-5,GETDATE()));
+	END;
+
+	-- ── Comments: trạng thái DELETED ─────────────────────────────────
+	IF OBJECT_ID('Comment', 'U') IS NOT NULL AND @bookChiPheo IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookChiPheo AND user_id = @member3Id)
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at,deleted_at)
+			VALUES (@bookChiPheo,@member3Id,N'Bình luận vi phạm nội quy - đã bị xóa bởi admin.',1,'DELETED',DATEADD(DAY,-15,GETDATE()),DATEADD(DAY,-14,GETDATE()));
+
+		IF NOT EXISTS (SELECT 1 FROM Comment WHERE book_id = @bookChiPheo AND user_id = @member10Id)
+			INSERT INTO Comment (book_id,user_id,content,rating,status,created_at,deleted_at)
+			VALUES (@bookChiPheo,@member10Id,N'Spam - comment này đã bị admin xóa.',1,'DELETED',DATEADD(DAY,-12,GETDATE()),DATEADD(DAY,-12,GETDATE()));
+	END;
+
+	-- ── CommentReply (admin/thủ thư phản hồi bình luận) ──────────────
+	IF OBJECT_ID('CommentReply', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @repComm1 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookJava AND user_id = @userId AND status = 'VISIBLE');
+		IF @repComm1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReply WHERE comment_id = @repComm1)
+			INSERT INTO CommentReply (comment_id,admin_id,content,created_at)
+			VALUES (@repComm1,@adminUserId,N'Cảm ơn bạn đã chia sẻ! Thư viện rất vui khi cuốn sách mang lại giá trị cho bạn. Chúc bạn đọc sách vui!',DATEADD(DAY,-19,GETDATE()));
+
+		DECLARE @repComm2 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookTatDen AND user_id = @member4Id AND status = 'VISIBLE');
+		IF @repComm2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReply WHERE comment_id = @repComm2)
+			INSERT INTO CommentReply (comment_id,admin_id,content,created_at)
+			VALUES (@repComm2,@lib2Id,N'Đúng vậy bạn ơi! "Hoàng tử bé" luôn là cuốn sách mà ai đọc ở độ tuổi nào cũng tìm thấy điều gì đó mới. Hẹn gặp bạn ở thư viện!',DATEADD(DAY,-13,GETDATE()));
+
+		DECLARE @repComm3 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookMicro AND user_id = @member6Id AND status = 'VISIBLE');
+		IF @repComm3 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReply WHERE comment_id = @repComm3)
+			INSERT INTO CommentReply (comment_id,admin_id,content,created_at)
+			VALUES (@repComm3,@adminUserId,N'Harari quả nhiên là tác giả xuất sắc! Bạn có thể tham khảo thêm cuốn "Homo Deus" của ông - thư viện sắp nhập sách mới.',DATEADD(DAY,-5,GETDATE()));
+	END;
+
+	-- ── CommentReport (báo cáo bình luận) ────────────────────────────
+	IF OBJECT_ID('CommentReport', 'U') IS NOT NULL
+	BEGIN
+		-- PENDING: member3 báo cáo bình luận của member6 về Clean Code
+		DECLARE @rptTarget1 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookJava AND user_id = @member6Id AND status = 'VISIBLE');
+		IF @rptTarget1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReport WHERE comment_id = @rptTarget1 AND reporter_user_id = @member3Id)
+			INSERT INTO CommentReport (comment_id,reporter_user_id,reason,description,report_time,status)
+			VALUES (@rptTarget1,@member3Id,N'Đánh giá không khách quan',N'Người dùng cho rằng ví dụ code cũ là lỗi nhưng đó là phong cách tác giả.',DATEADD(DAY,-2,GETDATE()),'PENDING');
+
+		-- PENDING: member5 báo cáo bình luận của member7 về 1984
+		DECLARE @rptTarget2 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookSql AND user_id = @member7Id AND status = 'VISIBLE');
+		IF @rptTarget2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReport WHERE comment_id = @rptTarget2 AND reporter_user_id = @member5Id)
+			INSERT INTO CommentReport (comment_id,reporter_user_id,reason,description,report_time,status)
+			VALUES (@rptTarget2,@member5Id,N'Nội dung sai lệch',N'Nhận xét có thể gây hiểu nhầm cho độc giả về nội dung cuốn sách.',DATEADD(DAY,-1,GETDATE()),'PENDING');
+
+		-- RESOLVED: bình luận DELETED của member3 (đã xử lý)
+		DECLARE @rptTarget3 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookChiPheo AND user_id = @member3Id AND status = 'DELETED');
+		IF @rptTarget3 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReport WHERE comment_id = @rptTarget3 AND reporter_user_id = @member7Id)
+			INSERT INTO CommentReport (comment_id,reporter_user_id,reason,description,report_time,status)
+			VALUES (@rptTarget3,@member7Id,N'Nội dung không phù hợp',N'Bình luận vi phạm nội quy thư viện.',DATEADD(DAY,-15,GETDATE()),'RESOLVED');
+
+		-- IGNORED: member2 báo cáo bình luận của member3 về 1984
+		DECLARE @rptTarget4 BIGINT = (SELECT TOP 1 comment_id FROM Comment WHERE book_id = @bookSql AND user_id = @member3Id AND status = 'VISIBLE');
+		IF @rptTarget4 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CommentReport WHERE comment_id = @rptTarget4 AND reporter_user_id = @member2Id)
+			INSERT INTO CommentReport (comment_id,reporter_user_id,reason,description,report_time,status)
+			VALUES (@rptTarget4,@member2Id,N'Ngôn từ không lịch sự',N'Cụm từ trong bình luận có vẻ thiếu chuẩn mực.',DATEADD(DAY,-9,GETDATE()),'IGNORED');
+	END;
+
+	-- ── Reservation: BORROWED status ─────────────────────────────────
+	IF OBJECT_ID('reservations', 'U') IS NOT NULL AND @bookChiPheo IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM reservations WHERE user_id = @member5Id AND book_id = @bookChiPheo)
+			INSERT INTO reservations (user_id,book_id,status,note,notified_at,expired_at,created_at)
+			VALUES (@member5Id,@bookChiPheo,'BORROWED',N'Đặt trước rồi đã mượn thành công.',DATEADD(DAY,-6,GETDATE()),DATEADD(DAY,-3,GETDATE()),DATEADD(DAY,-15,GETDATE()));
+	END;
+
+	-- ── Cart / CartItem (giỏ hàng) ────────────────────────────────────
+	IF OBJECT_ID('Cart', 'U') IS NOT NULL AND OBJECT_ID('CartItem', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @bkPragmatic2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780135957059');
+		DECLARE @bkDesignPat2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780201633610');
+		DECLARE @bkRichDad2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9781612680194');
+		DECLARE @bkHarryPot2  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780590353427');
+		DECLARE @bkBriefHist2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780553380163');
+		DECLARE @bkAtomicH2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780735211292');
+
+		-- Cart member2
+		DECLARE @cartIdM2 BIGINT = (SELECT TOP 1 cart_id FROM Cart WHERE user_id = @member2Id);
+		IF @cartIdM2 IS NULL
+		BEGIN
+			INSERT INTO Cart (user_id) VALUES (@member2Id);
+			SET @cartIdM2 = SCOPE_IDENTITY();
+		END;
+		IF @bkPragmatic2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM2 AND book_id = @bkPragmatic2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM2,@bkPragmatic2,1,DATEADD(DAY,-2,GETDATE()));
+		IF @bkRichDad2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM2 AND book_id = @bkRichDad2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM2,@bkRichDad2,1,DATEADD(DAY,-1,GETDATE()));
+
+		-- Cart member5
+		DECLARE @cartIdM5 BIGINT = (SELECT TOP 1 cart_id FROM Cart WHERE user_id = @member5Id);
+		IF @cartIdM5 IS NULL
+		BEGIN
+			INSERT INTO Cart (user_id) VALUES (@member5Id);
+			SET @cartIdM5 = SCOPE_IDENTITY();
+		END;
+		IF @bkDesignPat2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM5 AND book_id = @bkDesignPat2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM5,@bkDesignPat2,1,DATEADD(HOUR,-5,GETDATE()));
+		IF @bkHarryPot2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM5 AND book_id = @bkHarryPot2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM5,@bkHarryPot2,1,DATEADD(HOUR,-3,GETDATE()));
+
+		-- Cart member7
+		DECLARE @cartIdM7 BIGINT = (SELECT TOP 1 cart_id FROM Cart WHERE user_id = @member7Id);
+		IF @cartIdM7 IS NULL
+		BEGIN
+			INSERT INTO Cart (user_id) VALUES (@member7Id);
+			SET @cartIdM7 = SCOPE_IDENTITY();
+		END;
+		IF @bkBriefHist2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM7 AND book_id = @bkBriefHist2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM7,@bkBriefHist2,1,DATEADD(HOUR,-1,GETDATE()));
+		IF @bkAtomicH2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM CartItem WHERE cart_id = @cartIdM7 AND book_id = @bkAtomicH2)
+			INSERT INTO CartItem (cart_id,book_id,quantity,added_at) VALUES (@cartIdM7,@bkAtomicH2,1,DATEADD(MINUTE,-30,GETDATE()));
+	END;
+
+	-- ── LibrarianActivityLog (nhật ký hoạt động thủ thư) ──────────────
+	IF OBJECT_ID('LibrarianActivityLog', 'U') IS NOT NULL
+	BEGIN
+		DECLARE @libPrimId INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'librarian@gmail.com');
+		IF @libPrimId IS NOT NULL
+		BEGIN
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Duyệt yêu cầu mượn sách nhóm DEMO-APPROVED-001 của thành viên member2.',DATEADD(HOUR,-10,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Từ chối yêu cầu mượn sách nhóm DEMO-REJECTED-001 của thành viên member4.',DATEADD(HOUR,-7,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Cập nhật trạng thái vận chuyển DEMO-SHIPPING-001 sang SHIPPING.',DATEADD(HOUR,-6,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Nhận sách trả từ thành viên member4 - nhóm DEMO-LATE-UNPAID-001.',DATEADD(HOUR,-5,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Phê duyệt gia hạn cho thành viên member5 - nhóm DEMO-M5-BORROW-001.',DATEADD(DAY,-2,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@libPrimId,N'Từ chối gia hạn cho thành viên member6 - nhóm DEMO-M6-OVERDUE-001.',DATEADD(DAY,-4,GETDATE()));
+		END;
+		IF @lib2Id IS NOT NULL
+		BEGIN
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Duyệt yêu cầu mượn sách nhóm DEMO-M6-APPROVED-001 của thành viên member6.',DATEADD(HOUR,-4,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Cập nhật trạng thái giao hàng sang DELIVERED cho VN-TRACK-2025-002.',DATEADD(HOUR,-3,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Thêm sách mới "Head First Design Patterns" vào kho (quantity = 0).',DATEADD(DAY,-1,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Ghi nhận sách bị mất: Clean Code - một bản sao.',DATEADD(DAY,-3,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Ghi nhận sách bị hư hỏng: Nineteen Eighty-Four - một bản sao.',DATEADD(DAY,-3,GETDATE()));
+			INSERT INTO LibrarianActivityLog (user_id,action,timestamp) VALUES (@lib2Id,N'Xóa bình luận vi phạm nội quy của thành viên member10.',DATEADD(DAY,-12,GETDATE()));
+		END;
+	END;
+
+	-- ── Notifications bổ sung ────────────────────────────────────────
+	IF OBJECT_ID('notifications', 'U') IS NOT NULL
+	BEGIN
+		-- BORROW_APPROVED
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member2Id AND type = 'BORROW_APPROVED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member2Id,'BORROW_APPROVED',N'Yêu cầu mượn sách đã được duyệt!',N'Yêu cầu mượn sách nhóm DEMO-APPROVED-001 đã được phê duyệt. Sách đang được chuẩn bị để giao đến địa chỉ của bạn.',1,DATEADD(HOUR,-9,GETDATE()));
+
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member6Id AND type = 'BORROW_APPROVED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member6Id,'BORROW_APPROVED',N'Yêu cầu mượn sách đã được duyệt!',N'Yêu cầu mượn sách nhóm DEMO-M6-APPROVED-001 đã được duyệt. Sách đang trên đường giao đến bạn.',0,DATEADD(HOUR,-3,GETDATE()));
+
+		-- BORROW_REJECTED
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member4Id AND type = 'BORROW_REJECTED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member4Id,'BORROW_REJECTED',N'Yêu cầu mượn sách đã bị từ chối',N'Yêu cầu mượn sách nhóm DEMO-REJECTED-001 đã bị từ chối. Lý do: Độc giả đang còn phiếu mượn quá hạn. Vui lòng liên hệ thư viện để được hỗ trợ.',1,DATEADD(HOUR,-6,GETDATE()));
+
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member8Id AND type = 'BORROW_REJECTED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member8Id,'BORROW_REJECTED',N'Yêu cầu mượn sách đã bị từ chối',N'Yêu cầu mượn sách đã bị từ chối do tài khoản bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.',0,DATEADD(HOUR,-1,GETDATE()));
+
+		-- RENEWAL_APPROVED
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member5Id AND type = 'RENEWAL_APPROVED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member5Id,'RENEWAL_APPROVED',N'Yêu cầu gia hạn đã được chấp thuận!',N'Yêu cầu gia hạn sách "Atomic Habits" của bạn đã được phê duyệt. Hạn trả sách mới: 7 ngày kể từ hôm nay.',0,DATEADD(DAY,-2,GETDATE()));
+
+		-- RENEWAL_REJECTED
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member6Id AND type = 'RENEWAL_REJECTED')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member6Id,'RENEWAL_REJECTED',N'Yêu cầu gia hạn đã bị từ chối',N'Yêu cầu gia hạn sách "Sapiens" đã bị từ chối. Lý do: Sách đang có độc giả khác đặt trước và phiếu mượn đã quá hạn.',0,DATEADD(DAY,-4,GETDATE()));
+
+		-- OVERDUE_WARNING
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member2Id AND type = 'OVERDUE_WARNING')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member2Id,'OVERDUE_WARNING',N'Sách sắp đến hạn trả!',N'Cuốn sách "Nineteen Eighty-Four" của bạn sẽ đến hạn trả sau 2 ngày. Vui lòng trả sách đúng hạn để tránh bị tính phạt.',0,DATEADD(DAY,-16,GETDATE()));
+
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member6Id AND type = 'OVERDUE_WARNING')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member6Id,'OVERDUE_WARNING',N'Sách đã quá hạn trả - phát sinh tiền phạt!',N'Cuốn sách "Sapiens" của bạn đã quá hạn 8 ngày. Tiền phạt hiện tại: 35.000 ₫. Vui lòng trả sách ngay.',0,DATEADD(DAY,-8,GETDATE()));
+
+		-- GENERAL_NOTICE
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @userId AND type = 'GENERAL_NOTICE')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@userId,'GENERAL_NOTICE',N'Thông báo: Thư viện nghỉ lễ',N'Thư viện sẽ đóng cửa từ ngày 30/04 đến 02/05 nhân dịp Lễ 30 tháng 4. Mọi yêu cầu mượn/trả sẽ được xử lý sau ngày 03/05.',1,DATEADD(DAY,-7,GETDATE()));
+
+		IF NOT EXISTS (SELECT 1 FROM notifications WHERE user_id = @member5Id AND type = 'GENERAL_NOTICE')
+			INSERT INTO notifications (user_id,type,title,message,is_read,created_at)
+			VALUES (@member5Id,'GENERAL_NOTICE',N'Sách mới vừa về kho!',N'Thư viện vừa bổ sung thêm 5 đầu sách mới về Lập trình và Phát triển bản thân. Truy cập danh mục sách để xem chi tiết.',0,DATEADD(DAY,-3,GETDATE()));
+	END;
+
+	-- ── Password reset tokens bổ sung: đã dùng (used=1) và đã hết hạn ─
+	IF OBJECT_ID('password_reset_token', 'U') IS NOT NULL
+	BEGIN
+		-- Token đã sử dụng (used = 1)
+		IF NOT EXISTS (SELECT 1 FROM password_reset_token WHERE token = 'DEMO-RESET-USED-M5')
+			INSERT INTO password_reset_token (user_id,token,expired_at,used,created_at)
+			VALUES (@member5Id,'DEMO-RESET-USED-M5',DATEADD(HOUR,2,DATEADD(DAY,-1,GETDATE())),1,DATEADD(DAY,-1,GETDATE()));
+
+		-- Token đã hết hạn (expired_at trong quá khứ)
+		IF NOT EXISTS (SELECT 1 FROM password_reset_token WHERE token = 'DEMO-RESET-EXPIRED-M7')
+			INSERT INTO password_reset_token (user_id,token,expired_at,used,created_at)
+			VALUES (@member7Id,'DEMO-RESET-EXPIRED-M7',DATEADD(HOUR,-3,GETDATE()),0,DATEADD(HOUR,-5,GETDATE()));
+	END;
+
+	-- ── Email verification token cho user PENDING (member9) ───────────
+	IF OBJECT_ID('email_verification_token', 'U') IS NOT NULL AND @member9Id IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM email_verification_token WHERE user_id = @member9Id)
+			INSERT INTO email_verification_token (user_id,code,expired_at,used,created_at)
+			VALUES (@member9Id,'DEMO-VERIFY-123456',DATEADD(HOUR,24,GETDATE()),0,GETDATE());
+	END;
+
 	COMMIT TRANSACTION;
 
 	PRINT N'Seed demo data completed successfully.';
-	PRINT N'Accounts: admin@gmail.com / librarian@gmail.com / user@gmail.com / member2@gmail.com ~ member8@gmail.com';
-	PRINT N'Common password: 123456  |  member8 is LOCKED';
+	PRINT N'Accounts: admin@gmail.com / librarian@gmail.com / librarian2@gmail.com';
+	PRINT N'          user@gmail.com / member2@gmail.com ~ member11@gmail.com';
+	PRINT N'Common password: 123456  |  member8/member11=LOCKED  |  member9=PENDING  |  member10=comment-banned';
 END TRY
 BEGIN CATCH
 	IF @@TRANCOUNT > 0

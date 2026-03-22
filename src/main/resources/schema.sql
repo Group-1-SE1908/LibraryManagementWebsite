@@ -313,6 +313,23 @@ CREATE TABLE email_verification_token (
 );
 GO
 
+-- Bảng 15: Vận đơn giao hàng (Shipments)
+CREATE TABLE shipments (
+    id               BIGINT IDENTITY(1,1) PRIMARY KEY,
+    borrow_record_id BIGINT        NOT NULL,
+    tracking_code    VARCHAR(100)  NULL,
+    status           VARCHAR(30)   NOT NULL DEFAULT 'CREATED', -- CREATED, SHIPPING, DELIVERED, CANCELLED
+    address          NVARCHAR(500) NULL,
+    phone            VARCHAR(30)   NULL,
+    created_at       DATETIME      NOT NULL DEFAULT GETDATE(),
+    updated_at       DATETIME      NULL,
+    CONSTRAINT FK_Shipment_BorrowRecord FOREIGN KEY (borrow_record_id) REFERENCES borrow_records(id) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX IX_Shipment_BorrowRecordId ON shipments (borrow_record_id);
+GO
+
 -- =============================================
 -- 2. TRIGGER TỰ ĐỘNG TẠO BẢN SAO SÁCH (BOOKCOPY)
 -- =============================================
