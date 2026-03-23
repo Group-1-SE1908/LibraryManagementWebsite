@@ -90,6 +90,7 @@ CREATE TABLE Book (
                       quantity INT NOT NULL DEFAULT 0,
                       isbn VARCHAR(50) NOT NULL UNIQUE,
                       image NVARCHAR(500) NULL,
+                      description NVARCHAR(MAX) NULL,
 
     -- Tự động xác định còn sách hay không [cite: 7]
                       availability AS (CASE WHEN quantity > 0 THEN 1 ELSE 0 END),
