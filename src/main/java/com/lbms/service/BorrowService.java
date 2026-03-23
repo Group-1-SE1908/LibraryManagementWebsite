@@ -72,9 +72,9 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // Tăng availability của sách
+                // Tăng quantity của sách (availability là computed column, tự tính lại)
                 try (var ps = c.prepareStatement(
-                        "UPDATE Book SET availability = availability + 1, quantity = quantity + 1 WHERE book_id = ?")) {
+                        "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?")) {
                     ps.setLong(1, bookId);
                     ps.executeUpdate();
                 }
