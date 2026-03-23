@@ -335,6 +335,7 @@ public class BorrowController extends HttpServlet {
         // Gom tất cả RenewalRequest thành 1 list phẳng
         List<RenewalRequest> renewalList = new ArrayList<>();
         Map<Long, String> borrowBookMap = new HashMap<>();
+        Map<Long, Integer> renewalCountMap = new HashMap<>();
         for (BorrowRecord record : records) {
             if (record.getBook() != null) {
                 borrowBookMap.put(record.getId(), record.getBook().getTitle());
@@ -342,10 +343,12 @@ public class BorrowController extends HttpServlet {
             List<RenewalRequest> requests = borrowService.getRenewalRequestsForBorrow(record.getId());
             if (requests != null) {
                 renewalList.addAll(requests);
+                renewalCountMap.put(record.getId(), requests.size());
             }
         }
         req.setAttribute("renewalList", renewalList);
         req.setAttribute("borrowBookMap", borrowBookMap);
+        req.setAttribute("renewalCountMap", renewalCountMap);
 
         Object flash = req.getSession().getAttribute("flash");
         if (flash != null) {

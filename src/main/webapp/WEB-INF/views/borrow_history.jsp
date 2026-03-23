@@ -454,7 +454,7 @@
                                                     data-copy-index="${entry.copyIndex}">Xem đơn hàng
                                                     </button>
                                                 </div>
-                                                <c:if test="${fn:toUpperCase(r.status) == 'RECEIVED'}">
+                                                <c:if test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
                                                     <div class="mp-card__action">
                                                         <button class="btn btn-outline" type="button" data-open-renewal
                                                             data-borrow-id="${r.id}"

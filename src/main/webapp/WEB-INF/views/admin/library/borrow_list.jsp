@@ -509,6 +509,13 @@
                                                class="btn-modern secondary" style="padding: 8px 14px;">Xem
                                                 yêu cầu gia hạn</a>
                                             </c:if>
+                                        <c:set var="renewalCount" value="${renewalCountMap[r.id]}" />
+                                        <c:if test="${not empty renewalCount && renewalCount > 0}">
+                                            <span class="status-badge status-RENEWAL_REQUESTED"
+                                                  style="background:#e0f2fe;color:#075985;font-size:11px;">
+                                                Đã gửi gia hạn ${renewalCount} lần
+                                            </span>
+                                        </c:if>
                                     </div>
 
                                 </div>

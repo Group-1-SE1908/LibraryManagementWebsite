@@ -240,6 +240,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 }
 
                 java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
+                java.util.Map<Long, Integer> renewalCountMap = new java.util.HashMap<>();
                 for (BorrowRecord br : list) {
                     // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị
                     // lỗi gộp
@@ -248,9 +249,11 @@ public class LibrarianBorrowController extends HttpServlet {
                         gc = "DON-LE-" + br.getId();
                     }
                     groupedRecords.computeIfAbsent(gc, k -> new java.util.ArrayList<>()).add(br);
+                    renewalCountMap.put(br.getId(), libService.countRenewalRequestsForBorrow(br.getId()));
                 }
 
                 req.setAttribute("groupedRecords", groupedRecords);
+                req.setAttribute("renewalCountMap", renewalCountMap);
                 java.util.List<RenewalRequest> pendingRenewals = libService.listPendingRenewalRequests();
                 java.util.Map<Long, RenewalRequest> renewalLookup = new java.util.HashMap<>();
                 for (RenewalRequest pending : pendingRenewals) {
@@ -459,6 +462,7 @@ public class LibrarianBorrowController extends HttpServlet {
             throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn này.");
         }
         req.setAttribute("renewalTicket", ticket);
+        req.setAttribute("renewalRequestCount", libService.countRenewalRequestsForBorrow(ticket.getBorrowId()));
         List<Reservation> reservationQueue = java.util.Collections.emptyList();
         BorrowRecord record = ticket.getBorrowRecord();
         if (record != null && record.getBook() != null) {
