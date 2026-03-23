@@ -10,6 +10,196 @@
                 <title>Giỏ hàng</title>
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/styles.css" />
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/member-pages.css" />
+                <style>
+                    /* ── Cart Table Styles ── */
+                    .cart-table-wrapper {
+                        border-radius: 12px;
+                        border: 1.5px solid var(--mp-border-light);
+                        overflow: hidden;
+                        background: #fff;
+                        margin-bottom: 24px;
+                    }
+
+                    .cart-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 0.95rem;
+                    }
+
+                    .cart-table thead {
+                        background: #f8f9fb;
+                        border-bottom: 1.5px solid var(--mp-border-light);
+                    }
+
+                    .cart-table th {
+                        padding: 16px;
+                        text-align: left;
+                        font-weight: 700;
+                        color: var(--mp-text-muted);
+                        text-transform: uppercase;
+                        font-size: 0.75rem;
+                        letter-spacing: 0.05em;
+                    }
+
+                    .cart-table tbody tr {
+                        border-bottom: 1px solid var(--mp-border-light);
+                        transition: background-color 0.2s;
+                    }
+
+                    .cart-table tbody tr:hover {
+                        background-color: #fafbff;
+                    }
+
+                    .cart-table tbody tr:last-child {
+                        border-bottom: none;
+                    }
+
+                    .cart-table td {
+                        padding: 16px;
+                        color: var(--mp-text);
+                        vertical-align: middle;
+                    }
+
+                    .cart-book-cell {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+
+                    .cart-book-image {
+                        width: 50px;
+                        height: 70px;
+                        border-radius: 6px;
+                        object-fit: cover;
+                        background: #f0f4f8;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                        flex-shrink: 0;
+                        overflow: hidden;
+                    }
+
+                    .cart-book-info h3 {
+                        margin: 0 0 4px 0;
+                        font-size: 0.95rem;
+                        font-weight: 700;
+                        color: var(--mp-text);
+                    }
+
+                    .cart-book-info p {
+                        margin: 0;
+                        font-size: 0.82rem;
+                        color: var(--mp-text-secondary);
+                    }
+
+                    .cart-quantity-cell {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    .quantity-input {
+                        width: 60px;
+                        padding: 6px 10px;
+                        border: 1.5px solid var(--mp-border-light);
+                        border-radius: 6px;
+                        font-size: 0.9rem;
+                        text-align: center;
+                    }
+
+                    .availability {
+                        display: inline-block;
+                        padding: 4px 10px;
+                        border-radius: 20px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                    }
+
+                    .availability.in-stock {
+                        background: #dcfce7;
+                        color: #166534;
+                    }
+
+                    .availability.out-of-stock {
+                        background: #fee2e2;
+                        color: #991b1b;
+                    }
+
+                    .cart-actions-cell {
+                        display: flex;
+                        gap: 8px;
+                    }
+
+                    .cart-actions-cell .btn {
+                        padding: 6px 12px;
+                        font-size: 0.8rem;
+                        white-space: nowrap;
+                    }
+
+                    .cart-grid-section {
+                        display: grid;
+                        grid-template-columns: 1fr 320px;
+                        gap: 24px;
+                        margin-bottom: 40px;
+                    }
+
+                    .cart-summary-panel {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+
+                    @media (max-width: 1024px) {
+                        .cart-table {
+                            font-size: 0.85rem;
+                        }
+
+                        .cart-table th,
+                        .cart-table td {
+                            padding: 12px;
+                        }
+
+                        .cart-book-image {
+                            width: 40px;
+                            height: 55px;
+                            font-size: 1rem;
+                        }
+
+                        .cart-book-info h3 {
+                            font-size: 0.85rem;
+                        }
+
+                        .cart-book-info p {
+                            font-size: 0.75rem;
+                        }
+
+                        .cart-actions-cell .btn {
+                            padding: 4px 8px;
+                            font-size: 0.7rem;
+                        }
+
+                        .quantity-input {
+                            width: 50px;
+                        }
+                    }
+
+                    @media (max-width: 768px) {
+                        .cart-grid-section {
+                            grid-template-columns: 1fr;
+                        }
+
+                        .cart-table-wrapper {
+                            overflow-x: auto;
+                        }
+
+                        .cart-table {
+                            font-size: 0.8rem;
+                            min-width: 100%;
+                        }
+                    }
+                </style>
             </head>
 
             <body class="mp-body">
@@ -82,56 +272,71 @@
 
                     <c:if test="${itemCount > 0}">
                         <section class="cart-grid-section">
-                            <div class="cart-items-grid">
-                                <c:forEach items="${cart.items}" var="item">
-                                    <article class="cart-item-card">
-                                        <div class="cart-item-cover">
-                                            <c:choose>
-                                                <c:when test="${not empty item.book.image}">
-                                                    <c:choose>
-                                                        <c:when test="${fn:startsWith(item.book.image, 'http')}">
-                                                            <img src="${item.book.image}" alt="${item.book.title}"
-                                                                loading="lazy" />
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <img src="${pageContext.request.contextPath}/${item.book.image}"
-                                                                alt="${item.book.title}" loading="lazy" />
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="cover-placeholder">${fn:substring(item.book.title, 0,
-                                                        1)}</span>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                        <div class="cart-item-body">
-                                            <div class="cart-item-head">
-                                                <h3>${item.book.title}</h3>
-                                                <p class="cart-item-author">Tác giả ${item.book.author}</p>
-                                            </div>
-                                            <div class="cart-item-meta">
-                                                <span
-                                                    class="availability ${item.book.availability ? 'in-stock' : 'out-of-stock'}">
-                                                    ${item.book.availability ? 'Còn hàng' : 'Hết hàng'}
-                                                </span>
-                                            </div>
-                                            <div class="cart-item-actions">
-                                                <form action="${pageContext.request.contextPath}/cart/update"
-                                                    method="post" class="quantity-form">
-                                                    <input type="hidden" name="bookId" value="${item.bookId}" />
-                                                    <input type="number" name="quantity" min="1"
-                                                        value="${item.quantity}" class="quantity-input" />
-                                                </form>
-                                                <form action="${pageContext.request.contextPath}/cart/remove"
-                                                    method="post" class="remove-form">
-                                                    <input type="hidden" name="bookId" value="${item.bookId}" />
-                                                    <button type="submit" class="btn danger">Xóa</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </article>
-                                </c:forEach>
+                            <div class="cart-table-wrapper">
+                                <table class="cart-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SÁCH</th>
+                                            <th>SỐ LƯỢNG</th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${cart.items}" var="item">
+                                            <tr>
+                                                <!-- SÁCH Column -->
+                                                <td>
+                                                    <div class="cart-book-cell">
+                                                        <div class="cart-book-image">
+                                                            <c:choose>
+                                                                <c:when test="${not empty item.book.image}">
+                                                                    <c:choose>
+                                                                        <c:when test="${fn:startsWith(item.book.image, 'http')}">
+                                                                            <img src="${item.book.image}" alt="${item.book.title}"
+                                                                                loading="lazy" />
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <img src="${pageContext.request.contextPath}/${item.book.image}"
+                                                                                alt="${item.book.title}" loading="lazy" />
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span>${fn:substring(item.book.title, 0, 1)}</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </div>
+                                                        <div class="cart-book-info">
+                                                            <h3>${item.book.title}</h3>
+                                                            <p>Tác giả: ${item.book.author}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <!-- SỐ LƯỢNG Column -->
+                                                <td>
+                                                    <div class="cart-quantity-cell">
+                                                        <form action="${pageContext.request.contextPath}/cart/update"
+                                                            method="post" class="quantity-form">
+                                                            <input type="hidden" name="bookId" value="${item.bookId}" />
+                                                            <input type="number" name="quantity" min="1"
+                                                                value="${item.quantity}" class="quantity-input" />
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                                <!-- HÀNH ĐỘNG Column -->
+                                                <td>
+                                                    <div class="cart-actions-cell">
+                                                        <form action="${pageContext.request.contextPath}/cart/remove"
+                                                            method="post" class="remove-form" style="display:inline;">
+                                                            <input type="hidden" name="bookId" value="${item.bookId}" />
+                                                            <button type="submit" class="btn danger">Xóa</button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
                             </div>
                             <aside class="cart-summary-panel">
                                 <h3>Đơn hàng</h3>

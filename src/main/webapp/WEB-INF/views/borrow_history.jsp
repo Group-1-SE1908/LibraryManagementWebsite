@@ -302,6 +302,159 @@
                         .renewal-cancel-form {
                             display: inline-block;
                         }
+
+                        /* ── Table layout styles ── */
+                        .history-table-wrapper {
+                            border-radius: 12px;
+                            border: 1.5px solid var(--mp-border-light);
+                            overflow: hidden;
+                            background: #fff;
+                        }
+
+                        .history-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 0.95rem;
+                        }
+
+                        .history-table thead {
+                            background: #f8f9fb;
+                            border-bottom: 1.5px solid var(--mp-border-light);
+                        }
+
+                        .history-table th {
+                            padding: 16px;
+                            text-align: left;
+                            font-weight: 700;
+                            color: var(--mp-text-muted);
+                            text-transform: uppercase;
+                            font-size: 0.75rem;
+                            letter-spacing: 0.05em;
+                        }
+
+                        .history-table tbody tr {
+                            border-bottom: 1px solid var(--mp-border-light);
+                            transition: background-color 0.2s;
+                        }
+
+                        .history-table tbody tr:hover {
+                            background-color: #fafbff;
+                        }
+
+                        .history-table tbody tr:last-child {
+                            border-bottom: none;
+                        }
+
+                        .history-table td {
+                            padding: 16px;
+                            color: var(--mp-text);
+                            vertical-align: middle;
+                        }
+
+                        .table-book-cell {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        }
+
+                        .table-book-image {
+                            width: 50px;
+                            height: 70px;
+                            border-radius: 6px;
+                            object-fit: cover;
+                            background: #f0f4f8;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 1.5rem;
+                            flex-shrink: 0;
+                            overflow: hidden;
+                        }
+
+                        .table-book-info h3 {
+                            margin: 0 0 4px 0;
+                            font-size: 0.95rem;
+                            font-weight: 700;
+                            color: var(--mp-text);
+                        }
+
+                        .table-book-info p {
+                            margin: 0;
+                            font-size: 0.82rem;
+                            color: var(--mp-text-secondary);
+                        }
+
+                        .table-status-cell {
+                            display: flex;
+                            align-items: center;
+                        }
+
+                        .table-date-cell {
+                            white-space: nowrap;
+                            font-size: 0.9rem;
+                        }
+
+                        .table-actions-cell {
+                            display: flex;
+                            gap: 6px;
+                            flex-wrap: wrap;
+                        }
+
+                        .table-actions-cell .btn {
+                            padding: 6px 12px;
+                            font-size: 0.8rem;
+                            white-space: nowrap;
+                        }
+
+                        @media (max-width: 1024px) {
+                            .history-table {
+                                font-size: 0.85rem;
+                            }
+
+                            .history-table th,
+                            .history-table td {
+                                padding: 12px;
+                            }
+
+                            .table-book-image {
+                                width: 40px;
+                                height: 55px;
+                                font-size: 1rem;
+                            }
+
+                            .table-book-info h3 {
+                                font-size: 0.85rem;
+                            }
+
+                            .table-book-info p {
+                                font-size: 0.75rem;
+                            }
+
+                            .table-actions-cell .btn {
+                                padding: 4px 8px;
+                                font-size: 0.7rem;
+                            }
+                        }
+
+                        @media (max-width: 768px) {
+                            .history-table-wrapper {
+                                overflow-x: auto;
+                            }
+
+                            .history-table {
+                                font-size: 0.8rem;
+                                min-width: 900px;
+                            }
+                        }
+
+                        /* ── Center filter pills ── */
+                        .mp-filters {
+                            display: flex;
+                            justify-content: center;
+                            gap: 12px;
+                            flex-wrap: wrap;
+                            margin: 0 auto;
+                        }
                     </style>
                 </head>
 
@@ -354,223 +507,213 @@
 
                         <c:choose>
                             <c:when test="${historyTotalCopies > 0}">
-                                <div class="mp-cards">
-                                    <c:forEach items="${historyEntries}" var="entry">
-                                        <c:set var="r" value="${entry.record}" />
-                                        <c:set var="statusClass">
-                                            <c:choose>
-                                                <c:when
-                                                    test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
-                                                    mp-status-pill--borrowed
-                                                </c:when>
-                                                <c:when test="${fn:toUpperCase(r.status) == 'SHIPPING'}">
-                                                    mp-status-pill--shipping</c:when>
-                                                <c:when test="${fn:toUpperCase(r.status) == 'RETURNED'}">
-                                                    mp-status-pill--returned
-                                                </c:when>
-                                                <c:when test="${fn:toUpperCase(r.status) == 'REQUESTED'}">
-                                                    mp-status-pill--pending</c:when>
-                                                <c:when test="${fn:toUpperCase(r.status) == 'RENEWAL_REQUESTED'}">
-                                                    mp-status-pill--pending</c:when>
-                                                <c:otherwise>mp-status-pill--muted</c:otherwise>
-                                            </c:choose>
-                                        </c:set>
-                                        <c:set var="methodCode" value="${fn:toUpperCase(r.borrowMethod)}" />
-                                        <c:set var="shipping" value="${r.shippingDetails}" />
-                                        <article class="mp-card" data-copy-index="${entry.copyIndex}"
-                                            data-copy-count="${entry.copyCount}">
-                                            <div class="mp-card__banner">
-                                                <div>
-                                                    <p class="mp-card__eyebrow">Phiếu #${r.id}</p>
-                                                    <h2>${r.book.title}</h2>
-                                                    <p class="mp-card__author">${r.book.author}</p>
-                                                    <c:if test="${entry.copyCount > 1}">
-                                                        <p class="mp-card__copy-badge">Bản sao
-                                                            ${entry.copyIndex}/${entry.copyCount}</p>
-                                                    </c:if>
-                                                </div>
-                                                <span class="mp-status-pill ${statusClass}">${r.status}</span>
-                                            </div>
-
-                                            <div class="mp-card__poster">
-                                                <c:choose>
-                                                    <c:when test="${not empty r.book.image}">
-                                                        <c:choose>
-                                                            <c:when test="${fn:startsWith(r.book.image, 'http')}">
-                                                                <img src="${r.book.image}" alt="${r.book.title}" />
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <img src="${pageContext.request.contextPath}/${r.book.image}"
-                                                                    alt="${r.book.title}" />
-                                                            </c:otherwise>
-                                                        </c:choose>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <div class="mp-card__poster-ph">📖</div>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </div>
-
-                                            <div class="mp-card__body">
-                                                <div class="mp-card__field">
-                                                    <span>Ngày mượn</span>
-                                                    <strong>${r.borrowDate}</strong>
-                                                </div>
-                                                <div class="mp-card__field">
-                                                    <span>Hạn trả</span>
-                                                    <strong>${r.dueDate}</strong>
-                                                </div>
-                                                <div class="mp-card__field">
-                                                    <span>Người mượn</span>
-                                                    <strong>${r.user.fullName}</strong>
-                                                </div>
-                                                <div class="mp-card__field">
-                                                    <span>Trạng thái mượn</span>
-                                                    <strong>${r.status}</strong>
-                                                </div>
-                                                <div class="mp-card__field">
-                                                    <span>Phạt</span>
-                                                    <strong>
-                                                        <c:choose>
-                                                            <c:when test="${not empty r.fineAmount}">${r.fineAmount} VND
-                                                            </c:when>
-                                                            <c:otherwise>0 VND</c:otherwise>
-                                                        </c:choose>
-                                                    </strong>
-                                                </div>
-                                            </div>
-
-                                            <div class="mp-card__actions">
-                                                <div class="mp-card__action">
-                                                    <button class="btn primary js-show-order" type="button"
-                                                        data-method="${methodCode}"
-                                                        data-recipient="${shipping != null && not empty shipping.recipient ? shipping.recipient : ''}"
-                                                        data-shipping-phone="${shipping != null && not empty shipping.phone ? shipping.phone : ''}"
-                                                        data-address="${shipping != null && not empty shipping.formattedAddress ? shipping.formattedAddress : ''}"
-                                                        data-user-phone="${not empty r.user.phone ? r.user.phone : ''}"
-                                                        data-borrow-date="${not empty r.borrowDate ? r.borrowDate : ''}"
-                                                        data-deposit="<fmt:formatNumber value=" ${r.depositAmount !=null
-                                                        ? r.depositAmount : 0}" pattern="#,##0" /> ₫"
-                                                    data-copy-index="${entry.copyIndex}">Xem đơn hàng
-                                                    </button>
-                                                </div>
-                                                <c:if test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
-                                                    <div class="mp-card__action">
-                                                        <button class="btn btn-outline" type="button" data-open-renewal
-                                                            data-borrow-id="${r.id}"
-                                                            data-contact-name="${not empty currentUser.fullName ? fn:escapeXml(currentUser.fullName) : ''}"
-                                                            data-contact-phone="${not empty currentUser.phone ? fn:escapeXml(currentUser.phone) : ''}"
-                                                            data-contact-email="${not empty currentUser.email ? fn:escapeXml(currentUser.email) : ''}">
-                                                            Gia hạn
-                                                        </button>
-                                                    </div>
-                                                </c:if>
-
-                                                <c:if test="${fn:toUpperCase(r.status) == 'RENEWAL_REQUESTED'}">
-                                                    <div class="mp-card__action">
-                                                        <form class="renewal-cancel-form" method="post"
-                                                            action="${pageContext.request.contextPath}/borrow/renew/cancel"
-                                                            onsubmit="return confirm('Bạn có chắc chắn muốn hủy yêu cầu gia hạn không?');">
-                                                            <input type="hidden" name="borrowId" value="${r.id}" />
-                                                            <button class="btn danger" type="submit">Hủy gia
-                                                                hạn</button>
-                                                        </form>
-                                                    </div>
-                                                </c:if>
-                                                <c:if
-                                                    test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
-                                                    <div class="mp-card__action">
-                                                        <a class="btn success"
-                                                            href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả
-                                                            sách & Thanh toán</a>
-                                                    </div>
-                                                </c:if>
-                                                <c:if
-                                                    test="${fn:toUpperCase(r.status) == 'REQUESTED' && fn:toUpperCase(r.borrowMethod) != 'ONLINE'}">
-                                                    <div class="mp-card__action">
-                                                        <button class="btn danger" type="button"
-                                                            onclick="confirmCancel(${r.id})">Hủy yêu cầu
-                                                        </button>
-                                                    </div>
-                                                </c:if>
-                                            </div>
-                                            <c:if test="${not empty renewalHistory[r.id]}">
-                                                <div class="renewal-history-store" data-history-store
-                                                    data-borrow-id="${r.id}" hidden>
-                                                    <c:forEach items="${renewalHistory[r.id]}" var="renewal">
-                                                        <article class="renewal-history-record">
-                                                            <div class="renewal-history-record__meta">
-                                                                <span class="renewal-history-record__label">Trạng
-                                                                    thái</span>
-                                                                <strong
-                                                                    class="renewal-history-record__value">${renewal.status}</strong>
+                                <div class="history-table-wrapper">
+                                    <table class="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>SÁCH</th>
+                                                <th>TRẠNG THÁI</th>
+                                                <th>VỊ TRÍ</th>
+                                                <th>NGÀY ĐẶT</th>
+                                                <th>HẠN LẤY</th>
+                                                <th>THAO TÁC</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${historyEntries}" var="entry">
+                                                <c:set var="r" value="${entry.record}" />
+                                                <c:set var="statusClass">
+                                                    <c:choose>
+                                                        <c:when
+                                                            test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
+                                                            mp-status-pill--borrowed
+                                                        </c:when>
+                                                        <c:when test="${fn:toUpperCase(r.status) == 'SHIPPING'}">
+                                                            mp-status-pill--shipping</c:when>
+                                                        <c:when test="${fn:toUpperCase(r.status) == 'RETURNED'}">
+                                                            mp-status-pill--returned
+                                                        </c:when>
+                                                        <c:when test="${fn:toUpperCase(r.status) == 'REQUESTED'}">
+                                                            mp-status-pill--pending</c:when>
+                                                        <c:when test="${fn:toUpperCase(r.status) == 'RENEWAL_REQUESTED'}">
+                                                            mp-status-pill--pending</c:when>
+                                                        <c:otherwise>mp-status-pill--muted</c:otherwise>
+                                                    </c:choose>
+                                                </c:set>
+                                                <c:set var="methodCode" value="${fn:toUpperCase(r.borrowMethod)}" />
+                                                <c:set var="shipping" value="${r.shippingDetails}" />
+                                                <tr data-copy-index="${entry.copyIndex}" data-copy-count="${entry.copyCount}">
+                                                    <!-- SÁCH Column -->
+                                                    <td>
+                                                        <div class="table-book-cell">
+                                                            <div class="table-book-image">
+                                                                <c:choose>
+                                                                    <c:when test="${not empty r.book.image}">
+                                                                        <c:choose>
+                                                                            <c:when test="${fn:startsWith(r.book.image, 'http')}">
+                                                                                <img src="${r.book.image}" alt="${r.book.title}" />
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <img src="${pageContext.request.contextPath}/${r.book.image}"
+                                                                                    alt="${r.book.title}" />
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                    </c:when>
+                                                                    <c:otherwise>📖</c:otherwise>
+                                                                </c:choose>
                                                             </div>
-                                                            <p class="renewal-history-record__reason">
-                                                                <c:out value="${renewal.reason}"
-                                                                    default="Không có lý do" />
-                                                            </p>
-                                                            <div class="renewal-history-record__contact">
-                                                                <span class="renewal-history-record__label">Liên
-                                                                    hệ</span>
-                                                                <strong class="renewal-history-record__value">
-                                                                    <c:out
-                                                                        value="${not empty renewal.contactName ? renewal.contactName : r.user.fullName}"
-                                                                        default="Không có tên" /> ·
-                                                                    <c:out
-                                                                        value="${not empty renewal.contactPhone ? renewal.contactPhone : r.user.phone}"
-                                                                        default="Không có số" />
-                                                                    <c:if test="${not empty renewal.contactEmail}">
-                                                                        ·
-                                                                        <c:out value="${renewal.contactEmail}" />
-                                                                    </c:if>
-                                                                </strong>
+                                                            <div class="table-book-info">
+                                                                <h3>${r.book.title}</h3>
+                                                                <p>${r.book.author}</p>
                                                             </div>
+                                                        </div>
+                                                    </td>
+                                                    <!-- TRẠNG THÁI Column -->
+                                                    <td>
+                                                        <div class="table-status-cell">
+                                                            <span class="mp-status-pill ${statusClass}">${r.status}</span>
+                                                        </div>
+                                                    </td>
+                                                    <!-- VỊ TRÍ Column -->
+                                                    <td>
+                                                        <c:choose>
+                                                            <c:when test="${methodCode == 'ONLINE'}">Giao hàng</c:when>
+                                                            <c:otherwise>Tại thư viện</c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <!-- NGÀY ĐẶT Column -->
+                                                    <td>
+                                                        <div class="table-date-cell">${r.borrowDate}</div>
+                                                    </td>
+                                                    <!-- HẠN LẤY Column -->
+                                                    <td>
+                                                        <div class="table-date-cell">${r.dueDate}</div>
+                                                    </td>
+                                                    <!-- THAO TÁC Column -->
+                                                    <td>
+                                                        <div class="table-actions-cell">
+                                                            <button class="btn primary js-show-order" type="button"
+                                                                data-method="${methodCode}"
+                                                                data-recipient="${shipping != null && not empty shipping.recipient ? shipping.recipient : ''}"
+                                                                data-shipping-phone="${shipping != null && not empty shipping.phone ? shipping.phone : ''}"
+                                                                data-address="${shipping != null && not empty shipping.formattedAddress ? shipping.formattedAddress : ''}"
+                                                                data-user-phone="${not empty r.user.phone ? r.user.phone : ''}"
+                                                                data-borrow-date="${not empty r.borrowDate ? r.borrowDate : ''}"
+                                                                data-deposit="<fmt:formatNumber value=" ${r.depositAmount !=null
+                                                                ? r.depositAmount : 0}" pattern="#,##0" /> ₫"
+                                                            data-copy-index="${entry.copyIndex}">Chi tiết
+                                                            </button>
+                                                            <c:if test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
+                                                                <button class="btn btn-outline" type="button" data-open-renewal
+                                                                    data-borrow-id="${r.id}"
+                                                                    data-contact-name="${not empty currentUser.fullName ? fn:escapeXml(currentUser.fullName) : ''}"
+                                                                    data-contact-phone="${not empty currentUser.phone ? fn:escapeXml(currentUser.phone) : ''}"
+                                                                    data-contact-email="${not empty currentUser.email ? fn:escapeXml(currentUser.email) : ''}">
+                                                                    Gia hạn
+                                                                </button>
+                                                            </c:if>
+                                                            <c:if test="${fn:toUpperCase(r.status) == 'RENEWAL_REQUESTED'}">
+                                                                <form class="renewal-cancel-form" method="post"
+                                                                    action="${pageContext.request.contextPath}/borrow/renew/cancel"
+                                                                    onsubmit="return confirm('Bạn có chắc chắn muốn hủy yêu cầu gia hạn không?');">
+                                                                    <input type="hidden" name="borrowId" value="${r.id}" />
+                                                                    <button class="btn danger" type="submit">Hủy gia hạn
+                                                                    </button>
+                                                                </form>
+                                                            </c:if>
                                                             <c:if
-                                                                test="${shipping != null && (not empty shipping.formattedAddress || not empty shipping.phone)}">
-                                                                <div class="renewal-history-record__shipping">
-                                                                    <span class="renewal-history-record__label">Địa chỉ
-                                                                        giao</span>
+                                                                test="${fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'APPROVED' || fn:toUpperCase(r.status) == 'RECEIVED'}">
+                                                                <a class="btn success"
+                                                                    href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả & Thanh toán
+                                                                </a>
+                                                            </c:if>
+                                                            <c:if
+                                                                test="${fn:toUpperCase(r.status) == 'REQUESTED' && fn:toUpperCase(r.borrowMethod) != 'ONLINE'}">
+                                                                <button class="btn danger" type="button"
+                                                                    onclick="confirmCancel(${r.id})">Hủy
+                                                                </button>
+                                                            </c:if>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <c:if test="${not empty renewalHistory[r.id]}">
+                                                    <div class="renewal-history-store" data-history-store
+                                                        data-borrow-id="${r.id}" hidden>
+                                                        <c:forEach items="${renewalHistory[r.id]}" var="renewal">
+                                                            <article class="renewal-history-record">
+                                                                <div class="renewal-history-record__meta">
+                                                                    <span class="renewal-history-record__label">Trạng
+                                                                        thái</span>
+                                                                    <strong
+                                                                        class="renewal-history-record__value">${renewal.status}</strong>
+                                                                </div>
+                                                                <p class="renewal-history-record__reason">
+                                                                    <c:out value="${renewal.reason}"
+                                                                        default="Không có lý do" />
+                                                                </p>
+                                                                <div class="renewal-history-record__contact">
+                                                                    <span class="renewal-history-record__label">Liên
+                                                                        hệ</span>
+                                                                    <strong class="renewal-history-record__value">
+                                                                        <c:out
+                                                                            value="${not empty renewal.contactName ? renewal.contactName : r.user.fullName}"
+                                                                            default="Không có tên" /> ·
+                                                                        <c:out
+                                                                            value="${not empty renewal.contactPhone ? renewal.contactPhone : r.user.phone}"
+                                                                            default="Không có số" />
+                                                                        <c:if test="${not empty renewal.contactEmail}">
+                                                                            ·
+                                                                            <c:out value="${renewal.contactEmail}" />
+                                                                        </c:if>
+                                                                    </strong>
+                                                                </div>
+                                                                <c:if
+                                                                    test="${shipping != null && (not empty shipping.formattedAddress || not empty shipping.phone)}">
+                                                                    <div class="renewal-history-record__shipping">
+                                                                        <span class="renewal-history-record__label">Địa chỉ
+                                                                            giao</span>
+                                                                        <strong class="renewal-history-record__value">
+                                                                            <c:choose>
+                                                                                <c:when
+                                                                                    test="${not empty shipping.formattedAddress}">
+                                                                                    <c:out
+                                                                                        value="${shipping.formattedAddress}" />
+                                                                                </c:when>
+                                                                                <c:otherwise>Chưa có địa chỉ</c:otherwise>
+                                                                            </c:choose>
+                                                                        </strong>
+                                                                    </div>
+                                                                    <c:if test="${not empty shipping.phone}">
+                                                                        <div class="renewal-history-record__shipping">
+                                                                            <span class="renewal-history-record__label">SĐT
+                                                                                giao hàng</span>
+                                                                            <strong class="renewal-history-record__value">
+                                                                                <c:out value="${shipping.phone}" />
+                                                                            </strong>
+                                                                        </div>
+                                                                    </c:if>
+                                                                </c:if>
+                                                                <div class="renewal-history-record__date">
+                                                                    <span class="renewal-history-record__label">Gửi
+                                                                        lúc</span>
                                                                     <strong class="renewal-history-record__value">
                                                                         <c:choose>
-                                                                            <c:when
-                                                                                test="${not empty shipping.formattedAddress}">
-                                                                                <c:out
-                                                                                    value="${shipping.formattedAddress}" />
+                                                                            <c:when test="${not empty renewal.requestedAt}">
+                                                                                <c:set var="submittedAt"
+                                                                                    value="${fn:replace(renewal.requestedAt, 'T', ' ')}" />
+                                                                                ${submittedAt}
                                                                             </c:when>
-                                                                            <c:otherwise>Chưa có địa chỉ</c:otherwise>
+                                                                            <c:otherwise>Chưa ghi</c:otherwise>
                                                                         </c:choose>
                                                                     </strong>
                                                                 </div>
-                                                                <c:if test="${not empty shipping.phone}">
-                                                                    <div class="renewal-history-record__shipping">
-                                                                        <span class="renewal-history-record__label">SĐT
-                                                                            giao hàng</span>
-                                                                        <strong class="renewal-history-record__value">
-                                                                            <c:out value="${shipping.phone}" />
-                                                                        </strong>
-                                                                    </div>
-                                                                </c:if>
-                                                            </c:if>
-                                                            <div class="renewal-history-record__date">
-                                                                <span class="renewal-history-record__label">Gửi
-                                                                    lúc</span>
-                                                                <strong class="renewal-history-record__value">
-                                                                    <c:choose>
-                                                                        <c:when test="${not empty renewal.requestedAt}">
-                                                                            <c:set var="submittedAt"
-                                                                                value="${fn:replace(renewal.requestedAt, 'T', ' ')}" />
-                                                                            ${submittedAt}
-                                                                        </c:when>
-                                                                        <c:otherwise>Chưa ghi</c:otherwise>
-                                                                    </c:choose>
-                                                                </strong>
-                                                            </div>
-                                                        </article>
-                                                    </c:forEach>
-                                                </div>
-                                            </c:if>
-                                        </article>
-                                    </c:forEach>
+                                                            </article>
+                                                        </c:forEach>
+                                                    </div>
+                                                </c:if>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </c:when>
                             <c:otherwise>
