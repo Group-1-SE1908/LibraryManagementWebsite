@@ -18,8 +18,10 @@ public class LibrarianBorrowService {
     private final LibrarianActivityLogDAO logDAO = new LibrarianActivityLogDAO();
     private final RenewalRequestDAO renewalRequestDAO = new RenewalRequestDAO();
     private final ReservationService reservationService = new ReservationService();
+    private final WalletService walletService = new WalletService();
+    private final NotificationService notificationService = new NotificationService();
 
-    public BigDecimal returnBook(long borrowId, String inputBarcode) throws SQLException {
+    public BigDecimal[] returnBook(long borrowId, String inputBarcode) throws SQLException {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
         }
@@ -38,13 +40,18 @@ public class LibrarianBorrowService {
                 // + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
                 // + "WHERE br.id = ?";
 
-                String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode "
+                String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode, "
+                        + "br.user_id, br.deposit_amount, b.title AS book_title "
                         + "FROM borrow_records br "
                         + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+                        + "LEFT JOIN Book b ON br.book_id = b.book_id "
                         + "WHERE br.id = ? AND br.status IN ('BORROWED', 'RECEIVED', 'RETURN_REQUESTED')";
                 String correctBarcode = "";
                 long bookId = -1;
                 LocalDate dueDate = null;
+                long borrowUserId = -1;
+                BigDecimal depositAmount = null;
+                String bookTitle = "";
 
                 try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
                     ps.setLong(1, borrowId);
@@ -56,6 +63,11 @@ public class LibrarianBorrowService {
                             if (dueDateSql != null) {
                                 dueDate = dueDateSql.toLocalDate();
                             }
+                            borrowUserId = rs.getLong("user_id");
+                            depositAmount = rs.getBigDecimal("deposit_amount");
+                            bookTitle = rs.getString("book_title");
+                            if (bookTitle == null)
+                                bookTitle = "";
                         } else {
                             throw new IllegalArgumentException(
                                     "Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
@@ -98,6 +110,21 @@ public class LibrarianBorrowService {
                 BigDecimal fineAmount = calculateFine(dueDate, returnDate);
 
                 c.commit();
+
+                // Hoàn 50% tiền cọc vào ví người mượn
+                BigDecimal depositRefund = BigDecimal.ZERO;
+                if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0 && borrowUserId > 0) {
+                    depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
+                    try {
+                        walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND",
+                                "Hoàn 50% tiền cọc phiếu #" + borrowId, "DEPOSIT-REFUND-" + borrowId);
+                        notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund);
+                    } catch (Exception e) {
+                        System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền cọc borrowId=" + borrowId
+                                + ": " + e.getMessage());
+                    }
+                }
+
                 // Gọi ngoài transaction để tránh deadlock
                 try {
                     reservationService.onBookReturned(bookId);
@@ -106,7 +133,7 @@ public class LibrarianBorrowService {
                     System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId
                             + ": " + e.getMessage());
                 }
-                return fineAmount;
+                return new BigDecimal[] { fineAmount, depositRefund };
             } catch (Exception e) {
                 c.rollback();
                 throw e;

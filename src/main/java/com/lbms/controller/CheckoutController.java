@@ -299,7 +299,8 @@ public class CheckoutController extends HttpServlet {
                         fineMode ? PaymentHistory.TYPE_FINE : PaymentHistory.TYPE_BOOK_RETURN,
                         BigDecimal.ZERO, fineMode ? "Thanh toán phí phạt (miễn phí)" : "Trả sách (miễn phí)",
                         null, borrowId);
-                req.getSession().setAttribute("flash", "Trả sách thành công!");
+                req.getSession().setAttribute("flash",
+                        "Trả sách thành công!" + buildDepositRefundNote(br.getDepositAmount()));
                 req.getSession().setAttribute("flashType", "success");
                 resp.sendRedirect(req.getContextPath() + "/history");
                 return;
@@ -334,7 +335,8 @@ public class CheckoutController extends HttpServlet {
                 borrowService.markFinePaid(borrowId);
                 recordPayment(currentUser.getId(), PaymentHistory.METHOD_WALLET, PaymentHistory.TYPE_BOOK_RETURN,
                         fine, "Trả sách & thanh toán phí phạt phiếu #" + borrowId, ref, borrowId);
-                req.getSession().setAttribute("flash", "Trả sách & thanh toán thành công bằng ví!");
+                req.getSession().setAttribute("flash",
+                        "Trả sách & thanh toán thành công bằng ví!" + buildDepositRefundNote(br.getDepositAmount()));
             }
 
             // refresh session balance
@@ -353,6 +355,19 @@ public class CheckoutController extends HttpServlet {
         } catch (Exception ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private String buildDepositRefundNote(BigDecimal depositAmount) {
+        if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0)
+            return "";
+        BigDecimal refund = depositAmount.multiply(new BigDecimal("0.5"));
+        return " Đã hoàn 50% tiền cọc (" + formatVnd(refund) + ") vào ví.";
+    }
+
+    private String formatVnd(BigDecimal amount) {
+        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        fmt.setMaximumFractionDigits(0);
+        return fmt.format(amount) + " ₫";
     }
 
     private void recordPayment(long userId, String method, String type, BigDecimal amount,

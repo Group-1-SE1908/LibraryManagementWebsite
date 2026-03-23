@@ -22,34 +22,34 @@ import java.util.Locale;
 import java.util.Map;
 
 @WebServlet(urlPatterns = {
-    "/staff/borrowlibrary",
-    "/staff/borrowlibrary/approve",
-    "/staff/borrowlibrary/reject",
-    "/staff/borrowlibrary/return",
-    "/staff/borrowlibrary/detail",
-    "/staff/borrowlibrary/inperson",
-    "/staff/borrowlibrary/receive",
-    "/staff/borrowlibrary/verifyData",
-    "/staff/renewal",
-    "/staff/renewal/approve",
-    "/staff/renewal/reject",
-    "/staff/renewal/view",
-    "/staff/borrowlibrary/ship_fee",
-    "/staff/borrowlibrary/ship_confirm",
-    "/admin/borrowlibrary",
-    "/admin/borrowlibrary/approve",
-    "/admin/borrowlibrary/reject",
-    "/admin/borrowlibrary/return",
-    "/admin/borrowlibrary/detail",
-    "/admin/borrowlibrary/inperson",
-    "/admin/borrowlibrary/receive",
-    "/admin/borrowlibrary/verifyData",
-    "/admin/renewal",
-    "/admin/renewal/approve",
-    "/admin/renewal/reject",
-    "/admin/renewal/view",
-    "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm"
+        "/staff/borrowlibrary",
+        "/staff/borrowlibrary/approve",
+        "/staff/borrowlibrary/reject",
+        "/staff/borrowlibrary/return",
+        "/staff/borrowlibrary/detail",
+        "/staff/borrowlibrary/inperson",
+        "/staff/borrowlibrary/receive",
+        "/staff/borrowlibrary/verifyData",
+        "/staff/renewal",
+        "/staff/renewal/approve",
+        "/staff/renewal/reject",
+        "/staff/renewal/view",
+        "/staff/borrowlibrary/ship_fee",
+        "/staff/borrowlibrary/ship_confirm",
+        "/admin/borrowlibrary",
+        "/admin/borrowlibrary/approve",
+        "/admin/borrowlibrary/reject",
+        "/admin/borrowlibrary/return",
+        "/admin/borrowlibrary/detail",
+        "/admin/borrowlibrary/inperson",
+        "/admin/borrowlibrary/receive",
+        "/admin/borrowlibrary/verifyData",
+        "/admin/renewal",
+        "/admin/renewal/approve",
+        "/admin/renewal/reject",
+        "/admin/renewal/view",
+        "/admin/borrowlibrary/ship_fee",
+        "/admin/borrowlibrary/ship_confirm"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -332,19 +332,26 @@ public class LibrarianBorrowController extends HttpServlet {
                     throw new IllegalArgumentException("Barcode không hợp lệ.");
                 }
 
-                BigDecimal fineAmount = libService.returnBook(Long.parseLong(idStr), barcode);
-                if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    req.getSession().setAttribute("flash",
-                            "Đã nhận trả sách thành công. Phiếu này phát sinh tiền phạt "
-                            + formatCurrency(fineAmount)
-                            + " đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
-                } else {
-                    req.getSession().setAttribute("flash", "Đã nhận trả sách thành công.");
+                BigDecimal[] returnResult = libService.returnBook(Long.parseLong(idStr), barcode);
+                BigDecimal fineAmount = returnResult[0];
+                BigDecimal depositRefund = returnResult[1];
+                StringBuilder flashMsg = new StringBuilder("Đã nhận trả sách thành công.");
+                if (depositRefund != null && depositRefund.compareTo(BigDecimal.ZERO) > 0) {
+                    flashMsg.append(" Đã hoàn 50% tiền cọc (")
+                            .append(formatCurrency(depositRefund))
+                            .append(" đ) vào ví người mượn.");
                 }
+                if (fineAmount != null && fineAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    flashMsg.append(" Phiếu này phát sinh tiền phạt ")
+                            .append(formatCurrency(fineAmount))
+                            .append(" đ, vui lòng xác nhận tại mục Tiền phạt nếu khách thanh toán tại quầy.");
+                }
+                req.getSession().setAttribute("flash", flashMsg.toString());
             } else if ("receive".equals(action)) {
-//                long id = Long.parseLong(req.getParameter("id"));
-//                libService.confirmReceive(id);
-//                req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành công.");
+                // long id = Long.parseLong(req.getParameter("id"));
+                // libService.confirmReceive(id);
+                // req.getSession().setAttribute("flash", "Xác nhận độc giả đã lấy sách thành
+                // công.");
                 handleReceive(req, resp);
             } else if ("reject".equals(action)) {
                 long id = Long.parseLong(req.getParameter("id"));
@@ -505,7 +512,7 @@ public class LibrarianBorrowController extends HttpServlet {
             }
             req.getSession().setAttribute("flash", "Khách đã nhận thành công!.");
         }
-        //resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+        // resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
     }
 
     private String formatCurrency(BigDecimal amount) {

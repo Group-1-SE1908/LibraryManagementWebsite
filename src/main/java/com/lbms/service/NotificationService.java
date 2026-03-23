@@ -4,10 +4,13 @@ import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -117,6 +120,27 @@ public class NotificationService {
     }
 
     // ════════════════════════════════════════════════════════════════
+    // SỰ KIỆN 6: Hoàn 50% tiền cọc sau khi trả sách
+    // ════════════════════════════════════════════════════════════════
+    public void notifyDepositRefunded(long userId, String bookTitle, BigDecimal depositRefund) throws SQLException {
+        String formattedAmount = formatVnd(depositRefund);
+        String title = "Hoàn 50% tiền cọc thành công";
+        String message = "Bạn đã trả sách \"" + bookTitle + "\" thành công. "
+                + "Hệ thống đã hoàn 50% tiền cọc (" + formattedAmount + ") vào ví của bạn.";
+        insertNotification(userId, "DEPOSIT_REFUNDED", title, message);
+        try {
+            sendEmail(userId, "💰 " + title, buildEmailHtml(
+                    "💰 Hoàn tiền cọc thành công!",
+                    "Bạn đã trả sách <strong>\"" + bookTitle + "\"</strong> thành công.",
+                    "💵 Hệ thống đã hoàn <strong>50% tiền cọc (" + formattedAmount
+                            + ")</strong> vào ví của bạn ngay lập tức.",
+                    "#22c55e", "💳 Xem ví của tôi"));
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "[Notification] Bỏ qua lỗi email userId=" + userId + ": " + e.getMessage());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
     // QUERY METHODS
     // ════════════════════════════════════════════════════════════════
 
@@ -202,6 +226,14 @@ public class NotificationService {
             logger.log(Level.WARNING,
                     "[Notification] Gửi email thất bại userId=" + userId + ": " + e.getMessage());
         }
+    }
+
+    private String formatVnd(BigDecimal amount) {
+        if (amount == null)
+            return "0 ₫";
+        NumberFormat fmt = NumberFormat.getInstance(new Locale("vi", "VN"));
+        fmt.setMaximumFractionDigits(0);
+        return fmt.format(amount) + " ₫";
     }
 
     private String buildEmailHtml(String heading, String mainText,

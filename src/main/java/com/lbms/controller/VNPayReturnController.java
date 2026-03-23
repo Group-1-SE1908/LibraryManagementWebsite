@@ -1,8 +1,10 @@
 package com.lbms.controller;
 
 import com.lbms.dao.BookDAO;
+import com.lbms.dao.BorrowDAO;
 import com.lbms.dao.PaymentHistoryDAO;
 import com.lbms.model.Book;
+import com.lbms.model.BorrowRecord;
 import java.util.ArrayList;
 import com.lbms.config.VNPayConfig;
 import com.lbms.dao.UserDAO;
@@ -41,6 +43,7 @@ public class VNPayReturnController extends HttpServlet {
     private WalletService walletService;
     private ProfileService profileService;
     private PaymentHistoryDAO paymentHistoryDAO;
+    private BorrowDAO borrowDAO;
 
     @Override
     public void init() {
@@ -48,6 +51,7 @@ public class VNPayReturnController extends HttpServlet {
         this.walletService = new WalletService();
         this.profileService = new ProfileService();
         this.paymentHistoryDAO = new PaymentHistoryDAO();
+        this.borrowDAO = new BorrowDAO();
     }
 
     @Override
@@ -265,12 +269,19 @@ public class VNPayReturnController extends HttpServlet {
                             req.getSession().setAttribute("flashType", "success");
                             resp.sendRedirect(req.getContextPath() + "/fines");
                         } else {
+                            BorrowRecord brForDeposit = null;
+                            try {
+                                brForDeposit = borrowDAO.findById(borrowId);
+                            } catch (Exception ignored) {
+                            }
                             borrowService.returnBook(borrowId);
                             borrowService.markFinePaid(borrowId);
                             recordVnpayPayment(currentUser.getId(), PaymentHistory.TYPE_BOOK_RETURN,
                                     getVnpayAmount(req), "Trả sách & thanh toán phiếu #" + borrowId,
                                     vnp_TxnRef, borrowId);
-                            req.getSession().setAttribute("flash", "Thanh toán thành công & Trả sách thành công!");
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán thành công & Trả sách thành công!"
+                                            + buildDepositRefundNote(brForDeposit));
                             req.getSession().setAttribute("flashType", "success");
                             resp.sendRedirect(req.getContextPath() + "/history");
                         }
@@ -399,6 +410,16 @@ public class VNPayReturnController extends HttpServlet {
         session.setAttribute("flash", message);
         session.setAttribute("flashType", "success");
         resp.sendRedirect(req.getContextPath() + "/wallet");
+    }
+
+    private String buildDepositRefundNote(BorrowRecord br) {
+        if (br == null)
+            return "";
+        BigDecimal depositAmount = br.getDepositAmount();
+        if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0)
+            return "";
+        BigDecimal refund = depositAmount.multiply(new BigDecimal("0.5"));
+        return " Đã hoàn 50% tiền cọc (" + formatCurrency(refund) + ") vào ví.";
     }
 
     private String formatCurrency(BigDecimal amount) {
