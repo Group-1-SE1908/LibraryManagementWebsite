@@ -126,6 +126,19 @@ public class RenewalRequestDAO {
         return out;
     }
 
+    public int countByBorrowId(long borrowId) throws SQLException {
+        String sql = "SELECT COUNT(*) AS c FROM renewal_requests WHERE borrow_id = ?";
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, borrowId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("c");
+                }
+            }
+        }
+        return 0;
+    }
+
     public List<RenewalRequest> listPending() throws SQLException {
         List<RenewalRequest> out = new ArrayList<>();
         String sql = "SELECT * FROM renewal_requests WHERE status = 'PENDING' ORDER BY requested_at DESC";

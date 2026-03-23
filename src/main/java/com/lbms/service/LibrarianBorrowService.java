@@ -346,6 +346,10 @@ public class LibrarianBorrowService {
         return pending;
     }
 
+    public int countRenewalRequestsForBorrow(long borrowId) throws SQLException {
+        return renewalRequestDAO.countByBorrowId(borrowId);
+    }
+
     public RenewalRequest getRenewalRequest(long renewalId) throws SQLException {
         RenewalRequest request = renewalRequestDAO.findById(renewalId);
         if (request != null) {

@@ -368,6 +368,7 @@
                                     <span>👤 <c:out value="${renewalTicket.borrowRecord.user.fullName}" /> · <c:out value="${renewalTicket.borrowRecord.user.email}" /></span>
                                     <span>⏰ Hạn trả hiện tại: <strong><c:out value="${renewalTicket.borrowRecord.dueDate}" default="Chưa cập nhật" /></strong></span>
                                     <span>📩 Liên hệ: <c:out value="${not empty renewalTicket.contactPhone ? renewalTicket.contactPhone : renewalTicket.borrowRecord.user.phone}" default="Không có số" /> · <c:out value="${not empty renewalTicket.contactEmail ? renewalTicket.contactEmail : renewalTicket.borrowRecord.user.email}" default="Không có email" /></span>
+                                    <span>🔁 Số lần đã gửi yêu cầu gia hạn: <strong><c:out value="${renewalRequestCount}" default="0" /></strong></span>
                                 </div>
 
                                 <div class="detail-reason">

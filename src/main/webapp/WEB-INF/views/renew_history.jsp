@@ -78,6 +78,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Sách</th>
+                                            <th>Số lần gia hạn</th>
                                             <th>Người liên hệ</th>
                                             <th>Lý do</th>
                                             <th>Ngày gửi</th>
@@ -108,6 +109,13 @@
                                                             <div class="mp-cell-sub">Mã mượn: #${r.borrowId}</div>
                                                         </div>
                                                     </div>
+                                                </td>
+
+                                                <td data-label="Số lần gia hạn">
+                                                    <div class="mp-cell-title">
+                                                        ${renewalCountMap[r.borrowId]}
+                                                    </div>
+                                                    <div class="mp-cell-sub">Tổng số yêu cầu đã gửi cho phiếu này</div>
                                                 </td>
 
                                                 <td data-label="Người liên hệ">

@@ -260,8 +260,6 @@
                                 </select>
                             </label>
                         </div>
-                        <p class="shipping-note">Thông tin này sẽ được gửi tới đội vận chuyển để đồng bộ với API Giao
-                            Hàng Tiết Kiệm.</p>
                         <div class="shipping-actions">
                             <button type="button" class="btn secondary" data-shipping-cancel>Hủy</button>
                             <button type="button" class="btn primary" data-shipping-submit>Checkout</button>
