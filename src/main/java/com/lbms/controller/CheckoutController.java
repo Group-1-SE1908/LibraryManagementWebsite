@@ -365,7 +365,7 @@ public class CheckoutController extends HttpServlet {
     }
 
     private String formatVnd(BigDecimal amount) {
-        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(java.util.Locale.of("vi", "VN"));
         fmt.setMaximumFractionDigits(0);
         return fmt.format(amount) + " ₫";
     }
@@ -386,12 +386,6 @@ public class CheckoutController extends HttpServlet {
         } catch (Exception e) {
             System.err.println("[CheckoutController] recordPayment error: " + e.getMessage());
         }
-    }
-
-    private String formatVnd(BigDecimal amount) {
-        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
-        fmt.setMaximumFractionDigits(0);
-        return fmt.format(amount) + " ₫";
     }
 
     private User getCurrentUser(HttpServletRequest req) {
