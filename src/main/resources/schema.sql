@@ -73,30 +73,6 @@ GO
 CREATE INDEX IX_wallet_transaction_user_date ON wallet_transaction (user_id, created_at DESC);
 GO
 
--- Bảng 2.2: Lịch sử thanh toán tổng hợp (Payment history - cả VNPay và Wallet)
-IF OBJECT_ID('payment_history', 'U') IS NOT NULL
-    DROP TABLE payment_history;
-GO
-
-CREATE TABLE payment_history (
-    id              BIGINT IDENTITY(1,1) PRIMARY KEY,
-    user_id         INT            NOT NULL,
-    payment_method  VARCHAR(20)    NOT NULL, -- 'WALLET', 'VNPAY'
-    payment_type    VARCHAR(30)    NOT NULL, -- 'BOOK_DEPOSIT', 'FINE', 'BOOK_RETURN'
-    amount          DECIMAL(14,2)  NOT NULL,
-    description     NVARCHAR(255)  NULL,
-    reference       VARCHAR(255)   NULL,
-    status          VARCHAR(20)    NOT NULL DEFAULT 'SUCCESS', -- 'SUCCESS', 'FAILED'
-    borrow_id       BIGINT         NULL,
-    created_at      DATETIME       NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_PaymentHistory_User FOREIGN KEY (user_id) REFERENCES [User](user_id) ON DELETE CASCADE,
-    CONSTRAINT FK_PaymentHistory_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id)
-);
-GO
-
-CREATE INDEX IX_PaymentHistory_UserId ON payment_history (user_id, created_at DESC);
-GO
-
 -- Bảng 3: Thể loại sách (Category)
 CREATE TABLE Category (
                           category_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -168,6 +144,30 @@ CREATE TABLE borrow_records (
                                 CONSTRAINT FK_Borrow_Book FOREIGN KEY (book_id) REFERENCES Book(book_id),
                                 CONSTRAINT FK_Borrow_Copy FOREIGN KEY (copy_id) REFERENCES BookCopy(copy_id)
 );
+GO
+
+-- Bảng 2.2: Lịch sử thanh toán tổng hợp (Payment history - cả VNPay và Wallet)
+IF OBJECT_ID('payment_history', 'U') IS NOT NULL
+    DROP TABLE payment_history;
+GO
+
+CREATE TABLE payment_history (
+    id              BIGINT IDENTITY(1,1) PRIMARY KEY,
+    user_id         INT            NOT NULL,
+    payment_method  VARCHAR(20)    NOT NULL, -- 'WALLET', 'VNPAY'
+    payment_type    VARCHAR(30)    NOT NULL, -- 'BOOK_DEPOSIT', 'FINE', 'BOOK_RETURN'
+    amount          DECIMAL(14,2)  NOT NULL,
+    description     NVARCHAR(255)  NULL,
+    reference       VARCHAR(255)   NULL,
+    status          VARCHAR(20)    NOT NULL DEFAULT 'SUCCESS', -- 'SUCCESS', 'FAILED'
+    borrow_id       BIGINT         NULL,
+    created_at      DATETIME       NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_PaymentHistory_User FOREIGN KEY (user_id) REFERENCES [User](user_id) ON DELETE CASCADE,
+    CONSTRAINT FK_PaymentHistory_Borrow FOREIGN KEY (borrow_id) REFERENCES borrow_records(id)
+);
+GO
+
+CREATE INDEX IX_PaymentHistory_UserId ON payment_history (user_id, created_at DESC);
 GO
 
 -- Bảng 7: Yêu cầu gia hạn (Renewal Requests)
