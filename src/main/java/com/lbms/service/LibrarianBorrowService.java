@@ -250,9 +250,10 @@ public class LibrarianBorrowService {
                 }
 
                 int currentBorrowed = libDAO.countActiveBorrows(userId);
-                if (currentBorrowed + barcodes.size() > 5) {
+                if (currentBorrowed + barcodes.size() > BorrowService.MAX_ACTIVE_BORROWS) {
                     throw new IllegalArgumentException(
-                            "Vượt quá giới hạn mượn (Tối đa 5 cuốn). Đang mượn: " + currentBorrowed);
+                            "Vượt quá giới hạn mượn (Tối đa " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn). Đang mượn: "
+                                    + currentBorrowed);
                 }
 
                 LocalDate borrowDate = LocalDate.now();
