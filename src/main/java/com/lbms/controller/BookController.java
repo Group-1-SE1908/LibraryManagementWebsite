@@ -139,6 +139,7 @@ public class BookController extends HttpServlet {
                 b.setImage(imagePath);
                 b.setQuantity(0);
                 bookService.create(b, userId);
+                req.getSession().setAttribute("flash", "Thêm sách \"" + b.getTitle() + "\" thành công!");
             } else if ("/books/edit".equals(normalizedPath)) {
                 String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
@@ -151,6 +152,7 @@ public class BookController extends HttpServlet {
 
                 b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
+                req.getSession().setAttribute("flash", "Cập nhật sách \"" + b.getTitle() + "\" thành công!");
             } else if ("restock".equals(action)) {
                 int bookId = Integer.parseInt(req.getParameter("bookId"));
                 int amount = Integer.parseInt(req.getParameter("amount"));
@@ -236,6 +238,14 @@ public class BookController extends HttpServlet {
         req.setAttribute("endPage", endPage);
         req.setAttribute("hasPreviousPage", currentPage > 1);
         req.setAttribute("hasNextPage", currentPage < totalPages);
+
+        // Chuyển flash từ session sang request để hiển thị thông báo
+        Object flash = req.getSession().getAttribute("flash");
+        if (flash != null) {
+            req.setAttribute("flash", flash);
+            req.getSession().removeAttribute("flash");
+        }
+
         req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
     }
 

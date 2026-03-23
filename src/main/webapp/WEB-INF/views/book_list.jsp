@@ -470,6 +470,22 @@
 
                     <jsp:include page="footer.jsp" />
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <c:if test="${not empty flash}">
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công!',
+                                    text: '${fn:escapeXml(flash)}',
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false,
+                                    toast: true,
+                                    position: 'top-end'
+                                });
+                            });
+                        </script>
+                    </c:if>
                     <script>
                         function confirmDelete(bookId, bookTitle) {
                             Swal.fire({

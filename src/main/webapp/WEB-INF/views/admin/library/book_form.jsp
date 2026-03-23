@@ -119,7 +119,7 @@
                                                 </c:if>
 
                                                 <form
-                                                    action="${pageContext.request.contextPath}/books/${mode == 'create' ? 'new' : 'edit'}"
+                                                    action="${pageContext.request.contextPath}${booksBasePath}/${mode == 'create' ? 'new' : 'edit'}"
                                                     method="post" enctype="multipart/form-data">
 
                                                     <%-- --%>
@@ -202,7 +202,7 @@
 
                                                         <div
                                                             class="mt-5 d-flex justify-content-between align-items-center">
-                                                            <a href="${pageContext.request.contextPath}/books"
+                                                            <a href="${pageContext.request.contextPath}${booksBasePath}"
                                                                 class="text-decoration-none text-muted">
                                                                 <i class="fas fa-arrow-left me-1"></i> Quay lại danh
                                                                 sách
