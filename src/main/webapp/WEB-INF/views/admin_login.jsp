@@ -15,344 +15,142 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
             display: flex;
-            background: #0f172a;
-        }
-
-        /* ========== SPLIT LAYOUT ========== */
-        .al-split {
-            display: flex;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        /* ========== LEFT BRAND PANEL ========== */
-        .al-brand {
-            flex: 1;
-            background: linear-gradient(150deg, #0f172a 0%, #1e1b4b 45%, #2d1f6e 100%);
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 3rem;
-            position: relative;
-            overflow: hidden;
+            background: #f1f5f9;
         }
 
-        /* Animated mesh */
-        .al-brand-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(99, 102, 241, .05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, .05) 1px, transparent 1px);
-            background-size: 36px 36px;
-        }
-
-        /* Animated orbs */
-        .al-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(90px);
-            pointer-events: none;
-        }
-
-        .al-orb-1 {
-            width: 500px;
-            height: 500px;
-            background: rgba(79, 70, 229, .25);
-            top: -150px;
-            left: -150px;
-            animation: al-orb-float 10s ease-in-out infinite;
-        }
-
-        .al-orb-2 {
-            width: 350px;
-            height: 350px;
-            background: rgba(139, 92, 246, .2);
-            bottom: -100px;
-            right: -80px;
-            animation: al-orb-float 12s ease-in-out infinite reverse;
-        }
-
-        .al-orb-3 {
-            width: 200px;
-            height: 200px;
-            background: rgba(56, 189, 248, .12);
-            top: 45%;
-            left: 55%;
-            animation: al-orb-float 7s ease-in-out infinite 3s;
-        }
-
-        @keyframes al-orb-float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(15px, -20px) scale(1.05); }
-            66% { transform: translate(-10px, 10px) scale(.97); }
-        }
-
-        /* Decorative dots */
-        .al-dot {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(99, 102, 241, .25);
-        }
-
-        .al-d1 { width: 14px; height: 14px; top: 14%; left: 8%; animation: dot-blink 4s ease-in-out infinite; }
-        .al-d2 { width: 9px; height: 9px; top: 28%; right: 12%; animation: dot-blink 5s ease-in-out infinite 1s; }
-        .al-d3 { width: 18px; height: 18px; bottom: 18%; left: 16%; animation: dot-blink 6s ease-in-out infinite 2s; }
-        .al-d4 { width: 11px; height: 11px; bottom: 32%; right: 9%; animation: dot-blink 4.5s ease-in-out infinite .5s; }
-        .al-d5 { width: 6px; height: 6px; top: 52%; left: 5%; opacity: .6; animation: dot-blink 3s ease-in-out infinite 1.5s; }
-
-        @keyframes dot-blink {
-            0%, 100% { opacity: .25; transform: scale(1); }
-            50% { opacity: .7; transform: scale(1.3); }
-        }
-
-        .al-brand-inner {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 440px;
-        }
-
-        /* Shield icon */
-        .al-shield {
-            width: 110px;
-            height: 110px;
-            background: linear-gradient(135deg, rgba(99,102,241,.3), rgba(129,140,248,.2));
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem;
-            font-size: 50px;
-            color: #a5b4fc;
-            box-shadow: 0 30px 80px rgba(79,70,229,.4), inset 0 1px 0 rgba(255,255,255,.1);
-            transform: rotate(-4deg);
-            animation: shield-float 4s ease-in-out infinite;
-        }
-
-        @keyframes shield-float {
-            0%, 100% { transform: rotate(-4deg) translateY(0); }
-            50% { transform: rotate(-4deg) translateY(-8px); }
-        }
-
-        .al-logo {
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -1px;
-            margin-bottom: .4rem;
-        }
-
-        .al-logo span { color: #a5b4fc; }
-
-        .al-tagline {
-            font-size: .9rem;
-            color: #94a3b8;
-            line-height: 1.75;
-            margin-bottom: 2.5rem;
-        }
-
-        /* Access level badges */
-        .al-access-badges {
-            display: flex;
-            gap: .75rem;
-            justify-content: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .al-access-badge {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 14px;
-            padding: .9rem 1.1rem;
-            backdrop-filter: blur(6px);
-            transition: background .2s;
-        }
-
-        .al-access-badge:hover { background: rgba(255,255,255,.1); }
-
-        .al-access-badge i {
-            color: #a5b4fc;
-            font-size: 1.2rem;
-        }
-
-        .al-access-badge span {
-            font-size: .7rem;
-            color: rgba(255,255,255,.55);
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            font-weight: 600;
-        }
-
-        .al-stats {
-            display: flex;
-            gap: 2.5rem;
-            justify-content: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255,255,255,.08);
-        }
-
-        .al-stat-val {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #c7d2fe;
-        }
-
-        .al-stat-lbl {
-            font-size: .68rem;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            margin-top: 3px;
-        }
-
-        /* ========== RIGHT FORM PANEL ========== */
-        .al-form-panel {
-            width: 500px;
-            min-width: 500px;
+        .admin-card {
             background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, .1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .admin-logo {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.75rem;
+        }
+
+        .admin-logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 12px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 3.5rem;
-            position: relative;
+            color: #fff;
+            font-size: 17px;
         }
 
-        /* Corner decoration */
-        .al-form-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 140px;
-            height: 140px;
-            background: linear-gradient(135deg, #ede9fe, transparent);
-            border-radius: 0 0 0 120px;
-            opacity: .5;
+        .admin-logo-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -.5px;
         }
 
-        .al-form-top {
-            width: 100%;
-            margin-bottom: 2rem;
-            position: relative;
-        }
+        .admin-logo-text span { color: #4f46e5; }
 
-        .al-badge {
+        .admin-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             background: #ede9fe;
             color: #5b21b6;
             font-size: 11px;
             font-weight: 700;
-            padding: 5px 13px;
+            padding: 4px 12px;
             border-radius: 999px;
-            margin-bottom: 1rem;
+            margin-bottom: .9rem;
             letter-spacing: .04em;
             text-transform: uppercase;
         }
 
-        .al-form-top h2 {
-            font-size: 2rem;
+        .admin-title {
+            font-size: 1.4rem;
             font-weight: 800;
             color: #0f172a;
-            letter-spacing: -.6px;
-            margin-bottom: .4rem;
+            letter-spacing: -.5px;
+            margin-bottom: .25rem;
         }
 
-        .al-form-top p {
-            font-size: .85rem;
+        .admin-sub {
+            font-size: .83rem;
             color: #64748b;
-            line-height: 1.6;
+            margin-bottom: 1.75rem;
         }
 
-        /* Error alert */
-        .al-alert {
-            width: 100%;
+        .admin-alert {
             background: #fff1f2;
             border: 1px solid #fecdd3;
             border-left: 4px solid #f43f5e;
             border-radius: 10px;
-            padding: 12px 16px;
+            padding: 11px 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 13.5px;
+            gap: 9px;
+            font-size: 13px;
             color: #9f1239;
             margin-bottom: 1.25rem;
-            animation: slide-in .3s ease;
         }
 
-        @keyframes slide-in {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Form */
-        .al-form {
-            width: 100%;
+        .admin-form {
             display: flex;
             flex-direction: column;
             gap: 1.1rem;
         }
 
-        .al-field { display: flex; flex-direction: column; }
-
-        .al-label {
+        .admin-label {
+            display: block;
             font-size: 12.5px;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 7px;
-            letter-spacing: .01em;
+            margin-bottom: 6px;
         }
 
-        .al-input-wrap { position: relative; }
+        .admin-iw { position: relative; }
 
-        .al-input-wrap i.field-icon {
+        .admin-iw i.fi {
             position: absolute;
-            left: 14px;
+            left: 13px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
-            font-size: 14px;
+            font-size: 13px;
             pointer-events: none;
-            transition: color .2s;
         }
 
-        .al-input-wrap:focus-within i.field-icon { color: #6366f1; }
+        .admin-iw:focus-within i.fi { color: #6366f1; }
 
-        .al-input-wrap input {
+        .admin-iw input {
             width: 100%;
-            padding: 13px 14px 13px 42px;
+            padding: 12px 12px 12px 38px;
             border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 14px;
             color: #0f172a;
             background: #f8fafc;
-            transition: border-color .2s, background .2s, box-shadow .2s;
+            transition: border-color .2s, box-shadow .2s;
         }
 
-        .al-input-wrap input:focus {
+        .admin-iw input:focus {
             outline: none;
             border-color: #6366f1;
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, .1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
         }
 
-        .al-input-wrap input::placeholder { color: #cbd5e1; }
+        .admin-iw input::placeholder { color: #cbd5e1; }
 
-        /* Toggle password */
-        .al-input-wrap .toggle-pw {
+        .admin-iw .toggle-pw {
             position: absolute;
-            right: 13px;
+            right: 11px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
@@ -361,72 +159,69 @@
             padding: 4px;
             border: none;
             background: none;
-            transition: color .2s;
         }
 
-        .al-input-wrap .toggle-pw:hover { color: #6366f1; }
-        .al-input-wrap.has-toggle input { padding-right: 40px; }
+        .admin-iw .toggle-pw:hover { color: #6366f1; }
+        .admin-iw.has-toggle input { padding-right: 38px; }
 
-        .al-forgot {
-            align-self: flex-end;
-            font-size: 12.5px;
+        .admin-forgot {
+            display: block;
+            text-align: right;
+            font-size: 12px;
             color: #6366f1;
+            font-weight: 500;
             text-decoration: none;
             margin-top: 5px;
-            font-weight: 500;
         }
 
-        .al-forgot:hover { text-decoration: underline; }
+        .admin-forgot:hover { text-decoration: underline; }
 
-        .al-submit {
+        .admin-submit {
             margin-top: 4px;
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: #fff;
             border: none;
-            border-radius: 12px;
-            font-size: 15px;
+            border-radius: 10px;
+            font-size: 14.5px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
+            gap: 8px;
             transition: all .2s;
-            box-shadow: 0 4px 18px rgba(99, 102, 241, .38);
-            letter-spacing: .02em;
+            box-shadow: 0 3px 12px rgba(99, 102, 241, .38);
         }
 
-        .al-submit:hover {
-            box-shadow: 0 10px 30px rgba(99, 102, 241, .5);
-            transform: translateY(-1.5px);
-            filter: brightness(1.05);
+        .admin-submit:hover {
+            box-shadow: 0 6px 20px rgba(99, 102, 241, .5);
+            transform: translateY(-1px);
         }
 
-        .al-submit:active { transform: translateY(0); }
+        .admin-submit:active { transform: translateY(0); }
 
-        .al-divider {
+        .admin-divider {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             color: #cbd5e1;
-            font-size: 12px;
+            font-size: 11.5px;
         }
 
-        .al-divider::before,
-        .al-divider::after {
+        .admin-divider::before, .admin-divider::after {
             content: '';
             flex: 1;
             height: 1px;
             background: #e2e8f0;
         }
 
-        .al-user-link {
+        .admin-user-link {
             width: 100%;
-            padding: 13px 14px;
+            padding: 12px 14px;
             border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 13.5px;
             font-weight: 600;
             color: #475569;
@@ -441,147 +236,76 @@
             transition: all .2s;
         }
 
-        .al-user-link:hover {
+        .admin-user-link:hover {
             border-color: #c7d2fe;
             background: #f5f3ff;
             color: #4f46e5;
         }
 
-        .al-footer-note {
-            margin-top: 2rem;
+        .admin-footer {
+            margin-top: 1.75rem;
             font-size: 11.5px;
             color: #94a3b8;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
-        }
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 860px) {
-            .al-brand { display: none; }
-            .al-form-panel { width: 100%; min-width: unset; }
-        }
-
-        @media (max-width: 480px) {
-            .al-form-panel { padding: 2rem 1.5rem; }
         }
     </style>
 </head>
 
 <body>
-    <div class="al-split">
+    <div class="admin-card">
 
-        <!-- ===== LEFT: Brand Panel ===== -->
-        <div class="al-brand">
-            <div class="al-brand-grid"></div>
-            <div class="al-orb al-orb-1"></div>
-            <div class="al-orb al-orb-2"></div>
-            <div class="al-orb al-orb-3"></div>
-            <div class="al-dot al-d1"></div>
-            <div class="al-dot al-d2"></div>
-            <div class="al-dot al-d3"></div>
-            <div class="al-dot al-d4"></div>
-            <div class="al-dot al-d5"></div>
-
-            <div class="al-brand-inner">
-                <div class="al-shield">
-                    <i class="fas fa-shield-halved"></i>
-                </div>
-                <div class="al-logo">LB<span>MS</span></div>
-                <p class="al-tagline">
-                    Cổng quản trị hệ thống thư viện số.<br>
-                    Quản lý sách, độc giả và vận hành thư viện<br>
-                    một cách hiệu quả và an toàn.
-                </p>
-
-                <div class="al-access-badges">
-                    <div class="al-access-badge">
-                        <i class="fas fa-user-shield"></i>
-                        <span>Admin</span>
-                    </div>
-                    <div class="al-access-badge">
-                        <i class="fas fa-book-bookmark"></i>
-                        <span>Thủ thư</span>
-                    </div>
-                    <div class="al-access-badge">
-                        <i class="fas fa-lock"></i>
-                        <span>Bảo mật</span>
-                    </div>
-                </div>
-
-                <div class="al-stats">
-                    <div>
-                        <div class="al-stat-val">5,000+</div>
-                        <div class="al-stat-lbl">Đầu sách</div>
-                    </div>
-                    <div>
-                        <div class="al-stat-val">1,200+</div>
-                        <div class="al-stat-lbl">Độc giả</div>
-                    </div>
-                    <div>
-                        <div class="al-stat-val">24/7</div>
-                        <div class="al-stat-lbl">Hỗ trợ</div>
-                    </div>
-                </div>
-            </div>
+        <div class="admin-logo">
+            <div class="admin-logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="admin-logo-text">LB<span>MS</span></div>
         </div>
 
-        <!-- ===== RIGHT: Form Panel ===== -->
-        <div class="al-form-panel">
-            <div class="al-form-top">
-                <div class="al-badge">
-                    <i class="fas fa-lock fa-xs"></i>&nbsp;Truy cập nội bộ
-                </div>
-                <h2>Đăng nhập</h2>
-                <p>Chỉ dành cho quản trị viên và nhân viên thư viện.</p>
+        <div class="admin-badge">
+            <i class="fas fa-lock fa-xs"></i> Truy cập nội bộ
+        </div>
+        <div class="admin-title">Đăng nhập</div>
+        <div class="admin-sub">Chỉ dành cho quản trị viên và nhân viên thư viện.</div>
+
+        <c:if test="${not empty error}">
+            <div class="admin-alert">
+                <i class="fas fa-circle-exclamation"></i>
+                <span>${error}</span>
             </div>
+        </c:if>
 
-            <c:if test="${not empty error}">
-                <div class="al-alert">
-                    <i class="fas fa-circle-exclamation"></i>
-                    <span>${error}</span>
+        <form class="admin-form" method="post" action="${pageContext.request.contextPath}/adminlogin">
+            <div>
+                <label class="admin-label">Email công việc</label>
+                <div class="admin-iw">
+                    <i class="fas fa-envelope fi"></i>
+                    <input type="email" name="email" placeholder="admin@library.edu" required autofocus />
                 </div>
-            </c:if>
-
-            <form class="al-form" method="post" action="${pageContext.request.contextPath}/adminlogin">
-                <div class="al-field">
-                    <div class="al-label">Email công việc</div>
-                    <div class="al-input-wrap">
-                        <i class="fas fa-envelope field-icon"></i>
-                        <input type="email" name="email" placeholder="admin@library.edu" required autofocus />
-                    </div>
-                </div>
-
-                <div class="al-field">
-                    <div class="al-label">Mật khẩu</div>
-                    <div class="al-input-wrap has-toggle">
-                        <i class="fas fa-lock field-icon"></i>
-                        <input type="password" name="password" id="al-pw" placeholder="••••••••" required />
-                        <button type="button" class="toggle-pw" onclick="togglePw('al-pw', this)">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/reset-password" class="al-forgot">
-                        Quên mật khẩu?
-                    </a>
-                </div>
-
-                <button type="submit" class="al-submit">
-                    <i class="fas fa-arrow-right-to-bracket"></i>
-                    Đăng nhập hệ thống
-                </button>
-
-                <div class="al-divider">hoặc</div>
-
-                <a href="${pageContext.request.contextPath}/login" class="al-user-link">
-                    <i class="fas fa-user"></i> Tôi là bạn đọc thường
-                </a>
-            </form>
-
-            <div class="al-footer-note">
-                <i class="fas fa-shield fa-xs"></i>
-                Kết nối được mã hóa và bảo mật
             </div>
+            <div>
+                <label class="admin-label">Mật khẩu</label>
+                <div class="admin-iw has-toggle">
+                    <i class="fas fa-lock fi"></i>
+                    <input type="password" name="password" id="al-pw" placeholder="••••••••" required />
+                    <button type="button" class="toggle-pw" onclick="togglePw('al-pw', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <a href="${pageContext.request.contextPath}/reset-password" class="admin-forgot">Quên mật khẩu?</a>
+            </div>
+            <button type="submit" class="admin-submit">
+                <i class="fas fa-arrow-right-to-bracket"></i> Đăng nhập hệ thống
+            </button>
+            <div class="admin-divider">hoặc</div>
+            <a href="${pageContext.request.contextPath}/login" class="admin-user-link">
+                <i class="fas fa-user"></i> Tôi là bạn đọc thường
+            </a>
+        </form>
+
+        <div class="admin-footer">
+            <i class="fas fa-shield fa-xs"></i>
+            Kết nối được mã hóa và bảo mật
         </div>
 
     </div>
