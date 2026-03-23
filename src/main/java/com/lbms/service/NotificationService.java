@@ -231,7 +231,7 @@ public class NotificationService {
     private String formatVnd(BigDecimal amount) {
         if (amount == null)
             return "0 ₫";
-        NumberFormat fmt = NumberFormat.getInstance(new Locale("vi", "VN"));
+        NumberFormat fmt = NumberFormat.getInstance(Locale.of("vi", "VN"));
         fmt.setMaximumFractionDigits(0);
         return fmt.format(amount) + " ₫";
     }

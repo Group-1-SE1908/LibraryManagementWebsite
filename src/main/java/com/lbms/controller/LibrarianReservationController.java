@@ -2,7 +2,6 @@ package com.lbms.controller;
 
 import com.lbms.model.Reservation;
 import com.lbms.model.User;
-import com.lbms.model.Role;
 import com.lbms.service.ReservationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -39,7 +38,8 @@ public class LibrarianReservationController extends HttpServlet {
 
         try {
             String action = req.getParameter("action");
-            if (action == null) action = "";
+            if (action == null)
+                action = "";
 
             if ("queue".equals(action)) {
                 // Hiển thị hàng chờ của một cuốn sách
@@ -61,20 +61,21 @@ public class LibrarianReservationController extends HttpServlet {
         // ── Kiểm tra quyền ──────────────────────────────────────────────
         User currentUser = getCurrentUser(req);
         if (currentUser == null) {
-            sendJsonResponse(resp, HttpServletResponse.SC_UNAUTHORIZED, 
+            sendJsonResponse(resp, HttpServletResponse.SC_UNAUTHORIZED,
                     "Bạn phải đăng nhập");
             return;
         }
 
         if (!isLibrarianOrAdmin(currentUser)) {
-            sendJsonResponse(resp, HttpServletResponse.SC_FORBIDDEN, 
+            sendJsonResponse(resp, HttpServletResponse.SC_FORBIDDEN,
                     "Bạn không có quyền truy cập");
             return;
         }
 
         try {
             String action = req.getParameter("action");
-            if (action == null) action = "";
+            if (action == null)
+                action = "";
 
             switch (action) {
                 case "approve":
@@ -87,11 +88,11 @@ public class LibrarianReservationController extends HttpServlet {
                     handleBarcodeVerify(req, resp, currentUser);
                     break;
                 default:
-                    sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+                    sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                             "Hành động không hợp lệ");
             }
         } catch (SQLException e) {
-            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+            sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Lỗi cơ sở dữ liệu: " + e.getMessage());
         }
     }
@@ -104,14 +105,14 @@ public class LibrarianReservationController extends HttpServlet {
 
         try {
             long reservationId = Long.parseLong(req.getParameter("reservationId"));
-            
+
             // Gọi service để confirm pickup
             reservationService.confirmReservationPickup(reservationId);
-            
+
             sendJsonResponse(resp, HttpServletResponse.SC_OK,
                     "Đã xác nhận lấy sách thành công");
         } catch (NumberFormatException e) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                     "ID không hợp lệ");
         }
     }
@@ -125,15 +126,16 @@ public class LibrarianReservationController extends HttpServlet {
         try {
             long reservationId = Long.parseLong(req.getParameter("reservationId"));
             String reason = req.getParameter("reason");
-            if (reason == null) reason = "Không có lý do";
+            if (reason == null)
+                reason = "Không có lý do";
 
             // Gọi service để reject reservation
             reservationService.rejectReservation(reservationId, reason);
-            
+
             sendJsonResponse(resp, HttpServletResponse.SC_OK,
                     "Đã từ chối đặt trước");
         } catch (NumberFormatException e) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                     "ID không hợp lệ");
         }
     }
@@ -149,7 +151,7 @@ public class LibrarianReservationController extends HttpServlet {
             String barcode = req.getParameter("barcode");
 
             if (barcode == null || barcode.trim().isEmpty()) {
-                sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+                sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                         "Mã barcode không hợp lệ");
                 return;
             }
@@ -161,11 +163,11 @@ public class LibrarianReservationController extends HttpServlet {
                 sendJsonResponse(resp, HttpServletResponse.SC_OK,
                         "Barcode hợp lệ - Xác nhận thành công");
             } else {
-                sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+                sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                         "Barcode không khớp với sách trong đặt trước");
             }
         } catch (NumberFormatException e) {
-            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, 
+            sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST,
                     "ID không hợp lệ");
         }
     }
@@ -193,7 +195,7 @@ public class LibrarianReservationController extends HttpServlet {
         try {
             long bookId = Long.parseLong(req.getParameter("bookId"));
             List<Reservation> queue = reservationService.listWaitingQueue(bookId);
-            
+
             req.setAttribute("queue", queue);
             req.setAttribute("bookId", bookId);
             req.setAttribute("pageTitle", "Hàng chờ - Sách ID: " + bookId);
@@ -201,7 +203,7 @@ public class LibrarianReservationController extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/views/admin/library/reservation_queue.jsp")
                     .forward(req, resp);
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, 
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
                     "Book ID không hợp lệ");
         }
     }
@@ -210,12 +212,14 @@ public class LibrarianReservationController extends HttpServlet {
 
     private User getCurrentUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        if (session == null) return null;
+        if (session == null)
+            return null;
         return (User) session.getAttribute("currentUser");
     }
 
     private boolean isLibrarianOrAdmin(User user) {
-        if (user == null || user.getRole() == null) return false;
+        if (user == null || user.getRole() == null)
+            return false;
         String roleName = user.getRole().getName();
         return "LIBRARIAN".equals(roleName) || "ADMIN".equals(roleName);
     }
@@ -227,7 +231,7 @@ public class LibrarianReservationController extends HttpServlet {
             throws IOException {
         resp.setContentType("application/json; charset=UTF-8");
         resp.setStatus(statusCode);
-        resp.getWriter().write("{\"status\": " + statusCode + ", \"message\": \"" + 
+        resp.getWriter().write("{\"status\": " + statusCode + ", \"message\": \"" +
                 message.replace("\"", "\\\"") + "\"}");
     }
 }

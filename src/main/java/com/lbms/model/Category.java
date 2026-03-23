@@ -1,30 +1,54 @@
 package com.lbms.model;
 
 public class Category {
-    private int categoryId;
-    private String categoryName;
+    private long id;
+    private String name;
 
     public Category() {
     }
 
-    public Category(int categoryId, String categoryName) {
-        this.categoryId = categoryId;
-        this.categoryName = categoryName;
+    public Category(long id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
-    public int getCategoryId() {
-        return categoryId;
+    public long getId() {
+        return id;
     }
 
-    public void setCategoryId(int categoryId) {
-        this.categoryId = categoryId;
+    public void setId(long id) {
+        this.id = id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** @deprecated Use {@link #getId()} */
+    @Deprecated
+    public long getCategoryId() {
+        return id;
+    }
+
+    /** @deprecated Use {@link #setId(long)} */
+    @Deprecated
+    public void setCategoryId(long categoryId) {
+        this.id = categoryId;
+    }
+
+    /** @deprecated Use {@link #getName()} */
+    @Deprecated
     public String getCategoryName() {
-        return categoryName;
+        return name;
     }
 
+    /** @deprecated Use {@link #setName(String)} */
+    @Deprecated
     public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+        this.name = categoryName;
     }
 }

@@ -674,7 +674,7 @@ public class CartController extends HttpServlet {
     }
 
     private String formatVnd(BigDecimal amount) {
-        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        java.text.NumberFormat fmt = java.text.NumberFormat.getInstance(java.util.Locale.of("vi", "VN"));
         fmt.setMaximumFractionDigits(0);
         return fmt.format(amount) + " ₫";
     }
