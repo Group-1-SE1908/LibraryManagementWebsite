@@ -543,12 +543,12 @@
                         <script>
                             $(document).ready(function () {
                                 $(document).ready(function () {
-                                    toggleReceiverWrapper(); // 👈 BẮT BUỘC
+                                    toggleReceiverWrapper();
                                 });
                                 // Tự động ẩn Alert sau 4s
                                 setTimeout(() => { $(".alert-floating").fadeOut('slow'); }, 4000);
 
-                                // Khởi tạo Select2 khi modal mở
+
                                 $('#sendNotifModal').on('shown.bs.modal', function () {
                                     $('#userSelect').select2({
                                         dropdownParent: $('#sendNotifModal'),
@@ -568,6 +568,37 @@
                                     wrapper.fadeOut();
                                     $('#userSelect').prop('required', false);
                                 }
+                            }
+                            function markAsRead(id, btnElement) {
+                                fetch(`${pageContext.request.contextPath}/notifications?action=markRead&notifId=${id}`, {
+                                    method: 'POST'
+                                }).then(response => {
+                                    if (response.ok) {
+
+                                        const badge = document.querySelector('.badge-notify');
+                                        if (badge) {
+                                            let count = parseInt(badge.innerText);
+                                            if (count > 1) {
+                                                badge.innerText = (count - 1) > 99 ? '99+' : (count - 1);
+                                            } else {
+                                                badge.remove();
+                                            }
+                                        }
+
+
+                                        const card = btnElement.closest('.notif-card');
+                                        card.classList.remove('unread');
+                                        btnElement.parentElement.remove();
+
+
+                                        const subTitle = document.querySelector('.page-header__sub strong');
+                                        if (subTitle) {
+                                            let countHead = parseInt(subTitle.innerText);
+                                            if (countHead > 1) subTitle.innerText = countHead - 1;
+                                            else document.querySelector('.page-header__sub').innerText = "Tất cả đã đọc";
+                                        }
+                                    }
+                                }).catch(err => console.error("Lỗi:", err));
                             }
                         </script>
             </body>

@@ -33,8 +33,10 @@ public class NotificationController extends HttpServlet {
 
         try {
 
-            List<Map<String, Object>> notifications = notificationService.listByUser(currentUser.getId());
-            int unreadCount = notificationService.countUnread(currentUser.getId());
+            int userId = (int) currentUser.getId();
+            List<Map<String, Object>> notifications = notificationService.listByUser(userId);
+            int unreadCount = notificationService.getUnreadCount(userId);
+
             req.setAttribute("notifications", notifications);
             req.setAttribute("unreadCount", unreadCount);
 
@@ -81,7 +83,8 @@ public class NotificationController extends HttpServlet {
                 session.setAttribute("successMessage", "Thông báo đã được gửi thành công!");
             } else if ("markRead".equals(action)) {
                 long notifId = Long.parseLong(req.getParameter("notifId"));
-                notificationService.markRead(notifId, currentUser.getId());
+
+                notificationService.markAsRead(notifId, (int) currentUser.getId());
             } else if ("markAllRead".equals(action)) {
                 notificationService.markAllRead(currentUser.getId());
             }

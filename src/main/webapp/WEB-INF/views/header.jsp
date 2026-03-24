@@ -450,6 +450,40 @@
                         flex-shrink: 0;
                     }
 
+                    .nav-notification {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .badge-notify {
+                        position: absolute;
+                        top: -5px;
+                        /* Điều chỉnh lại để không đè quá nhiều lên icon */
+                        right: -5px;
+                        background-color: #ef4444;
+                        color: white;
+                        border-radius: 50%;
+                        padding: 2px 5px;
+                        font-size: 10px;
+                        line-height: 1;
+                        font-weight: bold;
+                        border: 2px solid #fff;
+                    }
+
+                    /* Thêm CSS này để nút thông báo đồng bộ với các nút khác */
+                    .btn-notification {
+                        text-decoration: none;
+                        margin-right: 15px;
+                        /* Khoảng cách với nút Cart */
+                        transition: opacity 0.2s;
+                    }
+
+                    .btn-notification:hover {
+                        opacity: 0.7;
+                    }
+
                     @media (max-width: 1320px) {
                         .header-nav-toggle {
                             display: inline-flex;
@@ -524,6 +558,7 @@
                         .header-nav li a svg {
                             opacity: 0.95;
                         }
+
                     }
 
                     @media (max-width: 768px) {
@@ -637,6 +672,23 @@
                             </nav>
 
                             <div class="header-actions">
+                                <a href="${pageContext.request.contextPath}/notifications" class="btn-notification">
+                                    <div class="nav-notification">
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                        </svg>
+
+                                        <c:if test="${globalUnreadCount > 0}">
+                                            <span class="badge-notify">
+                                                ${globalUnreadCount > 99 ? '99+' : globalUnreadCount}
+                                            </span>
+                                        </c:if>
+                                    </div>
+                                </a>
                                 <a href="${pageContext.request.contextPath}/cart" class="btn-cart">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="9" cy="21" r="1" />
@@ -794,4 +846,24 @@
                             toggleNavPanel(false);
                         }
                     });
+
+                    function markAsRead(id) {
+                        fetch(`${pageContext.request.contextPath}/notifications?action=markRead&notifId=${id}`, {
+                            method: 'POST'
+                        }).then(response => {
+                            if (response.redirected) {
+
+                                const badge = document.querySelector('.badge-notify');
+                                if (badge) {
+                                    let count = parseInt(badge.innerText);
+                                    if (count > 1) {
+                                        badge.innerText = count - 1;
+                                    } else {
+                                        badge.remove();
+                                    }
+                                }
+                                location.reload();
+                            }
+                        });
+                    }
                 </script>

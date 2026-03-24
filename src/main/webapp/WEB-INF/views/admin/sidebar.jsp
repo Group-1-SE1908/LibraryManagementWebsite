@@ -83,13 +83,62 @@
                     </div>
                 </nav>
 
+
+
                 <div class="ps-footer">
+                    <div class="ps-profile">
+                        <%-- Xử lý logic lấy ảnh đại diện đồng bộ với Header --%>
+                            <c:choose>
+                                <c:when test="${not empty currentUser.avatar && currentUser.avatar != 'null'}">
+                                    <c:set var="isAbsolute" value="${fn:startsWith(currentUser.avatar, 'http')}" />
+                                    <c:set var="finalAvatar"
+                                        value="${isAbsolute ? currentUser.avatar : pageContext.request.contextPath.concat('/').concat(currentUser.avatar)}" />
+
+                                    <img src="${finalAvatar}" class="ps-avatar"
+                                        style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;"
+                                        alt="Avatar"
+                                        onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/images/default-avatar.png';">
+                                </c:when>
+                                <c:otherwise>
+                                    <%-- Nếu không có ảnh, dùng chữ cái đầu của tên --%>
+                                        <div class="ps-avatar"
+                                            style="width: 40px; height: 40px; border-radius: 8px; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                            ${fn:toUpperCase(fn:substring(userName, 0, 1))}
+                                        </div>
+                                </c:otherwise>
+                            </c:choose>
+
+                            <div>
+                                <div class="ps-user-name">${userName}</div>
+                                <div class="ps-user-role">Quản trị viên</div>
+                            </div>
+
+                            <%-- Phần Notification --%>
+                                <a href="${pageContext.request.contextPath}/notifications" class="ps-notification-link"
+                                    title="Thông báo">
+                                    <div class="nav-notification"
+                                        style="position: relative; display: flex; align-items: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                        </svg>
+                                        <c:if test="${globalUnreadCount > 0}">
+                                            <span class="badge-notify">
+                                                ${globalUnreadCount > 99 ? '99+' : globalUnreadCount}
+                                            </span>
+                                        </c:if>
+                                    </div>
+                                </a>
+
+                    </div>
                     <div class="ps-footer-actions">
                         <a href="${pageContext.request.contextPath}/profile" class="ps-footer-btn ps-btn-profile">
-                            <i class="fas fa-cog"></i> <span class="ps-btn-text">Cài đặt</span>
+                            <i class="fas fa-user-gear"></i> <span class="ps-btn-text">Hồ sơ</span>
                         </a>
                         <a href="${pageContext.request.contextPath}/logout" class="ps-footer-btn ps-btn-logout">
-                            <i class="fas fa-power-off"></i> <span class="ps-btn-text">Đăng xuất</span>
+                            <i class="fas fa-power-off"></i> <span class="ps-btn-text">Thoát</span>
                         </a>
                     </div>
                 </div>
