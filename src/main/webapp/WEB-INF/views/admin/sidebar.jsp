@@ -68,6 +68,10 @@
                             class="${fn:contains(activeUri, '/admin/reports') ? 'active' : ''}">
                             <i class="fas fa-flag"></i> <span>Báo cáo bình luận</span>
                         </a>
+                        <a href="${pageContext.request.contextPath}/admin/contacts"
+                            class="${fn:contains(activeUri, '/admin/contacts') ? 'active' : ''}">
+                            <i class="fas fa-envelope-open-text"></i> <span>Phản hồi liên hệ</span>
+                        </a>
                     </div>
 
                     <div class="ps-section-title">Phân tích</div>

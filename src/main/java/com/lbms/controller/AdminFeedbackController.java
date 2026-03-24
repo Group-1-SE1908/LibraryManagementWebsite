@@ -18,22 +18,20 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
-
 import java.util.logging.Logger;
+import java.sql.SQLException;
 
 @WebServlet(name = "AdminFeedbackController", urlPatterns = { "/staff/feedback", "/admin/feedback" })
 public class AdminFeedbackController extends HttpServlet {
-    private CommentReportDAO reportDAO;
-    private CommentReplyDAO commentReplyDAO;
-    private CommentDAO commentDAO;
-    private UserDAO userDAO;
+    private CommentReportDAO reportDAO = new CommentReportDAO();
+    private CommentReplyDAO commentReplyDAO = new CommentReplyDAO();
+    private CommentDAO commentDAO = new CommentDAO();
+    private UserDAO userDAO = new UserDAO();
+    private com.lbms.dao.BookDAO bookDAO = new com.lbms.dao.BookDAO();
 
     @Override
     public void init() {
-        this.reportDAO = new CommentReportDAO();
-        this.commentDAO = new CommentDAO();
-        this.commentReplyDAO = new CommentReplyDAO();
-        this.userDAO = new UserDAO();
+        // Initialization moved to declarations to bypass IDE hot-swap skipping issues
     }
 
     @Override
@@ -74,8 +72,18 @@ public class AdminFeedbackController extends HttpServlet {
                 Comment comment = commentDAO.findById(commentId);
                 List<CommentReply> replies = commentReplyDAO.findByCommentId(commentId);
 
+                com.lbms.model.Book book = null;
+                if (comment != null) {
+                    try {
+                        book = bookDAO.findById(comment.getBookId());
+                    } catch (Exception e) {
+                        Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, "Lỗi lấy thông tin sách", e);
+                    }
+                }
+
                 request.setAttribute("comment", comment);
                 request.setAttribute("replies", replies);
+                request.setAttribute("book", book);
 
                 request.getRequestDispatcher("/WEB-INF/views/admin/library/feedback_detail.jsp")
                         .forward(request, response);
@@ -134,7 +142,7 @@ public class AdminFeedbackController extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-        
+
         // Determine base path based on user role or servlet path
         String basePath = "/admin/feedback";
         if (request.getServletPath().startsWith("/staff/")) {
@@ -221,7 +229,7 @@ public class AdminFeedbackController extends HttpServlet {
         if (reason == null) {
             return "Không xác định";
         }
-        
+
         switch (reason.toLowerCase()) {
             case "spam":
                 return "Spam";

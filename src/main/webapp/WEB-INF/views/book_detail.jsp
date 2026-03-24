@@ -1,4 +1,4 @@
-﻿<%@ page import="com.lbms.model.Comment" %>
+<%@ page import="com.lbms.model.Comment" %>
     <%@ page import="com.lbms.dao.CommentReplyDAO" %>
         <%@ page import="java.util.List" %>
             <%@ page import="java.util.Collections" %>
@@ -117,11 +117,54 @@
                                                                     </span>
                                                                 </c:otherwise>
                                                             </c:choose>
-                                                            <div class="book-hero__rating" id="bookRatingDisplay">
-                                                                <span class="book-hero__rating-value"
-                                                                    id="bookRatingValue"></span>
-                                                                <span class="book-hero__rating-count"
-                                                                    id="bookRatingCount"></span>
+                                                             <div class="book-hero__rating" id="bookRatingDisplay">
+                                                                <style>
+                                                                    .book-hero__rating {
+                                                                        display: flex !important;
+                                                                        align-items: center;
+                                                                        gap: 8px;
+                                                                    }
+                                                                    .comment-rating {
+                                                                        display: flex;
+                                                                        gap: 2px;
+                                                                        font-size: 18px;
+                                                                        line-height: 1;
+                                                                    }
+                                                                    .book-hero__rating-value {
+                                                                        font-size: 20px !important;
+                                                                        font-weight: 700;
+                                                                    }
+                                                                    .book-hero__rating-count {
+                                                                        font-size: 14px !important;
+                                                                        margin-left: 4px;
+                                                                    }
+                                                                </style>
+                                                                <c:choose>
+                                                                    <c:when test="${ratingCount > 0}">
+                                                                        <div class="comment-rating">
+                                                                            <c:forEach begin="1" end="5" var="i">
+                                                                                <span class="star"
+                                                                                    style="color: ${averageRating > (i - 1) ? '#f59e0b' : '#cbd5e1'};">★</span>
+                                                                            </c:forEach>
+                                                                        </div>
+                                                                        <span class="book-hero__rating-value"
+                                                                            id="bookRatingValue">
+                                                                            <fmt:formatNumber value="${averageRating}"
+                                                                                maxFractionDigits="1"
+                                                                                minFractionDigits="1" />
+                                                                        </span>
+                                                                        <span class="book-hero__rating-count"
+                                                                            id="bookRatingCount">
+                                                                            (${ratingCount} <fmt:message
+                                                                                key="book.reviews" />)
+                                                                        </span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="book-hero__rating-count">
+                                                                            <fmt:message key="book.no_reviews" />
+                                                                        </span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
                                                             </div>
                                                         </div>
 

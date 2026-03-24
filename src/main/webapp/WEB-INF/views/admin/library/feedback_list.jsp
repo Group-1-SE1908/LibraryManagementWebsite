@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
             <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -147,6 +147,58 @@
                             background: #f3f4f6;
                             color: #374151;
                         }
+
+                        /* ── Filter chip bar ── */
+                        .report-filter-bar {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            margin-bottom: 20px;
+                            flex-wrap: wrap;
+                        }
+                
+                        .filter-chip {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 18px;
+                            border-radius: 20px;
+                            font-size: 13px;
+                            font-weight: 600;
+                            border: 1px solid #cbd5e1;
+                            background: #f1f5f9;
+                            cursor: pointer;
+                            color: #475569;
+                            transition: all 0.2s ease;
+                        }
+                
+                        .filter-chip:hover {
+                            background: #e2e8f0;
+                            color: #1e293b;
+                        }
+                
+                        .filter-chip.active {
+                            background: #0b57d0;
+                            color: #fff;
+                            border-color: #0b57d0;
+                        }
+                
+                        .filter-chip .chip-count {
+                            background: #cbd5e1;
+                            color: #475569;
+                            padding: 1px 7px;
+                            border-radius: 10px;
+                            font-size: 11px;
+                        }
+                
+                        .filter-chip.active .chip-count {
+                            background: rgba(255, 255, 255, .25);
+                            color: #fff;
+                        }
+                        
+                        .feedback-row[data-hidden="true"] {
+                            display: none !important;
+                        }
                     </style>
                     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
                         rel="stylesheet">
@@ -250,10 +302,38 @@
 
                             <!-- Tab: Reported Comments -->
                             <div class="tab-content ${activeTab == 'reports' ? 'active' : ''}">
+                                <%-- Count stats --%>
+                                <c:set var="pendingCount" value="0" />
+                                <c:set var="resolvedCount" value="0" />
+                                <c:set var="totalCount" value="0" />
+                                <c:forEach var="r" items="${reports}">
+                                    <c:set var="totalCount" value="${totalCount + 1}" />
+                                    <c:if test="${r.status == 'PENDING'}">
+                                        <c:set var="pendingCount" value="${pendingCount + 1}" />
+                                    </c:if>
+                                    <c:if test="${r.status == 'RESOLVED' || r.status == 'IGNORED'}">
+                                        <c:set var="resolvedCount" value="${resolvedCount + 1}" />
+                                    </c:if>
+                                </c:forEach>
+
+                                <%-- Filter tabs --%>
+                                <div class="report-filter-bar" id="filterBarReports" style="margin-top: 10px;">
+                                    <button type="button" class="filter-chip active" data-filter="ALL">
+                                        Tất cả <span class="chip-count">${totalCount}</span>
+                                    </button>
+                                    <button type="button" class="filter-chip" data-filter="PENDING">
+                                        <i class="fas fa-clock"></i> Chưa xử lý <span class="chip-count">${pendingCount}</span>
+                                    </button>
+                                    <button type="button" class="filter-chip" data-filter="DONE">
+                                        <i class="fas fa-check-circle"></i> Đã xử lý <span class="chip-count">${resolvedCount}</span>
+                                    </button>
+                                </div>
+
+                                <div id="reportCardList">
                                 <c:choose>
                                     <c:when test="${not empty reports}">
                                         <c:forEach var="report" items="${reports}">
-                                            <div class="feedback-row">
+                                            <div class="feedback-row report-card-row" data-status="${report.status}">
                                                 <div class="feedback-content">
                                                     <div class="feedback-title">
                                                         #${report.commentId} — ${report.commentUserFullName}
@@ -267,8 +347,17 @@
                                                         </span>
                                                     </div>
                                                     <div style="margin-top: 8px;">
-                                                        <span class="report-reason-label">Báo cáo: ${report.reason}</span>
-                                                    </div>
+                                            <span class="report-reason-label">
+                                                Báo cáo: 
+                                                <c:choose>
+                                                    <c:when test="${fn:toLowerCase(report.reason) == 'spam'}">Spam</c:when>
+                                                    <c:when test="${fn:toLowerCase(report.reason) == 'offensive language'}">Ngôn ngữ thô tục</c:when>
+                                                    <c:when test="${fn:toLowerCase(report.reason) == 'harassment'}">Quấy rối</c:when>
+                                                    <c:when test="${fn:toLowerCase(report.reason) == 'false information'}">Thông tin sai lệch</c:when>
+                                                    <c:otherwise>Khác</c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </div>
                                                     <div class="feedback-text" style="margin-top: 6px;">
                                                         <strong>Bình luận:</strong> ${report.commentContent}
                                                     </div>
@@ -291,10 +380,41 @@
                                         <div class="empty-state">Không có bình luận bị báo cáo nào.</div>
                                     </c:otherwise>
                                 </c:choose>
+                                </div>
                             </div>
                         </div>
 
                     </main>
+
+                    <script>
+                        (function () {
+                            const filterBar = document.getElementById('filterBarReports');
+                            const reportList = document.getElementById('reportCardList');
+                            if (!filterBar || !reportList) return;
+
+                            const chips = filterBar.querySelectorAll('.filter-chip');
+                            const cards = reportList.querySelectorAll('.report-card-row');
+
+                            chips.forEach(chip => {
+                                chip.addEventListener('click', () => {
+                                    chips.forEach(c => c.classList.remove('active'));
+                                    chip.classList.add('active');
+
+                                    const filter = chip.dataset.filter;
+                                    cards.forEach(card => {
+                                        const status = card.dataset.status;
+                                        if (filter === 'ALL') {
+                                            card.dataset.hidden = 'false';
+                                        } else if (filter === 'PENDING') {
+                                            card.dataset.hidden = status !== 'PENDING' ? 'true' : 'false';
+                                        } else if (filter === 'DONE') {
+                                            card.dataset.hidden = (status === 'RESOLVED' || status === 'IGNORED') ? 'false' : 'true';
+                                        }
+                                    });
+                                });
+                            });
+                        })();
+                    </script>
 
                 </body>
 
