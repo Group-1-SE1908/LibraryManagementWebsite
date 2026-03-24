@@ -1,5 +1,6 @@
 package com.lbms.service;
 
+import com.lbms.dao.NotificationDAO;
 import com.lbms.dao.UserDAO;
 import com.lbms.model.User;
 import com.lbms.util.DBConnection;
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
 public class NotificationService {
 
     private static final Logger logger = Logger.getLogger(NotificationService.class.getName());
-
+    private final NotificationDAO notificationDAO = new NotificationDAO();
     private final EmailService emailService = new EmailService();
     private final UserDAO userDAO = new UserDAO();
 
@@ -269,78 +270,20 @@ public class NotificationService {
                 "</table></td></tr></table></body></html>";
     }
 
-    /**
-     * 1. GỬI CHO MỘT USER CỤ THỂ
-     * 
-     */
-    public void sendNotificationToUser(int receiverId, int senderId, String senderRole,
-            String type, String title, String message) throws SQLException {
-        String sql = "INSERT INTO notifications (user_id, sender_id, sender_role, type, title, message, "
-                + "is_read, sent_to_all, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, 0, 0, GETDATE())";
-
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, receiverId);
-            ps.setInt(2, senderId);
-            ps.setString(3, senderRole);
-            ps.setString(4, type);
-            ps.setString(5, title);
-            ps.setString(6, message);
-            ps.executeUpdate();
-            logger.info("[Notification] Sent to User ID: " + receiverId);
-        }
-    }
-
-    /**
-     * 2. GỬI CHO TOÀN BỘ HỆ THỐNG (Chỉ dành cho ADMIN)
-     * 
-     */
-    public void sendSystemNotificationToAll(int senderId, String type, String title, String message)
+    public void sendToUser(int receiverId, int senderId, String senderRole, String type, String title, String message)
             throws SQLException {
-
-        String sql = "INSERT INTO notifications (user_id, sender_id, sender_role, type, title, message, is_read, sent_to_all, created_at) "
-                + "SELECT user_id, ?, 'ADMIN', ?, ?, ?, 0, 1, GETDATE() "
-                + "FROM [User] WHERE status = 'ACTIVE' AND user_id <> ?";
-
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, senderId);
-            ps.setString(2, type);
-            ps.setString(3, title);
-            ps.setString(4, message);
-            ps.setInt(5, senderId);
-            int rows = ps.executeUpdate();
-            logger.info("[Notification] System broadcast sent to " + rows + " users.");
-        }
+        notificationDAO.insertToUser(receiverId, senderId, senderRole, type, title, message);
+        logger.info("[Notification] Sent to User ID: " + receiverId);
     }
 
-    /**
-     * 3. GỬI THEO NHÓM ROLE (USER hoặc LIBRARIAN)
-     * 
-     */
-    public void sendNotificationToRole(String targetRoleName, int senderId, String senderRole,
-            String type, String title, String message) throws SQLException {
+    public void sendToAll(int senderId, String type, String title, String message) throws SQLException {
+        notificationDAO.insertToAll(senderId, type, title, message);
+    }
 
-        // JOIN với bảng Role để lọc chính xác tên Role (ví dụ: 'USER', 'LIBRARIAN')
-        String sql = "INSERT INTO notifications (user_id, sender_id, sender_role, type, title, message, is_read, sent_to_all, created_at) "
-                + "SELECT u.user_id, ?, ?, ?, ?, ?, 0, 1, GETDATE() "
-                + "FROM [User] u "
-                + "INNER JOIN Role r ON u.role_id = r.role_id "
-                + "WHERE r.role_name = ? AND u.status = 'ACTIVE' AND u.user_id <> ?";
-
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, senderId);
-            ps.setString(2, senderRole);
-            ps.setString(3, type);
-            ps.setString(4, title);
-            ps.setString(5, message);
-            ps.setString(6, targetRoleName); // 'USER' hoặc 'LIBRARIAN'
-            ps.setInt(7, senderId);
-            int rows = ps.executeUpdate();
-            logger.info("[Notification] Sent to all " + targetRoleName + "s (" + rows + " records)");
-        }
+    public void sendToRole(String targetRole, int senderId, String senderRole, String type, String title,
+            String message) throws SQLException {
+        int rows = notificationDAO.insertToRole(targetRole, senderId, senderRole, type, title, message);
+        logger.info("[Notification] Sent to all " + targetRole + "s (" + rows + " records)");
     }
 
     /**
