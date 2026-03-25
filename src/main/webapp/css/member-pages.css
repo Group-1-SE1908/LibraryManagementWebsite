@@ -143,8 +143,8 @@
 .mp-hero__card {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
   border-radius: var(--mp-radius);
   padding: 22px 28px;
   min-width: 200px;
@@ -696,6 +696,7 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   white-space: nowrap;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -1668,6 +1669,7 @@ form.mp-inline-form {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;

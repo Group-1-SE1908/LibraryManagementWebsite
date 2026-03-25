@@ -56,6 +56,11 @@ public class CartService {
             throw new IllegalArgumentException("Sách không tồn tại");
         }
 
+        if (quantity <= 0) {
+            removeBook(userId, bookId);
+            return;
+        }
+
         if (quantity > book.getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá tồn kho");
         }

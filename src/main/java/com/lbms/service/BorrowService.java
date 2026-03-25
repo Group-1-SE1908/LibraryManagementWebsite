@@ -56,6 +56,7 @@ public class BorrowService {
     // ═══════════════════════════════════════════════════════════════
     public BigDecimal returnBook(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
+
         if (br == null) {
             throw new IllegalArgumentException("Phiếu mượn không tồn tại");
         }
@@ -82,9 +83,9 @@ public class BorrowService {
 
                 // Cập nhật borrow_record → RETURNED
                 try (var ps = c.prepareStatement(
-                        "UPDATE borrow_records " +
-                                "SET status = 'RETURNED', return_date = ?, fine_amount = ?, is_paid = 0 " +
-                                "WHERE id = ?")) {
+                        "UPDATE borrow_records "
+                                + "SET status = 'RETURNED', return_date = ?, fine_amount = ?, is_paid = 0 "
+                                + "WHERE id = ?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
                     ps.setBigDecimal(2, fine);
                     ps.setLong(3, borrowId);
@@ -94,10 +95,12 @@ public class BorrowService {
                 c.commit();
             } catch (Exception ex) {
                 c.rollback();
-                if (ex instanceof SQLException)
+                if (ex instanceof SQLException) {
                     throw (SQLException) ex;
-                if (ex instanceof RuntimeException)
+                }
+                if (ex instanceof RuntimeException) {
                     throw (RuntimeException) ex;
+                }
                 throw new RuntimeException(ex);
             } finally {
                 c.setAutoCommit(true);
@@ -107,11 +110,16 @@ public class BorrowService {
         BigDecimal deposit = br.getDepositAmount();
         if (deposit != null && deposit.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal depositRefund = deposit.multiply(new BigDecimal("0.5"));
+
             try {
                 walletService.creditWallet(br.getUser().getId(), depositRefund, "DEPOSIT_REFUND",
                         "Hoàn 50% tiền cọc phiếu #" + borrowId, "DEPOSIT-REFUND-" + borrowId);
-                notificationService.notifyDepositRefunded(br.getUser().getId(),
-                        br.getBook().getTitle(), depositRefund);
+                notificationService.notifyDepositRefunded(
+                        br.getUser().getId(),
+                        br.getBook().getTitle(),
+                        depositRefund,
+                        "Hệ thống đã hoàn lại 50% tiền cọc");
+
             } catch (Exception e) {
                 logger.log(Level.WARNING,
                         "[BorrowService] Lỗi hoàn tiền cọc borrowId=" + borrowId, e);
@@ -130,10 +138,6 @@ public class BorrowService {
         return fine;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // Các method còn lại giữ nguyên
-    // ═══════════════════════════════════════════════════════════════
-
     public long requestBorrow(long userId, long bookId, String method, ShippingDetails shippingDetails)
             throws SQLException {
         return requestBorrow(userId, bookId, 1, method, shippingDetails);
@@ -141,75 +145,113 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, int quantity, String method,
             ShippingDetails shippingDetails) throws SQLException {
-        String groupCode = "REQ-" + System.currentTimeMillis() + "-" + userId;
-        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails, quantity, groupCode);
+
+        String groupCode = "REQ-" + System.currentTimeMillis() + "CCCCCCCC";
+
+        // Gọi hàm chính (có depositAmount), truyền null để tự tính bên trong
+        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails,
+                quantity, groupCode, null);
+
         return ids.isEmpty() ? 0 : ids.get(0);
     }
 
+    /**
+     * Yêu cầu mượn nhiều sách từ giỏ hàng (Online Cart) TẤT CẢ sách trong cùng
+     * một đơn thanh toán sẽ có CHUNG groupCode
+     */
     public List<Long> requestBorrowCopies(long userId, long bookId, String method,
             ShippingDetails shippingDetails, int quantity, String groupCode,
             BigDecimal depositAmount) throws SQLException {
-        if (quantity <= 0)
-            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
+
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
+        }
 
         Book book = bookDAO.findById(bookId);
-        if (book == null)
+        if (book == null) {
             throw new IllegalArgumentException("Sách không tồn tại");
-        if (book.getQuantity() <= 0)
-            throw new IllegalArgumentException("Sách đã hết");
-        if (quantity > book.getQuantity())
-            throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang có");
+        }
+        if (book.getQuantity() < quantity) {
+            throw new IllegalArgumentException("Sách chỉ còn " + book.getQuantity() + " cuốn");
+        }
 
         int active = borrowDAO.countActiveBorrows(userId);
-        if (active + quantity > MAX_ACTIVE_BORROWS)
-            throw new IllegalArgumentException(
-                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
-                            + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
+        if (active + quantity > MAX_ACTIVE_BORROWS) {
+            throw new IllegalArgumentException("Vượt quá giới hạn mượn (Tối đa " + MAX_ACTIVE_BORROWS + " cuốn)");
+        }
+
+        // [XỬ LÝ CHÍNH XÁC GROUP CODE]: Chỉ tạo mới nếu Controller không truyền vào
+        String finalCode = (groupCode != null && !groupCode.trim().isEmpty())
+                ? groupCode
+                : "REQ-" + System.currentTimeMillis() + "QUYNN";
 
         shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
 
-        List<Long> ids = new ArrayList<>(quantity);
-        for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, 1, method,
-                    shippingDetails, groupCode, depositAmount));
+        // Tính deposit_amount cho từng cuốn riêng lẻ (tránh nhân đôi khi qty > 1)
+        // depositAmount là tổng cho cả item (price * qty * 0.5), cần chia đều cho từng
+        // copy
+        BigDecimal perCopyDeposit = BigDecimal.ZERO;
+        if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+            perCopyDeposit = depositAmount.divide(new BigDecimal(quantity), 2, java.math.RoundingMode.HALF_UP);
         }
-        return ids;
+
+        List<Long> createdIds = new ArrayList<>();
+        // Tách mỗi cuốn thành 1 bản ghi riêng biệt nhưng dùng chung finalCode
+        for (int i = 0; i < quantity; i++) {
+            long newId = borrowDAO.createRequest(
+                    userId,
+                    bookId,
+                    1,
+                    method,
+                    shippingDetails,
+                    finalCode,
+                    perCopyDeposit);
+            createdIds.add(newId);
+        }
+        return createdIds;
     }
 
-    public List<Long> requestBorrowCopies(long userId, long bookId, String method,
-            ShippingDetails shippingDetails, int quantity, String groupCode) throws SQLException {
-        if (quantity <= 0)
-            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
-
-        Book book = bookDAO.findById(bookId);
-        if (book == null)
-            throw new IllegalArgumentException("Sách không tồn tại");
-        if (book.getQuantity() <= 0)
-            throw new IllegalArgumentException("Sách đã hết");
-        if (quantity > book.getQuantity())
-            throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang có");
-
-        int active = borrowDAO.countActiveBorrows(userId);
-        if (active + quantity > MAX_ACTIVE_BORROWS)
-            throw new IllegalArgumentException(
-                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
-                            + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
-
-        shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
-
-        BigDecimal price = book.getPrice() != null
-                ? BigDecimal.valueOf(book.getPrice())
-                : BigDecimal.ZERO;
-        BigDecimal depositAmount = price.multiply(BigDecimal.valueOf(0.5));
-
-        List<Long> ids = new ArrayList<>(quantity);
-        for (int i = 0; i < quantity; i++) {
-            ids.add(borrowDAO.createRequest(userId, bookId, 1, method,
-                    shippingDetails, groupCode, depositAmount));
-        }
-        return ids;
-    }
-
+    // public List<Long> requestBorrowCopies(long userId, long bookId, String
+    // method,
+    // ShippingDetails shippingDetails, int quantity, String groupCode) throws
+    // SQLException {
+    // if (quantity <= 0) {
+    // throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
+    // }
+    //
+    // Book book = bookDAO.findById(bookId);
+    // if (book == null) {
+    // throw new IllegalArgumentException("Sách không tồn tại");
+    // }
+    // if (book.getQuantity() <= 0) {
+    // throw new IllegalArgumentException("Sách đã hết");
+    // }
+    // if (quantity > book.getQuantity()) {
+    // throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang
+    // có");
+    // }
+    //
+    // int active = borrowDAO.countActiveBorrows(userId);
+    // if (active + quantity > MAX_ACTIVE_BORROWS) {
+    // throw new IllegalArgumentException(
+    // "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
+    // + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
+    // }
+    //
+    // shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
+    //
+    // BigDecimal price = book.getPrice() != null
+    // ? BigDecimal.valueOf(book.getPrice())
+    // : BigDecimal.ZERO;
+    // BigDecimal depositAmount = price.multiply(BigDecimal.valueOf(0.5));
+    //
+    // List<Long> ids = new ArrayList<>(quantity);
+    // for (int i = 0; i < quantity; i++) {
+    // ids.add(borrowDAO.createRequest(userId, bookId, 1, method,
+    // shippingDetails, groupCode, depositAmount));
+    // }
+    // return ids;
+    // }
     public int countActiveBorrows(long userId) throws SQLException {
         return borrowDAO.countActiveBorrows(userId);
     }
@@ -223,10 +265,11 @@ public class BorrowService {
                         "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'")) {
                     ps.setString(1, barcode);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next())
+                        if (rs.next()) {
                             copyId = rs.getLong("copy_id");
-                        else
+                        } else {
                             throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã được mượn!");
+                        }
                     }
                 }
 
@@ -263,23 +306,29 @@ public class BorrowService {
 
     public void reject(long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null)
+        if (br == null) {
             throw new IllegalArgumentException("Yêu cầu không tồn tại");
-        if (!"REQUESTED".equalsIgnoreCase(br.getStatus()))
+        }
+        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ để từ chối");
+        }
         borrowDAO.updateStatus(borrowId, "REJECTED");
     }
 
     public void cancelRenewalRequest(long userId, long borrowId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null)
+        if (br == null) {
             throw new IllegalArgumentException("Phiếu mượn không tồn tại");
-        if (br.getUser() == null || br.getUser().getId() != userId)
+        }
+        if (br.getUser() == null || br.getUser().getId() != userId) {
             throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
-        if (!"RENEWAL_REQUESTED".equalsIgnoreCase(br.getStatus()))
+        }
+        if (!"RENEWAL_REQUESTED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Chỉ có thể hủy khi đang chờ duyệt gia hạn");
-        if (!renewalRequestDAO.existsPendingForBorrow(borrowId))
+        }
+        if (!renewalRequestDAO.existsPendingForBorrow(borrowId)) {
             throw new IllegalArgumentException("Không tìm thấy yêu cầu gia hạn đang xử lý");
+        }
 
         renewalRequestDAO.cancelPendingForBorrow(borrowId);
         borrowDAO.updateStatus(borrowId, "BORROWED");
@@ -287,32 +336,40 @@ public class BorrowService {
 
     public void cancelRequest(long borrowId, long userId) throws SQLException {
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null)
+        if (br == null) {
             throw new IllegalArgumentException("Yêu cầu không tồn tại");
-        if (br.getUser().getId() != userId)
+        }
+        if (br.getUser().getId() != userId) {
             throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
-        if (!"REQUESTED".equalsIgnoreCase(br.getStatus()))
+        }
+        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Chỉ có thể hủy yêu cầu khi đang chờ duyệt");
+        }
         borrowDAO.updateStatus(borrowId, "CANCELLED");
     }
 
     public long requestRenewal(long userId, long borrowId, String reason,
             String contactName, String contactPhone, String contactEmail) throws SQLException {
         String cleanReason = reason != null ? reason.trim() : "";
-        if (cleanReason.isBlank())
+        if (cleanReason.isBlank()) {
             throw new IllegalArgumentException("Vui lòng mô tả lý do gia hạn");
+        }
 
         BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null)
+        if (br == null) {
             throw new IllegalArgumentException("Phiếu mượn không tồn tại");
-        if (br.getUser() == null || br.getUser().getId() != userId)
+        }
+        if (br.getUser() == null || br.getUser().getId() != userId) {
             throw new IllegalArgumentException("Bạn không có quyền gửi yêu cầu này");
+        }
         if (!"BORROWED".equalsIgnoreCase(br.getStatus())
                 && !"APPROVED".equalsIgnoreCase(br.getStatus())
-                && !"RECEIVED".equalsIgnoreCase(br.getStatus()))
+                && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
             throw new IllegalArgumentException("Chỉ có thể gia hạn khi sách đang mượn");
-        if (renewalRequestDAO.existsPendingForBorrow(borrowId))
+        }
+        if (renewalRequestDAO.existsPendingForBorrow(borrowId)) {
             throw new IllegalArgumentException("Bạn đã gửi yêu cầu gia hạn trước đó, vui lòng chờ duyệt");
+        }
 
         String finalName = notBlank(contactName, br.getUser().getFullName());
         String finalPhone = notBlank(contactPhone, br.getUser().getPhone());
@@ -328,8 +385,9 @@ public class BorrowService {
     }
 
     public BigDecimal calculateFine(LocalDate dueDate, LocalDate returnDate) {
-        if (dueDate == null || returnDate == null)
+        if (dueDate == null || returnDate == null) {
             return BigDecimal.ZERO;
+        }
         long lateDays = ChronoUnit.DAYS.between(dueDate, returnDate);
         return lateDays <= 0 ? BigDecimal.ZERO
                 : FINE_PER_DAY.multiply(BigDecimal.valueOf(lateDays));
@@ -348,10 +406,11 @@ public class BorrowService {
                         "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'")) {
                     ps.setString(1, barcode);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next())
+                        if (rs.next()) {
                             copyId = rs.getLong("copy_id");
-                        else
+                        } else {
                             throw new IllegalArgumentException("Mã vạch không hợp lệ hoặc sách đã được mượn!");
+                        }
                     }
                 }
 
@@ -359,8 +418,7 @@ public class BorrowService {
                 LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, status, borrow_method, copy_id) "
-                                +
-                                "VALUES(?, ?, ?, ?, 'BORROWED', 'IN_PERSON', ?)")) {
+                                + "VALUES(?, ?, ?, ?, 'BORROWED', 'IN_PERSON', ?)")) {
                     ps.setLong(1, userId);
                     ps.setLong(2, bookId);
                     ps.setDate(3, java.sql.Date.valueOf(today));

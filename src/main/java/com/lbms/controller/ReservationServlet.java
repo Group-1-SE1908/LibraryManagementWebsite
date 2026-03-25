@@ -16,8 +16,8 @@ import java.util.List;
 @WebServlet("/reservation")
 public class ReservationServlet extends HttpServlet {
 
-    private final ReservationService  reservationService = new ReservationService();
-    private final NotificationService notifService       = new NotificationService();
+    private final ReservationService reservationService = new ReservationService();
+    private final NotificationService notifService = new NotificationService();
 
     // ── GET: hiển thị danh sách reservation của user ─────────────────────
     @Override
@@ -31,8 +31,7 @@ public class ReservationServlet extends HttpServlet {
         }
 
         try {
-            List<Reservation> reservations =
-                    reservationService.listByUser(currentUser.getId());
+            List<Reservation> reservations = reservationService.listByUser(currentUser.getId());
             req.setAttribute("reservations", reservations);
             req.setAttribute("maxReservations", reservationService.getMaxReservations());
 
@@ -60,7 +59,8 @@ public class ReservationServlet extends HttpServlet {
         }
 
         String action = req.getParameter("action");
-        if (action == null) action = "";
+        if (action == null)
+            action = "";
 
         try {
             switch (action) {
@@ -110,7 +110,8 @@ public class ReservationServlet extends HttpServlet {
     // ── Helpers ───────────────────────────────────────────────────────────
     private User getCurrentUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        if (session == null) return null;
+        if (session == null)
+            return null;
         return (User) session.getAttribute("currentUser");
     }
 

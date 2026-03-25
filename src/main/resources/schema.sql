@@ -228,16 +228,22 @@ SET r.queue_position = rk.rn
 JOIN ranked rk ON r.id = rk.id;
 -- Bảng thông báo
 CREATE TABLE notifications (
-                               id         BIGINT IDENTITY(1,1) PRIMARY KEY,
-                               user_id    INT            NOT NULL,
-                               type       VARCHAR(50)    NOT NULL,
-                               title      NVARCHAR(255)  NOT NULL,
-                               message    NVARCHAR(1000) NOT NULL,
-                               is_read    BIT            NOT NULL DEFAULT 0,
-                               created_at DATETIME       NOT NULL DEFAULT GETDATE(),
-                               CONSTRAINT FK_Notif_User FOREIGN KEY (user_id) REFERENCES [User](user_id)
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    sender_id INT NULL,
+    sender_role VARCHAR(50) NULL,
+    type VARCHAR(50) NOT NULL,
+    title NVARCHAR(255) NOT NULL,
+    message NVARCHAR(1000) NOT NULL,
+    is_read BIT NOT NULL DEFAULT 0,
+    sent_to_all BIT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Notif_User FOREIGN KEY (user_id) REFERENCES [User](user_id),
+    CONSTRAINT FK_Notif_Sender FOREIGN KEY (sender_id) REFERENCES [User](user_id)
 );
 GO
+
 
 CREATE INDEX IX_Notif_UserId ON notifications (user_id);
 CREATE INDEX IX_Notif_IsRead ON notifications (user_id, is_read);

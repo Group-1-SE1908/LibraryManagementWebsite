@@ -16,6 +16,7 @@
                     rel="stylesheet" />
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
                     rel="stylesheet" />
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                 <style>
                     *,
                     *::before,
@@ -350,226 +351,285 @@
             </head>
 
             <body>
-                <jsp:include page="/WEB-INF/views/header.jsp" />
+                <c:set var="userRole" value="${sessionScope.currentUser.role.name}" />
+                <c:set var="isStaff" value="${userRole == 'ADMIN' || userRole == 'LIBRARIAN'}" />
 
-                <%-- Thông báo thành công --%>
-                    <c:if test="${not empty sessionScope.successMessage}">
-                        <div class="alert alert-dismissible fade show alert-floating" role="alert">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <div class="alert-content">
-                                ${sessionScope.successMessage}
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        <c:remove var="successMessage" scope="session" />
-                    </c:if>
+                <div class="app-container ${isStaff ? '' : 'no-sidebar'}">
 
-                    <div class="main-wrap">
-                        <header class="page-header">
-                            <div class="page-header__inner">
-                                <div class="page-header__left">
-                                    <div class="page-header__icon"><i class="bi bi-bell"></i></div>
-                                    <div>
-                                        <div class="page-header__title">Thông báo</div>
-                                        <div class="page-header__sub">
-                                            <c:choose>
-                                                <c:when test="${unreadCount > 0}">
-                                                    Bạn có <strong>${unreadCount}</strong> thông báo chưa đọc
-                                                </c:when>
-                                                <c:otherwise>Tất cả đã đọc</c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                    </div>
-                                </div>
+                    <c:choose>
 
-                                <div class="btn-action-group">
-                                    <%-- Nút Soạn tin cho Admin/Librarian --%>
-                                        <c:if
-                                            test="${sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
-                                            <button class="btn-compose" data-bs-toggle="modal"
-                                                data-bs-target="#sendNotifModal">
-                                                <i class="bi bi-plus-lg"></i> Soạn tin
-                                            </button>
-                                        </c:if>
+                        <%-- ADMIN --%>
+                            <c:when test="${userRole == 'ADMIN'}">
+                                <jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+                                <div class="main-content-wrapper" style="margin-left:250px;">
+                            </c:when>
 
-                                        <c:if test="${unreadCount > 0}">
-                                            <form method="post"
-                                                action="${pageContext.request.contextPath}/notifications">
-                                                <input type="hidden" name="action" value="markAllRead" />
-                                                <button type="submit" class="btn-mark-all">
-                                                    <i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc
-                                                </button>
-                                            </form>
-                                        </c:if>
-                                </div>
-                            </div>
-                        </header>
-
-                        <main class="content">
-                            <c:choose>
-                                <c:when test="${empty notifications}">
-                                    <div class="empty-state">
-                                        <div class="empty-state__icon"><i class="bi bi-bell-slash"></i></div>
-                                        <div class="empty-state__title">Chưa có thông báo nào</div>
-                                    </div>
+                            <%-- LIBRARIAN --%>
+                                <c:when test="${userRole == 'LIBRARIAN'}">
+                                    <jsp:include page="/WEB-INF/views/admin/library/librarian_sidebar.jsp" />
+                                    <div class="main-content-wrapper" style="margin-left:250px;">
                                 </c:when>
-                                <c:otherwise>
-                                    <div class="notif-list">
-                                        <c:forEach var="n" items="${notifications}">
-                                            <div class="notif-card ${n.isRead ? '' : 'unread'}">
-                                                <div class="notif-icon 
-                                    <c:choose>
-                                        <c:when test=" ${n.type=='RESERVATION_AVAILABLE' }">notif-icon--available
-                                                    </c:when>
-                                                    <c:when test="${n.type == 'RESERVATION_EXPIRING'}">
-                                                        notif-icon--expiring</c:when>
-                                                    <c:when test="${n.type == 'RESERVATION_EXPIRED'}">
-                                                        notif-icon--expired</c:when>
-                                                    <c:otherwise>notif-icon--info</c:otherwise>
-                            </c:choose>">
-                            <c:choose>
-                                <c:when test="${n.type == 'RESERVATION_AVAILABLE'}"><i
-                                        class="bi bi-check-circle-fill"></i></c:when>
-                                <c:when test="${n.type == 'RESERVATION_EXPIRING'}"><i class="bi bi-alarm-fill"></i>
-                                </c:when>
-                                <c:when test="${n.type == 'RESERVATION_EXPIRED'}"><i class="bi bi-x-circle-fill"></i>
-                                </c:when>
-                                <c:otherwise><i class="bi bi-info-circle-fill"></i></c:otherwise>
-                            </c:choose>
-                    </div>
 
-                    <div class="notif-body">
-                        <div class="notif-title">${n.title}</div>
-                        <div class="notif-message">${n.message}</div>
-                        <div class="notif-time">
-                            <i class="bi bi-clock" style="font-size:.7rem"></i>
-                            <fmt:formatDate value="${n.createdAt}" pattern="HH:mm - dd/MM/yyyy" />
-                        </div>
-                    </div>
+                                <%-- USER --%>
+                                    <c:otherwise>
+                                        <jsp:include page="/WEB-INF/views/header.jsp" />
+                                        <div class="main-content-wrapper">
+                                    </c:otherwise>
 
-                    <c:if test="${!n.isRead}">
-                        <div class="notif-actions">
-                            <form method="post" action="${pageContext.request.contextPath}/notifications">
-                                <input type="hidden" name="action" value="markRead" />
-                                <input type="hidden" name="notifId" value="${n.id}" />
-                                <button type="submit" class="btn-read">Đã đọc</button>
-                            </form>
-                        </div>
-                    </c:if>
-                    </div>
-                    </c:forEach>
-                    </div>
-                    </c:otherwise>
                     </c:choose>
-                    </main>
-                    </div>
 
-                    <%-- Modal Soạn tin --%>
-                        <div class="modal fade" id="sendNotifModal" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius);">
-                                    <form action="${pageContext.request.contextPath}/notifications" method="post">
-                                        <input type="hidden" name="action" value="create">
-                                        <div class="modal-header bg-primary text-white"
-                                            style="border-top-left-radius: var(--radius); border-top-right-radius: var(--radius);">
-                                            <h5 class="modal-title fw-bold"><i class="bi bi-send-fill me-2"></i>Gửi
-                                                thông báo mới</h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-bold small text-uppercase">Phạm vi
-                                                        gửi:</label>
-                                                    <select name="notification_mode" id="modeSelect"
-                                                        class="form-select shadow-sm"
-                                                        onchange="toggleReceiverWrapper()">
-                                                        <c:if test="${sessionScope.currentUser.role.name == 'ADMIN'}">
-                                                            <option value="ALL_SYSTEM">Toàn bộ hệ thống</option>
-                                                            <option value="ALL_LIBRARIANS">Tất cả Thủ thư</option>
-                                                        </c:if>
-                                                        <option value="ALL_USERS">Tất cả Thành viên</option>
-                                                        <option value="SPECIFIC">Cá nhân cụ thể</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6" id="receiverWrapper" style="display: none;">
-                                                    <label class="form-label fw-bold small text-uppercase">Người
-                                                        nhận:</label>
-                                                    <select name="receiver_id" id="userSelect"
-                                                        class="form-select w-100">
-                                                        <option value="">-- Chọn Email --</option>
-                                                        <c:forEach items="${users}" var="u">
-                                                            <option value="${u.id}">${u.email} (${u.fullName})
-                                                            </option>
-                                                        </c:forEach>
-                                                    </select>
-                                                </div>
-                                                <div class="col-12">
-                                                    <label class="form-label fw-bold small text-uppercase">Tiêu
-                                                        đề:</label>
-                                                    <input type="text" name="title" class="form-control shadow-sm"
-                                                        placeholder="Nhập tiêu đề thông báo..." required>
-                                                </div>
-                                                <div class="col-12">
-                                                    <label class="form-label fw-bold small text-uppercase">Nội dung
-                                                        chi
-                                                        tiết:</label>
-                                                    <textarea name="message" class="form-control shadow-sm" rows="4"
-                                                        placeholder="Viết nội dung tại đây..." required></textarea>
-                                                </div>
+                    <%-- Thông báo thành công --%>
+                        <c:if test="${not empty sessionScope.successMessage}">
+                            <script>
+                                const msg = `<c:out value="${sessionScope.successMessage}"/>`.trim();
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: msg,
+                                    confirmButtonColor: '#3b82f6',
+                                    timer: 4000,
+                                    timerProgressBar: true
+                                });
+                            </script>
+                            <c:remove var="successMessage" scope="session" />
+                        </c:if>
+
+                        <div class="main-wrap">
+                            <header class="page-header">
+                                <div class="page-header__inner">
+                                    <div class="page-header__left">
+                                        <div class="page-header__icon"><i class="bi bi-bell"></i></div>
+                                        <div>
+                                            <div class="page-header__title">Thông báo</div>
+                                            <div class="page-header__sub">
+                                                <c:choose>
+                                                    <c:when test="${unreadCount > 0}">
+                                                        Bạn có <strong>${unreadCount}</strong> thông báo chưa đọc
+                                                    </c:when>
+                                                    <c:otherwise>Tất cả đã đọc</c:otherwise>
+                                                </c:choose>
                                             </div>
                                         </div>
-                                        <div class="modal-footer bg-light border-0"
-                                            style="border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);">
-                                            <button type="button"
-                                                class="btn btn-link text-secondary text-decoration-none fw-semibold"
-                                                data-bs-dismiss="modal">Hủy bỏ</button>
-                                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Gửi
-                                                ngay</button>
-                                        </div>
-                                    </form>
+                                    </div>
+
+                                    <div class="btn-action-group">
+                                        <%-- Nút Soạn tin cho Admin/Librarian --%>
+                                            <c:if
+                                                test="${sessionScope.currentUser.role.name == 'ADMIN' || sessionScope.currentUser.role.name == 'LIBRARIAN'}">
+                                                <button class="btn-compose" data-bs-toggle="modal"
+                                                    data-bs-target="#sendNotifModal">
+                                                    <i class="bi bi-plus-lg"></i> Soạn tin
+                                                </button>
+                                            </c:if>
+
+                                            <c:if test="${unreadCount > 0}">
+                                                <form method="post"
+                                                    action="${pageContext.request.contextPath}/notifications">
+                                                    <input type="hidden" name="action" value="markAllRead" />
+                                                    <button type="submit" class="btn-mark-all">
+                                                        <i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc
+                                                    </button>
+                                                </form>
+                                            </c:if>
+                                    </div>
                                 </div>
+                            </header>
+
+                            <main class="content">
+                                <c:choose>
+                                    <c:when test="${empty notifications}">
+                                        <div class="empty-state">
+                                            <div class="empty-state__icon"><i class="bi bi-bell-slash"></i></div>
+                                            <div class="empty-state__title">Chưa có thông báo nào</div>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="notif-list">
+                                            <c:forEach var="n" items="${notifications}">
+                                                <div class="notif-card ${n.isRead ? '' : 'unread'}">
+                                                    <div class="notif-icon 
+                                    <c:choose>
+                                        <c:when test=" ${n.type=='RESERVATION_AVAILABLE' }">notif-icon--available
+                                                        </c:when>
+                                                        <c:when test="${n.type == 'RESERVATION_EXPIRING'}">
+                                                            notif-icon--expiring</c:when>
+                                                        <c:when test="${n.type == 'RESERVATION_EXPIRED'}">
+                                                            notif-icon--expired</c:when>
+                                                        <c:otherwise>notif-icon--info</c:otherwise>
+                                </c:choose>">
+                                <c:choose>
+                                    <c:when test="${n.type == 'RESERVATION_AVAILABLE'}"><i
+                                            class="bi bi-check-circle-fill"></i></c:when>
+                                    <c:when test="${n.type == 'RESERVATION_EXPIRING'}"><i class="bi bi-alarm-fill"></i>
+                                    </c:when>
+                                    <c:when test="${n.type == 'RESERVATION_EXPIRED'}"><i
+                                            class="bi bi-x-circle-fill"></i>
+                                    </c:when>
+                                    <c:otherwise><i class="bi bi-info-circle-fill"></i></c:otherwise>
+                                </c:choose>
+                        </div>
+
+                        <div class="notif-body">
+                            <div class="notif-title">${n.title}</div>
+                            <div class="notif-message">${n.message}</div>
+                            <div class="notif-time">
+                                <i class="bi bi-clock" style="font-size:.7rem"></i>
+                                <fmt:formatDate value="${n.createdAt}" pattern="HH:mm - dd/MM/yyyy" />
                             </div>
                         </div>
 
-                        <jsp:include page="/WEB-INF/views/footer.jsp" />
+                        <c:if test="${!n.isRead}">
+                            <div class="notif-actions">
+                                <form method="post" action="${pageContext.request.contextPath}/notifications">
+                                    <input type="hidden" name="action" value="markRead" />
+                                    <input type="hidden" name="notifId" value="${n.id}" />
+                                    <button type="submit" class="btn-read">Đã đọc</button>
+                                </form>
+                            </div>
+                        </c:if>
+                </div>
+                </c:forEach>
+                </div>
+                </c:otherwise>
+                </c:choose>
+                </main>
+                </div>
 
-                        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                        <script
-                            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                <%-- Modal Soạn tin --%>
+                    <div class="modal fade" id="sendNotifModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius);">
+                                <form action="${pageContext.request.contextPath}/notifications" method="post">
+                                    <input type="hidden" name="action" value="create">
+                                    <div class="modal-header bg-primary text-white"
+                                        style="border-top-left-radius: var(--radius); border-top-right-radius: var(--radius);">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-send-fill me-2"></i>Gửi
+                                            thông báo mới</h5>
+                                        <button type="button" class="btn-close btn-close-white"
+                                            data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-uppercase">Phạm vi
+                                                    gửi:</label>
+                                                <select name="notification_mode" id="modeSelect"
+                                                    class="form-select shadow-sm" onchange="toggleReceiverWrapper()">
+                                                    <c:if test="${sessionScope.currentUser.role.name == 'ADMIN'}">
+                                                        <option value="ALL_SYSTEM">Toàn bộ hệ thống</option>
+                                                        <option value="ALL_LIBRARIANS">Tất cả Thủ thư</option>
+                                                    </c:if>
+                                                    <option value="ALL_USERS">Tất cả Thành viên</option>
+                                                    <option value="SPECIFIC">Cá nhân cụ thể</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6" id="receiverWrapper" style="display: none;">
+                                                <label class="form-label fw-bold small text-uppercase">Người
+                                                    nhận:</label>
+                                                <select name="receiver_id" id="userSelect" class="form-select w-100">
+                                                    <option value="">-- Chọn Email --</option>
+                                                    <c:forEach items="${users}" var="u">
+                                                        <option value="${u.id}">${u.email} (${u.fullName})
+                                                        </option>
+                                                    </c:forEach>
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold small text-uppercase">Tiêu
+                                                    đề:</label>
+                                                <input type="text" name="title" class="form-control shadow-sm"
+                                                    placeholder="Nhập tiêu đề thông báo..." required>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold small text-uppercase">Nội dung
+                                                    chi
+                                                    tiết:</label>
+                                                <textarea name="message" class="form-control shadow-sm" rows="4"
+                                                    placeholder="Viết nội dung tại đây..." required></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer bg-light border-0"
+                                        style="border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);">
+                                        <button type="button"
+                                            class="btn btn-link text-secondary text-decoration-none fw-semibold"
+                                            data-bs-dismiss="modal">Hủy bỏ</button>
+                                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Gửi
+                                            ngay</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 
-                        <script>
+                    <jsp:include page="/WEB-INF/views/footer.jsp" />
+
+                    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+                    <script>
+                        $(document).ready(function () {
                             $(document).ready(function () {
-                                $(document).ready(function () {
-                                    toggleReceiverWrapper(); // 👈 BẮT BUỘC
-                                });
-                                // Tự động ẩn Alert sau 4s
-                                setTimeout(() => { $(".alert-floating").fadeOut('slow'); }, 4000);
+                                toggleReceiverWrapper();
+                            });
+                            // Tự động ẩn Alert sau 4s
+                            setTimeout(() => { $(".alert-floating").fadeOut('slow'); }, 4000);
 
-                                // Khởi tạo Select2 khi modal mở
-                                $('#sendNotifModal').on('shown.bs.modal', function () {
-                                    $('#userSelect').select2({
-                                        dropdownParent: $('#sendNotifModal'),
-                                        placeholder: "Tìm kiếm bằng email...",
-                                        allowClear: true
-                                    });
+
+                            $('#sendNotifModal').on('shown.bs.modal', function () {
+                                $('#userSelect').select2({
+                                    dropdownParent: $('#sendNotifModal'),
+                                    placeholder: "Tìm kiếm bằng email...",
+                                    allowClear: true
                                 });
                             });
+                        });
 
-                            function toggleReceiverWrapper() {
-                                const mode = $('#modeSelect').val();
-                                const wrapper = $('#receiverWrapper');
-                                if (mode === 'SPECIFIC') {
-                                    wrapper.fadeIn();
-                                    $('#userSelect').prop('required', true);
-                                } else {
-                                    wrapper.fadeOut();
-                                    $('#userSelect').prop('required', false);
-                                }
+                        function toggleReceiverWrapper() {
+                            const mode = $('#modeSelect').val();
+                            const wrapper = $('#receiverWrapper');
+                            if (mode === 'SPECIFIC') {
+                                wrapper.fadeIn();
+                                $('#userSelect').prop('required', true);
+                            } else {
+                                wrapper.fadeOut();
+                                $('#userSelect').prop('required', false);
                             }
-                        </script>
+                        }
+                        function markAsRead(id, btnElement) {
+                            fetch(`${pageContext.request.contextPath}/notifications?action=markRead&notifId=${id}`, {
+                                method: 'POST'
+                            }).then(response => {
+                                if (response.ok) {
+
+                                    const badge = document.querySelector('.badge-notify');
+                                    if (badge) {
+                                        let count = parseInt(badge.innerText);
+                                        if (count > 1) {
+                                            badge.innerText = (count - 1) > 99 ? '99+' : (count - 1);
+                                        } else {
+                                            badge.remove();
+                                        }
+                                    }
+
+
+                                    const card = btnElement.closest('.notif-card');
+                                    card.classList.remove('unread');
+                                    btnElement.parentElement.remove();
+
+
+                                    const subTitle = document.querySelector('.page-header__sub strong');
+                                    if (subTitle) {
+                                        let countHead = parseInt(subTitle.innerText);
+                                        if (countHead > 1) subTitle.innerText = countHead - 1;
+                                        else document.querySelector('.page-header__sub').innerText = "Tất cả đã đọc";
+                                    }
+                                }
+                            }).catch(err => console.error("Lỗi:", err));
+                        }
+                    </script>
             </body>
 
             </html>

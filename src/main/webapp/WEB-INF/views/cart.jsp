@@ -877,7 +877,7 @@
                         });
 
                         const attachQuantityAutoSubmit = () => {
-                            const quantityForms = document.querySelectorAll('.cart-item-card .quantity-form');
+                            const quantityForms = document.querySelectorAll('form.quantity-form');
                             quantityForms.forEach(form => {
                                 const input = form.querySelector('.quantity-input');
                                 if (!input) {
