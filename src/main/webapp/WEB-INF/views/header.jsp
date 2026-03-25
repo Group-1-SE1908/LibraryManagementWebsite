@@ -450,38 +450,53 @@
                         flex-shrink: 0;
                     }
 
-                    .nav-notification {
+                    /* Notification button */
+                    .btn-notif {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 38px;
+                        height: 38px;
+                        background: transparent;
+                        border: 1.5px solid #e5e7eb;
+                        border-radius: 8px;
+                        color: #4b5563;
+                        text-decoration: none;
                         position: relative;
+                        cursor: pointer;
+                        transition: all 0.15s;
+                        flex-shrink: 0;
+                    }
+
+                    .btn-notif:hover {
+                        background: #f3f4f6;
+                        color: #2563eb;
+                        border-color: #2563eb;
+                    }
+
+                    .btn-notif svg {
+                        width: 20px;
+                        height: 20px;
+                    }
+
+                    .notif-badge {
+                        position: absolute;
+                        top: -6px;
+                        right: -6px;
+                        background: #ef4444;
+                        color: #ffffff;
+                        font-size: 10px;
+                        font-weight: 700;
+                        min-width: 18px;
+                        height: 18px;
+                        border-radius: 10px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    }
-
-                    .badge-notify {
-                        position: absolute;
-                        top: -5px;
-                        /* Điều chỉnh lại để không đè quá nhiều lên icon */
-                        right: -5px;
-                        background-color: #ef4444;
-                        color: white;
-                        border-radius: 50%;
-                        padding: 2px 5px;
-                        font-size: 10px;
+                        padding: 0 4px;
+                        border: 2px solid #ffffff;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                         line-height: 1;
-                        font-weight: bold;
-                        border: 2px solid #fff;
-                    }
-
-                    /* Thêm CSS này để nút thông báo đồng bộ với các nút khác */
-                    .btn-notification {
-                        text-decoration: none;
-                        margin-right: 15px;
-                        /* Khoảng cách với nút Cart */
-                        transition: opacity 0.2s;
-                    }
-
-                    .btn-notification:hover {
-                        opacity: 0.7;
                     }
 
                     @media (max-width: 1320px) {
@@ -558,7 +573,6 @@
                         .header-nav li a svg {
                             opacity: 0.95;
                         }
-
                     }
 
                     @media (max-width: 768px) {
@@ -667,28 +681,23 @@
                                                 Danh sách yêu cầu gia hạn
                                             </a>
                                         </li>
+                                        <li>
+                                            <a href="${pageContext.request.contextPath}/contact">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
+                                                    <path
+                                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                    </path>
+                                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                                </svg>
+                                                Liên hệ
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             </nav>
 
                             <div class="header-actions">
-                                <a href="${pageContext.request.contextPath}/notifications" class="btn-notification">
-                                    <div class="nav-notification">
-
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                        </svg>
-
-                                        <c:if test="${globalUnreadCount > 0}">
-                                            <span class="badge-notify">
-                                                ${globalUnreadCount > 99 ? '99+' : globalUnreadCount}
-                                            </span>
-                                        </c:if>
-                                    </div>
-                                </a>
                                 <a href="${pageContext.request.contextPath}/cart" class="btn-cart">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="9" cy="21" r="1" />
@@ -713,6 +722,17 @@
                                             </span>
                                         </a>
                                     </div>
+
+                                    <a href="${pageContext.request.contextPath}/notifications" class="btn-notif"
+                                        title="Thông báo">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                        </svg>
+                                        <c:if test="${unreadCount > 0}">
+                                            <span class="notif-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>
+                                        </c:if>
+                                    </a>
                                 </c:if>
                                 <c:choose>
                                     <c:when test="${not empty currentUser}">
@@ -756,6 +776,16 @@
                                                                 <circle cx="12" cy="7" r="4" />
                                                             </svg>
                                                             <fmt:message key="nav.profile" />
+                                                        </a>
+                                                        <a href="${pageContext.request.contextPath}/contact-history">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2">
+                                                                <path
+                                                                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                                </path>
+                                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                                            </svg>
+                                                            Lịch sử liên hệ
                                                         </a>
                                                         <div class="hd-divider"></div>
                                                         <a href="${pageContext.request.contextPath}/logout"
@@ -846,24 +876,4 @@
                             toggleNavPanel(false);
                         }
                     });
-
-                    function markAsRead(id) {
-                        fetch(`${pageContext.request.contextPath}/notifications?action=markRead&notifId=${id}`, {
-                            method: 'POST'
-                        }).then(response => {
-                            if (response.redirected) {
-
-                                const badge = document.querySelector('.badge-notify');
-                                if (badge) {
-                                    let count = parseInt(badge.innerText);
-                                    if (count > 1) {
-                                        badge.innerText = count - 1;
-                                    } else {
-                                        badge.remove();
-                                    }
-                                }
-                                location.reload();
-                            }
-                        });
-                    }
                 </script>
