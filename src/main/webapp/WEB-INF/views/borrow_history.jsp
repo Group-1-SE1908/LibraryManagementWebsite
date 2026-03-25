@@ -630,7 +630,7 @@
                                                             <c:if
                                                                 test="${fn:toUpperCase(r.status) == 'REQUESTED' && fn:toUpperCase(r.borrowMethod) != 'ONLINE'}">
                                                                 <button class="btn danger" type="button"
-                                                                    onclick="confirmCancel(${r.id})">Hủy
+                                                                    onclick="confirmCancel('${r.id}')">Hủy
                                                                 </button>
                                                             </c:if>
                                                         </div>
