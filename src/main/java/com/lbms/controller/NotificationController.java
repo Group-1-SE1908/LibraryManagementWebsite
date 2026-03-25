@@ -8,7 +8,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,18 +31,20 @@ public class NotificationController extends HttpServlet {
         }
 
         try {
+            int userId = (int) currentUser.getId();
 
-            List<Map<String, Object>> notifications = notificationService.listByUser(currentUser.getId());
-            int unreadCount = notificationService.countUnread(currentUser.getId());
+            List<Map<String, Object>> notifications = notificationService.listByUser(userId);
+            int unreadCount = notificationService.getUnreadCount(userId);
+
             req.setAttribute("notifications", notifications);
             req.setAttribute("unreadCount", unreadCount);
 
             String role = currentUser.getRole().getName().toUpperCase();
             if ("ADMIN".equals(role) || "LIBRARIAN".equals(role)) {
-                List<User> targetUsers = new ArrayList<>();
+                List<User> targetUsers;
                 if ("ADMIN".equals(role)) {
 
-                    targetUsers = userDAO.findAllActiveExceptMe((int) currentUser.getId());
+                    targetUsers = userDAO.findAllActiveExceptMe(userId);
                 } else {
 
                     targetUsers = userDAO.findByRoleName("MEMBER");
@@ -56,7 +57,7 @@ public class NotificationController extends HttpServlet {
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi tải dữ liệu thông báo", e);
-            resp.sendError(500);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -76,12 +77,11 @@ public class NotificationController extends HttpServlet {
 
         try {
             if ("create".equals(action)) {
-
                 handleSendLogic(req, currentUser);
                 session.setAttribute("successMessage", "Thông báo đã được gửi thành công!");
             } else if ("markRead".equals(action)) {
                 long notifId = Long.parseLong(req.getParameter("notifId"));
-                notificationService.markRead(notifId, currentUser.getId());
+                notificationService.markAsRead(notifId, (int) currentUser.getId());
             } else if ("markAllRead".equals(action)) {
                 notificationService.markAllRead(currentUser.getId());
             }
@@ -101,37 +101,41 @@ public class NotificationController extends HttpServlet {
         String type = "GENERAL_NOTICE";
         int senderId = (int) sender.getId();
 
-        if ("ADMIN".equals(role)) {
+        if (title == null || title.isBlank() || message == null || message.isBlank()) {
+            throw new IllegalArgumentException("Tiêu đề và nội dung không được để trống!");
+        }
 
+        if ("ADMIN".equals(role)) {
             switch (mode) {
-                case "ALL_SYSTEM" -> notificationService.sendSystemNotificationToAll(senderId, type, title, message);
+                case "ALL_SYSTEM" -> notificationService.sendToAll(senderId, type, title, message);
                 case "ALL_LIBRARIANS" ->
-                    notificationService.sendNotificationToRole("LIBRARIAN", senderId, "ADMIN", type, title, message);
+                    notificationService.sendToRole("LIBRARIAN", senderId, "ADMIN", type, title, message);
                 case "ALL_USERS" ->
-                    notificationService.sendNotificationToRole("MEMBER", senderId, "ADMIN", type, title, message);
+                    notificationService.sendToRole("MEMBER", senderId, "ADMIN", type, title, message);
                 case "SPECIFIC" -> {
                     String receiverId = req.getParameter("receiver_id");
                     if (receiverId != null && !receiverId.isEmpty()) {
-                        notificationService.sendNotificationToUser(Integer.parseInt(receiverId), senderId, "ADMIN",
-                                type, title, message);
+                        notificationService.sendToUser(Integer.parseInt(receiverId), senderId, "ADMIN", type, title,
+                                message);
+                    } else {
+                        throw new IllegalArgumentException("Vui lòng chọn người nhận cụ thể!");
                     }
                 }
             }
         } else if ("LIBRARIAN".equals(role)) {
-
             if ("ALL_USERS".equals(mode)) {
-                notificationService.sendNotificationToRole("MEMBER", senderId, "LIBRARIAN", type, title, message);
+                notificationService.sendToRole("MEMBER", senderId, "LIBRARIAN", type, title, message);
             } else if ("SPECIFIC".equals(mode)) {
                 String receiverId = req.getParameter("receiver_id");
                 if (receiverId != null && !receiverId.isEmpty()) {
-                    notificationService.sendNotificationToUser(Integer.parseInt(receiverId), senderId, "LIBRARIAN",
-                            type, title, message);
+                    notificationService.sendToUser(Integer.parseInt(receiverId), senderId, "LIBRARIAN", type, title,
+                            message);
                 } else {
                     throw new IllegalArgumentException("Vui lòng chọn người nhận cụ thể!");
                 }
             }
         } else {
-            throw new IllegalStateException("Bạn không có quyền gửi thông báo!");
+            throw new IllegalStateException("Bạn không có quyền thực hiện thao tác này!");
         }
     }
 

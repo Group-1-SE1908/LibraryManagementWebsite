@@ -4,8 +4,12 @@ import com.lbms.dao.BorrowDAO;
 import com.lbms.dao.ShipmentDAO;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.Shipment;
+import com.lbms.util.DBConnection;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 import java.sql.SQLException;
+import java.util.List;
 
 public class ShippingService {
 
@@ -123,11 +127,71 @@ public class ShippingService {
 //            }
 //        }
 //    }
-    public void createGroupShipment(String groupCode) throws SQLException {
+//    public void createGroupShipment(String groupCode) throws SQLException {
+//        com.lbms.dao.LibrarianBorrowDAO libDAO = new com.lbms.dao.LibrarianBorrowDAO();
+//        java.util.List<BorrowRecord> allRecords;
+//
+//        // 1. Lấy toàn bộ danh sách bản ghi theo mã nhóm hoặc ID đơn lẻ
+//        if (groupCode != null && groupCode.startsWith("DON-LE-")) {
+//            long id = Long.parseLong(groupCode.substring(7));
+//            BorrowRecord br = libDAO.findById(id);
+//            allRecords = new java.util.ArrayList<>();
+//            if (br != null) {
+//                allRecords.add(br);
+//            }
+//        } else {
+//            allRecords = libDAO.findByGroupCode(groupCode);
+//        }
+//
+//        if (allRecords == null || allRecords.isEmpty()) {
+//            throw new IllegalArgumentException("Không tìm thấy dữ liệu phiếu mượn.");
+//        }
+//
+//        // 2. LỌC: Chỉ lấy những phiếu mượn ở trạng thái APPROVED (Đã duyệt)
+//        java.util.List<BorrowRecord> approvedRecords = new java.util.ArrayList<>();
+//        int totalWeight = 0;
+//        for (BorrowRecord br : allRecords) {
+//            if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
+//                approvedRecords.add(br);
+//                // Tính trọng lượng dựa trên số lượng thực tế của sách đã duyệt
+//                totalWeight += (br.getQuantity() * 500);
+//            }
+//        }
+//
+//        // Nếu sau khi lọc không có cuốn nào được duyệt (ví dụ bị từ chối hết)
+//        if (approvedRecords.isEmpty()) {
+//            throw new IllegalArgumentException("Không có phiếu mượn nào ở trạng thái 'Đã duyệt' để thực hiện giao hàng.");
+//        }
+//
+//        // 3. GỌI API GHTK: Sử dụng thông tin của bản ghi đầu tiên trong nhóm đã duyệt
+//        BorrowRecord firstRecord = approvedRecords.get(0);
+//        String trackingCode = ghtkService.createOrder(firstRecord, totalWeight);
+//
+//        // 4. CẬP NHẬT: Chỉ tạo Shipment và đổi trạng thái cho những cuốn đã duyệt
+//        for (BorrowRecord br : approvedRecords) {
+//            // Tạo bản ghi vận chuyển trong bảng shipments
+//            long shipmentId = shipmentDAO.create(br.getId(),
+//                    firstRecord.getShippingDetails().getFormattedAddress(),
+//                    firstRecord.getShippingDetails().getPhone());
+//
+//            // Lưu mã vận đơn GHTK trả về
+//            shipmentDAO.updateTracking(shipmentId, trackingCode, "CREATED");
+//
+//            // Chuyển trạng thái phiếu mượn sang đang giao (SHIPPING) và cập nhật ngày mượn/hạn trả
+//            try (java.sql.Connection c = com.lbms.util.DBConnection.getConnection(); java.sql.PreparedStatement ps = c.prepareStatement(
+//                    "UPDATE borrow_records SET status = 'SHIPPING', borrow_date = GETDATE(), "
+//                    + "due_date = DATEADD(day, 14, GETDATE()) WHERE id = ?")) {
+//                ps.setLong(1, br.getId());
+//                ps.executeUpdate();
+//            }
+//        }
+//    }
+    // Trong ShippingService.java
+    public void createManualGroupShipment(String groupCode) throws SQLException {
         com.lbms.dao.LibrarianBorrowDAO libDAO = new com.lbms.dao.LibrarianBorrowDAO();
         java.util.List<BorrowRecord> allRecords;
 
-        // 1. Lấy toàn bộ danh sách bản ghi theo mã nhóm hoặc ID đơn lẻ
+        // 1. Lấy danh sách phiếu mượn (đơn lẻ hoặc theo nhóm)
         if (groupCode != null && groupCode.startsWith("DON-LE-")) {
             long id = Long.parseLong(groupCode.substring(7));
             BorrowRecord br = libDAO.findById(id);
@@ -143,37 +207,33 @@ public class ShippingService {
             throw new IllegalArgumentException("Không tìm thấy dữ liệu phiếu mượn.");
         }
 
-        // 2. LỌC: Chỉ lấy những phiếu mượn ở trạng thái APPROVED (Đã duyệt)
+        // 2. LỌC: Chỉ lấy những phiếu mượn ở trạng thái APPROVED
         java.util.List<BorrowRecord> approvedRecords = new java.util.ArrayList<>();
-        int totalWeight = 0;
         for (BorrowRecord br : allRecords) {
             if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
                 approvedRecords.add(br);
-                // Tính trọng lượng dựa trên số lượng thực tế của sách đã duyệt
-                totalWeight += (br.getQuantity() * 500);
             }
         }
 
-        // Nếu sau khi lọc không có cuốn nào được duyệt (ví dụ bị từ chối hết)
+        // LỖI BẠN ĐANG GẶP: Nếu danh sách này rỗng thì ném lỗi ra UI
         if (approvedRecords.isEmpty()) {
-            throw new IllegalArgumentException("Không có phiếu mượn nào ở trạng thái 'Đã duyệt' để thực hiện giao hàng.");
+            throw new IllegalArgumentException("Lỗi: Bạn chưa 'Duyệt sách' hoặc đơn hàng này đã được giao rồi.");
         }
 
-        // 3. GỌI API GHTK: Sử dụng thông tin của bản ghi đầu tiên trong nhóm đã duyệt
-        BorrowRecord firstRecord = approvedRecords.get(0);
-        String trackingCode = ghtkService.createOrder(firstRecord, totalWeight);
+        // 3. TỰ SINH MÃ VẬN ĐƠN NỘI BỘ (Để tránh bị NULL như trong bảng shipments của bạn)
+        String manualTrackingCode = "SHIP-" + groupCode + "-" + System.currentTimeMillis();
 
-        // 4. CẬP NHẬT: Chỉ tạo Shipment và đổi trạng thái cho những cuốn đã duyệt
+        // 4. CẬP NHẬT TỪNG PHIẾU MƯỢN ĐÃ DUYỆT
         for (BorrowRecord br : approvedRecords) {
-            // Tạo bản ghi vận chuyển trong bảng shipments
+            // Tạo bản ghi vận chuyển
             long shipmentId = shipmentDAO.create(br.getId(),
-                    firstRecord.getShippingDetails().getFormattedAddress(),
-                    firstRecord.getShippingDetails().getPhone());
+                    br.getShippingDetails().getFormattedAddress(),
+                    br.getShippingDetails().getPhone());
 
-            // Lưu mã vận đơn GHTK trả về
-            shipmentDAO.updateTracking(shipmentId, trackingCode, "CREATED");
+            // Cập nhật mã vận đơn nội bộ vào DB (Không còn bị NULL nữa)
+            shipmentDAO.updateTracking(shipmentId, manualTrackingCode, "SHIPPING");
 
-            // Chuyển trạng thái phiếu mượn sang đang giao (SHIPPING) và cập nhật ngày mượn/hạn trả
+            // Cập nhật trạng thái phiếu mượn sang đang giao (SHIPPING)
             try (java.sql.Connection c = com.lbms.util.DBConnection.getConnection(); java.sql.PreparedStatement ps = c.prepareStatement(
                     "UPDATE borrow_records SET status = 'SHIPPING', borrow_date = GETDATE(), "
                     + "due_date = DATEADD(day, 14, GETDATE()) WHERE id = ?")) {
@@ -182,4 +242,27 @@ public class ShippingService {
             }
         }
     }
+
+    /**
+     * HÀM MỚI: Thủ thư xác nhận nhập kho bằng cách quét Barcode sách trả online
+     */
+    public void confirmReturnByBarcode(long borrowId, String barcode) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            // Cập nhật BookCopy về AVAILABLE
+            String sqlCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE barcode = ?";
+            try (PreparedStatement ps = c.prepareStatement(sqlCopy)) {
+                ps.setString(1, barcode);
+                ps.executeUpdate();
+            }
+
+            // Hoàn tất phiếu mượn
+            String sqlBorrow = "UPDATE borrow_records SET status = 'RETURNED', return_date = GETDATE() "
+                    + "WHERE id = ? AND status = 'RETURN_REQUESTED'";
+            try (PreparedStatement ps = c.prepareStatement(sqlBorrow)) {
+                ps.setLong(1, borrowId);
+                ps.executeUpdate();
+            }
+        }
+    }
+
 }

@@ -35,7 +35,7 @@ public class UserDAO {
 
     public User findByEmail(String email) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.city, u.district, u.ward, u.created_at, r.role_name "
                 + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.email = ?";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -51,7 +51,7 @@ public class UserDAO {
 
     public User findById(long id) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.city, u.district, u.ward, u.created_at, r.role_name "
                 + "FROM [User] u "
                 + "JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.user_id = ?";
@@ -175,7 +175,7 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize, String keyword) throws SQLException {
         List<User> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
+        String sql = "SELECT u.user_id, u.full_name, u.email, u.password, u.status, u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.city, u.district, u.ward, u.created_at, r.role_name "
                 + "FROM [User] u LEFT JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE u.full_name LIKE ? OR u.email LIKE ? "
                 + "ORDER BY u.user_id ASC "
@@ -222,7 +222,7 @@ public class UserDAO {
 
     public List<User> findByRoleName(String roleName) throws SQLException {
         String sql = "SELECT u.user_id, u.email, u.password, u.full_name, u.status, "
-                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.created_at, r.role_name "
+                + "u.role_id, u.phone, u.address, u.avatar, u.wallet_balance, u.city, u.district, u.ward, u.created_at, r.role_name "
                 + "FROM [User] u JOIN Role r ON u.role_id = r.role_id "
                 + "WHERE r.role_name = ?";
         List<User> list = new ArrayList<>();
@@ -246,6 +246,9 @@ public class UserDAO {
         u.setPhone(rs.getString("phone"));
         u.setAvatar(rs.getString("avatar"));
         u.setAddress(rs.getString("address"));
+        u.setCity(rs.getString("city"));
+        u.setDistrict(rs.getString("district"));
+        u.setWard(rs.getString("ward"));
         BigDecimal balance = rs.getBigDecimal("wallet_balance");
         if (balance == null) {
             balance = BigDecimal.ZERO;
@@ -282,16 +285,22 @@ public class UserDAO {
     public void updateProfile(long userId,
             String fullName,
             String phone,
-            String address) throws Exception {
+            String address,
+            String city,
+            String district,
+            String ward) throws Exception {
 
-        String sql = "UPDATE [User] SET full_name = ?, phone = ?, address = ? WHERE user_id = ?";
+        String sql = "UPDATE [User] SET full_name = ?, phone = ?, address = ?, city = ?, district = ?, ward = ? WHERE user_id = ?";
 
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setString(1, fullName);
             ps.setString(2, phone);
             ps.setString(3, address);
-            ps.setLong(4, userId);
+            ps.setString(4, city);
+            ps.setString(5, district);
+            ps.setString(6, ward);
+            ps.setLong(7, userId);
 
             ps.executeUpdate();
         }

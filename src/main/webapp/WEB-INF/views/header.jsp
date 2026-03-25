@@ -450,6 +450,55 @@
                         flex-shrink: 0;
                     }
 
+                    /* Notification button */
+                    .btn-notif {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 38px;
+                        height: 38px;
+                        background: transparent;
+                        border: 1.5px solid #e5e7eb;
+                        border-radius: 8px;
+                        color: #4b5563;
+                        text-decoration: none;
+                        position: relative;
+                        cursor: pointer;
+                        transition: all 0.15s;
+                        flex-shrink: 0;
+                    }
+
+                    .btn-notif:hover {
+                        background: #f3f4f6;
+                        color: #2563eb;
+                        border-color: #2563eb;
+                    }
+
+                    .btn-notif svg {
+                        width: 20px;
+                        height: 20px;
+                    }
+
+                    .notif-badge {
+                        position: absolute;
+                        top: -6px;
+                        right: -6px;
+                        background: #ef4444;
+                        color: #ffffff;
+                        font-size: 10px;
+                        font-weight: 700;
+                        min-width: 18px;
+                        height: 18px;
+                        border-radius: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0 4px;
+                        border: 2px solid #ffffff;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        line-height: 1;
+                    }
+
                     @media (max-width: 1320px) {
                         .header-nav-toggle {
                             display: inline-flex;
@@ -632,6 +681,18 @@
                                                 Danh sách yêu cầu gia hạn
                                             </a>
                                         </li>
+                                        <li>
+                                            <a href="${pageContext.request.contextPath}/contact">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
+                                                    <path
+                                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                    </path>
+                                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                                </svg>
+                                                Liên hệ
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             </nav>
@@ -661,6 +722,17 @@
                                             </span>
                                         </a>
                                     </div>
+
+                                    <a href="${pageContext.request.contextPath}/notifications" class="btn-notif"
+                                        title="Thông báo">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                        </svg>
+                                        <c:if test="${unreadCount > 0}">
+                                            <span class="notif-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>
+                                        </c:if>
+                                    </a>
                                 </c:if>
                                 <c:choose>
                                     <c:when test="${not empty currentUser}">
@@ -704,6 +776,16 @@
                                                                 <circle cx="12" cy="7" r="4" />
                                                             </svg>
                                                             <fmt:message key="nav.profile" />
+                                                        </a>
+                                                        <a href="${pageContext.request.contextPath}/contact-history">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2">
+                                                                <path
+                                                                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                                </path>
+                                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                                            </svg>
+                                                            Lịch sử liên hệ
                                                         </a>
                                                         <div class="hd-divider"></div>
                                                         <a href="${pageContext.request.contextPath}/logout"

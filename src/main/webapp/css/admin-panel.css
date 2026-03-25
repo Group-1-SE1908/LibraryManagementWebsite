@@ -2333,6 +2333,55 @@ body.panel-body .admin-header {
     }
 }
 
+
+.ps-notification-link,
+.ps-notification-link:visited {
+    color: #ffffff !important;
+
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+}
+
+
+.nav-notification {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+
+.badge-notify {
+    position: absolute;
+    top: -2px;
+
+    right: -5px;
+
+    background-color: #ff4d4f !important;
+
+    color: white !important;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #1a2235;
+
+    padding: 2px;
+    line-height: 1;
+}
+
+
+.ps-notification-link:hover {
+    color: #3b82f6 !important;
+
+}
+
 /* ============================================================
    LEGACY RESPONSIVE
    ============================================================ */

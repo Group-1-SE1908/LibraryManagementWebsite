@@ -22,34 +22,34 @@ import java.util.Locale;
 import java.util.Map;
 
 @WebServlet(urlPatterns = {
-        "/staff/borrowlibrary",
-        "/staff/borrowlibrary/approve",
-        "/staff/borrowlibrary/reject",
-        "/staff/borrowlibrary/return",
-        "/staff/borrowlibrary/detail",
-        "/staff/borrowlibrary/inperson",
-        "/staff/borrowlibrary/receive",
-        "/staff/borrowlibrary/verifyData",
-        "/staff/renewal",
-        "/staff/renewal/approve",
-        "/staff/renewal/reject",
-        "/staff/renewal/view",
-        "/staff/borrowlibrary/ship_fee",
-        "/staff/borrowlibrary/ship_confirm",
-        "/admin/borrowlibrary",
-        "/admin/borrowlibrary/approve",
-        "/admin/borrowlibrary/reject",
-        "/admin/borrowlibrary/return",
-        "/admin/borrowlibrary/detail",
-        "/admin/borrowlibrary/inperson",
-        "/admin/borrowlibrary/receive",
-        "/admin/borrowlibrary/verifyData",
-        "/admin/renewal",
-        "/admin/renewal/approve",
-        "/admin/renewal/reject",
-        "/admin/renewal/view",
-        "/admin/borrowlibrary/ship_fee",
-        "/admin/borrowlibrary/ship_confirm"
+    "/staff/borrowlibrary",
+    "/staff/borrowlibrary/approve",
+    "/staff/borrowlibrary/reject",
+    "/staff/borrowlibrary/return",
+    "/staff/borrowlibrary/detail",
+    "/staff/borrowlibrary/inperson",
+    "/staff/borrowlibrary/receive",
+    "/staff/borrowlibrary/verifyData",
+    "/staff/renewal",
+    "/staff/renewal/approve",
+    "/staff/renewal/reject",
+    "/staff/renewal/view",
+    "/staff/borrowlibrary/ship_fee",
+    "/staff/borrowlibrary/ship_confirm",
+    "/admin/borrowlibrary",
+    "/admin/borrowlibrary/approve",
+    "/admin/borrowlibrary/reject",
+    "/admin/borrowlibrary/return",
+    "/admin/borrowlibrary/detail",
+    "/admin/borrowlibrary/inperson",
+    "/admin/borrowlibrary/receive",
+    "/admin/borrowlibrary/verifyData",
+    "/admin/renewal",
+    "/admin/renewal/approve",
+    "/admin/renewal/reject",
+    "/admin/renewal/view",
+    "/admin/borrowlibrary/ship_fee",
+    "/admin/borrowlibrary/ship_confirm"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -285,12 +285,14 @@ public class LibrarianBorrowController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
         String action = getAction(path);
-        if (action == null || action.isEmpty()) {
+
+        if (action == null || action.isEmpty() || action.equals("borrowlibrary")) {
             action = req.getParameter("action");
         }
         String redirectBase = resolveRedirectBase(path);
 
         try {
+
             requireOperationalAccess(req);
 
             // Lấy thông tin người dùng hiện tại từ session để ghi log hoạt động
@@ -315,6 +317,14 @@ public class LibrarianBorrowController extends HttpServlet {
                 req.getSession().setAttribute("flash", "Đã từ chối yêu cầu gia hạn #" + renewalId);
                 resp.sendRedirect(req.getContextPath() + redirectBase);
                 return;
+            } else if ("create-manual".equals(action)) {
+                String groupCode = req.getParameter("groupCode");
+                com.lbms.service.ShippingService shipService = new com.lbms.service.ShippingService();
+                shipService.createManualGroupShipment(groupCode);
+                req.getSession().setAttribute("flash", "Đã tạo mã vận đơn cho đơn hàng " + groupCode);
+                resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+                return;
+
             } else if ("approve".equals(action)) {
                 String idStr = req.getParameter("id");
                 String barcode = req.getParameter("barcode");
@@ -330,9 +340,9 @@ public class LibrarianBorrowController extends HttpServlet {
 
             } else if ("return".equals(action)) {
                 String idStr = req.getParameter("id");
-                String barcode = req.getParameter("barcode").trim();
-                if (idStr == null || idStr.isBlank()) {
-                    throw new IllegalArgumentException("Barcode không hợp lệ.");
+                String barcode = req.getParameter("barcode");
+                if (idStr == null || barcode == null || barcode.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Dữ liệu trả sách (ID/Barcode) không được để trống.");
                 }
 
                 BigDecimal[] returnResult = libService.returnBook(Long.parseLong(idStr), barcode);
@@ -398,7 +408,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 String groupCode = req.getParameter("groupCode");
 
                 com.lbms.service.ShippingService shippingService = new com.lbms.service.ShippingService();
-                shippingService.createGroupShipment(groupCode);
+                shippingService.createManualGroupShipment(groupCode);
 
                 req.getSession().setAttribute("flash", "Đã đẩy đơn hàng gồm nhiều sách sang GHTK thành công!");
                 // Sau khi giao xong cả nhóm, quay thẳng về trang danh sách (borrow_list)

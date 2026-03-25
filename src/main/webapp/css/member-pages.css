@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    MEMBER PAGES – Unified Design System  v2
    Pages: /books, /history, /fines, /reservations,
           /renew-history, /cart
@@ -446,6 +446,16 @@
   background: #f6f9ff;
 }
 
+.mp-table tbody tr.row-cancelled {
+  background-color: #f9fafb !important;
+  opacity: 0.6 !important;
+  transition: opacity var(--mp-transition);
+}
+
+.mp-table tbody tr.row-cancelled:hover {
+  opacity: 1 !important;
+}
+
 .mp-table tbody tr.hidden-row {
   display: none;
 }
@@ -579,6 +589,19 @@
 
 .mp-badge--cancelled .mp-badge__dot {
   background: #94a3b8;
+}
+
+.mp-badge--cancelled.is-outline {
+  background: transparent !important;
+  color: var(--mp-text-muted) !important;
+  border: 1px solid var(--mp-border) !important;
+  font-weight: 600;
+  padding: 3px 10px;
+}
+
+.mp-badge--cancelled.is-outline .mp-badge__dot {
+  background: #cbd5e1;
+  box-shadow: none;
 }
 
 .mp-badge--pending {
@@ -2005,4 +2028,27 @@ form.mp-inline-form {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.mp-btn-reorder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--mp-radius-xs);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mp-primary-mid);
+  background: var(--mp-primary-xlight);
+  border: 1.5px solid var(--mp-primary-light);
+  text-decoration: none;
+  transition: all var(--mp-transition);
+}
+
+.mp-btn-reorder:hover {
+  background: var(--mp-primary-mid);
+  color: #fff;
+  border-color: var(--mp-primary-mid);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }

@@ -21,7 +21,10 @@ public class ProfileService {
     public void updateProfile(Long userId,
             String fullName,
             String phone,
-            String address) throws Exception {
+            String address,
+            String city,
+            String district,
+            String ward) throws Exception {
 
         // validate cơ bản
         if (fullName == null || fullName.trim().isEmpty()) {
@@ -47,7 +50,7 @@ public class ProfileService {
             throw new IllegalArgumentException("Số điện thoại này đã được sử dụng. Vui lòng nhập số khác.");
         }
 
-        userDAO.updateProfile(userId, fullName, phone, address);
+        userDAO.updateProfile(userId, fullName, phone, address, city, district, ward);
     }
 
     // Change password

@@ -219,6 +219,9 @@
                 <c:set var="userPhone" value="${currentUser.phone}" />
                 <c:set var="userEmail" value="${currentUser.email}" />
                 <c:set var="userAddress" value="${currentUser.address}" />
+                <c:set var="userCity" value="${currentUser.city}" />
+                <c:set var="userDistrict" value="${currentUser.district}" />
+                <c:set var="userWard" value="${currentUser.ward}" />
                 <c:set var="borrowDetailsVisible" value="${not empty param.cartError}" />
                 <c:url value="/checkout" var="checkoutUrlValue" />
 
@@ -418,7 +421,10 @@
                 <div class="shipping-overlay" hidden data-shipping-overlay
                     data-profile-recipient="${not empty userFullName ? fn:escapeXml(userFullName) : ''}"
                     data-profile-phone="${not empty userPhone ? fn:escapeXml(userPhone) : ''}"
-                    data-profile-street="${not empty userAddress ? fn:escapeXml(userAddress) : ''}">
+                    data-profile-street="${not empty userAddress ? fn:escapeXml(userAddress) : ''}"
+                    data-profile-city="${not empty userCity ? fn:escapeXml(userCity) : ''}"
+                    data-profile-district="${not empty userDistrict ? fn:escapeXml(userDistrict) : ''}"
+                    data-profile-ward="${not empty userWard ? fn:escapeXml(userWard) : ''}">
                     <div class="shipping-dialog">
                         <div class="shipping-header">
                             <p class="label">Thông tin giao sách</p>
@@ -521,19 +527,38 @@
                         const profileDefaults = {
                             recipient: (shippingOverlay?.dataset.profileRecipient || '').trim(),
                             phone: (shippingOverlay?.dataset.profilePhone || '').trim(),
-                            street: (shippingOverlay?.dataset.profileStreet || '').trim()
+                            street: (shippingOverlay?.dataset.profileStreet || '').trim(),
+                            city: (shippingOverlay?.dataset.profileCity || '').trim(),
+                            district: (shippingOverlay?.dataset.profileDistrict || '').trim(),
+                            ward: (shippingOverlay?.dataset.profileWard || '').trim()
                         };
 
                         const applyProfileDefaults = () => {
-                            Object.entries(profileDefaults).forEach(([key, value]) => {
+                            // Fill text fields only if empty
+                            ['recipient', 'phone', 'street'].forEach(key => {
+                                const value = profileDefaults[key];
                                 if (!value) return;
                                 const field = shippingFieldMap[key];
                                 if (!field) return;
-                                // Chỉ điền nếu ô đó đang trống
                                 if (!field.value.trim()) {
                                     field.value = value;
                                 }
                             });
+                            // Auto-fill city/district/ward from profile if no stored shipping value
+                            if (profileDefaults.city && !shippingHiddenMap.city?.value) {
+                                ensureLocationData().then(() => {
+                                    if (!shippingCitySelect || shippingCitySelect.value) return;
+                                    shippingCitySelect.value = profileDefaults.city;
+                                    renderDistricts(profileDefaults.city);
+                                    if (profileDefaults.district && shippingDistrictSelect) {
+                                        shippingDistrictSelect.value = profileDefaults.district;
+                                        renderWards(profileDefaults.city, profileDefaults.district);
+                                        if (profileDefaults.ward && shippingWardSelect) {
+                                            shippingWardSelect.value = profileDefaults.ward;
+                                        }
+                                    }
+                                });
+                            }
                         };
 
                         if (shippingOverlay && shippingOverlay.parentElement !== document.body) {
@@ -699,7 +724,8 @@
                                     } else {
                                         renderWards(storedCity, '');
                                     }
-                                } else {
+                                } else if (!shippingCitySelect.value) {
+                                    // Only reset if profile defaults didn't fill city either
                                     renderDistricts('');
                                     renderWards('', '');
                                 }
