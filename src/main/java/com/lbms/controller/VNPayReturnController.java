@@ -73,20 +73,30 @@ public class VNPayReturnController extends HttpServlet {
             }
 
             String vnp_SecureHash = req.getParameter("vnp_SecureHash");
-            if (fields.containsKey("vnp_SecureHashType")) fields.remove("vnp_SecureHashType");
-            if (fields.containsKey("vnp_SecureHash")) fields.remove("vnp_SecureHash");
+            if (fields.containsKey("vnp_SecureHashType")) {
+                fields.remove("vnp_SecureHashType");
+            }
+            if (fields.containsKey("vnp_SecureHash")) {
+                fields.remove("vnp_SecureHash");
+            }
 
+            // Check signature
             String signValue = hashAllFields(fields);
             String vnp_TxnRef = req.getParameter("vnp_TxnRef");
-            
             long borrowId = -1;
             String mode = MODE_RETURN;
             if (vnp_TxnRef != null && !vnp_TxnRef.isEmpty()) {
                 String[] parts = vnp_TxnRef.split("_");
-                if (parts.length > 0) {
-                    try { borrowId = Long.parseLong(parts[0]); } catch (Exception ignored) {}
+                if (parts.length > 0 && parts[0] != null && !parts[0].isEmpty()) {
+                    try {
+                        borrowId = Long.parseLong(parts[0]);
+                    } catch (NumberFormatException ignored) {
+                        borrowId = -1;
+                    }
                 }
-                if (parts.length > 1) mode = parts[1];
+                if (parts.length > 1 && parts[1] != null && !parts[1].isEmpty()) {
+                    mode = parts[1];
+                }
             }
 
             boolean isWalletTxn = vnp_TxnRef != null && vnp_TxnRef.startsWith(WalletService.TXN_REF_PREFIX);
@@ -97,12 +107,13 @@ public class VNPayReturnController extends HttpServlet {
                         handleWalletTopUpSuccess(req, resp, vnp_TxnRef, currentUser);
                         return;
                     }
-
-                    if (vnp_TxnRef != null && vnp_TxnRef.startsWith("CART-")) {
+                    if (vnp_TxnRef.startsWith("CART-")) {
+                        // Xử lý đặt sách online
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession().getAttribute("cartCheckout-" + vnp_TxnRef);
-                        
+                        Map<String, Object> checkoutData = (Map<String, Object>) req.getSession()
+                                .getAttribute("cartCheckout-" + vnp_TxnRef);
                         if (checkoutData != null) {
+                            // Thực hiện borrow như trong CartController
                             String method = (String) checkoutData.get("method");
                             String contactName = (String) checkoutData.get("contactName");
                             String contactPhone = (String) checkoutData.get("contactPhone");
@@ -111,175 +122,321 @@ public class VNPayReturnController extends HttpServlet {
                             ShippingDetails shippingDetails = (ShippingDetails) checkoutData.get("shippingDetails");
                             @SuppressWarnings("unchecked")
                             List<CartItem> items = (List<CartItem>) checkoutData.get("items");
+
+                            // Gửi request
                             @SuppressWarnings("unchecked")
                             List<BigDecimal> depositAmounts = (List<BigDecimal>) checkoutData.get("depositAmounts");
 
-                            // --- CỐ ĐỊNH GROUP CODE TẠI ĐÂY ---
-                            // Tạo MỘT lần duy nhất cho toàn bộ các cuốn sách trong đơn hàng
-                            String finalGroupCode = "REQ-" + vnp_TxnRef;
+                            // Nếu null hoặc toàn 0 → tính lại từ DB
+                            if (depositAmounts == null || depositAmounts.stream()
+                                    .allMatch(d -> d == null || d.compareTo(BigDecimal.ZERO) == 0)) {
+                                BookDAO bookDAO = new BookDAO();
+                                depositAmounts = new ArrayList<>();
+                                for (CartItem item : items) {
+                                    Book book = bookDAO.findById(item.getBookId());
+                                    BigDecimal price = (book != null && book.getPrice() != null)
+                                            ? BigDecimal.valueOf(book.getPrice())
+                                            : BigDecimal.ZERO;
+                                    BigDecimal deposit = price
+                                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+                                            .multiply(BigDecimal.valueOf(0.5));
+                                    depositAmounts.add(deposit);
+                                }
+                            }
+                            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
 
                             for (int i = 0; i < items.size(); i++) {
                                 CartItem item = items.get(i);
-                                BigDecimal depositAmount = (depositAmounts != null && i < depositAmounts.size()) 
-                                                           ? depositAmounts.get(i) : BigDecimal.ZERO;
 
-                                // Gọi service lưu từng cuốn nhưng chung finalGroupCode
+                                // 2. XÓA HOẶC COMMENT DÒNG groupCode CŨ Ở ĐÂY 
+                                // String groupCode = "REQ-" + ... (Dòng này trong code cũ của bạn đang gây lỗi)
+                                BigDecimal depositAmount = (i < depositAmounts.size() && depositAmounts.get(i) != null)
+                                        ? depositAmounts.get(i)
+                                        : BigDecimal.ZERO;
+
+                                // 3. Truyền biến groupCode đã tạo ở bên trên vào hàm
                                 borrowService.requestBorrowCopies(
                                         currentUser.getId(),
                                         item.getBookId(),
                                         method,
                                         shippingDetails,
                                         item.getQuantity(),
-                                        finalGroupCode, 
-                                        depositAmount
-                                );
+                                        groupCode, // Cả 2 cuốn sách sẽ dùng chung mã này
+                                        depositAmount);
+
                             }
+                            
+                                // Clear cart
+                                new CartService().clearCart(currentUser.getId());
 
-                            // Dọn dẹp giỏ hàng
-                            new CartService().clearCart(currentUser.getId());
-                            notifyLibrarians(currentUser, items, method, contactName, contactPhone, contactEmail, formattedReturnDate, shippingDetails);
-                            req.getSession().removeAttribute("cartCheckout-" + vnp_TxnRef);
+                                // Notify librarians
+                                try {
+                                    UserDAO userDAO = new UserDAO();
+                                    List<User> librarians = userDAO.findByRoleName("LIBRARIAN");
+                                    if (!librarians.isEmpty()) {
+                                        String emails = librarians.stream()
+                                                .map(User::getEmail)
+                                                .filter(Objects::nonNull)
+                                                .map(String::trim)
+                                                .filter(email -> !email.isBlank())
+                                                .distinct()
+                                                .collect(Collectors.joining(","));
+                                        if (!emails.isBlank()) {
+                                            String displayName = currentUser.getFullName() != null
+                                                    ? currentUser.getFullName()
+                                                    : "Người dùng";
+                                            String userEmail = currentUser.getEmail() != null ? currentUser.getEmail()
+                                                    : "chưa cung cấp";
+                                            String subject = "LBMS - Yêu cầu mượn sách mới từ " + displayName;
+                                            StringBuilder body = new StringBuilder();
+                                            body.append("<h3>Yêu cầu mượn sách mới</h3>");
+                                            body.append("<p>Người dùng ").append(displayName)
+                                                    .append(" (").append(userEmail)
+                                                    .append(") vừa gửi yêu cầu mượn sách.</p>");
+                                            body.append("<p>Phương thức: <strong>online</strong></p>");
+                                            body.append("<h4>Thông tin liên hệ</h4>");
+                                            body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
+                                            body.append("<li><strong>Tên:</strong> ").append(contactName).append("</li>");
+                                            body.append("<li><strong>Điện thoại:</strong> ").append(contactPhone)
+                                                    .append("</li>");
+                                            body.append("<li><strong>Email:</strong> ").append(contactEmail)
+                                                    .append("</li>");
+                                            body.append("</ul>");
+                                            body.append("<h4>Chi tiết sách</h4>");
+                                            body.append("<ul style=\"padding-left:16px; line-height:1.6;\">");
+                                            for (CartItem item : items) {
+                                                body.append("<li>").append(item.getBook().getTitle()).append(" (")
+                                                        .append(item.getQuantity()).append(" cuốn)</li>");
+                                            }
+                                            body.append("</ul>");
+                                            body.append("<p>Ngày trả dự kiến: ").append(formattedReturnDate).append("</p>");
+                                            if (shippingDetails != null) {
+                                                body.append("<p>Người nhận: ").append(shippingDetails.getRecipient())
+                                                        .append("</p>");
+                                                body.append("<p>Điện thoại người nhận: ").append(shippingDetails.getPhone())
+                                                        .append("</p>");
+                                                body.append("<p>Địa chỉ giao: ")
+                                                        .append(shippingDetails.getFormattedAddress()).append("</p>");
+                                            }
+                                            body.append("<p>Vui lòng kiểm tra và xử lý yêu cầu.</p>");
+                                            new EmailService().send(emails, subject, body.toString());
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    // Ignore email error
+                                }
 
-                            // Lưu lịch sử thanh toán
-                            recordOrderPayment(currentUser.getId(), items, vnp_TxnRef);
+                                // Remove session data
+                                req.getSession().removeAttribute("cartCheckout-" + vnp_TxnRef);
 
-                            BigDecimal paidAmount = getVnpayAmount(req);
-                            req.getSession().setAttribute("paymentResult_status", "success");
-                            req.getSession().setAttribute("paymentResult_message", "Thanh toán cọc thành công! Đơn hàng đã được gửi.");
-                            req.getSession().setAttribute("paymentResult_amount", paidAmount);
-                            req.getSession().setAttribute("paymentResult_method", "VNPAY");
-                            req.getSession().setAttribute("paymentResult_backUrl", "/history");
-                            req.getSession().setAttribute("paymentResult_backLabel", "Xem lịch sử mượn");
-                            resp.sendRedirect(req.getContextPath() + "/payment-result");
+                                // record payment history
+                                try {
+                                    BigDecimal totalDeposit = items.stream()
+                                            .map(item -> BigDecimal.valueOf(item.getSubtotal())
+                                            .multiply(BigDecimal.valueOf(0.5)))
+                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                    PaymentHistory ph = new PaymentHistory();
+                                    ph.setUserId(currentUser.getId());
+                                    ph.setPaymentMethod(PaymentHistory.METHOD_VNPAY);
+                                    ph.setPaymentType(PaymentHistory.TYPE_BOOK_DEPOSIT);
+                                    ph.setAmount(totalDeposit);
+                                    ph.setDescription("CọC ĐẶT SÁCH ONLINE - VNPay");
+                                    ph.setReference(vnp_TxnRef);
+                                    ph.setStatus(PaymentHistory.STATUS_SUCCESS);
+                                    paymentHistoryDAO.save(ph);
+                                } catch (Exception e) {
+                                    System.err.println("[VNPayReturn] recordPayment error: " + e.getMessage());
+                                }
+
+                                BigDecimal paidAmount = getVnpayAmount(req);
+                                req.getSession().setAttribute("paymentResult_status", "success");
+                                req.getSession().setAttribute("paymentResult_message",
+                                        "Thanh toán cọc thành công! Yêu cầu đặt sách đã được gửi đến thủ thư.");
+                                req.getSession().setAttribute("paymentResult_amount", paidAmount);
+                                req.getSession().setAttribute("paymentResult_method", "VNPAY");
+                                req.getSession().setAttribute("paymentResult_backUrl", "/cart");
+                                req.getSession().setAttribute("paymentResult_backLabel", "Quay lại giỏ hàng");
+                                resp.sendRedirect(req.getContextPath() + "/payment-result");
+                            } else {
+                                req.getSession().setAttribute("paymentResult_status", "success");
+                                req.getSession().setAttribute("paymentResult_message",
+                                        "Thanh toán thành công nhưng không tìm thấy thông tin đặt sách.");
+                                req.getSession().setAttribute("paymentResult_method", "VNPAY");
+                                req.getSession().setAttribute("paymentResult_backUrl", "/cart");
+                                req.getSession().setAttribute("paymentResult_backLabel", "Quay lại giỏ hàng");
+                                resp.sendRedirect(req.getContextPath() + "/payment-result");
+                            }
+                        } else if (borrowId > 0) {
+                            if (MODE_FINE.equals(mode)) {
+                                borrowService.markFinePaid(borrowId);
+                                recordVnpayPayment(currentUser.getId(), PaymentHistory.TYPE_FINE,
+                                        getVnpayAmount(req), "Thanh toán phí phạt phiếu #" + borrowId,
+                                        vnp_TxnRef, borrowId);
+                                req.getSession().setAttribute("flash", "Thanh toán phí phạt thành công!");
+                                req.getSession().setAttribute("flashType", "success");
+                                resp.sendRedirect(req.getContextPath() + "/fines");
+                            } else {
+                                BorrowRecord brForDeposit = null;
+                                try {
+                                    brForDeposit = borrowDAO.findById(borrowId);
+                                } catch (Exception ignored) {
+                                }
+                                borrowService.returnBook(borrowId);
+                                borrowService.markFinePaid(borrowId);
+                                recordVnpayPayment(currentUser.getId(), PaymentHistory.TYPE_BOOK_RETURN,
+                                        getVnpayAmount(req), "Trả sách & thanh toán phiếu #" + borrowId,
+                                        vnp_TxnRef, borrowId);
+                                req.getSession().setAttribute("flash",
+                                        "Thanh toán thành công & Trả sách thành công!"
+                                        + buildDepositRefundNote(brForDeposit));
+                                req.getSession().setAttribute("flashType", "success");
+                                resp.sendRedirect(req.getContextPath() + "/history");
+                            }
+                        } else {
+                            req.getSession().setAttribute("flash",
+                                    "Thanh toán thành công nhưng không tìm thấy thông tin phiếu mượn.");
+                            resp.sendRedirect(req.getContextPath() + "/history");
                         }
-                    } else if (borrowId > 0) {
-                        // Xử lý thanh toán phạt hoặc trả sách lẻ
-                        handleSingleBorrowPayment(req, resp, currentUser, borrowId, mode, vnp_TxnRef);
+                    } else {
+                        // Payment failed
+                        String redirect;
+                        if (isWalletTxn) {
+                            redirect = req.getContextPath() + "/wallet";
+                            req.getSession().removeAttribute(WalletService.SESSION_KEY_PREFIX + vnp_TxnRef);
+                        } else if (vnp_TxnRef != null && vnp_TxnRef.startsWith("CART-")) {
+                            req.getSession().setAttribute("paymentResult_status", "failed");
+                            req.getSession().setAttribute("paymentResult_message",
+                                    "Thanh toán thất bại! (Mã lỗi: " + req.getParameter("vnp_ResponseCode")
+                                    + "). Vui lòng thử lại.");
+                            req.getSession().setAttribute("paymentResult_method", "VNPAY");
+                            req.getSession().setAttribute("paymentResult_backUrl", "/cart");
+                            req.getSession().setAttribute("paymentResult_backLabel", "Thử lại");
+                            resp.sendRedirect(req.getContextPath() + "/payment-result");
+                            return;
+                        } else {
+                            redirect = req.getContextPath() + "/checkout";
+                            if (borrowId > 0) {
+                                redirect += "?borrowId=" + borrowId;
+                                if (MODE_FINE.equals(mode)) {
+                                    redirect += "&mode=fine";
+                                }
+                            }
+                        }
+                        req.getSession().setAttribute("flash", "Thanh toán thất bại! (Mã lỗi: "
+                                + req.getParameter("vnp_ResponseCode") + "). Vui lòng thử lại.");
+                        req.getSession().setAttribute("flashType", "error");
+                        resp.sendRedirect(redirect);
                     }
                 } else {
-                    handlePaymentFailure(req, resp, vnp_TxnRef, isWalletTxn, borrowId, mode);
+                    // Invalid signature
+                    req.getSession().setAttribute("flash", "Chữ ký không hợp lệ!");
+                    resp.sendRedirect(req.getContextPath() + "/history");
                 }
-            } else {
-                req.getSession().setAttribute("flash", "Chữ ký thanh toán không hợp lệ!");
-                resp.sendRedirect(req.getContextPath() + "/history");
-            }
-        } catch (Exception ex) {
+
+            }catch (Exception ex) {
             throw new ServletException(ex);
         }
-    }
-
-    private void notifyLibrarians(User user, List<CartItem> items, String method, String name, String phone, String email, String date, ShippingDetails sd) {
-        try {
-            UserDAO userDAO = new UserDAO();
-            List<User> librarians = userDAO.findByRoleName("LIBRARIAN");
-            String emails = librarians.stream().map(User::getEmail).filter(Objects::nonNull).collect(Collectors.joining(","));
-            if (emails.isBlank()) return;
-
-            String subject = "LBMS - Đơn mượn Online mới từ " + user.getFullName();
-            StringBuilder body = new StringBuilder("<h3>Có đơn mượn mới</h3>");
-            body.append("<p>Người mượn: ").append(user.getFullName()).append("</p>");
-            body.append("<ul>");
-            for (CartItem item : items) {
-                body.append("<li>").append(item.getBook().getTitle()).append(" (SL: ").append(item.getQuantity()).append(")</li>");
-            }
-            body.append("</ul>");
-            new EmailService().send(emails, subject, body.toString());
-        } catch (Exception ignored) {}
-    }
-
-    private void recordOrderPayment(long userId, List<CartItem> items, String ref) {
-        try {
-            BigDecimal totalDeposit = items.stream()
-                    .map(item -> BigDecimal.valueOf(item.getSubtotal()).multiply(new BigDecimal("0.5")))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            PaymentHistory ph = new PaymentHistory();
-            ph.setUserId(userId);
-            ph.setPaymentMethod(PaymentHistory.METHOD_VNPAY);
-            ph.setPaymentType(PaymentHistory.TYPE_BOOK_DEPOSIT);
-            ph.setAmount(totalDeposit);
-            ph.setDescription("Cọc đơn hàng Online: " + ref);
-            ph.setReference(ref);
-            ph.setStatus(PaymentHistory.STATUS_SUCCESS);
-            paymentHistoryDAO.save(ph);
-        } catch (Exception e) {
-            System.err.println("Lỗi ghi lịch sử thanh toán: " + e.getMessage());
         }
-    }
 
-    private void handleSingleBorrowPayment(HttpServletRequest req, HttpServletResponse resp, User user, long borrowId, String mode, String vnp_TxnRef) throws Exception {
-        if (MODE_FINE.equals(mode)) {
-            borrowService.markFinePaid(borrowId);
-            recordVnpayPayment(user.getId(), PaymentHistory.TYPE_FINE, getVnpayAmount(req), "Phí phạt #" + borrowId, vnp_TxnRef, borrowId);
-            req.getSession().setAttribute("flash", "Thanh toán phí phạt thành công!");
-            resp.sendRedirect(req.getContextPath() + "/fines");
-        } else {
-            BorrowRecord br = borrowDAO.findById(borrowId);
-            borrowService.returnBook(borrowId);
-            recordVnpayPayment(user.getId(), PaymentHistory.TYPE_BOOK_RETURN, getVnpayAmount(req), "Trả sách #" + borrowId, vnp_TxnRef, borrowId);
-            req.getSession().setAttribute("flash", "Trả sách thành công!" + buildDepositRefundNote(br));
-            resp.sendRedirect(req.getContextPath() + "/history");
-        }
-    }
+    
 
-    private void handlePaymentFailure(HttpServletRequest req, HttpServletResponse resp, String vnp_TxnRef, boolean isWallet, long borrowId, String mode) throws IOException {
-        String redirect = req.getContextPath() + "/history";
-        if (isWallet) redirect = req.getContextPath() + "/wallet";
-        else if (vnp_TxnRef != null && vnp_TxnRef.startsWith("CART-")) {
-            req.getSession().setAttribute("paymentResult_status", "failed");
-            req.getSession().setAttribute("paymentResult_message", "Thanh toán thất bại.");
-            resp.sendRedirect(req.getContextPath() + "/payment-result");
-            return;
-        }
-        req.getSession().setAttribute("flash", "Thanh toán thất bại.");
-        resp.sendRedirect(redirect);
-    }
-
-    private void recordVnpayPayment(long userId, String type, BigDecimal amount, String description, String reference, long borrowId) {
+    private void recordVnpayPayment(long userId, String type, BigDecimal amount, String description,
+            String reference, long borrowId) {
         try {
             PaymentHistory ph = new PaymentHistory();
             ph.setUserId(userId);
             ph.setPaymentMethod(PaymentHistory.METHOD_VNPAY);
             ph.setPaymentType(type);
-            ph.setAmount(amount);
+            ph.setAmount(amount != null ? amount : BigDecimal.ZERO);
             ph.setDescription(description);
             ph.setReference(reference);
             ph.setStatus(PaymentHistory.STATUS_SUCCESS);
-            if (borrowId > 0) ph.setBorrowId(borrowId);
+            if (borrowId > 0) {
+                ph.setBorrowId(borrowId);
+            }
             paymentHistoryDAO.save(ph);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("[VNPayReturn] recordVnpayPayment error: " + e.getMessage());
+        }
     }
 
     private BigDecimal getVnpayAmount(HttpServletRequest req) {
         try {
             String vnpAmount = req.getParameter("vnp_Amount");
-            if (vnpAmount != null) return new BigDecimal(vnpAmount).divide(BigDecimal.valueOf(100));
-        } catch (Exception ignored) {}
+            if (vnpAmount != null && !vnpAmount.isBlank()) {
+                return new BigDecimal(vnpAmount).divide(BigDecimal.valueOf(100));
+            }
+        } catch (Exception ignored) {
+        }
         return BigDecimal.ZERO;
     }
 
-    private void handleWalletTopUpSuccess(HttpServletRequest req, HttpServletResponse resp, String txnRef, User currentUser) throws Exception {
+    private void handleWalletTopUpSuccess(HttpServletRequest req, HttpServletResponse resp, String txnRef,
+            User currentUser) throws Exception {
+
         HttpSession session = req.getSession();
         @SuppressWarnings("unchecked")
-        Map<String, Object> topUpData = (Map<String, Object>) session.getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
-        BigDecimal amount = getVnpayAmount(req);
+        Map<String, Object> topUpData = (Map<String, Object>) session
+                .getAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
+        BigDecimal amount = null;
+        if (topUpData != null) {
+            Object storedAmount = topUpData.get("amount");
+            if (storedAmount instanceof BigDecimal) {
+                amount = (BigDecimal) storedAmount;
+            } else if (storedAmount instanceof Number) {
+                amount = BigDecimal.valueOf(((Number) storedAmount).doubleValue());
+            }
+        }
         session.removeAttribute(WalletService.SESSION_KEY_PREFIX + txnRef);
 
-        if (amount.compareTo(BigDecimal.ZERO) > 0) {
-            walletService.creditWallet(currentUser.getId(), amount, "VNPay", "Nạp tiền ví", txnRef);
+        if (amount == null) {
+            String paramAmount = req.getParameter("vnp_Amount");
+            if (paramAmount != null && !paramAmount.isBlank()) {
+                amount = new BigDecimal(paramAmount).divide(BigDecimal.valueOf(100));
+            }
         }
-        session.setAttribute("currentUser", profileService.refreshUser(currentUser.getId()));
-        session.setAttribute("flash", "Nạp tiền vào ví thành công.");
+
+        if (amount == null) {
+            amount = BigDecimal.ZERO;
+        }
+
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            String source = "VNPay Sandbox";
+            String storedLabel = null;
+            if (topUpData != null) {
+                Object labelValue = topUpData.get("label");
+                if (labelValue instanceof String) {
+                    storedLabel = (String) labelValue;
+                }
+            }
+            String description = storedLabel != null ? storedLabel : formatCurrency(amount);
+            walletService.creditWallet(currentUser.getId(), amount, source, description, txnRef);
+        }
+        User refreshed = profileService.refreshUser(currentUser.getId());
+        session.setAttribute("currentUser", refreshed);
+        String message = amount.compareTo(BigDecimal.ZERO) > 0
+                ? "Nạp " + formatCurrency(amount) + " vào ví thành công."
+                : "Nạp tiền vào ví thành công.";
+        session.setAttribute("flash", message);
+        session.setAttribute("flashType", "success");
         resp.sendRedirect(req.getContextPath() + "/wallet");
     }
 
     private String buildDepositRefundNote(BorrowRecord br) {
-        if (br == null || br.getDepositAmount() == null) return "";
-        BigDecimal refund = br.getDepositAmount().multiply(new BigDecimal("0.5"));
+        if (br == null) {
+            return "";
+        }
+        BigDecimal depositAmount = br.getDepositAmount();
+        if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return "";
+        }
+        BigDecimal refund = depositAmount.multiply(new BigDecimal("0.5"));
         return " Đã hoàn 50% tiền cọc (" + formatCurrency(refund) + ") vào ví.";
     }
 
     private String formatCurrency(BigDecimal amount) {
-        return NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")).format(amount);
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+        return formatter.format(amount);
     }
 
     private User getCurrentUser(HttpServletRequest req) {
@@ -288,20 +445,27 @@ public class VNPayReturnController extends HttpServlet {
     }
 
     private String hashAllFields(Map<String, String> fields) {
-        List<String> fieldNames = new ArrayList<>(fields.keySet());
-        Collections.sort(fieldNames);
+        // Build hash data
+        java.util.List<String> fieldNames = new java.util.ArrayList<>(fields.keySet());
+        java.util.Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
+        java.util.Iterator<String> itr = fieldNames.iterator();
         try {
             while (itr.hasNext()) {
                 String fieldName = itr.next();
                 String fieldValue = fields.get(fieldName);
-                if (fieldValue != null && !fieldValue.isEmpty()) {
-                    hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                    if (itr.hasNext()) hashData.append('&');
+                if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                    hashData.append(fieldName);
+                    hashData.append('=');
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    if (itr.hasNext()) {
+                        hashData.append('&');
+                    }
                 }
             }
             return VNPayConfig.hmacSHA512(VNPayConfig.vnp_HashSecret, hashData.toString());
-        } catch (Exception ex) { return ""; }
+        } catch (Exception ex) {
+            return "";
+        }
     }
 }
