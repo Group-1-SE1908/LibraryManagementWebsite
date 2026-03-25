@@ -244,6 +244,7 @@ CREATE TABLE notifications (
 );
 GO
 
+
 CREATE INDEX IX_Notif_UserId ON notifications (user_id);
 CREATE INDEX IX_Notif_IsRead ON notifications (user_id, is_read);
 GO
