@@ -20,38 +20,187 @@ public class LibrarianBorrowService {
     private final ReservationService reservationService = new ReservationService();
     private final WalletService walletService = new WalletService();
     private final NotificationService notificationService = new NotificationService();
+    public static final BigDecimal FIXED_SHIPPING_FEE = new BigDecimal("30000"); // 30k tiền ship
+    public static final BigDecimal RETENTION_RATE = new BigDecimal("0.25");    // Giữ lại 25% cọc
 
-    public BigDecimal[] returnBook(long borrowId, String inputBarcode) throws SQLException {
+//    public BigDecimal[] returnBook(long borrowId, String inputBarcode) throws SQLException {
+//        if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
+//            throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
+//        }
+//
+//        // Chuẩn hóa đầu vào: bỏ khoảng trắng thừa
+//        String cleanInput = inputBarcode.trim();
+//
+//        try (Connection c = DBConnection.getConnection()) {
+//            c.setAutoCommit(false);
+//            try {
+//                // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
+//                // trong DB)
+//                // String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id,
+//                // br.status, br.due_date "
+//                // + "FROM borrow_records br "
+//                // + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+//                // + "WHERE br.id = ?";
+//
+//                String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode, "
+//                        + "br.user_id, br.deposit_amount, b.title AS book_title,br.borrow_method "
+//                        + "FROM borrow_records br "
+//                        + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+//                        + "LEFT JOIN Book b ON br.book_id = b.book_id "
+//                        + "WHERE br.id = ? AND br.status IN ('BORROWED', 'RECEIVED', 'RETURN_REQUESTED')";
+//                String correctBarcode = "";
+//                long bookId = -1;
+//                LocalDate dueDate = null;
+//                long borrowUserId = -1;
+//                BigDecimal depositAmount = null;
+//                String bookTitle = "";
+//
+//                try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
+//                    ps.setLong(1, borrowId);
+//                    try (ResultSet rs = ps.executeQuery()) {
+//                        if (rs.next()) {
+//                            correctBarcode = rs.getString("barcode");
+//                            bookId = rs.getLong("book_id");
+//                            java.sql.Date dueDateSql = rs.getDate("due_date");
+//                            if (dueDateSql != null) {
+//                                dueDate = dueDateSql.toLocalDate();
+//                            }
+//                            borrowUserId = rs.getLong("user_id");
+//                            depositAmount = rs.getBigDecimal("deposit_amount");
+//                            String borrowMethod = rs.getString("borrow_method");
+//                            bookTitle = rs.getString("book_title");
+//                            if (bookTitle == null)
+//                                bookTitle = "";
+//                        } else {
+//                            throw new IllegalArgumentException(
+//                                    "Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
+//                        }
+//                        
+//                    }
+//                }
+//
+//                // 2. So khớp Barcode (Sử dụng equalsIgnoreCase và hiển thị lỗi chi tiết nếu
+//                // sai)
+//                if (correctBarcode == null || !correctBarcode.equalsIgnoreCase(cleanInput)) {
+//                    throw new IllegalArgumentException("Sai mã vạch! Phiếu này yêu cầu mã '" + correctBarcode
+//                            + "', nhưng bạn lại quét mã '" + cleanInput + "'.");
+//                }
+//
+//                // 3. Cập nhật trạng thái bản sao sách về khả dụng
+//                String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE copy_id = "
+//                        + "(SELECT copy_id FROM borrow_records WHERE id = ?)";
+//                try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
+//                    ps.setLong(1, borrowId);
+//                    ps.executeUpdate();
+//                }
+//
+//                // 4. Tăng số lượng đầu sách trong kho (Chỉ tăng nếu trạng thái cũ là đang
+//                // mượn/giao)
+//                String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
+//                try (PreparedStatement ps = c.prepareStatement(updateQty)) {
+//                    ps.setLong(1, bookId);
+//                    ps.executeUpdate();
+//                }
+//
+//                // 5. Cập nhật phiếu mượn thành công
+//                String updateBr = "UPDATE borrow_records SET status='RETURNED', return_date=GETDATE() WHERE id=?";
+//                try (PreparedStatement ps = c.prepareStatement(updateBr)) {
+//                    ps.setLong(1, borrowId);
+//                    ps.executeUpdate();
+//                }
+//
+//                // 6. Tính tiền phạt nếu trễ hạn
+//                LocalDate returnDate = LocalDate.now();
+//                BigDecimal fineAmount = calculateFine(dueDate, returnDate);
+//
+//                c.commit();
+//
+//                // Hoàn tiền cọc vào ví người mượn
+//                BigDecimal depositRefund = BigDecimal.ZERO;
+//                if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0 && borrowUserId > 0) {
+    ////                    depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
+////                    try {
+////                        walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND",
+////                                "Hoàn 50% tiền cọc phiếu #" + borrowId, "DEPOSIT-REFUND-" + borrowId);
+////                        notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund);
+////                    } catch (Exception e) {
+////                        System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền cọc borrowId=" + borrowId
+////                                + ": " + e.getMessage());
+////                    }
+//                        
+//                }
+//
+//                // Gọi ngoài transaction để tránh deadlock
+////                try {
+////                    reservationService.onBookReturned(bookId);
+////                } catch (Exception e) {
+////                    // Chỉ log, không làm hỏng luồng trả sách
+////                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId
+////                            + ": " + e.getMessage());
+////                }
+//
+//                  if ("ONLINE".equalsIgnoreCase(borrowMethod)) {
+//                    // Mượn Online: Giữ lại 30k ship + 25% cọc
+//                    BigDecimal shipFee = new BigDecimal("30000");
+//                    BigDecimal retentionRate = new BigDecimal("0.25");
+//                    BigDecimal retentionAmount = depositAmount.multiply(retentionRate).add(shipFee);
+//                    depositRefund = depositAmount.subtract(retentionAmount);
+//                } else {
+//                    // Mượn tại chỗ (IN_PERSON): Hoàn 50% như cũ
+//                    depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
+//                }
+//
+//                // Đảm bảo không hoàn số âm
+//                if (depositRefund.compareTo(BigDecimal.ZERO) < 0) depositRefund = BigDecimal.ZERO;
+//
+//                try {
+//                    String note = "ONLINE".equalsIgnoreCase(borrowMethod) 
+//                        ? "Hoàn cọc phiếu #" + borrowId + " (Đã trừ 30k ship & 25% phí)"
+//                        : "Hoàn 50% tiền cọc phiếu #" + borrowId;
+//                    
+//                    walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND", note, "DEPOSIT-REFUND-" + borrowId);
+//                    notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund);
+//                } catch (Exception e) {
+//                    System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền: " + e.getMessage());
+//                }
+//            }  
+//
+//
+//                return new BigDecimal[] { fineAmount, depositRefund };
+//            } catch (Exception e) {
+//                c.rollback();
+//                throw e;
+//            }
+//        }
+    
+            // Các hằng số nên được khai báo ở đầu lớp LibrarianBorrowService hoặc trong BorrowService
+
+
+public BigDecimal[] returnBook(long borrowId, String inputBarcode) throws SQLException {
         if (inputBarcode == null || inputBarcode.trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng quét hoặc nhập mã vạch sách.");
         }
 
-        // Chuẩn hóa đầu vào: bỏ khoảng trắng thừa
         String cleanInput = inputBarcode.trim();
 
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1. Lấy thông tin đối chiếu (Sử dụng TRIM trong SQL để loại bỏ khoảng trắng ẩn
-                // trong DB)
-                // String sqlCheck = "SELECT LTRIM(RTRIM(bc.barcode)) as barcode, br.book_id,
-                // br.status, br.due_date "
-                // + "FROM borrow_records br "
-                // + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
-                // + "WHERE br.id = ?";
-
+                // 1. Lấy thông tin đối chiếu, bao gồm cả borrow_method để phân loại phí
                 String sqlCheck = "SELECT br.status, br.due_date, br.copy_id, br.book_id, bc.barcode, "
-                        + "br.user_id, br.deposit_amount, b.title AS book_title "
+                        + "br.user_id, br.deposit_amount, b.title AS book_title, br.borrow_method "
                         + "FROM borrow_records br "
                         + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id "
                         + "LEFT JOIN Book b ON br.book_id = b.book_id "
                         + "WHERE br.id = ? AND br.status IN ('BORROWED', 'RECEIVED', 'RETURN_REQUESTED')";
+
                 String correctBarcode = "";
                 long bookId = -1;
                 LocalDate dueDate = null;
                 long borrowUserId = -1;
                 BigDecimal depositAmount = null;
                 String bookTitle = "";
+                String borrowMethod = "";
 
                 try (PreparedStatement ps = c.prepareStatement(sqlCheck)) {
                     ps.setLong(1, borrowId);
@@ -66,23 +215,23 @@ public class LibrarianBorrowService {
                             borrowUserId = rs.getLong("user_id");
                             depositAmount = rs.getBigDecimal("deposit_amount");
                             bookTitle = rs.getString("book_title");
-                            if (bookTitle == null)
+                            borrowMethod = rs.getString("borrow_method");
+                            if (bookTitle == null) {
                                 bookTitle = "";
+                            }
                         } else {
-                            throw new IllegalArgumentException(
-                                    "Lỗi: Phiếu mượn này chưa được gán mã vạch (copy_id bị NULL hoặc không tồn tại).");
+                            throw new IllegalArgumentException("Lỗi: Phiếu mượn không hợp lệ hoặc không ở trạng thái có thể trả.");
                         }
                     }
                 }
 
-                // 2. So khớp Barcode (Sử dụng equalsIgnoreCase và hiển thị lỗi chi tiết nếu
-                // sai)
+                // 2. So khớp Barcode
                 if (correctBarcode == null || !correctBarcode.equalsIgnoreCase(cleanInput)) {
                     throw new IllegalArgumentException("Sai mã vạch! Phiếu này yêu cầu mã '" + correctBarcode
                             + "', nhưng bạn lại quét mã '" + cleanInput + "'.");
                 }
 
-                // 3. Cập nhật trạng thái bản sao sách về khả dụng
+                // 3. Cập nhật trạng thái bản sao sách về AVAILABLE
                 String updateCopy = "UPDATE BookCopy SET status = 'AVAILABLE' WHERE copy_id = "
                         + "(SELECT copy_id FROM borrow_records WHERE id = ?)";
                 try (PreparedStatement ps = c.prepareStatement(updateCopy)) {
@@ -90,8 +239,7 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
-                // 4. Tăng số lượng đầu sách trong kho (Chỉ tăng nếu trạng thái cũ là đang
-                // mượn/giao)
+                // 4. Tăng số lượng đầu sách trong kho
                 String updateQty = "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?";
                 try (PreparedStatement ps = c.prepareStatement(updateQty)) {
                     ps.setLong(1, bookId);
@@ -111,29 +259,36 @@ public class LibrarianBorrowService {
 
                 c.commit();
 
-                // Hoàn 50% tiền cọc vào ví người mượn
+                // 7. Xử lý hoàn tiền cọc dựa trên borrow_method
                 BigDecimal depositRefund = BigDecimal.ZERO;
                 if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0 && borrowUserId > 0) {
-                    depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
+                    String note;
+                    if ("ONLINE".equalsIgnoreCase(borrowMethod)) {
+                        // Logic Online: Giữ lại 30k ship + 25% cọc
+                        BigDecimal shipFee = new BigDecimal("30000");
+                        BigDecimal retentionAmount = depositAmount.multiply(new BigDecimal("0.25")).add(shipFee);
+                        depositRefund = depositAmount.subtract(retentionAmount);
+
+                        note = "Hoàn tiền cọc sau khi trừ 30k ship và 25% phí vận hành";
+                    } else {
+                        // Logic Tại chỗ: Hoàn 50% cọc (như bạn đã thống nhất cho BorrowService)
+                        depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
+                        note = "Hoàn lại 50% tiền cọc (mượn tại chỗ)";
+                    }
+
+                    if (depositRefund.compareTo(BigDecimal.ZERO) < 0) {
+                        depositRefund = BigDecimal.ZERO;
+                    }
+
                     try {
-                        walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND",
-                                "Hoàn 50% tiền cọc phiếu #" + borrowId, "DEPOSIT-REFUND-" + borrowId);
-                        notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund);
+                        walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND", note, "DEPOSIT-REFUND-" + borrowId);
+                        notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund, note);
                     } catch (Exception e) {
-                        System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền cọc borrowId=" + borrowId
-                                + ": " + e.getMessage());
+                        System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền khi trả sách: " + e.getMessage());
                     }
                 }
 
-                // Gọi ngoài transaction để tránh deadlock
-                try {
-                    reservationService.onBookReturned(bookId);
-                } catch (Exception e) {
-                    // Chỉ log, không làm hỏng luồng trả sách
-                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId
-                            + ": " + e.getMessage());
-                }
-                return new BigDecimal[] { fineAmount, depositRefund };
+                return new BigDecimal[]{fineAmount, depositRefund};
             } catch (Exception e) {
                 c.rollback();
                 throw e;
@@ -247,13 +402,33 @@ public class LibrarianBorrowService {
     public void rejectRequest(long borrowId, String reason, long staffId) throws SQLException {
         BorrowRecord record = libDAO.findById(borrowId);
         if (record == null) {
-            throw new IllegalArgumentException("Không tìm thấy phiếu mượn với ID: " + borrowId);
+            throw new IllegalArgumentException("Không tìm thấy phiếu mượn.");
         }
+
+        BigDecimal depositAmount = record.getDepositAmount();
+        long userId = record.getUser().getId();
         String bookTitle = record.getBook().getTitle();
-        String userName = record.getUser().getFullName();
+
+        // 1. Cập nhật trạng thái REJECTED (để lưu lý do từ chối)
         libDAO.rejectRequest(borrowId, reason);
-        logDAO.addActivityLog((int) staffId,
-                "Từ chối mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
+
+        // 2. HOÀN TIỀN 100%: Nếu là đơn Online có đặt cọc thì trả lại ví
+        if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                String note = "Hoàn 100% tiền cọc do yêu cầu mượn bị từ chối: " + reason;
+                // Nạp lại tiền vào ví khách hàng
+                walletService.creditWallet(userId, depositAmount, "REJECT_REFUND",
+                        note, "REJECT-REFUND-" + borrowId);
+
+                // Gửi thông báo cho khách (nếu có hệ thống Notification)
+                notificationService.notifyDepositRefunded(userId, bookTitle, depositAmount, note);
+            } catch (Exception e) {
+                System.err.println("Lỗi hoàn tiền khi từ chối: " + e.getMessage());
+            }
+        }
+
+        // Ghi log hoạt động của thủ thư
+        logDAO.addActivityLog((int) staffId, "Từ chối mượn: " + bookTitle + " [ID:" + borrowId + "]");
     }
 
     public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
@@ -280,7 +455,7 @@ public class LibrarianBorrowService {
                 if (currentBorrowed + barcodes.size() > BorrowService.MAX_ACTIVE_BORROWS) {
                     throw new IllegalArgumentException(
                             "Vượt quá giới hạn mượn (Tối đa " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn). Đang mượn: "
-                                    + currentBorrowed);
+                            + currentBorrowed);
                 }
 
                 LocalDate borrowDate = LocalDate.now();
