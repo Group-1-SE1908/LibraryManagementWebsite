@@ -53,6 +53,34 @@
                                 border: 1px solid var(--panel-border);
                             }
 
+                            .pm-charts {
+                                display: grid;
+                                grid-template-columns: 1.5fr 1fr;
+                                gap: 1.25rem;
+                                width: 100%;
+                                max-width: 100%;
+
+                                margin-bottom: 2rem;
+                            }
+
+                            .pm-card {
+                                background: var(--panel-card);
+                                border-radius: var(--panel-radius);
+                                border: 1px solid var(--panel-border);
+                                padding: 1.5rem;
+                                min-width: 0;
+
+                                overflow: hidden;
+                            }
+
+
+                            .chart-wrapper {
+                                position: relative;
+                                height: 300px;
+
+                                width: 100%;
+                            }
+
 
                             @media (max-width: 1100px) {
                                 .pm-stats {
@@ -198,13 +226,17 @@
                                     <div class="pm-card-header">
                                         <h3 class="pm-card-title">Top 5 sách mượn nhiều nhất</h3>
                                     </div>
-                                    <div style="height:300px;"><canvas id="bookChart"></canvas></div>
+                                    <div class="chart-wrapper">
+                                        <canvas id="bookChart"></canvas>
+                                    </div>
                                 </div>
                                 <div class="pm-card">
                                     <div class="pm-card-header">
                                         <h3 class="pm-card-title">Phân bổ tiền phạt</h3>
                                     </div>
-                                    <div style="height:250px;"><canvas id="fineChart"></canvas></div>
+                                    <div class="chart-wrapper">
+                                        <canvas id="fineChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
 
@@ -321,8 +353,14 @@
                                         }]
                                     },
                                     options: {
-                                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                                        plugins: { legend: { display: false } }
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                display: true
+                                            }
+                                        }
                                     }
                                 });
 
@@ -342,8 +380,14 @@
                                         }]
                                     },
                                     options: {
-                                        cutout: '70%', responsive: true, maintainAspectRatio: false,
-                                        plugins: { legend: { position: 'bottom', display: hasData } }
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                display: true
+                                            }
+                                        }
                                     }
                                 });
                             });
