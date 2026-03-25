@@ -79,7 +79,8 @@ public class CheckoutController extends HttpServlet {
                     return;
                 }
             } else {
-                if (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"APPROVED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
+                if (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"APPROVED".equalsIgnoreCase(br.getStatus())
+                        && !"RECEIVED".equalsIgnoreCase(br.getStatus())) {
                     req.getSession().setAttribute("flash", "Sách này không đang trong trạng thái mượn.");
                     resp.sendRedirect(req.getContextPath() + "/history");
                     return;
@@ -138,7 +139,8 @@ public class CheckoutController extends HttpServlet {
             }
 
             if (!fineMode
-                    && (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"APPROVED".equalsIgnoreCase(br.getStatus()) && !"RECEIVED".equalsIgnoreCase(br.getStatus()))) {
+                    && (!"BORROWED".equalsIgnoreCase(br.getStatus()) && !"APPROVED".equalsIgnoreCase(br.getStatus())
+                            && !"RECEIVED".equalsIgnoreCase(br.getStatus()))) {
                 resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }
@@ -302,6 +304,9 @@ public class CheckoutController extends HttpServlet {
                 req.getSession().setAttribute("flash",
                         "Trả sách thành công!" + buildDepositRefundNote(br.getDepositAmount()));
                 req.getSession().setAttribute("flashType", "success");
+                // Refresh session wallet balance so header displays updated amount
+                User updatedUser = walletService.refreshUser(currentUser.getId());
+                req.getSession().setAttribute("currentUser", updatedUser);
                 resp.sendRedirect(req.getContextPath() + "/history");
                 return;
             }

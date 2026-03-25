@@ -84,8 +84,8 @@ public class BorrowService {
                 // Cập nhật borrow_record → RETURNED
                 try (var ps = c.prepareStatement(
                         "UPDATE borrow_records "
-                        + "SET status = 'RETURNED', return_date = ?, fine_amount = ?, is_paid = 0 "
-                        + "WHERE id = ?")) {
+                                + "SET status = 'RETURNED', return_date = ?, fine_amount = ?, is_paid = 0 "
+                                + "WHERE id = ?")) {
                     ps.setDate(1, java.sql.Date.valueOf(today));
                     ps.setBigDecimal(2, fine);
                     ps.setLong(3, borrowId);
@@ -118,8 +118,7 @@ public class BorrowService {
                         br.getUser().getId(),
                         br.getBook().getTitle(),
                         depositRefund,
-                        "Hệ thống đã hoàn lại 50% tiền cọc"
-                );
+                        "Hệ thống đã hoàn lại 50% tiền cọc");
 
             } catch (Exception e) {
                 logger.log(Level.WARNING,
@@ -188,6 +187,14 @@ public class BorrowService {
 
         shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
 
+        // Tính deposit_amount cho từng cuốn riêng lẻ (tránh nhân đôi khi qty > 1)
+        // depositAmount là tổng cho cả item (price * qty * 0.5), cần chia đều cho từng
+        // copy
+        BigDecimal perCopyDeposit = BigDecimal.ZERO;
+        if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+            perCopyDeposit = depositAmount.divide(new BigDecimal(quantity), 2, java.math.RoundingMode.HALF_UP);
+        }
+
         List<Long> createdIds = new ArrayList<>();
         // Tách mỗi cuốn thành 1 bản ghi riêng biệt nhưng dùng chung finalCode
         for (int i = 0; i < quantity; i++) {
@@ -198,51 +205,53 @@ public class BorrowService {
                     method,
                     shippingDetails,
                     finalCode,
-                    (depositAmount != null ? depositAmount : BigDecimal.ZERO)
-            );
+                    perCopyDeposit);
             createdIds.add(newId);
         }
         return createdIds;
     }
 
-//    public List<Long> requestBorrowCopies(long userId, long bookId, String method,
-//            ShippingDetails shippingDetails, int quantity, String groupCode) throws SQLException {
-//        if (quantity <= 0) {
-//            throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
-//        }
-//
-//        Book book = bookDAO.findById(bookId);
-//        if (book == null) {
-//            throw new IllegalArgumentException("Sách không tồn tại");
-//        }
-//        if (book.getQuantity() <= 0) {
-//            throw new IllegalArgumentException("Sách đã hết");
-//        }
-//        if (quantity > book.getQuantity()) {
-//            throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang có");
-//        }
-//
-//        int active = borrowDAO.countActiveBorrows(userId);
-//        if (active + quantity > MAX_ACTIVE_BORROWS) {
-//            throw new IllegalArgumentException(
-//                    "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
-//                    + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
-//        }
-//
-//        shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
-//
-//        BigDecimal price = book.getPrice() != null
-//                ? BigDecimal.valueOf(book.getPrice())
-//                : BigDecimal.ZERO;
-//        BigDecimal depositAmount = price.multiply(BigDecimal.valueOf(0.5));
-//
-//        List<Long> ids = new ArrayList<>(quantity);
-//        for (int i = 0; i < quantity; i++) {
-//            ids.add(borrowDAO.createRequest(userId, bookId, 1, method,
-//                    shippingDetails, groupCode, depositAmount));
-//        }
-//        return ids;
-//    }
+    // public List<Long> requestBorrowCopies(long userId, long bookId, String
+    // method,
+    // ShippingDetails shippingDetails, int quantity, String groupCode) throws
+    // SQLException {
+    // if (quantity <= 0) {
+    // throw new IllegalArgumentException("Số lượng mượn phải lớn hơn 0");
+    // }
+    //
+    // Book book = bookDAO.findById(bookId);
+    // if (book == null) {
+    // throw new IllegalArgumentException("Sách không tồn tại");
+    // }
+    // if (book.getQuantity() <= 0) {
+    // throw new IllegalArgumentException("Sách đã hết");
+    // }
+    // if (quantity > book.getQuantity()) {
+    // throw new IllegalArgumentException("Không thể mượn nhiều hơn số lượng đang
+    // có");
+    // }
+    //
+    // int active = borrowDAO.countActiveBorrows(userId);
+    // if (active + quantity > MAX_ACTIVE_BORROWS) {
+    // throw new IllegalArgumentException(
+    // "Bạn chỉ có thể mượn tối đa " + MAX_ACTIVE_BORROWS
+    // + " cuốn cùng lúc (bao gồm đang chờ duyệt)");
+    // }
+    //
+    // shippingDetails = fillInPersonShipping(userId, method, shippingDetails);
+    //
+    // BigDecimal price = book.getPrice() != null
+    // ? BigDecimal.valueOf(book.getPrice())
+    // : BigDecimal.ZERO;
+    // BigDecimal depositAmount = price.multiply(BigDecimal.valueOf(0.5));
+    //
+    // List<Long> ids = new ArrayList<>(quantity);
+    // for (int i = 0; i < quantity; i++) {
+    // ids.add(borrowDAO.createRequest(userId, bookId, 1, method,
+    // shippingDetails, groupCode, depositAmount));
+    // }
+    // return ids;
+    // }
     public int countActiveBorrows(long userId) throws SQLException {
         return borrowDAO.countActiveBorrows(userId);
     }
@@ -409,7 +418,7 @@ public class BorrowService {
                 LocalDate dueDate = today.plusDays(LOAN_DAYS);
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, status, borrow_method, copy_id) "
-                        + "VALUES(?, ?, ?, ?, 'BORROWED', 'IN_PERSON', ?)")) {
+                                + "VALUES(?, ?, ?, ?, 'BORROWED', 'IN_PERSON', ?)")) {
                     ps.setLong(1, userId);
                     ps.setLong(2, bookId);
                     ps.setDate(3, java.sql.Date.valueOf(today));
