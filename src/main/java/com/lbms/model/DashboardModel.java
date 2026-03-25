@@ -11,7 +11,8 @@ public class DashboardModel {
     private int totalShipments;
     private double finesCollected;
     private double finesPending;
-
+    private double totalDeposits;
+    private double averageRating;
     private List<TopUser> topUsers;
     private List<TopBook> topBooks;
 
@@ -174,4 +175,21 @@ public class DashboardModel {
     public void setTopBooks(List<TopBook> topBooks) {
         this.topBooks = topBooks;
     }
+
+    public double getTotalDeposits() {
+        return totalDeposits;
+    }
+
+    public void setTotalDeposits(double totalDeposits) {
+        this.totalDeposits = totalDeposits;
+    }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
+    }
+
 }

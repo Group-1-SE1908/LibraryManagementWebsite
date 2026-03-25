@@ -31,6 +31,41 @@
                                 font-size: .875rem;
                                 color: var(--panel-text-sub);
                             }
+
+                            .pm-stats {
+                                display: grid !important;
+
+                                grid-template-columns: repeat(4, 1fr) !important;
+                                gap: 1.25rem;
+                                margin-bottom: 2rem;
+                                width: 100%;
+                            }
+
+
+                            .pm-stat {
+                                min-width: 0;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                background: var(--panel-card);
+                                padding: 20px;
+                                border-radius: var(--panel-radius);
+                                border: 1px solid var(--panel-border);
+                            }
+
+
+                            @media (max-width: 1100px) {
+                                .pm-stats {
+                                    grid-template-columns: repeat(2, 1fr) !important;
+                                }
+                            }
+
+
+                            @media (max-width: 600px) {
+                                .pm-stats {
+                                    grid-template-columns: 1fr !important;
+                                }
+                            }
                         </style>
                     </head>
 
@@ -80,6 +115,7 @@
                                     <div class="pm-stat-icon" style="background:#ede9fe;color:#6366f1;"><i
                                             class="fas fa-book"></i></div>
                                 </div>
+
                                 <div class="pm-stat">
                                     <div>
                                         <div class="pm-stat-label">Bạn đọc</div>
@@ -88,6 +124,32 @@
                                     <div class="pm-stat-icon" style="background:#dcfce7;color:#15803d;"><i
                                             class="fas fa-users"></i></div>
                                 </div>
+
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Đánh giá trung bình</div>
+                                        <div class="pm-stat-value" style="color:#f59e0b;">
+                                            <fmt:formatNumber value="${dashboardData.averageRating}"
+                                                pattern="#,##0.0" />
+                                            <i class="fas fa-star" style="font-size: 0.7em;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pm-stat-icon" style="background:#fef3c7;color:#f59e0b;"><i
+                                            class="fas fa-star-half-alt"></i></div>
+                                </div>
+
+                                <div class="pm-stat">
+                                    <div>
+                                        <div class="pm-stat-label">Tiền cọc đang giữ</div>
+                                        <div class="pm-stat-value" style="color:#6366f1;">
+                                            <fmt:formatNumber value="${dashboardData.totalDeposits}" pattern="#,##0" />
+                                            ₫
+                                        </div>
+                                    </div>
+                                    <div class="pm-stat-icon" style="background:#e0e7ff;color:#4f46e5;"><i
+                                            class="fas fa-vault"></i></div>
+                                </div>
+
                                 <div class="pm-stat">
                                     <div>
                                         <div class="pm-stat-label">Đang mượn</div>
@@ -97,6 +159,7 @@
                                     <div class="pm-stat-icon" style="background:#e0f2fe;color:#0369a1;"><i
                                             class="fas fa-book-reader"></i></div>
                                 </div>
+
                                 <div class="pm-stat">
                                     <div>
                                         <div class="pm-stat-label">Quá hạn</div>
@@ -106,6 +169,7 @@
                                     <div class="pm-stat-icon" style="background:#fee2e2;color:#ef4444;"><i
                                             class="fas fa-history"></i></div>
                                 </div>
+
                                 <div class="pm-stat">
                                     <div>
                                         <div class="pm-stat-label">Tiền phạt đã thu</div>
@@ -117,19 +181,18 @@
                                     <div class="pm-stat-icon" style="background:#dcfce7;color:#15803d;"><i
                                             class="fas fa-hand-holding-usd"></i></div>
                                 </div>
+
                                 <div class="pm-stat">
                                     <div>
                                         <div class="pm-stat-label">Tiền phạt chưa thu</div>
                                         <div class="pm-stat-value" style="color:#f59e0b;">
-                                            <fmt:formatNumber value="${dashboardData.finesPending}"
-                                                pattern="#,##0 '₫'" />
+                                            <fmt:formatNumber value="${dashboardData.finesPending}" pattern="#,##0" /> ₫
                                         </div>
                                     </div>
-                                    <div class="pm-stat-icon" style="background:#fef3c7;color:#b45309;"><i
-                                            class="fas fa-clock"></i></div>
+                                    <div class="pm-stat-icon" style="background:#fff7ed;color:#ea580c;"><i
+                                            class="fas fa-clock-rotate-left"></i></div>
                                 </div>
                             </div>
-
                             <div class="pm-charts">
                                 <div class="pm-card">
                                     <div class="pm-card-header">

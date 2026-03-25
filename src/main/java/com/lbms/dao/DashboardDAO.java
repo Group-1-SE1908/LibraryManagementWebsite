@@ -18,7 +18,6 @@ public class DashboardDAO {
 
         try (Connection conn = DBConnection.getConnection()) {
             if (conn != null) {
-
                 String sqlStats = "SELECT "
                         + "(SELECT COUNT(*) FROM Book) as totalBooks, "
                         + "(SELECT COUNT(*) FROM [User] WHERE status = 'ACTIVE') as activeUsers, "
@@ -29,11 +28,17 @@ public class DashboardDAO {
                         + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE is_paid = 1"
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS finesCollected, "
                         + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE is_paid = 0"
-                        + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS finesPending";
+                        + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS finesPending, "
+                        + "(SELECT ISNULL(SUM(deposit_amount), 0) FROM borrow_records WHERE status IN ('BORROWED', 'REQUESTED', 'SHIPPING')"
+                        + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS totalDeposits, "
+                        // THÊM DÒNG NÀY: Tính trung bình cộng rating
+                        + "(SELECT ISNULL(AVG(CAST(rating AS DECIMAL(3,2))), 0) FROM Comment WHERE status = 'VISIBLE'"
+                        + (hasFilter ? " AND created_at BETWEEN ? AND ?" : "") + ") AS avgRating";
 
                 try (PreparedStatement ps = conn.prepareStatement(sqlStats)) {
                     if (hasFilter) {
-                        for (int i = 1; i <= 8; i += 2) {
+                        // Cập nhật loop: Bây giờ có 6 subqueries cần filter ngày (i <= 12)
+                        for (int i = 1; i <= 12; i += 2) {
                             ps.setString(i, startDate);
                             ps.setString(i + 1, endDate);
                         }
@@ -46,6 +51,9 @@ public class DashboardDAO {
                             ds.setOverdueBooks(rs.getInt("overdueBooks"));
                             ds.setFinesCollected(rs.getDouble("finesCollected"));
                             ds.setFinesPending(rs.getDouble("finesPending"));
+                            ds.setTotalDeposits(rs.getDouble("totalDeposits"));
+
+                            ds.setAverageRating(rs.getDouble("avgRating"));
                         }
                     }
                 }
