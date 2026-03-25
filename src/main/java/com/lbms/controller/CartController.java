@@ -41,8 +41,8 @@ import java.util.Objects;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = { "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout",
-        "/cart/checkout/process", "/cart/checkout/pay-wallet" })
+@WebServlet(urlPatterns = {"/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/checkout",
+    "/cart/checkout/process", "/cart/checkout/pay-wallet"})
 public class CartController extends HttpServlet {
 
     private CartService cartService;
@@ -168,12 +168,15 @@ public class CartController extends HttpServlet {
         String formPhone = req.getParameter("contactPhone");
         String formEmail = req.getParameter("contactEmail");
 
-        if (formName != null && !formName.isBlank())
+        if (formName != null && !formName.isBlank()) {
             contactName = formName;
-        if (formPhone != null && !formPhone.isBlank())
+        }
+        if (formPhone != null && !formPhone.isBlank()) {
             contactPhone = formPhone;
-        if (formEmail != null && !formEmail.isBlank())
+        }
+        if (formEmail != null && !formEmail.isBlank()) {
             contactEmail = formEmail;
+        }
 
         int borrowDays = parseIntParam(req, "borrowDuration", 7);
         LocalDate pickupDate = null;
@@ -216,8 +219,9 @@ public class CartController extends HttpServlet {
             returnDate = LocalDate.now().plusDays(borrowDays);
         }
 
-        if (returnDate == null)
+        if (returnDate == null) {
             returnDate = LocalDate.now().plusDays(borrowDays);
+        }
         formattedReturnDate = returnDate.format(DISPLAY_DATE_FORMAT);
 
         Cart cart = cartService.getCart(currentUser.getId());
@@ -232,7 +236,7 @@ public class CartController extends HttpServlet {
         if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
             redirectWithParam(req, resp, "/cart", "cartError",
                     "Bạn đang có " + currentActiveBorrows + " cuốn đang mượn/đang chờ duyệt, tối đa "
-                            + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
+                    + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
             return;
         }
 
@@ -285,10 +289,23 @@ public class CartController extends HttpServlet {
         }
 
         // ── IN_PERSON: tạo borrow records ngay, không qua VNPay ─────────────
+//        for (CartItem item : items) {
+//            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
+//            borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
+//                    item.getQuantity(), groupCode);
+//        }
         for (CartItem item : items) {
             String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
-            borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
-                    item.getQuantity(), groupCode);
+
+            borrowService.requestBorrowCopies(
+                    currentUser.getId(),
+                    item.getBookId(),
+                    method,
+                    shippingDetails,
+                    item.getQuantity(),
+                    groupCode,
+                    null // ← truyền null để BorrowService tự tính deposit
+            );
         }
 
         cartService.clearCart(currentUser.getId());
@@ -298,8 +315,9 @@ public class CartController extends HttpServlet {
         StringBuilder message = new StringBuilder();
         message.append("Gửi yêu cầu mượn ").append(toMethodLabel(method)).append(" thành công. ");
         message.append("Ngày trả dự kiến ").append(formattedReturnDate).append(". ");
-        if (formattedPickupDate != null)
+        if (formattedPickupDate != null) {
             message.append("Ngày đến lấy: ").append(formattedPickupDate).append(". ");
+        }
         if (shippingDetails != null) {
             message.append("Người nhận: ").append(shippingDetails.getRecipient()).append(". ");
             message.append("Điện thoại người nhận: ").append(shippingDetails.getPhone()).append(". ");
@@ -627,11 +645,10 @@ public class CartController extends HttpServlet {
         // debit wallet
         String ref = "WALLET-CART-" + currentUser.getId() + "-" + System.currentTimeMillis();
         walletService.debitWallet(currentUser.getId(), totalDeposit, "Coc dat sach online", ref);
-
+        String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
         // create borrow requests
         for (int i = 0; i < items.size(); i++) {
-            CartItem item = items.get(i);
-            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
+            CartItem item = items.get(i);            
             BigDecimal deposit = (i < depositAmounts.size() && depositAmounts.get(i) != null)
                     ? depositAmounts.get(i)
                     : BigDecimal.ZERO;
@@ -665,7 +682,7 @@ public class CartController extends HttpServlet {
         req.getSession().setAttribute("paymentResult_status", "success");
         req.getSession().setAttribute("paymentResult_message",
                 "Thanh toán cọc " + formatVnd(totalDeposit)
-                        + " bằng ví thành công! Yêu cầu đặt sách đã được gửi đến thủ thư.");
+                + " bằng ví thành công! Yêu cầu đặt sách đã được gửi đến thủ thư.");
         req.getSession().setAttribute("paymentResult_amount", totalDeposit);
         req.getSession().setAttribute("paymentResult_method", "WALLET");
         req.getSession().setAttribute("paymentResult_backUrl", "/cart");

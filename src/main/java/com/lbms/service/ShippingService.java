@@ -1,6 +1,7 @@
 package com.lbms.service;
 
 import com.lbms.dao.BorrowDAO;
+import com.lbms.dao.LibrarianBorrowDAO;
 import com.lbms.dao.ShipmentDAO;
 import com.lbms.model.BorrowRecord;
 import com.lbms.model.Shipment;
@@ -10,6 +11,7 @@ import java.sql.PreparedStatement;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ShippingService {
 
@@ -186,55 +188,91 @@ public class ShippingService {
 //            }
 //        }
 //    }
-    // Trong ShippingService.java
+//    public void createManualGroupShipment(String groupCode) throws SQLException {
+//        com.lbms.dao.LibrarianBorrowDAO libDAO = new com.lbms.dao.LibrarianBorrowDAO();
+//        java.util.List<BorrowRecord> allRecords;
+//
+//        // 1. Lấy danh sách phiếu mượn (đơn lẻ hoặc theo nhóm)
+//        if (groupCode != null && groupCode.startsWith("DON-LE-")) {
+//            long id = Long.parseLong(groupCode.substring(7));
+//            BorrowRecord br = libDAO.findById(id);
+//            allRecords = new java.util.ArrayList<>();
+//            if (br != null) {
+//                allRecords.add(br);
+//            }
+//        } else {
+//            allRecords = libDAO.findByGroupCode(groupCode);
+//        }
+//
+//        if (allRecords == null || allRecords.isEmpty()) {
+//            throw new IllegalArgumentException("Không tìm thấy dữ liệu phiếu mượn.");
+//        }
+//
+//        // 2. LỌC: Chỉ lấy những phiếu mượn ở trạng thái APPROVED
+//        java.util.List<BorrowRecord> approvedRecords = new java.util.ArrayList<>();
+//        for (BorrowRecord br : allRecords) {
+//            if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
+//                approvedRecords.add(br);
+//            }
+//        }
+//
+//        // LỖI BẠN ĐANG GẶP: Nếu danh sách này rỗng thì ném lỗi ra UI
+//        if (approvedRecords.isEmpty()) {
+//            throw new IllegalArgumentException("Lỗi: Bạn chưa 'Duyệt sách' hoặc đơn hàng này đã được giao rồi.");
+//        }
+//
+//        // 3. TỰ SINH MÃ VẬN ĐƠN NỘI BỘ (Để tránh bị NULL như trong bảng shipments của bạn)
+//        String manualTrackingCode = "SHIP-" + groupCode + "-" + System.currentTimeMillis();
+//
+//        // 4. CẬP NHẬT TỪNG PHIẾU MƯỢN ĐÃ DUYỆT
+//        for (BorrowRecord br : approvedRecords) {
+//            // Tạo bản ghi vận chuyển
+//            long shipmentId = shipmentDAO.create(br.getId(),
+//                    br.getShippingDetails().getFormattedAddress(),
+//                    br.getShippingDetails().getPhone());
+//
+//            // Cập nhật mã vận đơn nội bộ vào DB (Không còn bị NULL nữa)
+//            shipmentDAO.updateTracking(shipmentId, manualTrackingCode, "SHIPPING");
+//
+//            // Cập nhật trạng thái phiếu mượn sang đang giao (SHIPPING)
+//            try (java.sql.Connection c = com.lbms.util.DBConnection.getConnection(); java.sql.PreparedStatement ps = c.prepareStatement(
+//                    "UPDATE borrow_records SET status = 'SHIPPING', borrow_date = GETDATE(), "
+//                    + "due_date = DATEADD(day, 14, GETDATE()) WHERE id = ?")) {
+//                ps.setLong(1, br.getId());
+//                ps.executeUpdate();
+//            }
+//        }
+//    }
     public void createManualGroupShipment(String groupCode) throws SQLException {
-        com.lbms.dao.LibrarianBorrowDAO libDAO = new com.lbms.dao.LibrarianBorrowDAO();
-        java.util.List<BorrowRecord> allRecords;
+        LibrarianBorrowDAO libDAO = new LibrarianBorrowDAO();
+        List<BorrowRecord> allRecords = libDAO.findByGroupCode(groupCode);
 
-        // 1. Lấy danh sách phiếu mượn (đơn lẻ hoặc theo nhóm)
-        if (groupCode != null && groupCode.startsWith("DON-LE-")) {
-            long id = Long.parseLong(groupCode.substring(7));
-            BorrowRecord br = libDAO.findById(id);
-            allRecords = new java.util.ArrayList<>();
-            if (br != null) {
-                allRecords.add(br);
-            }
-        } else {
-            allRecords = libDAO.findByGroupCode(groupCode);
-        }
+        // Lọc các bản ghi đã được duyệt (APPROVED)
+        List<BorrowRecord> approvedRecords = allRecords.stream()
+                .filter(r -> "APPROVED".equalsIgnoreCase(r.getStatus()))
+                .collect(Collectors.toList());
 
-        if (allRecords == null || allRecords.isEmpty()) {
-            throw new IllegalArgumentException("Không tìm thấy dữ liệu phiếu mượn.");
-        }
-
-        // 2. LỌC: Chỉ lấy những phiếu mượn ở trạng thái APPROVED
-        java.util.List<BorrowRecord> approvedRecords = new java.util.ArrayList<>();
-        for (BorrowRecord br : allRecords) {
-            if ("APPROVED".equalsIgnoreCase(br.getStatus())) {
-                approvedRecords.add(br);
-            }
-        }
-
-        // LỖI BẠN ĐANG GẶP: Nếu danh sách này rỗng thì ném lỗi ra UI
         if (approvedRecords.isEmpty()) {
-            throw new IllegalArgumentException("Lỗi: Bạn chưa 'Duyệt sách' hoặc đơn hàng này đã được giao rồi.");
+            throw new IllegalArgumentException("Không có phiếu mượn nào ở trạng thái 'Đã duyệt' để giao hàng.");
         }
 
-        // 3. TỰ SINH MÃ VẬN ĐƠN NỘI BỘ (Để tránh bị NULL như trong bảng shipments của bạn)
-        String manualTrackingCode = "SHIP-" + groupCode + "-" + System.currentTimeMillis();
+        // 1. TÍNH TỔNG TRỌNG LƯỢNG & GỌI GHTK DUY NHẤT 1 LẦN
+        int totalWeight = approvedRecords.stream().mapToInt(r -> r.getQuantity() * 500).sum();
+        BorrowRecord firstRecord = approvedRecords.get(0);
 
-        // 4. CẬP NHẬT TỪNG PHIẾU MƯỢN ĐÃ DUYỆT
+        // Gọi GHTK thực tế (Giả sử dùng hàm createOrder đã có)
+        String trackingCode = ghtkService.createOrder(firstRecord, totalWeight);
+
+        // 2. CẬP NHẬT MÃ TRACKING DÙNG CHUNG CHO TẤT CẢ SÁCH TRONG NHÓM
         for (BorrowRecord br : approvedRecords) {
-            // Tạo bản ghi vận chuyển
             long shipmentId = shipmentDAO.create(br.getId(),
                     br.getShippingDetails().getFormattedAddress(),
                     br.getShippingDetails().getPhone());
 
-            // Cập nhật mã vận đơn nội bộ vào DB (Không còn bị NULL nữa)
-            shipmentDAO.updateTracking(shipmentId, manualTrackingCode, "SHIPPING");
+            shipmentDAO.updateTracking(shipmentId, trackingCode, "SHIPPING");
 
-            // Cập nhật trạng thái phiếu mượn sang đang giao (SHIPPING)
-            try (java.sql.Connection c = com.lbms.util.DBConnection.getConnection(); java.sql.PreparedStatement ps = c.prepareStatement(
+            // Cập nhật trạng thái phiếu mượn sang SHIPPING
+            try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(
                     "UPDATE borrow_records SET status = 'SHIPPING', borrow_date = GETDATE(), "
                     + "due_date = DATEADD(day, 14, GETDATE()) WHERE id = ?")) {
                 ps.setLong(1, br.getId());
