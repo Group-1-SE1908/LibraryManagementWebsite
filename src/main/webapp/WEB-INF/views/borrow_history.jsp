@@ -24,6 +24,21 @@
                 pointer-events: none;
             }
 
+            .table-book-copy {
+                margin-bottom: 6px;
+            }
+
+            .copy-tag {
+                display: inline-block;
+                background: #e0f2fe;
+                color: #0369a1;
+                font-size: 0.68rem;
+                font-weight: 700;
+                border-radius: 999px;
+                padding: 2px 8px;
+                margin-bottom: 4px;
+            }
+
             .order-modal[hidden] {
                 display: none;
             }
@@ -546,6 +561,11 @@
                                         <!-- SÁCH Column -->
                                         <td>
                                             <div class="table-book-cell">
+                                                <div class="table-book-copy">
+                                                    <c:if test="${entry.copyCount > 1}">
+                                                        <span class="copy-tag">Phiếu ${entry.copyIndex}/${entry.copyCount}</span>
+                                                    </c:if>
+                                                </div>
                                                 <div class="table-book-image">
                                                     <c:choose>
                                                         <c:when test="${not empty r.book.image}">

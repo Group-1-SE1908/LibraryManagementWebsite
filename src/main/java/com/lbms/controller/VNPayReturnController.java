@@ -123,6 +123,24 @@ public class VNPayReturnController extends HttpServlet {
                             @SuppressWarnings("unchecked")
                             List<CartItem> items = (List<CartItem>) checkoutData.get("items");
 
+                            if (items == null || items.isEmpty()) {
+                                req.getSession().setAttribute("paymentResult_status", "fail");
+                                req.getSession().setAttribute("paymentResult_message", "Giỏ hàng trống");
+                                resp.sendRedirect(req.getContextPath() + "/cart");
+                                return;
+                            }
+
+                            int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
+                            int requestedBooks = items.stream().mapToInt(CartItem::getQuantity).sum();
+                            if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
+                                req.getSession().setAttribute("paymentResult_status", "fail");
+                                req.getSession().setAttribute("paymentResult_message",
+                                        "Bạn đang có " + currentActiveBorrows + " cuốn đang mượn/đang chờ duyệt, tối đa "
+                                                + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
+                                resp.sendRedirect(req.getContextPath() + "/cart");
+                                return;
+                            }
+
                             // Gửi request
                             @SuppressWarnings("unchecked")
                             List<BigDecimal> depositAmounts = (List<BigDecimal>) checkoutData.get("depositAmounts");

@@ -231,6 +231,25 @@ public class CartController extends HttpServlet {
         }
 
         List<CartItem> items = new ArrayList<>(cart.getItems());
+
+        // Validate quantities / available stock before checkout
+        for (CartItem item : items) {
+            if (item.getQuantity() <= 0) {
+                redirectWithParam(req, resp, "/cart", "cartError", "Số lượng sách phải lớn hơn 0");
+                return;
+            }
+            Book book = new BookDAO().findById(item.getBookId());
+            if (book == null) {
+                redirectWithParam(req, resp, "/cart", "cartError", "Sách trong giỏ không tồn tại");
+                return;
+            }
+            if (item.getQuantity() > book.getQuantity()) {
+                redirectWithParam(req, resp, "/cart", "cartError",
+                        "Sách '" + book.getTitle() + "' chỉ còn " + book.getQuantity() + " cuốn.");
+                return;
+            }
+        }
+
         int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
         int requestedBooks = items.stream().mapToInt(CartItem::getQuantity).sum();
         if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
@@ -289,21 +308,15 @@ public class CartController extends HttpServlet {
         }
 
         // ── IN_PERSON: tạo borrow records ngay, không qua VNPay ─────────────
-//        for (CartItem item : items) {
-//            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
-//            borrowService.requestBorrowCopies(currentUser.getId(), item.getBookId(), method, shippingDetails,
-//                    item.getQuantity(), groupCode);
-//        }
+        String cartGroupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
         for (CartItem item : items) {
-            String groupCode = "REQ-" + System.currentTimeMillis() + "-" + currentUser.getId();
-
             borrowService.requestBorrowCopies(
                     currentUser.getId(),
                     item.getBookId(),
                     method,
                     shippingDetails,
                     item.getQuantity(),
-                    groupCode,
+                    cartGroupCode,
                     null // ← truyền null để BorrowService tự tính deposit
             );
         }
@@ -598,6 +611,15 @@ public class CartController extends HttpServlet {
         List<CartItem> items = (List<CartItem>) checkoutData.get("items");
         if (items == null || items.isEmpty()) {
             redirectWithParam(req, resp, "/cart", "cartError", "Giỏ hàng trống");
+            return;
+        }
+
+        int currentActiveBorrows = borrowService.countActiveBorrows(currentUser.getId());
+        int requestedBooks = items.stream().mapToInt(CartItem::getQuantity).sum();
+        if (currentActiveBorrows + requestedBooks > BorrowService.MAX_ACTIVE_BORROWS) {
+            redirectWithParam(req, resp, "/cart", "cartError",
+                    "Bạn đang có " + currentActiveBorrows + " cuốn đang mượn/đang chờ duyệt, tối đa "
+                            + BorrowService.MAX_ACTIVE_BORROWS + " cuốn cùng lúc. Vui lòng giảm số sách trong giỏ.");
             return;
         }
 
