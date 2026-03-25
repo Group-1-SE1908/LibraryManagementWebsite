@@ -77,6 +77,22 @@ public class ContactHistoryController extends HttpServlet {
                 e.printStackTrace();
                 session.setAttribute("error", "Đã xảy ra lỗi khi hủy yêu cầu.");
             }
+        } else if ("edit".equals(action)) {
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                String feedbackType = request.getParameter("feedbackType");
+                String message = request.getParameter("message");
+                ContactMessage msg = contactMessageDAO.findById(id);
+                if (msg != null && msg.getEmail().equals(user.getEmail()) && "PENDING".equals(msg.getStatus())) {
+                    contactMessageDAO.updateMessage(id, feedbackType, message);
+                    session.setAttribute("toastMessage", "Đã cập nhật yêu cầu liên hệ thành công.");
+                } else {
+                    session.setAttribute("error", "Không thể cập nhật yêu cầu này.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                session.setAttribute("error", "Đã xảy ra lỗi khi cập nhật yêu cầu.");
+            }
         }
         
         String filter = request.getParameter("filter");

@@ -122,6 +122,17 @@ public class ContactMessageDAO {
         }
     }
 
+    public void updateMessage(int id, String feedbackType, String message) throws SQLException {
+        String sql = "UPDATE contact_messages SET feedback_type = ?, message = ? WHERE id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, feedbackType);
+            ps.setString(2, message);
+            ps.setInt(3, id);
+            ps.executeUpdate();
+        }
+    }
+
     private ContactMessage map(ResultSet rs) throws SQLException {
         ContactMessage msg = new ContactMessage();
         msg.setId(rs.getInt("id"));
