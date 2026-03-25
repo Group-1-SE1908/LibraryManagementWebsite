@@ -284,7 +284,7 @@
                     let titleText = 'Lỗi';
 
                     // Kiểm tra nội dung để chọn icon phù hợp (Không phân biệt hoa thường)
-                    if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả') || lowerMsg.includes('xác nhận') || lowerMsg.includes('từ chối')) {
+                    if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả') || lowerMsg.includes('xác nhận') || lowerMsg.includes('từ chối') || lowerMsg.includes('đã tạo mã')) {
                         iconType = 'success';
                         titleText = 'Thành công';
                     }
@@ -317,42 +317,32 @@
 
                         <div class="order-header">
                             <div class="order-header-info">
-                                <div class="order-id">Mã đơn: <span
-                                        style="color: #0ea5e9;">${groupCode}</span></div>
+                                <div class="order-id">Mã đơn: <span style="color: #0ea5e9;">${groupCode}</span></div>
                                 <div class="user-meta">
-                                    👤 ${firstRecord.user.fullName} &nbsp;|&nbsp;
-                                    📞 ${firstRecord.user.phone} &nbsp;|&nbsp;
-                                    ✉️ ${firstRecord.user.email}
+                                    👤 ${firstRecord.user.fullName} &nbsp;|&nbsp; 📞 ${firstRecord.user.phone}
                                 </div>
                             </div>
+
                             <div style="text-align: right;">
-                                <c:set var="normalizedGroupStatus"
-                                       value="${fn:toUpperCase(fn:trim(firstRecord.status))}" />
-                                <span class="status-badge status-${normalizedGroupStatus}"
-                                      style="font-size: 13px; padding: 6px 14px;">
+                                <c:set var="normalizedGroupStatus" value="${fn:toUpperCase(fn:trim(firstRecord.status))}" />
+
+                                
+                                <c:if test="${normalizedGroupStatus == 'APPROVED'}">
+                                    <button onclick="createManualShipment('${groupCode}')" 
+                                            class="btn-modern primary" 
+                                            style="background: #0284c7; margin-bottom: 8px;">
+                                        🚚 Giao đơn hàng này (Tạo mã)
+                                    </button>
+                                </c:if>
+
+                                <span class="status-badge status-${normalizedGroupStatus}">
                                     <c:choose>
-                                        <c:when test="${normalizedGroupStatus == 'REQUESTED'}">⏳ Chờ
-                                            duyệt</c:when>
-                                        <c:when test="${normalizedGroupStatus == 'APPROVED'}">✅ Đã duyệt
-                                        </c:when>
-                                        <c:when test="${normalizedGroupStatus == 'BORROWED'}">📖 Đang
-                                            mượn</c:when>
-                                        <c:when test="${normalizedGroupStatus == 'RECEIVED'}">🤝 Đã nhận
-                                        </c:when>
-                                        <c:when test="${normalizedGroupStatus == 'SHIPPING'}">🚚 Đang
-                                            giao</c:when>
-                                        <c:when test="${normalizedGroupStatus == 'RETURNED'}">📥 Đã trả
-                                        </c:when>
-                                        <c:when test="${normalizedGroupStatus == 'REJECTED'}">❌ Từ chối
-                                        </c:when>
+                                        <c:when test="${normalizedGroupStatus == 'SHIPPING'}">🚚 Đang giao (Nội bộ)</c:when>
                                         <c:otherwise>${normalizedGroupStatus}</c:otherwise>
                                     </c:choose>
                                 </span>
-                                <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Tổng
-                                    cộng: <strong>${fn:length(recordsInGroup)}</strong> cuốn</div>
                             </div>
                         </div>
-
                         <div class="order-body">
                             <c:forEach items="${recordsInGroup}" var="r">
                                 <div class="book-item-row">
@@ -400,6 +390,9 @@
                                     </div>
 
                                     <div class="book-actions">
+                                        <c:set var="itemStatus" value="${fn:toUpperCase(fn:trim(r.status))}" />
+                                        <c:set var="isOnline" value="${fn:toUpperCase(fn:trim(r.borrowMethod)) == 'ONLINE'}" />
+                                        
                                         <c:if test="${r.status == 'REQUESTED'}">
                                             <div id="box-${r.id}"
                                                  style="display:none; gap:5px; align-items:center;">
@@ -422,12 +415,10 @@
                                                     chối</button>
                                             </form>
 
-                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
-                                               class="btn-modern secondary">Chi tiết</a>
                                         </c:if>
 
                                         <c:if
-                                            test="${r.status == 'RECEIVED' || r.status == 'BORROWED'}">
+                                            test="${itemStatus == 'BORROWED' || (itemStatus == 'RECEIVED' && !isOnline)}">
                                             <div id="return-box-${r.id}"
                                                  style="display:none; gap:5px; align-items:center;">
                                                 <input type="text" id="ret-bc-${r.id}"
@@ -439,8 +430,7 @@
 
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})"
                                                     class="btn-modern success">Nhận trả</button>
-                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
-                                               class="btn-modern secondary">Xem Chi tiết</a>
+                                            
                                         </c:if>
 
                                         <c:if test="${r.status == 'APPROVED'}">
@@ -462,42 +452,25 @@
                                                     </form>
                                                 </c:otherwise>
                                             </c:choose>
-                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
-                                               class="btn-modern secondary">Xem Chi tiết</a>
+                                            
                                         </c:if>
-
-                                        <c:if
-                                            test="${r.status == 'RETURNED' || r.status == 'REJECTED' || r.status == 'OVERDUE'}">
-                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
-                                               class="btn-modern secondary">Xem Chi tiết</a>
-                                        </c:if>
-
-
-                                        <c:if test="${r.status == 'SHIPPING'}">
-                                            <form action="${pageContext.request.contextPath}${borrowBase}" method="post" style="display:inline;">
-                                                <input type="hidden" name="action" value="receive">
+                       
+                                        <c:if test="${itemStatus == 'SHIPPING'}">
+                                            <form action="${pageContext.request.contextPath}${borrowBase}/receive" method="POST" style="display:inline;">
                                                 <input type="hidden" name="id" value="${r.id}">
-                                                <button type="button" class="btn-modern primary" onclick="confirmCustomerReceived(${r.id})">
-                                                    <i class="fas fa-check"></i> Khách đã nhận
-                                                </button>
+                                                <button type="submit" class="btn-modern primary">Khách đã nhận</button>
                                             </form>
                                         </c:if>
 
 
-                                        <c:if test="${r.status == 'RETURN_REQUESTED'}">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <input type="text" id="bc-input-${r.id}" class="form-control form-control-sm" 
-                                                       placeholder="Mã vạch trả..." style="width: 130px;">
 
-                                                <button type="button" class="btn btn-sm btn-warning fw-bold" 
-                                                        onclick="submitReturnOnline(${r.id})">
-                                                    Nhập kho Online
+                                        <c:if test="${fn:toUpperCase(r.status) == 'RETURN_REQUESTED'}">
+                                            <div class="d-flex align-items-center">
+                                                <input type="text" id="bc-input-${r.id}" class="form-control-sm me-2" placeholder="Quét barcode...">
+                                                <button class="btn btn-modern btn-warning" onclick="submitReturnOnline(${r.id})">
+                                                    Xác nhận nhập kho
                                                 </button>
-
-                                                <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}" 
-                                                   class="btn btn-sm btn-outline-secondary">
-                                                    Xem chi tiết
-                                                </a>
+                                                
                                             </div>
                                         </c:if>
                                         <c:set var="pendingRenewal" value="${pendingRenewalMap[r.id]}" />
@@ -509,13 +482,15 @@
                                                class="btn-modern secondary" style="padding: 8px 14px;">Xem
                                                 yêu cầu gia hạn</a>
                                             </c:if>
-                                        <c:set var="renewalCount" value="${renewalCountMap[r.id]}" />
-                                        <c:if test="${not empty renewalCount && renewalCount > 0}">
+                                            <c:set var="renewalCount" value="${renewalCountMap[r.id]}" />
+                                            <c:if test="${not empty renewalCount && renewalCount > 0}">
                                             <span class="status-badge status-RENEWAL_REQUESTED"
                                                   style="background:#e0f2fe;color:#075985;font-size:11px;">
                                                 Đã gửi gia hạn ${renewalCount} lần
                                             </span>
                                         </c:if>
+                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
+                                               class="btn-modern secondary">Xem Chi tiết</a>
                                     </div>
 
                                 </div>
@@ -692,6 +667,40 @@
                             form.submit();
                         }
                     });
+                }
+                function createManualShipment(groupCode) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '${pageContext.request.contextPath}${borrowBase}';
+                    form.innerHTML = `
+        <input type="hidden" name="action" value="create-manual">
+        <input type="hidden" name="groupCode" value="${groupCode}">
+    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+
+                // Thay thế hàm submitReturnOnline (dòng 859) trong borrow_list.jsp
+                function submitReturnOnline(id) {
+                    const bcInput = document.getElementById('bc-input-' + id);
+                    const bcValue = bcInput ? bcInput.value.trim() : "";
+
+                    if (!bcValue) {
+                        Swal.fire('Cảnh báo', 'Vui lòng nhập mã vạch sách trả!', 'warning');
+                        return;
+                    }
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    // Gửi về đúng địa chỉ base của Controller
+                    form.action = '${pageContext.request.contextPath}${borrowBase}/return';
+
+                    form.innerHTML = '<input type="hidden" name="id" value="' + id + '">' +
+                            '<input type="hidden" name="barcode" value="' + bcValue + '">' +
+                            '<input type="hidden" name="action" value="return">';
+
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             </script>
         </main>

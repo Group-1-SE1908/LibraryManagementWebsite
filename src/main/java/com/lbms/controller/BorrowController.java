@@ -16,18 +16,21 @@ import com.lbms.model.BorrowRecord;
 import com.lbms.model.RenewalRequest;
 import com.lbms.model.User;
 import com.lbms.service.BorrowService;
+import com.lbms.util.DBConnection;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 @WebServlet(urlPatterns = {"/borrow", "/borrow/request", "/borrow/approve", "/borrow/reject", "/borrow/cancel",
     "/borrow/return",
     "/borrow/renew",
     "/borrow/renew/cancel",
-    "/history", "/renew-history","/borrow/returnOnline"})
+    "/history", "/renew-history", "/borrow/returnOnline"})
 public class BorrowController extends HttpServlet {
 
     private BorrowService borrowService;
@@ -134,6 +137,9 @@ public class BorrowController extends HttpServlet {
                     break;
                 case "/borrow/renew/cancel":
                     handleRenewalCancel(req, resp);
+                    break;
+                case "/borrow/returnOnline":
+                    handleReturnOnlineRequest(req, resp);
                     break;
                 default:
                     resp.sendError(405);
@@ -469,11 +475,12 @@ public class BorrowController extends HttpServlet {
     private void handleReturnOnlineRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             long id = Long.parseLong(req.getParameter("id"));
-            // Cập nhật trạng thái sang RETURN_REQUESTED
-            // Bạn có thể dùng hàm updateStatus có sẵn trong borrowDAO
-            borrowDAO.updateStatus(id, "RETURN_REQUESTED");
-
-            req.getSession().setAttribute("flash", "Yêu cầu trả sách đã được gửi. Vui lòng chờ thư viện xác nhận.");
+            try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(
+                    "UPDATE borrow_records SET status = 'RETURN_REQUESTED' WHERE id = ?")) {
+                ps.setLong(1, id);
+                ps.executeUpdate();
+            }
+            req.getSession().setAttribute("flash", "Yêu cầu trả sách qua Ship thành công! Vui lòng gửi sách về thư viện.");
         } catch (Exception e) {
             req.getSession().setAttribute("flash", "Lỗi: " + e.getMessage());
         }

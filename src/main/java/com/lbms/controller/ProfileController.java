@@ -142,12 +142,18 @@ public class ProfileController extends HttpServlet {
         String fullName = req.getParameter("fullName");
         String phone = req.getParameter("phone");
         String address = req.getParameter("address");
+        String city = req.getParameter("city");
+        String district = req.getParameter("district");
+        String ward = req.getParameter("ward");
 
         profileService.updateProfile(
                 currentUser.getId(),
                 fullName,
                 phone,
-                address);
+                address,
+                city,
+                district,
+                ward);
 
         // refresh session
         User updatedUser = profileService.refreshUser(currentUser.getId());

@@ -166,8 +166,28 @@
                         font-weight: 600;
                     }
 
-                    .form-group input {
+                    .form-group input,
+                    .form-group select {
                         flex: 1;
+                    }
+
+                    .profile-container select {
+                        width: 100%;
+                        padding: 11px 14px;
+                        margin-bottom: 18px;
+                        border-radius: 10px;
+                        border: 1px solid #ddd;
+                        transition: 0.2s;
+                        font-size: 14px;
+                        background: #fff;
+                        cursor: pointer;
+                        appearance: auto;
+                    }
+
+                    .profile-container select:focus {
+                        border-color: #2b63d9;
+                        outline: none;
+                        box-shadow: 0 0 0 3px rgba(43, 99, 217, 0.15);
                     }
 
                     .message {
@@ -355,8 +375,33 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Địa chỉ</label>
-                                    <input type="text" name="address" value="${user.address}" maxlength="200">
+                                    <label>Địa chỉ (Số nhà / Đường)</label>
+                                    <input type="text" name="address" value="${user.address}" maxlength="200"
+                                        placeholder="Ví dụ: 118/2/14 Lê Văn Thọ">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tỉnh / Thành phố</label>
+                                    <select id="profileCity">
+                                        <option value="">Chọn tỉnh/thành</option>
+                                    </select>
+                                    <input type="hidden" name="city" id="hiddenCity" value="${user.city}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Quận / Huyện</label>
+                                    <select id="profileDistrict">
+                                        <option value="">Chọn quận/huyện</option>
+                                    </select>
+                                    <input type="hidden" name="district" id="hiddenDistrict" value="${user.district}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Phường / Xã</label>
+                                    <select id="profileWard">
+                                        <option value="">Chọn phường/xã</option>
+                                    </select>
+                                    <input type="hidden" name="ward" id="hiddenWard" value="${user.ward}">
                                 </div>
 
                                 <p>
@@ -564,6 +609,120 @@
                                 return true;
                             });
                         }
+                    });
+                </script>
+
+                <!-- Province/District/Ward API Integration -->
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const PROVINCE_API_URL = 'https://provinces.open-api.vn/api/?depth=3';
+                        const citySelect = document.getElementById('profileCity');
+                        const districtSelect = document.getElementById('profileDistrict');
+                        const wardSelect = document.getElementById('profileWard');
+                        const hiddenCity = document.getElementById('hiddenCity');
+                        const hiddenDistrict = document.getElementById('hiddenDistrict');
+                        const hiddenWard = document.getElementById('hiddenWard');
+
+                        if (!citySelect || !districtSelect || !wardSelect) return;
+
+                        const savedCity = (hiddenCity?.value || '').trim();
+                        const savedDistrict = (hiddenDistrict?.value || '').trim();
+                        const savedWard = (hiddenWard?.value || '').trim();
+
+                        const locationCatalog = new Map();
+
+                        const resetSelect = (select, placeholder) => {
+                            select.innerHTML = '<option value="">' + placeholder + '</option>';
+                        };
+
+                        const buildCatalog = (provinces) => {
+                            locationCatalog.clear();
+                            if (!Array.isArray(provinces)) return;
+                            provinces.forEach(p => {
+                                if (!p || !p.name) return;
+                                const districts = new Map();
+                                (p.districts || []).forEach(d => {
+                                    if (!d || !d.name) return;
+                                    const wards = Array.isArray(d.wards)
+                                        ? d.wards.map(w => w.name).filter(Boolean) : [];
+                                    districts.set(d.name, wards);
+                                });
+                                locationCatalog.set(p.name, { districts });
+                            });
+                        };
+
+                        const populateCities = () => {
+                            resetSelect(citySelect, 'Chọn tỉnh/thành');
+                            locationCatalog.forEach((val, name) => {
+                                const opt = document.createElement('option');
+                                opt.value = name;
+                                opt.textContent = name;
+                                citySelect.appendChild(opt);
+                            });
+                        };
+
+                        const renderDistricts = (city) => {
+                            resetSelect(districtSelect, 'Chọn quận/huyện');
+                            resetSelect(wardSelect, 'Chọn phường/xã');
+                            if (!city) return;
+                            const province = locationCatalog.get(city);
+                            if (!province) return;
+                            province.districts.forEach((wards, distName) => {
+                                const opt = document.createElement('option');
+                                opt.value = distName;
+                                opt.textContent = distName;
+                                districtSelect.appendChild(opt);
+                            });
+                        };
+
+                        const renderWards = (city, district) => {
+                            resetSelect(wardSelect, 'Chọn phường/xã');
+                            if (!city || !district) return;
+                            const province = locationCatalog.get(city);
+                            const wardList = province?.districts.get(district);
+                            if (!Array.isArray(wardList)) return;
+                            wardList.forEach(w => {
+                                const opt = document.createElement('option');
+                                opt.value = w;
+                                opt.textContent = w;
+                                wardSelect.appendChild(opt);
+                            });
+                        };
+
+                        const syncHidden = () => {
+                            hiddenCity.value = citySelect.value;
+                            hiddenDistrict.value = districtSelect.value;
+                            hiddenWard.value = wardSelect.value;
+                        };
+
+                        citySelect.addEventListener('change', () => {
+                            renderDistricts(citySelect.value);
+                            syncHidden();
+                        });
+                        districtSelect.addEventListener('change', () => {
+                            renderWards(citySelect.value, districtSelect.value);
+                            syncHidden();
+                        });
+                        wardSelect.addEventListener('change', syncHidden);
+
+                        fetch(PROVINCE_API_URL)
+                            .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
+                            .then(data => {
+                                buildCatalog(data);
+                                populateCities();
+                                if (savedCity) {
+                                    citySelect.value = savedCity;
+                                    renderDistricts(savedCity);
+                                    if (savedDistrict) {
+                                        districtSelect.value = savedDistrict;
+                                        renderWards(savedCity, savedDistrict);
+                                        if (savedWard) {
+                                            wardSelect.value = savedWard;
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(err => console.error('Không tải được tỉnh/thành:', err));
                     });
                 </script>
 

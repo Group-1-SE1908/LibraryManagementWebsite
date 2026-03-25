@@ -360,6 +360,19 @@ GO
 CREATE INDEX IX_Shipment_BorrowRecordId ON shipments (borrow_record_id);
 GO
 
+-- Bảng 16: Liên hệ người dùng (Contact Messages)
+CREATE TABLE contact_messages (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    full_name NVARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    feedback_type NVARCHAR(50) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, RESOLVED, IGNORED, CLOSED
+    created_at DATETIME DEFAULT GETDATE()
+);
+GO
+
 -- =============================================
 -- 2. TRIGGER TỰ ĐỘNG TẠO BẢN SAO SÁCH (BOOKCOPY)
 -- =============================================

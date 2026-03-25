@@ -185,7 +185,7 @@ public class CartController extends HttpServlet {
         String deliveryAddress = req.getParameter("deliveryAddress");
         if (deliveryAddress != null && !deliveryAddress.isBlank()) {
             userDAO.updateProfile(currentUser.getId(), currentUser.getFullName(), currentUser.getPhone(),
-                    deliveryAddress);
+                    deliveryAddress, currentUser.getCity(), currentUser.getDistrict(), currentUser.getWard());
             currentUser.setAddress(deliveryAddress);
             req.getSession().setAttribute("currentUser", currentUser);
         }

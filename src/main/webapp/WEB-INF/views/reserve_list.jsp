@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
@@ -94,27 +94,23 @@
                 </div>
             </c:if>
 
-            <!-- TOOLBAR -->
             <div class="mp-toolbar">
                 <div class="mp-tabs">
-                    <button class="mp-tab active" data-filter="ALL">
-                        Tất cả <span class="mp-count" id="count-all"></span>
-                    </button>
-                    <button class="mp-tab" data-filter="WAITING">
+                    <button class="mp-tab active" data-filter="WAITING">
                         <i class="bi bi-hourglass-split"></i> Đang chờ
                         <span class="mp-count" id="count-waiting"></span>
                     </button>
                     <button class="mp-tab" data-filter="AVAILABLE">
-                        <i class="bi bi-check-circle"></i> Sẵn sàng
+                        <i class="bi bi-check-circle-fill"></i> Sẵn sàng
                         <span class="mp-count" id="count-available"></span>
                     </button>
                     <button class="mp-tab" data-filter="BORROWED">
                         <i class="bi bi-book"></i> Đã mượn
                         <span class="mp-count" id="count-borrowed"></span>
                     </button>
-                    <button class="mp-tab" data-filter="CANCELLED">
-                        <i class="bi bi-x-circle"></i> Đã hủy
-                        <span class="mp-count" id="count-cancelled"></span>
+                    <button class="mp-tab" data-filter="HISTORY">
+                        <i class="bi bi-clock-history"></i> Lịch sử
+                        <span class="mp-count" id="count-history"></span>
                     </button>
                 </div>
                 <div class="mp-search">
@@ -160,8 +156,11 @@
                             </thead>
                             <tbody>
                                 <c:forEach var="res" items="${reservations}" varStatus="loop">
-                                    <tr data-status="${res.status}"
-                                        data-search="${res.bookTitle} ${res.bookAuthor}">
+                                    <c:set var="resGroup"
+                                        value="${(res.status == 'WAITING' || res.status == 'AVAILABLE' || res.status == 'BORROWED') ? 'ACTIVE' : 'HISTORY'}" />
+                                    <tr data-status="${res.status}" data-group="${resGroup}"
+                                        data-search="${res.bookTitle} ${res.bookAuthor}"
+                                        class="${res.status == 'CANCELLED' ? 'row-cancelled' : ''}">
 
                                         <td class="td-num" data-label="STT">${loop.index + 1}</td>
 
@@ -201,7 +200,7 @@
                                                     </span>
                                                 </c:when>
                                                 <c:when test="${res.status == 'CANCELLED'}">
-                                                    <span class="mp-badge mp-badge--cancelled">
+                                                    <span class="mp-badge mp-badge--cancelled is-outline">
                                                         <span class="mp-badge__dot"></span>Đã hủy
                                                     </span>
                                                 </c:when>
@@ -275,6 +274,12 @@
                                                         </button>
                                                     </form>
                                                 </c:when>
+                                                <c:when test="${res.status == 'CANCELLED'}">
+                                                    <a href="${pageContext.request.contextPath}/books/detail?id=${res.bookId}"
+                                                        class="mp-btn-reorder">
+                                                        <i class="bi bi-arrow-repeat"></i> Đặt lại
+                                                    </a>
+                                                </c:when>
                                                 <c:otherwise>
                                                     <span style="font-size:0.8rem;color:var(--mp-text-muted)">—</span>
                                                 </c:otherwise>
@@ -297,7 +302,7 @@
     <script>
         (function () {
             const ROWS_PER_PAGE = 10;
-            let currentFilter = 'ALL';
+            let currentFilter = 'WAITING';
             let currentPage = 1;
 
             const rows = Array.from(document.querySelectorAll('#resTable tbody tr'));
@@ -305,11 +310,10 @@
             const pagination = document.getElementById('pagination');
 
             const counts = {
-                all: document.getElementById('count-all'),
                 waiting: document.getElementById('count-waiting'),
                 available: document.getElementById('count-available'),
                 borrowed: document.getElementById('count-borrowed'),
-                cancelled: document.getElementById('count-cancelled'),
+                history: document.getElementById('count-history'),
             };
 
             function matchSearch(r) {
@@ -318,16 +322,15 @@
             }
 
             function updateCounts() {
-                counts.all.textContent = rows.filter(matchSearch).length;
                 counts.waiting.textContent = rows.filter(r => r.dataset.status === 'WAITING' && matchSearch(r)).length;
                 counts.available.textContent = rows.filter(r => r.dataset.status === 'AVAILABLE' && matchSearch(r)).length;
                 counts.borrowed.textContent = rows.filter(r => r.dataset.status === 'BORROWED' && matchSearch(r)).length;
-                counts.cancelled.textContent = rows.filter(r => r.dataset.status === 'CANCELLED' && matchSearch(r)).length;
+                counts.history.textContent = rows.filter(r => r.dataset.group === 'HISTORY' && matchSearch(r)).length;
             }
 
             function getVisible() {
                 return rows.filter(r => {
-                    const statusOk = currentFilter === 'ALL' || r.dataset.status === currentFilter;
+                    const statusOk = currentFilter === 'HISTORY' ? r.dataset.group === 'HISTORY' : r.dataset.status === currentFilter;
                     return statusOk && matchSearch(r);
                 });
             }
