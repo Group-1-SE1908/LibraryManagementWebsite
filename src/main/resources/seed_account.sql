@@ -202,6 +202,18 @@ UPDATE [User]
 SET password = @defaultPasswordHash, full_name = N'Vũ Thị Thu', phone = '0901000014', address = N'8 Nguyễn Thị Minh Khai, Đa Kao, Quận 1, TP. Hồ Chí Minh', status = 'LOCKED', role_id = @memberRoleId, banned_until = DATEADD(DAY, 14, GETDATE()), comment_banned_until = DATEADD(DAY, 14, GETDATE())
 WHERE email = 'member11@gmail.com';
 
+-- ── Thành viên mới có ví 200.000đ ──────────────────────────────────
+IF
+NOT EXISTS (SELECT 1 FROM [User] WHERE email = 'member12@gmail.com')
+BEGIN
+INSERT INTO [User] (email, password, full_name, phone, address, status, role_id, avatar, wallet_balance)
+VALUES ('member12@gmail.com', @defaultPasswordHash, N'Phan Thị Hồng Nhung', '0901000015', N'72 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh', 'ACTIVE', @memberRoleId, 'uploads/user.png', 200000);
+END;
+
+UPDATE [User]
+SET password = @defaultPasswordHash, full_name = N'Phan Thị Hồng Nhung', phone = '0901000015', address = N'72 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh', status = 'ACTIVE', role_id = @memberRoleId, wallet_balance = 200000
+WHERE email = 'member12@gmail.com';
+
 -- Cập nhật member8: thêm banned_until để test tính năng ban có thời hạn
 UPDATE [User]
 SET banned_until = DATEADD(DAY, 30, GETDATE())
@@ -233,6 +245,8 @@ DECLARE
 @member10Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member10@gmail.com');
         DECLARE
 @member11Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member11@gmail.com');
+        DECLARE
+@member12Id INT = (SELECT TOP 1 user_id FROM [User] WHERE email = 'member12@gmail.com');
 
         -- Seed thÃªm sáº¡ch má»›i Ä‘á»ƒ hiá»ƒn thá»‹ kho sáº£n pháº©m demo.
         -- Seed sách mới từ Open Library (dữ liệu thực).
