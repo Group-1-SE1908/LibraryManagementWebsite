@@ -113,9 +113,9 @@ public class BookDAO {
             boolean hasDescriptionColumn = hasColumn(c, "Book", "description");
             String sql = hasDescriptionColumn
                     ? "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image, description) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
                     : "INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -304,6 +304,30 @@ public class BookDAO {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return false;
+    }
+    // Thêm phương thức này vào BookDAO.java
+
+    public boolean hasBorrowRecords(int bookId) throws SQLException {
+        // Truy vấn đếm số lượng bản ghi mượn dựa trên cấu trúc DB mới
+        String sql = "SELECT COUNT(*) FROM borrow_records br "
+                + "JOIN BookCopy bc ON br.copy_id = bc.copy_id "
+                + "WHERE bc.book_id = ?";
+
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            // Log lỗi để dễ debug nếu có sai sót tên cột
+            System.err.println("Lỗi truy vấn hasBorrowRecords: " + e.getMessage());
+            throw e;
         }
         return false;
     }

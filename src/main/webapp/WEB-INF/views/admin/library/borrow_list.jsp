@@ -274,29 +274,42 @@
                    style="padding: 10px 20px;">Xóa lọc</a>
             </form>
 
+            <%-- Hiển thị thông báo Thành công --%>
             <c:if test="${not empty flash}">
                 <script>
-                    // Sử dụng dấu nháy kép và escape ký tự đặc biệt để tránh lỗi JS khi chuỗi có dấu nháy đơn hoặc xuống dòng
-                    const flashMsg = `<c:out value="${flash}"/>`.trim();
-                    const lowerMsg = flashMsg.toLowerCase();
-
-                    let iconType = 'error';
-                    let titleText = 'Lỗi';
-
-                    // Kiểm tra nội dung để chọn icon phù hợp (Không phân biệt hoa thường)
-                    if (lowerMsg.includes('thành công') || lowerMsg.includes('đã nhận trả') || lowerMsg.includes('xác nhận') || lowerMsg.includes('từ chối') || lowerMsg.includes('đã tạo mã')) {
-                        iconType = 'success';
-                        titleText = 'Thành công';
-                    }
-
                     Swal.fire({
-                        icon: iconType,
-                        title: titleText,
-                        text: flashMsg,
+                        icon: 'success',
+                        title: 'Thành công',
+                        html: `${fn:escapeXml(flash)}`, // Dùng backtick để an toàn hơn
                         confirmButtonColor: '#0b57d0',
-                        timer: 5000 // Tự động đóng sau 5 giây
+                        timer: 3000
                     });
                 </script>
+                <% session.removeAttribute("flash"); %>
+            </c:if>
+
+            <%-- Hiển thị thông báo Lỗi --%>
+            <c:if test="${not empty flashError}">
+                <script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi nghiệp vụ',
+                        html: `${fn:escapeXml(flashError)}`, // Dùng html thay vì text
+                        confirmButtonColor: '#dc2626',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        // Tự động focus lại ô input barcode nếu đang hiển thị
+                        const visibleInputs = document.querySelectorAll('input[id^="bc-input-"], input[id^="ret-bc-"]');
+                        for (let input of visibleInputs) {
+                            if (input.offsetParent !== null) {
+                                input.focus();
+                                input.select();
+                                break;
+                            }
+                        }
+                    });
+                </script>
+                <% session.removeAttribute("flashError");%>
             </c:if>
 
             <script>
@@ -326,8 +339,8 @@
                             <div style="text-align: right;">
                                 <c:set var="normalizedGroupStatus" value="${fn:toUpperCase(fn:trim(firstRecord.status))}" />
 
-                                
-                                
+
+
 
                                 <span class="status-badge status-${normalizedGroupStatus}">
                                     <c:choose>
@@ -386,7 +399,7 @@
                                     <div class="book-actions">
                                         <c:set var="itemStatus" value="${fn:toUpperCase(fn:trim(r.status))}" />
                                         <c:set var="isOnline" value="${fn:toUpperCase(fn:trim(r.borrowMethod)) == 'ONLINE'}" />
-                                        
+
                                         <c:if test="${r.status == 'REQUESTED'}">
                                             <div id="box-${r.id}"
                                                  style="display:none; gap:5px; align-items:center;">
@@ -424,7 +437,7 @@
 
                                             <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})"
                                                     class="btn-modern success">Nhận trả</button>
-                                            
+
                                         </c:if>
 
                                         <c:if test="${r.status == 'APPROVED'}">
@@ -446,9 +459,9 @@
                                                     </form>
                                                 </c:otherwise>
                                             </c:choose>
-                                            
+
                                         </c:if>
-                       
+
                                         <c:if test="${itemStatus == 'SHIPPING'}">
                                             <form action="${pageContext.request.contextPath}${borrowBase}/receive" method="POST" style="display:inline;">
                                                 <input type="hidden" name="id" value="${r.id}">
@@ -464,7 +477,7 @@
                                                 <button class="btn btn-modern btn-warning" onclick="submitReturnOnline(${r.id})">
                                                     Xác nhận nhập kho
                                                 </button>
-                                                
+
                                             </div>
                                         </c:if>
                                         <c:set var="pendingRenewal" value="${pendingRenewalMap[r.id]}" />
@@ -483,8 +496,8 @@
                                                 Đã gửi gia hạn ${renewalCount} lần
                                             </span>
                                         </c:if>
-                                            <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
-                                               class="btn-modern secondary">Xem Chi tiết</a>
+                                        <a href="${pageContext.request.contextPath}${borrowBase}/detail?id=${r.id}"
+                                           class="btn-modern secondary">Xem Chi tiết</a>
                                     </div>
 
                                 </div>

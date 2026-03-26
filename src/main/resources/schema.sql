@@ -443,3 +443,30 @@ INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) VALU
 
 GO
 PRINT '--- DATABASE LIBRARYDB HAS BEEN FULLY ASSEMBLED ---';
+
+-- chạy TRANSACTION để đồng bộ ISBN theo format ISBN-
+USE LibraryDB;
+GO
+
+BEGIN TRANSACTION;
+
+BEGIN TRY
+    -- Sử dụng CTE để đánh số thứ tự cho toàn bộ sách hiện có
+    WITH BookUpdate AS (
+        SELECT 
+            isbn,
+            ROW_NUMBER() OVER (ORDER BY book_id) as RowNum
+        FROM Book
+    )
+    -- Cập nhật ISBN theo format ISBN-XX (đảm bảo có 2 chữ số trở lên)
+    UPDATE BookUpdate
+    SET isbn = 'ISBN-' + FORMAT(RowNum, '00');
+
+    COMMIT TRANSACTION;
+    PRINT 'Cập nhật mã ISBN thành công!';
+END TRY
+BEGIN CATCH
+    ROLLBACK TRANSACTION;
+    PRINT 'Lỗi trong quá trình cập nhật: ' + ERROR_MESSAGE();
+END CATCH
+GO

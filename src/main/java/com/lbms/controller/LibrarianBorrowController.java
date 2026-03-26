@@ -242,7 +242,8 @@ public class LibrarianBorrowController extends HttpServlet {
 //                    list = libService.searchBorrowings(q, status, methodFilter);
 //                }
 //
-////                java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
+              
+                ////                java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
 ////                java.util.Map<Long, Integer> renewalCountMap = new java.util.HashMap<>();
 ////                for (BorrowRecord br : list) {
 ////                    // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị
@@ -500,7 +501,7 @@ public class LibrarianBorrowController extends HttpServlet {
 
         } catch (IllegalArgumentException ex) {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
-            req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
+            req.getSession().setAttribute("flashError", ex.getMessage());
             if ("inperson".equals(action)) {
                 // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
                 resp.sendRedirect(req.getContextPath() + redirectBase);
@@ -508,7 +509,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + redirectBase);
             }
         } catch (Exception ex) {
-            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
+            req.getSession().setAttribute("flashError", "Lỗi hệ thống: " + ex.getMessage());
             // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
             resp.sendRedirect(req.getContextPath() + redirectBase);
         }
@@ -592,21 +593,32 @@ public class LibrarianBorrowController extends HttpServlet {
         }
     }
 
+//    private void handleReceive(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+//        long id = Long.parseLong(req.getParameter("id"));
+//        BorrowRecord record = libService.getDetail(id);
+//
+//        if (record != null) {
+//            if ("ONLINE".equalsIgnoreCase(record.getBorrowMethod())) {
+//                // Luồng Online: Cập nhật ngày mượn/trả thực tế
+//                libService.confirmReceiveOnline(id);
+//            } else {
+//                // Luồng tại chỗ: Chỉ cập nhật trạng thái
+//                libService.updateStatus(id, "RECEIVED");
+//            }
+//            req.getSession().setAttribute("flash", "Khách đã nhận thành công!.");
+//        }
+//        // resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
+//    }
     private void handleReceive(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         long id = Long.parseLong(req.getParameter("id"));
         BorrowRecord record = libService.getDetail(id);
 
         if (record != null) {
-            if ("ONLINE".equalsIgnoreCase(record.getBorrowMethod())) {
-                // Luồng Online: Cập nhật ngày mượn/trả thực tế
-                libService.confirmReceiveOnline(id);
-            } else {
-                // Luồng tại chỗ: Chỉ cập nhật trạng thái
-                libService.updateStatus(id, "RECEIVED");
-            }
-            req.getSession().setAttribute("flash", "Khách đã nhận thành công!.");
+            // Không phân biệt Online hay Tại chỗ, hễ khách nhận sách là phải điền ngày mượn
+            libService.confirmReceiveOnline(id);
+
+            req.getSession().setAttribute("flash", "Xác nhận khách đã nhận sách thành công!");
         }
-        // resp.sendRedirect(req.getContextPath() + "/staff/borrowlibrary");
     }
 
     private String formatCurrency(BigDecimal amount) {

@@ -104,6 +104,85 @@
             .btn-delete {
                 background: #dc2626;
             }
+            /* Container chính cho phần header */
+            .page-header {
+                background: white;
+                padding: 24px;
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                margin-bottom: 24px;
+            }
+
+            .header-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .header-title h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                color: #1e293b;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .header-subtitle {
+                color: #64748b;
+                font-size: 0.9rem;
+                margin: 4px 0 0 35px; /* Căn lề theo icon của h2 */
+            }
+
+            /* Thanh tìm kiếm và nút thêm mới trên cùng một hàng */
+            .header-actions {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .search-form {
+                display: flex;
+                gap: 8px;
+                flex-grow: 1;
+            }
+
+            .search-input {
+                flex: 1;
+                max-width: 400px;
+                padding: 10px 16px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                outline: none;
+                transition: all 0.2s;
+            }
+
+            .search-input:focus {
+                border-color: #0b57d0;
+                box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.1);
+            }
+
+            .btn-primary-custom {
+                background: #0b57d0;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                text-decoration: none;
+                border: none;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+
+            .btn-primary-custom:hover {
+                background: #0842a0;
+                transform: translateY(-1px);
+            }
         </style>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin-panel.css" />
@@ -114,25 +193,28 @@
         <jsp:include page="librarian_sidebar.jsp" />
 
         <div class="main-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2>📦 Quản lý kho sách tổng hợp</h2>
-                <p>Nhập kho, chỉnh sửa hoặc xóa thông tin sách</p>
-            </div>
+            <div class="page-header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h2>📦 Quản lý kho sách tổng hợp</h2>
+                        <p class="header-subtitle">Nhập kho, chỉnh sửa hoặc xóa thông tin sách trong hệ thống</p>
+                    </div>
+                </div>
 
-            <div class="search-container" style="margin-bottom: 20px;">
-                <form action="${pageContext.request.contextPath}${booksBasePath}" method="get">
-                    <input type="hidden" name="action" value="viewImportList">
-                    <input type="text" name="searchImport" value="${lastSearch}"
-                           placeholder="Tìm tên sách, ISBN..."
-                           style="padding: 10px; width: 300px; border-radius: 4px; border: 1px solid #ddd;">
-                    <button type="submit" class="btn-import"><i class="fas fa-search"></i> Tìm kiếm</button>
-                </form>   
-            </div>
-                           <div class="d-flex justify-content-end">
-                <a href="${pageContext.request.contextPath}${booksBasePath}/new?redirect=importList" 
-                   class="btn-import" style="margin-left: 10px;">
-                    <i class="fas fa-plus"></i> Thêm sách mới
-                </a>
+                <div class="header-actions">
+                    <form action="${pageContext.request.contextPath}${booksBasePath}" method="get" class="search-form">
+                        <input type="hidden" name="action" value="viewImportList">
+                        <input type="text" name="searchImport" value="${lastSearch}" 
+                               class="search-input" placeholder="Tìm tên sách, ISBN...">
+                        <button type="submit" class="btn-primary-custom">
+                            <i class="fas fa-search"></i> Tìm kiếm
+                        </button>
+                    </form>
+
+                    <a href="${pageContext.request.contextPath}${booksBasePath}/new?redirect=importList" class="btn-primary-custom">
+                        <i class="fas fa-plus"></i> Thêm sách mới
+                    </a>
+                </div>
             </div>
 
             <table>
@@ -240,6 +322,16 @@
                 timer: 3000,
                 showConfirmButton: false
             });
+                <% session.removeAttribute("flash"); %>
+            </c:if>
+            <c:if test="${not empty flashError}">
+            Swal.fire({
+                icon: 'error',
+                title: 'Không thể xoá!',
+                text: '${flashError}',
+                confirmButtonColor: '#0b57d0'
+            });
+                <% session.removeAttribute("flashError");%>
             </c:if>
         </script>
     </body>
