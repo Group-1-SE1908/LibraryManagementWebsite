@@ -77,7 +77,8 @@ public class AdminFeedbackController extends HttpServlet {
                     try {
                         book = bookDAO.findById(comment.getBookId());
                     } catch (Exception e) {
-                        Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE, "Lỗi lấy thông tin sách", e);
+                        Logger.getLogger(AdminFeedbackController.class.getName()).log(Level.SEVERE,
+                                "Lỗi lấy thông tin sách", e);
                     }
                 }
 

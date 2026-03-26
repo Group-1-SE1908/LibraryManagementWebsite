@@ -41,6 +41,9 @@ CREATE TABLE [User] (
     full_name NVARCHAR(100) NULL,
     phone VARCHAR(20) NULL,
     address NVARCHAR(255) NULL,
+    city NVARCHAR(100) NULL,
+    district NVARCHAR(100) NULL,
+    ward NVARCHAR(100) NULL,
                         status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LOCKED
     role_id INT NOT NULL,
     avatar VARCHAR(255) NULL, --
