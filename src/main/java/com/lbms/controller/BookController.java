@@ -46,6 +46,7 @@ public class BookController extends HttpServlet {
     private CommentReplyDAO replyDAO;
     private ReservationDAO reservationDAO;
     private CommentReportDAO reportDAO;
+    private BookDAO bookDAO;
 
     @Override
     public void init() {
@@ -56,6 +57,7 @@ public class BookController extends HttpServlet {
         this.reservationDAO = new ReservationDAO();
         this.reportDAO = new CommentReportDAO();
         this.userDAO = new UserDAO();
+        this.bookDAO = new BookDAO();
     }
 
     @Override
@@ -64,9 +66,11 @@ public class BookController extends HttpServlet {
         String normalizedPath = normalizeBooksPath(path);
         String booksBasePath = resolveBooksBasePath(path);
         req.setAttribute("booksBasePath", booksBasePath);
+
         try {
             String action = req.getParameter("action");
             String rawId = req.getParameter("id");
+            String redirect = req.getParameter("redirect");
             if ("viewImportList".equals(action)) {
                 handleImportList(req, resp);
                 return;
@@ -82,7 +86,7 @@ public class BookController extends HttpServlet {
                 case "/books/new":
                     req.setAttribute("mode", "create");
                     req.setAttribute("categories", categoryDAO.listAll());
-                    String redirect = req.getParameter("redirect");
+                    //String redirect = req.getParameter("redirect");
                     if (redirect != null) {
                         req.setAttribute("redirect", redirect);
                     }
@@ -93,9 +97,17 @@ public class BookController extends HttpServlet {
                     break;
                 case "/books/delete":
                     int delId = Integer.parseInt(req.getParameter("id"));
-                    bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
 
-//                    resp.sendRedirect(req.getContextPath() + booksBasePath);
+                    // 1. Kiểm tra xem sách có lịch sử mượn trả không
+                    if (bookDAO.hasBorrowRecords(delId)) {
+                        req.getSession().setAttribute("flashError", "Không thể xóa: Sách này đã có lịch sử mượn trả!");
+                    } else {
+                        // 2. Nếu không có ràng buộc, mới tiến hành xóa
+                        bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
+                        req.getSession().setAttribute("flash", "Xóa đầu sách thành công!");
+                    }
+
+                    // 3. Điều hướng về trang danh sách phù hợp
                     if ("importList".equals(req.getParameter("redirect"))) {
                         resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
                     } else {
@@ -117,8 +129,10 @@ public class BookController extends HttpServlet {
                     resp.sendError(404);
                     break;
             }
-        } catch (Exception ex) {
-            throw new ServletException(ex);
+        } catch (Exception e) {
+            //throw new ServletException(ex);
+            req.getSession().setAttribute("flashError", "Lỗi: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
         }
     }
 
