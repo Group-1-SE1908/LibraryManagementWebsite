@@ -75,17 +75,14 @@
 
                             <div class="ps-section-title">Kho sách</div>
                             <div class="ps-menu">
-                                <a href="${pageContext.request.contextPath}${booksBase}"
-                                    class="${fn:contains(activeUri, booksBase) && !fn:contains(activeUri, '/new') && param.action != 'viewImportList' ? 'active' : ''}">
-                                    <i class="fas fa-book"></i> <span>Kho sách</span>
-                                </a>
+                                
                                 <a href="${pageContext.request.contextPath}${booksBase}/new"
                                     class="${fn:contains(activeUri, '/new') ? 'active' : ''}">
                                     <i class="fas fa-plus-circle"></i> <span>Thêm sách mới</span>
                                 </a>
                                 <a href="${pageContext.request.contextPath}${booksBase}?action=viewImportList"
                                     class="${param.action == 'viewImportList' ? 'active' : ''}">
-                                    <i class="fas fa-truck-loading"></i> <span>Nhập kho</span>
+                                    <i class="fas fa-truck-loading"></i> <span>Quản lí sách</span>
                                 </a>
                                 <a href="${pageContext.request.contextPath}${routePrefix}/reservation"
                                     class="${activeUri.contains('/reservation') ? 'active' : ''}">

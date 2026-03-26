@@ -216,7 +216,8 @@
                                                                     <c:otherwise>
                                                                         <form
                                                                             action="${pageContext.request.contextPath}/reservation"
-                                                                            method="post">
+                                                                            method="post"
+                                                                            onsubmit="return confirm('Are you sure you want to reserve this book?');">
                                                                             <input type="hidden" name="action"
                                                                                 value="add" />
                                                                             <input type="hidden" name="bookId"
