@@ -9,7 +9,8 @@ import java.util.List;
 
 public class ReservationDAO {
 
-    // ── existsActive: kiểm tra user đã có reservation đang active cho book chưa ──
+    // existsActive: kiểm tra user đã có reservation đang active cho book chưa
+    // gác cổng : check xem liệu đã đặt chưa
     public boolean existsActive(long userId, long bookId) throws SQLException {
         String sql = "SELECT COUNT(1) FROM reservations " +
                 "WHERE user_id = ? AND book_id = ? " +
@@ -23,7 +24,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── countActive: đếm số reservation đang active của user (để check giới hạn) ──
+    // countActive: đếm số reservation đang active của user (để check giới hạn)
+    // gác cổng: số lượng reservation hiện tại
     public int countActive(long userId) throws SQLException {
         String sql = "SELECT COUNT(1) FROM reservations " +
                 "WHERE user_id = ? AND status IN ('WAITING', 'AVAILABLE')";
@@ -35,7 +37,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── getNextQueuePosition: lấy vị trí kế tiếp trong hàng chờ của 1 cuốn sách ──
+    // getNextQueuePosition: lấy vị trí kế tiếp trong hàng chờ của 1 cuốn sách
+    // xếp hàng: gán giá trị tiếp theo của queue
     public int getNextQueuePosition(long bookId) throws SQLException {
         String sql = "SELECT ISNULL(MAX(queue_position), 0) + 1 " +
                 "FROM reservations " +
@@ -48,7 +51,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── create: insert reservation mới với queue_position, trả về id vừa tạo ──
+    // create: insert reservation mới với queue_position, trả về id vừa tạo
+    //xếp hàng: vô list
     public long create(long userId, long bookId, int queuePosition) throws SQLException {
         String sql = "INSERT INTO reservations " +
                 "(user_id, book_id, status, queue_position, created_at) " +
@@ -66,7 +70,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── reactivate: kích hoạt lại reservation CANCELLED/EXPIRED với queue mới ──
+    // reactivate: kích hoạt lại reservation CANCELLED/EXPIRED với queue mới
+    // quay xe, kh cần tạo mới
     public void reactivate(long reservationId, int queuePosition) throws SQLException {
         String sql = "UPDATE reservations " +
                 "SET status = 'WAITING', " +
@@ -86,7 +91,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── cancel: hủy reservation của chính user (đang WAITING hoặc AVAILABLE) ──
+    // cancel: hủy reservation của chính user (đang WAITING hoặc AVAILABLE)
+    // rời hàng
     public void cancel(long reservationId, long userId) throws SQLException {
         // Lấy thông tin trước khi hủy để re-order queue
         Reservation res = getById(reservationId);
@@ -114,7 +120,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── reorderQueueAfterRemoval: cập nhật lại queue_position sau khi 1 người rời hàng ──
+    // reorderQueueAfterRemoval: cập nhật lại queue_position sau khi 1 người rời hàng
+    //dồn hàng, 2 lên 1, 3 lên 2
     private void reorderQueueAfterRemoval(long bookId, int removedPosition) throws SQLException {
         String sql = "UPDATE reservations " +
                 "SET queue_position = queue_position - 1, " +
@@ -130,7 +137,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── updateStatus: cập nhật status, tùy chọn set expired_at và notified_at ──
+    // updateStatus: cập nhật status, tùy chọn set expired_at và notified_at
+    
     public void updateStatus(long reservationId, String status) throws SQLException {
         String sql = "UPDATE reservations SET status = ?, updated_at = GETDATE() WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -151,7 +159,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── markAvailable: set status=AVAILABLE, notified_at=now, expired_at=now+3days ──
+    // markAvailable: set status=AVAILABLE, notified_at=now, expired_at=now+3days
+    // available, expired là 3 ngày sau, đôn lên next queue
     public void markAvailable(long reservationId) throws SQLException {
         // Bước 1: Lấy thông tin reservation để biết book_id và queue_position hiện tại
         Reservation res = getById(reservationId);
@@ -185,7 +194,8 @@ public class ReservationDAO {
             ps.executeUpdate();
         }
     }
-    // ── getFirstWaiting: lấy người đầu tiên trong hàng chờ của 1 cuốn sách ──
+    // getFirstWaiting: lấy người đầu tiên trong hàng chờ của 1 cuốn sách
+    // tìm ông có đầu hàng 
     public Reservation getFirstWaiting(long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -204,7 +214,8 @@ public class ReservationDAO {
         }
     }
 
-    // ── findExpiredAvailable: tìm các reservation AVAILABLE đã quá hạn ──
+    // findExpiredAvailable: tìm các reservation AVAILABLE đã quá hạn
+    // available nhưng k lấy sách
     public List<Reservation> findExpiredAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -224,7 +235,8 @@ public class ReservationDAO {
         return list;
     }
 
-    // ── findExpiringAvailable: tìm AVAILABLE sắp hết hạn trong vòng 1 ngày (để nhắc nhở) ──
+    // findExpiringAvailable: tìm AVAILABLE sắp hết hạn trong vòng 1 ngày (để nhắc nhở)
+    // sắp hết hạn trong 1 ngày để nhắc
     public List<Reservation> findExpiringAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -245,7 +257,7 @@ public class ReservationDAO {
         return list;
     }
 
-    // ── markReminded: đánh dấu đã nhắc để không gửi lại ──
+    // markReminded: đánh dấu đã nhắc để không gửi lại
     public void markReminded(long reservationId) throws SQLException {
         String sql = "UPDATE reservations SET note = ISNULL(note,'') + ' [REMINDED]', " +
                 "updated_at = GETDATE() WHERE id = ?";
@@ -256,7 +268,7 @@ public class ReservationDAO {
         }
     }
 
-    // ── findByUserAndBook: tìm reservation CANCELLED/EXPIRED của user cho book ──
+    // findByUserAndBook: tìm reservation CANCELLED/EXPIRED của user cho book
     public Reservation findCancelledOrExpired(long userId, long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -277,7 +289,7 @@ public class ReservationDAO {
         }
     }
 
-    // ── listByUser ──────────────────────────────────────────────────────────
+    // listByUser
     public List<Reservation> listByUser(long userId) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -297,7 +309,7 @@ public class ReservationDAO {
         return list;
     }
 
-    // ── listAll: toàn bộ (dành cho Librarian/Admin) ─────────────────────────
+    // listAll: toàn bộ (dành cho Librarian/Admin)
     public List<Reservation> listAll() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -347,7 +359,7 @@ public class ReservationDAO {
         return queue;
     }
 
-    // ── getById ──────────────────────────────────────────────────────────────
+    // getById
     public Reservation getById(long id) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -365,7 +377,7 @@ public class ReservationDAO {
         return null;
     }
 
-    // ── mapRow helper ────────────────────────────────────────────────────────
+    // mapRow helper
     private Reservation mapRow(ResultSet rs) throws SQLException {
         Reservation r = new Reservation();
         r.setId(rs.getLong("id"));

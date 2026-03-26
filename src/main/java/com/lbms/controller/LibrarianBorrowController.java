@@ -208,7 +208,7 @@ public class LibrarianBorrowController extends HttpServlet {
                         String[] barcodes = barcodesRaw.split("\\r?\\n");
                         for (String bc : barcodes) {
                             if (!bc.trim().isEmpty()) {
-                                // Gọi hàm getBookByBarcode đã thêm vào Service ở bước trước
+                                // Tìm sách theo mã vạch
                                 com.lbms.model.BookCopy copy = libService.getBookByBarcode(bc.trim());
                                 if (copy != null) {
                                     copies.add(copy);
@@ -220,7 +220,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     // 4. Trả về kết quả JSON cho Frontend
                     resp.setContentType("application/json");
                     resp.setCharacterEncoding("UTF-8");
-                    // Sử dụng lớp VerificationResult (đã hướng dẫn tạo ở cuối file)
+                    // Trả về kết quả JSON
                     String json = new com.google.gson.Gson().toJson(new VerificationResult(user, copies));
                     resp.getWriter().write(json);
                     return; // Dừng lại ở đây, không forward tới trang JSP
@@ -305,7 +305,7 @@ public class LibrarianBorrowController extends HttpServlet {
                     list = libService.searchBorrowings(q, status, methodFilter);
                 }
 
-                // ==================== GOM NHÓM THEO GROUP CODE (ĐÃ SỬA) ====================
+                // Gom nhóm theo Group Code (đã sửa)
                 Map<String, List<BorrowRecord>> groupedRecords = new LinkedHashMap<>();
                 Map<Long, Integer> renewalCountMap = new HashMap<>();
 
@@ -346,7 +346,7 @@ public class LibrarianBorrowController extends HttpServlet {
             }
 
         } catch (IllegalArgumentException ex) {
-            // SỬA LỖI LẶP TRANG: Lỗi phân quyền thì đẩy về trang chủ (hoặc trang đăng nhập)
+            // Lỗi phân quyền hoặc lỗi nghiệp vụ: chuyển hướng về trang chủ
             req.getSession().setAttribute("flash", "Truy cập bị từ chối: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/");
         } catch (Exception ex) {
@@ -614,7 +614,7 @@ public class LibrarianBorrowController extends HttpServlet {
         BorrowRecord record = libService.getDetail(id);
 
         if (record != null) {
-            // Không phân biệt Online hay Tại chỗ, hễ khách nhận sách là phải điền ngày mượn
+            // Cập nhật ngày mượn thực tế khi khách nhận sách trực tiếp
             libService.confirmReceiveOnline(id);
 
             req.getSession().setAttribute("flash", "Xác nhận khách đã nhận sách thành công!");

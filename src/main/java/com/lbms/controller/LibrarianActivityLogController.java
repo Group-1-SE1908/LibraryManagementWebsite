@@ -38,9 +38,7 @@ public class LibrarianActivityLogController extends HttpServlet {
         String id = request.getParameter("id");
         String detailType = request.getParameter("detailType");
 
-        // =========================
-        // LOAD MODAL DETAIL
-        // =========================
+        // Load modal detail
         if ("true".equals(modal) && id != null) {
 
             try {
@@ -74,9 +72,7 @@ public class LibrarianActivityLogController extends HttpServlet {
             }
         }
 
-        // =========================
-        // LOAD ACTIVITY LOG PAGE
-        // =========================
+        // Load activity log page
 
         String filterType = request.getParameter("filterType");
 

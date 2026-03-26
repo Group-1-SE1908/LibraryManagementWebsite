@@ -30,9 +30,9 @@ public class ProfileController extends HttpServlet {
         paymentHistoryDAO = new PaymentHistoryDAO();
     }
 
-    // =========================
+  
     // GET PROFILE
-    // =========================
+    
     @Override
     protected void doGet(HttpServletRequest req,
             HttpServletResponse resp)
@@ -46,7 +46,7 @@ public class ProfileController extends HttpServlet {
                 return;
             }
 
-            // 🔥 LUÔN refresh từ DB
+            // LUÔN refresh từ DB
             User freshUser = profileService.refreshUser(currentUser.getId());
 
             req.getSession().setAttribute("currentUser", freshUser);
@@ -80,9 +80,9 @@ public class ProfileController extends HttpServlet {
         }
     }
 
-    // =========================
+ 
     // POST
-    // =========================
+    
     @Override
     protected void doPost(HttpServletRequest req,
             HttpServletResponse resp)
@@ -125,9 +125,9 @@ public class ProfileController extends HttpServlet {
         }
     }
 
-    // =========================
+
     // UPDATE PROFILE
-    // =========================
+
     private void handleUpdateProfile(HttpServletRequest req,
             HttpServletResponse resp)
             throws Exception {
@@ -188,9 +188,9 @@ public class ProfileController extends HttpServlet {
         return s1.trim().equals(s2.trim());
     }
 
-    // =========================
+   
     // CHANGE PASSWORD
-    // =========================
+   
     private void handleChangePassword(HttpServletRequest req,
             HttpServletResponse resp)
             throws Exception {
@@ -224,9 +224,9 @@ public class ProfileController extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/profile");
     }
 
-    // =========================
+ 
     // UPLOAD AVATAR
-    // =========================
+    
     private void handleAvatarUpload(HttpServletRequest req,
             HttpServletResponse resp)
             throws Exception {

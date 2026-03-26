@@ -128,7 +128,7 @@ public class CommentController extends HttpServlet {
             return;
         }
 
-        // ✅ Kiểm tra user có đang bị khóa comment không
+        // Kiểm tra user có đang bị khóa comment không
         if (userDAO.isCommentLocked(user.getId())) {
             session.setAttribute("errorMessage", "Tài khoản của bạn đang bị hạn chế bình luận. Vui lòng thử lại sau.");
             int bookId = Integer.parseInt(request.getParameter("bookId"));

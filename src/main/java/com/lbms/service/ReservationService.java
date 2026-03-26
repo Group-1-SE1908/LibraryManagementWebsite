@@ -16,16 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * ReservationService – Business logic cho toàn bộ luồng đặt trước sách.
- *
- * Implement đầy đủ Use Case UC-RES-01:
- *  - Basic Flow       : createReservation()
- *  - Alt A1           : kiểm tra sách còn hàng
- *  - Alt A2           : kiểm tra đã đặt rồi (existsActive)
- *  - Alt A3           : kiểm tra giới hạn MAX_RESERVATIONS
- *  - Alt A3+          : kiểm tra tổng (đang mượn + đặt trước) <= MAX_TOTAL
- *  - Expiration Rule  : processExpiredReservations() – gọi từ scheduler
- *  - Notification     : tích hợp NotificationService
+ * Service xử lý các nghiệp vụ liên quan đến đặt trước sách.
  */
 public class ReservationService {
 
@@ -40,9 +31,7 @@ public class ReservationService {
     private final BorrowDAO           borrowDAO      = new BorrowDAO();
     private final NotificationService notifService   = new NotificationService();
 
-    // ════════════════════════════════════════════════════════════════
-    //  1. TẠO RESERVATION – Basic Flow + Alternative Flows
-    // ════════════════════════════════════════════════════════════════
+    // 1. TẠO RESERVATION
     /**
      * Tạo reservation mới cho userId với bookId.
      *
@@ -51,24 +40,24 @@ public class ReservationService {
      */
     public long createReservation(long userId, long bookId) throws SQLException {
 
-        // ── Bước 1: Kiểm tra sách tồn tại ────────────────────────────────
+        // 1. Kiểm tra sách tồn tại
         Book book = bookDAO.findById(bookId);
         if (book == null) {
             throw new IllegalArgumentException("Sách không tồn tại trong hệ thống.");
         }
 
-        // ── Bước 2: Alt A1 – Sách còn hàng → không cho đặt trước ────────
+        // 2. Kiểm tra sách còn hàng
         if (book.getQuantity() > 0) {
             throw new IllegalArgumentException(
                     "Sách hiện còn sẵn, bạn có thể mượn trực tiếp mà không cần đặt trước.");
         }
 
-        // ── Bước 3: Alt A2 – Đã đặt trước rồi ───────────────────────────
+        // 3. Kiểm tra đã đặt trước chưa
         if (reservationDAO.existsActive(userId, bookId)) {
             throw new IllegalArgumentException("Bạn đã đặt trước cuốn sách này rồi.");
         }
 
-        // ── Bước 4: Alt A3 – Vượt giới hạn reservation ───────────────────
+        // 4. Kiểm tra giới hạn đặt trước
         int activeReservations = reservationDAO.countActive(userId);
         if (activeReservations >= MAX_RESERVATIONS) {
             throw new IllegalArgumentException(
@@ -76,7 +65,7 @@ public class ReservationService {
                             "Vui lòng hủy bớt trước khi đặt thêm.");
         }
 
-        // ── Bước 5: Kiểm tra tổng (đang mượn + đặt trước) <= MAX_TOTAL ───
+        // 5. Kiểm tra tổng số lượng mượn + đặt trước
         int activeBorrows = borrowDAO.countActiveBorrows(userId);
         int total = activeBorrows + activeReservations;
         if (total >= MAX_TOTAL) {
@@ -86,7 +75,7 @@ public class ReservationService {
                             "Vui lòng trả sách hoặc hủy đặt trước trước khi đặt thêm.");
         }
 
-        // ── Bước 5: Tìm và tái kích hoạt bản ghi cũ (CANCELLED/EXPIRED) ──
+        // 6. Xử lý bản ghi đặt trước cũ nếu có
         //    → tránh tạo dư thừa dữ liệu, đồng thời gán lại queue_position mới
         Reservation old = reservationDAO.findCancelledOrExpired(userId, bookId);
         int queuePos = reservationDAO.getNextQueuePosition(bookId);
@@ -102,9 +91,7 @@ public class ReservationService {
         return reservationId;
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  2. HỦY RESERVATION
-    // ════════════════════════════════════════════════════════════════
+    // 2. HỦY RESERVATION
     public void cancelReservation(long reservationId, long userId) throws SQLException {
         // Lấy thông tin để gửi notification sau khi hủy
         Reservation res = reservationDAO.getById(reservationId);
@@ -240,10 +227,7 @@ public class ReservationService {
         return false;
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  3. XỬ LÝ KHI SÁCH ĐƯỢC TRẢ – gọi từ BorrowService khi return
-    //     Implement: Reservation Expiration Rule bước 1-3 & 6
-    // ════════════════════════════════════════════════════════════════
+    // 3. XỬ LÝ KHI SÁCH ĐƯỢC TRẢ
     /**
      * Gọi method này khi 1 cuốn sách được trả lại.
      * Hệ thống sẽ tìm người đầu hàng chờ, chuyển sang AVAILABLE
@@ -262,10 +246,7 @@ public class ReservationService {
         notifService.notifyBookAvailable(first.getUserId(), first.getBookTitle());
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  4. XỬ LÝ HẾT HẠN – gọi định kỳ từ ReservationExpirationScheduler
-    //     Implement: Reservation Expiration Rule bước 4-6
-    // ════════════════════════════════════════════════════════════════
+    // 4. XỬ LÝ HẾT HẠN
     /**
      * Quét các reservation AVAILABLE đã quá 3 ngày:
      *  1. Set status = EXPIRED
@@ -287,9 +268,7 @@ public class ReservationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  5. NHẮC NHỞ SẮP HẾT HẠN – gọi từ scheduler mỗi giờ
-    // ════════════════════════════════════════════════════════════════
+    // 5. NHẮC NHỞ SẮP HẾT HẠN
     public void processExpiringReminders() throws SQLException {
         List<Reservation> expiring = reservationDAO.findExpiringAvailable();
 
@@ -300,9 +279,7 @@ public class ReservationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
-    //  6. QUERY METHODS
-    // ════════════════════════════════════════════════════════════════
+    // 6. CÁC PHƯƠNG THỨC TRUY VẤN
     public List<Reservation> listByUser(long userId) throws SQLException {
         return reservationDAO.listByUser(userId);
     }
