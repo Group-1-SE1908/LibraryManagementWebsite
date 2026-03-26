@@ -26,11 +26,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = {
-    "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock",
-    "/staff/books", "/staff/books/new", "/staff/books/edit", "/staff/books/delete", "/staff/books/detail",
-    "/staff/books/search", "/staff/books/restock",
-    "/admin/books", "/admin/books/new", "/admin/books/edit", "/admin/books/delete", "/admin/books/detail",
-    "/admin/books/search", "/admin/books/restock"
+        "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock",
+        "/staff/books", "/staff/books/new", "/staff/books/edit", "/staff/books/delete", "/staff/books/detail",
+        "/staff/books/search", "/staff/books/restock",
+        "/admin/books", "/admin/books/new", "/admin/books/edit", "/admin/books/delete", "/admin/books/detail",
+        "/admin/books/search", "/admin/books/restock"
 })
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
@@ -86,7 +86,7 @@ public class BookController extends HttpServlet {
                 case "/books/new":
                     req.setAttribute("mode", "create");
                     req.setAttribute("categories", categoryDAO.listAll());
-                    //String redirect = req.getParameter("redirect");
+                    // String redirect = req.getParameter("redirect");
                     if (redirect != null) {
                         req.setAttribute("redirect", redirect);
                     }
@@ -130,7 +130,7 @@ public class BookController extends HttpServlet {
                     break;
             }
         } catch (Exception e) {
-            //throw new ServletException(ex);
+            // throw new ServletException(ex);
             req.getSession().setAttribute("flashError", "Lỗi: " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
         }
@@ -284,8 +284,19 @@ public class BookController extends HttpServlet {
             req.setAttribute("flash", flash);
             req.getSession().removeAttribute("flash");
         }
+        Object flashError = req.getSession().getAttribute("flashError");
+        if (flashError != null) {
+            req.setAttribute("flashError", flashError);
+            req.getSession().removeAttribute("flashError");
+        }
 
-        req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
+        // Admin context gets a dedicated list view; others use the public catalog
+        String booksPath = (String) req.getAttribute("booksBasePath");
+        if ("/admin/books".equals(booksPath)) {
+            req.getRequestDispatcher("/WEB-INF/views/admin/library/admin_book_list.jsp").forward(req, resp);
+        } else {
+            req.getRequestDispatcher("/WEB-INF/views/book_list.jsp").forward(req, resp);
+        }
     }
 
     private String normalizeKeyword(HttpServletRequest req) {
@@ -336,7 +347,7 @@ public class BookController extends HttpServlet {
         req.setAttribute("categories", categoryDAO.listAll());
         String redirect = req.getParameter("redirect");
         if (redirect != null) {
-            req.setAttribute("redirect", redirect);   // <-- Thêm dòng này
+            req.setAttribute("redirect", redirect); // <-- Thêm dòng này
         }
         req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
 

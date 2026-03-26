@@ -641,13 +641,7 @@
                                                         </button>
                                                     </form>
                                                 </c:if>
-                                                <c:if test="${(fn:toUpperCase(r.status) == 'BORROWED' || fn:toUpperCase(r.status) == 'RECEIVED') 
-                                                              && fn:toUpperCase(r.status) != 'SHIPPING' 
-                                                              && fn:toUpperCase(r.status) != 'RETURN_REQUESTED'}">
-                                                      <a class="btn success"
-                                                         href="${pageContext.request.contextPath}/checkout?borrowId=${r.id}">Trả & Thanh toán
-                                                      </a>
-                                                </c:if>
+                                                
                                                 <c:if
                                                     test="${fn:toUpperCase(r.status) == 'REQUESTED' && fn:toUpperCase(r.borrowMethod) != 'ONLINE'}">
                                                     <button class="btn danger" type="button"

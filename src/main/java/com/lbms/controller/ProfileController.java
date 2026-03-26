@@ -3,7 +3,9 @@ package com.lbms.controller;
 import com.lbms.dao.PaymentHistoryDAO;
 import com.lbms.model.PaymentHistory;
 import com.lbms.model.User;
+import com.lbms.model.WalletTransaction;
 import com.lbms.service.ProfileService;
+import com.lbms.service.WalletService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -23,11 +25,13 @@ public class ProfileController extends HttpServlet {
 
     private ProfileService profileService;
     private PaymentHistoryDAO paymentHistoryDAO;
+    private WalletService walletService;
 
     @Override
     public void init() {
         profileService = new ProfileService();
         paymentHistoryDAO = new PaymentHistoryDAO();
+        walletService = new WalletService();
     }
 
   
@@ -58,6 +62,15 @@ public class ProfileController extends HttpServlet {
                 req.setAttribute("paymentHistory", paymentHistory);
             } catch (Exception ignored) {
                 req.setAttribute("paymentHistory", new java.util.ArrayList<>());
+            }
+
+            // Load wallet transaction history
+            try {
+                java.util.List<WalletTransaction> walletHistory = walletService
+                        .getRecentTransactions(freshUser.getId());
+                req.setAttribute("walletHistory", walletHistory);
+            } catch (Exception ignored) {
+                req.setAttribute("walletHistory", new java.util.ArrayList<>());
             }
 
             // Flash message
@@ -183,8 +196,10 @@ public class ProfileController extends HttpServlet {
     }
 
     private boolean isEqual(String s1, String s2) {
-        if (s1 == null && s2 == null) return true;
-        if (s1 == null || s2 == null) return false;
+        if (s1 == null && s2 == null)
+            return true;
+        if (s1 == null || s2 == null)
+            return false;
         return s1.trim().equals(s2.trim());
     }
 

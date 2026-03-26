@@ -20,8 +20,8 @@
                     <div class="footer-section">
                         <h3>Contact Us</h3>
                         <p>📧 support@library.edu</p>
-                        <p>📞 +1 (555) 123-4567</p>
-                        <p>📍 Main Campus, Building A</p>
+                        <p>📞 +84 123456789</p>
+                        <p>📍 Cần Thơ, Việt Nam</p>
                     </div>
                 </div>
                 <div class="footer-bottom">
