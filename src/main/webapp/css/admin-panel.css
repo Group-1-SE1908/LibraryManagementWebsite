@@ -147,6 +147,12 @@ body.panel-body {
     flex: 1;
     overflow-y: auto;
     padding: 14px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.ps-nav::-webkit-scrollbar {
+    display: none;
 }
 
 .ps-section-title {
