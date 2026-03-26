@@ -1,4 +1,4 @@
-USE
+﻿USE
 LibraryDB;
 GO
 
@@ -263,24 +263,24 @@ DECLARE
 @catTech IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780135957059')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780135957059')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The Pragmatic Programmer', 'David Thomas, Andy Hunt', @catTech, 320000, 6, '9780135957059', 'https://covers.openlibrary.org/b/id/10143650-M.jpg');
+                VALUES ('The Pragmatic Programmer', 'David Thomas, Andy Hunt', @catTech, 320000, 6, 'ISBN-9780135957059', 'https://covers.openlibrary.org/b/id/10143650-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780201633610')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780201633610')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', @catTech, 380000, 5, '9780201633610', 'https://covers.openlibrary.org/b/id/10827044-M.jpg');
+                VALUES ('Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', @catTech, 380000, 5, 'ISBN-9780201633610', 'https://covers.openlibrary.org/b/id/10827044-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780262033848')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780262033848')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', @catTech, 450000, 4, '9780262033848', 'https://covers.openlibrary.org/b/id/11106524-M.jpg');
+                VALUES ('Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', @catTech, 450000, 4, 'ISBN-9780262033848', 'https://covers.openlibrary.org/b/id/11106524-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780596517748')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780596517748')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('JavaScript: The Good Parts', 'Douglas Crockford', @catTech, 280000, 7, '9780596517748', 'https://covers.openlibrary.org/b/id/2536428-M.jpg');
+                VALUES ('JavaScript: The Good Parts', 'Douglas Crockford', @catTech, 280000, 7, 'ISBN-9780596517748', 'https://covers.openlibrary.org/b/id/2536428-M.jpg');
 END;
 
         -- ── Văn học thế giới ──────────────────────────────────────────────
@@ -288,19 +288,19 @@ END;
 @catLit IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780062315007')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780062315007')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The Alchemist', 'Paulo Coelho', @catLit, 108000, 11, '9780062315007', 'https://covers.openlibrary.org/b/id/15091614-M.jpg');
+                VALUES ('The Alchemist', 'Paulo Coelho', @catLit, 108000, 11, 'ISBN-9780062315007', 'https://covers.openlibrary.org/b/id/15091614-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780060883287')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780060883287')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('One Hundred Years of Solitude', 'Gabriel García Márquez', @catLit, 145000, 9, '9780060883287', 'https://covers.openlibrary.org/b/isbn/9780060883287-M.jpg');
+                VALUES ('One Hundred Years of Solitude', 'Gabriel García Márquez', @catLit, 145000, 9, 'ISBN-9780060883287', 'https://covers.openlibrary.org/b/isbn/9780060883287-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780141439518')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780141439518')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Pride and Prejudice', 'Jane Austen', @catLit, 85000, 14, '9780141439518', 'https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg');
+                VALUES ('Pride and Prejudice', 'Jane Austen', @catLit, 85000, 14, 'ISBN-9780141439518', 'https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg');
 END;
 
         -- ── Phát triển bản thân ───────────────────────────────────────────
@@ -308,24 +308,24 @@ END;
 @catSkills IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780671027032')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780671027032')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('How to Win Friends and Influence People', 'Dale Carnegie', @catSkills, 155000, 14, '9780671027032', 'https://covers.openlibrary.org/b/isbn/9780671027032-M.jpg');
+                VALUES ('How to Win Friends and Influence People', 'Dale Carnegie', @catSkills, 155000, 14, 'ISBN-9780671027032', 'https://covers.openlibrary.org/b/isbn/9780671027032-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780735211292')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780735211292')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Atomic Habits', 'James Clear', @catSkills, 178000, 10, '9780735211292', 'https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg');
+                VALUES ('Atomic Habits', 'James Clear', @catSkills, 178000, 10, 'ISBN-9780735211292', 'https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780743269513')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780743269513')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The 7 Habits of Highly Effective People', 'Stephen R. Covey', @catSkills, 168000, 8, '9780743269513', 'https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg');
+                VALUES ('The 7 Habits of Highly Effective People', 'Stephen R. Covey', @catSkills, 168000, 8, 'ISBN-9780743269513', 'https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780374533557')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780374533557')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Thinking, Fast and Slow', 'Daniel Kahneman', @catSkills, 225000, 7, '9780374533557', 'https://covers.openlibrary.org/b/isbn/9780374533557-M.jpg');
+                VALUES ('Thinking, Fast and Slow', 'Daniel Kahneman', @catSkills, 225000, 7, 'ISBN-9780374533557', 'https://covers.openlibrary.org/b/isbn/9780374533557-M.jpg');
 END;
 
         -- ── Khoa học & Tự nhiên ───────────────────────────────────────────
@@ -333,14 +333,14 @@ END;
 @catSci IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780553380163')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780553380163')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('A Brief History of Time', 'Stephen Hawking', @catSci, 132000, 9, '9780553380163', 'https://covers.openlibrary.org/b/id/14589690-M.jpg');
+                VALUES ('A Brief History of Time', 'Stephen Hawking', @catSci, 132000, 9, 'ISBN-9780553380163', 'https://covers.openlibrary.org/b/id/14589690-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780198788607')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780198788607')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The Selfish Gene', 'Richard Dawkins', @catSci, 165000, 6, '9780198788607', 'https://covers.openlibrary.org/b/isbn/9780198788607-M.jpg');
+                VALUES ('The Selfish Gene', 'Richard Dawkins', @catSci, 165000, 6, 'ISBN-9780198788607', 'https://covers.openlibrary.org/b/isbn/9780198788607-M.jpg');
 END;
 
         -- ── Lịch sử & Văn minh ────────────────────────────────────────────
@@ -348,14 +348,14 @@ END;
 @catHist IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780062316097')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780062316097')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', @catHist, 210000, 8, '9780062316097', 'https://covers.openlibrary.org/b/id/14369194-M.jpg');
+                VALUES ('Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', @catHist, 210000, 8, 'ISBN-9780062316097', 'https://covers.openlibrary.org/b/id/14369194-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780393061314')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780393061314')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Guns, Germs, and Steel', 'Jared Diamond', @catHist, 200000, 6, '9780393061314', 'https://covers.openlibrary.org/b/isbn/9780393061314-M.jpg');
+                VALUES ('Guns, Germs, and Steel', 'Jared Diamond', @catHist, 200000, 6, 'ISBN-9780393061314', 'https://covers.openlibrary.org/b/isbn/9780393061314-M.jpg');
 END;
 
         -- ── Kinh tế & Kinh doanh ──────────────────────────────────────────
@@ -363,14 +363,14 @@ END;
 @catEcon IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9781612680194')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9781612680194')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Rich Dad Poor Dad', 'Robert T. Kiyosaki', @catEcon, 175000, 11, '9781612680194', 'https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg');
+                VALUES ('Rich Dad Poor Dad', 'Robert T. Kiyosaki', @catEcon, 175000, 11, 'ISBN-9781612680194', 'https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780307887894')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780307887894')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The Lean Startup', 'Eric Ries', @catEcon, 195000, 7, '9780307887894', 'https://covers.openlibrary.org/b/isbn/9780307887894-M.jpg');
+                VALUES ('The Lean Startup', 'Eric Ries', @catEcon, 195000, 7, 'ISBN-9780307887894', 'https://covers.openlibrary.org/b/isbn/9780307887894-M.jpg');
 END;
 
         -- ── Khoa học viễn tưởng ───────────────────────────────────────────
@@ -378,14 +378,14 @@ END;
 @catSciFi IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780804139021')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780804139021')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('The Martian', 'Andy Weir', @catSciFi, 155000, 8, '9780804139021', 'https://covers.openlibrary.org/b/id/14641755-M.jpg');
+                VALUES ('The Martian', 'Andy Weir', @catSciFi, 155000, 8, 'ISBN-9780804139021', 'https://covers.openlibrary.org/b/id/14641755-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780441013593')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780441013593')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Dune', 'Frank Herbert', @catSciFi, 145000, 7, '9780441013593', 'https://covers.openlibrary.org/b/isbn/9780441013593-M.jpg');
+                VALUES ('Dune', 'Frank Herbert', @catSciFi, 145000, 7, 'ISBN-9780441013593', 'https://covers.openlibrary.org/b/isbn/9780441013593-M.jpg');
 END;
 
         -- ── Thiếu nhi ─────────────────────────────────────────────────────
@@ -393,50 +393,50 @@ END;
 @catKids IS NOT NULL
 BEGIN
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780590353427')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780590353427')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Harry Potter and the Sorcerer''s Stone', 'J.K. Rowling', @catKids, 145000, 16, '9780590353427', 'https://covers.openlibrary.org/b/isbn/9780590353427-M.jpg');
+                VALUES ('Harry Potter and the Sorcerer''s Stone', 'J.K. Rowling', @catKids, 145000, 16, 'ISBN-9780590353427', 'https://covers.openlibrary.org/b/isbn/9780590353427-M.jpg');
 
             IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780141439761')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780141439761')
                 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-                VALUES ('Alice''s Adventures in Wonderland', 'Lewis Carroll', @catKids, 75000, 13, '9780141439761', 'https://covers.openlibrary.org/b/isbn/9780141439761-M.jpg');
+                VALUES ('Alice''s Adventures in Wonderland', 'Lewis Carroll', @catKids, 75000, 13, 'ISBN-9780141439761', 'https://covers.openlibrary.org/b/isbn/9780141439761-M.jpg');
 END;
 
         -- ── Biến sách cho borrow / comment / reservation demo ─────────────
         -- (Tên biến giữ nguyên để không phải sửa toàn bộ phần demo bên dưới)
         DECLARE
-@bookJava    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780132350884'); -- Clean Code
+@bookJava    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780132350884'); -- Clean Code
         DECLARE
-@bookSql     INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780451524935'); -- Nineteen Eighty-Four
+@bookSql     INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780451524935'); -- Nineteen Eighty-Four
         DECLARE
-@bookTatDen  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780156012195'); -- The Little Prince
+@bookTatDen  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780156012195'); -- The Little Prince
         DECLARE
-@bookPython  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780735211292'); -- Atomic Habits
+@bookPython  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780735211292'); -- Atomic Habits
         DECLARE
-@bookMicro   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780062316097'); -- Sapiens
+@bookMicro   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780062316097'); -- Sapiens
         DECLARE
-@bookKieu    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780590353427'); -- Harry Potter
+@bookKieu    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780590353427'); -- Harry Potter
         DECLARE
-@bookDeMen   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780062315007'); -- The Alchemist
+@bookDeMen   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780062315007'); -- The Alchemist
         DECLARE
-@bookSkills  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780671027032'); -- How to Win Friends
+@bookSkills  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780671027032'); -- How to Win Friends
         DECLARE
-@bookToan    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780262033848'); -- Introduction to Algorithms
+@bookToan    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780262033848'); -- Introduction to Algorithms
         DECLARE
-@bookReact   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780743269513'); -- The 7 Habits
+@bookReact   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780743269513'); -- The 7 Habits
         DECLARE
-@bookClean   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780201633610'); -- Design Patterns
+@bookClean   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780201633610'); -- Design Patterns
         DECLARE
-@bookDocker  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780307887894'); -- The Lean Startup
+@bookDocker  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780307887894'); -- The Lean Startup
         DECLARE
-@bookSoDo    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780060883287'); -- One Hundred Years of Solitude
+@bookSoDo    INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780060883287'); -- One Hundred Years of Solitude
         DECLARE
-@bookChiPheo INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780804139021'); -- The Martian
+@bookChiPheo INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780804139021'); -- The Martian
         DECLARE
-@book7Habits INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9781612680194'); -- Rich Dad Poor Dad
+@book7Habits INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9781612680194'); -- Rich Dad Poor Dad
         DECLARE
-@bookToeic   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780553380163'); -- A Brief History of Time
+@bookToeic   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780553380163'); -- A Brief History of Time
 
         IF
 @bookJava IS NULL OR @bookSql IS NULL OR @bookTatDen IS NULL
@@ -926,16 +926,16 @@ END;
 
         -- ── Sách hết hàng (quantity = 0) ─────────────────────────────────
         IF
-NOT EXISTS (SELECT 1 FROM Book WHERE isbn = '9780136083252')
+NOT EXISTS (SELECT 1 FROM Book WHERE isbn = 'ISBN-9780136083252')
 BEGIN
             DECLARE
 @catTechExt INT = (SELECT TOP 1 category_id FROM Category WHERE category_name = N'Lập trình & Công nghệ');
 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image)
-VALUES (N'Head First Design Patterns', N'Eric Freeman, Elisabeth Robson', @catTechExt, 320000, 0, '9780136083252',
+VALUES (N'Head First Design Patterns', N'Eric Freeman, Elisabeth Robson', @catTechExt, 320000, 0, 'ISBN-9780136083252',
         'https://covers.openlibrary.org/b/isbn/9780596007126-M.jpg');
 END;
         DECLARE
-@bookOutOfStock INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780136083252');
+@bookOutOfStock INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780136083252');
 
         -- ── Cập nhật BookCopy: LOST và DAMAGED ───────────────────────────
         IF
@@ -960,9 +960,9 @@ END;
 
         -- ── Borrow records: SHIPPING (đơn hàng đang giao) ────────────────
         DECLARE
-@bkDune  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780441013593');
+@bkDune  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780441013593');
         DECLARE
-@bkAlice INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780141439761');
+@bkAlice INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780141439761');
 
         IF
 @bkDune IS NOT NULL AND NOT EXISTS (SELECT 1 FROM borrow_records WHERE group_code = 'DEMO-SHIPPING-001' AND book_id = @bkDune)
@@ -1111,17 +1111,17 @@ END;
 OBJECT_ID('Cart', 'U') IS NOT NULL AND OBJECT_ID('CartItem', 'U') IS NOT NULL
 BEGIN
             DECLARE
-@bkPragmatic2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780135957059');
+@bkPragmatic2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780135957059');
             DECLARE
-@bkDesignPat2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780201633610');
+@bkDesignPat2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780201633610');
             DECLARE
-@bkRichDad2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9781612680194');
+@bkRichDad2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9781612680194');
             DECLARE
-@bkHarryPot2  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780590353427');
+@bkHarryPot2  INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780590353427');
             DECLARE
-@bkBriefHist2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780553380163');
+@bkBriefHist2 INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780553380163');
             DECLARE
-@bkAtomicH2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = '9780735211292');
+@bkAtomicH2   INT = (SELECT TOP 1 book_id FROM Book WHERE isbn = 'ISBN-9780735211292');
 
             -- Cart member2
             DECLARE

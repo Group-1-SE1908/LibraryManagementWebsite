@@ -1,4 +1,4 @@
-/*
+﻿/*
 ===========================================================================
  PROJECT: LIBRARY MANAGEMENT SYSTEM (LBMS) - FULL VERSION
  DATABASE: LibraryDB
@@ -437,9 +437,9 @@ INSERT INTO Category (category_name) VALUES
 -- Chèn sách ban đầu – trigger tự động tạo BookCopy
 -- category_id: 1=Lập trình & Công nghệ  2=Văn học thế giới
 INSERT INTO Book (title, author, category_id, price, quantity, isbn, image) VALUES
-    ('Clean Code', 'Robert C. Martin', 1, 350000, 8, '9780132350884', 'https://covers.openlibrary.org/b/id/15126503-M.jpg'),
-    ('Nineteen Eighty-Four', 'George Orwell', 2, 120000, 12, '9780451524935', 'https://covers.openlibrary.org/b/id/12054527-M.jpg'),
-    ('The Little Prince', 'Antoine de Saint-Exupéry', 2, 95000, 15, '9780156012195', 'https://covers.openlibrary.org/b/id/7268667-M.jpg');
+    ('Clean Code', 'Robert C. Martin', 1, 350000, 8, 'ISBN-9780132350884', 'https://covers.openlibrary.org/b/id/15126503-M.jpg'),
+    ('Nineteen Eighty-Four', 'George Orwell', 2, 120000, 12, 'ISBN-9780451524935', 'https://covers.openlibrary.org/b/id/12054527-M.jpg'),
+    ('The Little Prince', 'Antoine de Saint-Exupéry', 2, 95000, 15, 'ISBN-9780156012195', 'https://covers.openlibrary.org/b/id/7268667-M.jpg');
 
 GO
 PRINT '--- DATABASE LIBRARYDB HAS BEEN FULLY ASSEMBLED ---';
