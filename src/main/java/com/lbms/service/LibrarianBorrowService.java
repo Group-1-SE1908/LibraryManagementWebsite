@@ -280,6 +280,13 @@ public class LibrarianBorrowService {
 
                 c.commit();
 
+                // Xử lý reservation cho hàng chờ mượn
+                try {
+                    reservationService.onBookReturned(bookId);
+                } catch (Exception e) {
+                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId + ": " + e.getMessage());
+                }
+
                 // 7. Xử lý hoàn tiền cọc dựa trên borrow_method
                 BigDecimal depositRefund = BigDecimal.ZERO;
                 if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0 && borrowUserId > 0) {

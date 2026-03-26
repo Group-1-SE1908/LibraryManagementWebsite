@@ -30,7 +30,7 @@ public class LibrarianBorrowDAO {
                 + BorrowSchemaSupport.copyIdExpression(schema) + ", "
                 + "br.borrow_date, br.due_date, br.return_date, "
                 + BorrowSchemaSupport.quantityExpression(schema, "borrow_qty") + ", "
-                + "br.status AS borrow_status, br.fine_amount, "
+                + "br.status AS borrow_status, br.fine_amount, br.deposit_amount, "
                 + BorrowSchemaSupport.borrowMethodExpression(schema) + ", "
                 + BorrowSchemaSupport.groupCodeExpression(schema) + ", "
                 + BorrowSchemaSupport.shippingRecipientExpression(schema) + ", "
@@ -235,6 +235,7 @@ public class LibrarianBorrowDAO {
         br.setQuantity(rs.getInt("borrow_qty"));
         br.setStatus(rs.getString("borrow_status"));
         br.setFineAmount(rs.getBigDecimal("fine_amount"));
+        br.setDepositAmount(rs.getBigDecimal("deposit_amount"));
         br.setBorrowMethod(rs.getString("borrow_method"));
         br.setGroupCode(rs.getString("group_code"));
 

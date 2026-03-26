@@ -298,7 +298,25 @@ public class ShippingService {
                     + "WHERE id = ? AND status = 'RETURN_REQUESTED'";
             try (PreparedStatement ps = c.prepareStatement(sqlBorrow)) {
                 ps.setLong(1, borrowId);
-                ps.executeUpdate();
+                int rows = ps.executeUpdate();
+                
+                if (rows > 0) {
+                    long bookId = -1;
+                    String sqlGetBook = "SELECT book_id FROM borrow_records WHERE id = ?";
+                    try (PreparedStatement ps2 = c.prepareStatement(sqlGetBook)) {
+                        ps2.setLong(1, borrowId);
+                        try (java.sql.ResultSet rs = ps2.executeQuery()) {
+                            if (rs.next()) bookId = rs.getLong("book_id");
+                        }
+                    }
+                    if (bookId != -1) {
+                        try {
+                            new ReservationService().onBookReturned(bookId);
+                        } catch (Exception e) {
+                            System.err.println("[ShippingService] Lỗi xử lý reservation: " + e.getMessage());
+                        }
+                    }
+                }
             }
         }
     }

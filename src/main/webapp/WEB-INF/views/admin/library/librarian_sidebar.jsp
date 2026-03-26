@@ -92,10 +92,6 @@
                                     class="${activeUri.contains('/feedback') ? 'active' : ''}">
                                     <i class="fas fa-comment-dots"></i> <span>Phản hồi về sách</span>
                                 </a>
-                                <a href="${pageContext.request.contextPath}${routePrefix}/contacts"
-                                    class="${activeUri.contains('/contacts') ? 'active' : ''}">
-                                    <i class="fas fa-envelope-open-text"></i> <span>Phản hồi liên hệ</span>
-                                </a>
                             </div>
                         </nav>
 

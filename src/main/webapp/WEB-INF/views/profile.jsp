@@ -325,21 +325,21 @@
                         <div id="profile" class="section active">
 
                             <!-- AVATAR FORM -->
-                            <div class="avatar-wrapper">
+                            <div class="avatar-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
 
                                 <form id="avatarForm" method="post" action="upload-avatar"
-                                    enctype="multipart/form-data">
+                                    enctype="multipart/form-data" style="display: flex; flex-direction: column; align-items: center;">
 
                                     <c:choose>
                                         <c:when test="${not empty user.avatar}">
                                             <img src="${pageContext.request.contextPath}/${user.avatar}?v=${timestamp}"
                                                 id="previewAvatar"
                                                 onclick="document.getElementById('avatarUpload').click();"
-                                                onerror="this.src='https://i.pravatar.cc/150?img=3'">
+                                                onerror="this.style.display='none'; this.parentElement.querySelector('.default-avatar').style.display='flex';">
+                                            <div class="default-avatar" style="display:none; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #60a5fa); color: #fff; font-weight: 700; font-size: 48px; align-items: center; justify-content: center; cursor: pointer; border: 5px solid #eef1ff;" onclick="document.getElementById('avatarUpload').click();">${userInitial}</div>
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="https://i.pravatar.cc/150?img=3" id="previewAvatar"
-                                                onclick="document.getElementById('avatarUpload').click();">
+                                            <div class="default-avatar" style="width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #60a5fa); color: #fff; font-weight: 700; font-size: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 5px solid #eef1ff;" onclick="document.getElementById('avatarUpload').click();" id="previewAvatarContainer">${userInitial}</div>
                                         </c:otherwise>
                                     </c:choose>
 
