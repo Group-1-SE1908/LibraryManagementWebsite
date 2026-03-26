@@ -501,7 +501,7 @@ public class LibrarianBorrowController extends HttpServlet {
 
         } catch (IllegalArgumentException ex) {
             // Bắt riêng lỗi nghiệp vụ (sai barcode, giới hạn mượn...)
-            req.getSession().setAttribute("flash", "Lỗi: " + ex.getMessage());
+            req.getSession().setAttribute("flashError", ex.getMessage());
             if ("inperson".equals(action)) {
                 // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
                 resp.sendRedirect(req.getContextPath() + redirectBase);
@@ -509,7 +509,7 @@ public class LibrarianBorrowController extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + redirectBase);
             }
         } catch (Exception ex) {
-            req.getSession().setAttribute("flash", "Lỗi hệ thống: " + ex.getMessage());
+            req.getSession().setAttribute("flashError", "Lỗi hệ thống: " + ex.getMessage());
             // resp.sendRedirect(req.getContextPath() + redirectBase + "/inperson");
             resp.sendRedirect(req.getContextPath() + redirectBase);
         }
