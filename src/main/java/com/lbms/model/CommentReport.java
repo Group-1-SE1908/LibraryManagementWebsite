@@ -15,6 +15,9 @@ public class CommentReport {
     private String reporterFullName;
     private String commentContent;
     private String commentUserFullName;
+    private long bookId;
+    private String bookTitle;
+    private int rating;
 
     public CommentReport() {}
 
@@ -105,5 +108,29 @@ public class CommentReport {
 
     public void setCommentUserFullName(String commentUserFullName) {
         this.commentUserFullName = commentUserFullName;
+    }
+
+    public long getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(long bookId) {
+        this.bookId = bookId;
+    }
+
+    public String getBookTitle() {
+        return bookTitle;
+    }
+
+    public void setBookTitle(String bookTitle) {
+        this.bookTitle = bookTitle;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
     }
 }

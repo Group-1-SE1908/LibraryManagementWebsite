@@ -106,8 +106,8 @@ public class LibrarianReservationController extends HttpServlet {
         try {
             long reservationId = Long.parseLong(req.getParameter("reservationId"));
 
-            // Gọi service để confirm pickup
-            reservationService.confirmReservationPickup(reservationId);
+            // Gọi service để confirm pickup (không có barcode cụ thể -> tự lấy cuốn available)
+            reservationService.confirmReservationPickup(reservationId, null);
 
             sendJsonResponse(resp, HttpServletResponse.SC_OK,
                     "Đã xác nhận lấy sách thành công");
@@ -158,8 +158,8 @@ public class LibrarianReservationController extends HttpServlet {
 
             // Verify barcode
             if (reservationService.verifyBookBarcode(reservationId, barcode)) {
-                // Barcode valid - mark as borrowed
-                reservationService.confirmReservationPickup(reservationId);
+                // Barcode valid - mark as borrowed with specific barcode
+                reservationService.confirmReservationPickup(reservationId, barcode.trim());
                 sendJsonResponse(resp, HttpServletResponse.SC_OK,
                         "Barcode hợp lệ - Xác nhận thành công");
             } else {

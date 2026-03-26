@@ -105,6 +105,20 @@ public class BookService {
         }
 
         // 3. Gọi DAO và truyền thêm userId để ghi log
-        return bookDAO.restockBook(bookId, additionalQuantity, userId);
+        boolean success = bookDAO.restockBook(bookId, additionalQuantity, userId);
+        
+        // 4. Nếu nhập hàng thành công, tự động thông báo cho các bạn đọc đang nằm trong hàng chờ (nếu có)
+        if (success) {
+            try {
+                com.lbms.service.ReservationService reservationService = new com.lbms.service.ReservationService();
+                for (int i = 0; i < additionalQuantity; i++) {
+                    reservationService.onBookReturned(bookId); // Mỗi lượt lôi 1 người ở đầu hàng chờ lên để cấp sách
+                }
+            } catch (Exception e) {
+                System.err.println("[BookService] Lỗi khi notify hàng chờ sau khi thêm lượng sách: " + e.getMessage());
+            }
+        }
+        
+        return success;
     }
 }

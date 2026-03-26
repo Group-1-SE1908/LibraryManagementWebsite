@@ -146,25 +146,46 @@ public class ProfileController extends HttpServlet {
         String district = req.getParameter("district");
         String ward = req.getParameter("ward");
 
-        profileService.updateProfile(
-                currentUser.getId(),
-                fullName,
-                phone,
-                address,
-                city,
-                district,
-                ward);
+        // Dirty checking: compare with current session user
+        boolean changed = !isEqual(fullName, currentUser.getFullName()) ||
+                !isEqual(phone, currentUser.getPhone()) ||
+                !isEqual(address, currentUser.getAddress()) ||
+                !isEqual(city, currentUser.getCity()) ||
+                !isEqual(district, currentUser.getDistrict()) ||
+                !isEqual(ward, currentUser.getWard());
 
-        // refresh session
-        User updatedUser = profileService.refreshUser(currentUser.getId());
-        req.getSession().setAttribute("currentUser", updatedUser);
+        if (changed) {
+            profileService.updateProfile(
+                    currentUser.getId(),
+                    fullName,
+                    phone,
+                    address,
+                    city,
+                    district,
+                    ward);
 
-        req.getSession().setAttribute("flash",
-                "Cập nhật hồ sơ thành công.");
-        req.getSession().setAttribute("flashType",
-                "success");
+            // refresh session
+            User updatedUser = profileService.refreshUser(currentUser.getId());
+            req.getSession().setAttribute("currentUser", updatedUser);
+
+            req.getSession().setAttribute("flash",
+                    "Cập nhật hồ sơ thành công.");
+            req.getSession().setAttribute("flashType",
+                    "success");
+        } else {
+            req.getSession().setAttribute("flash",
+                    "Thông tin không thay đổi.");
+            req.getSession().setAttribute("flashType",
+                    "info");
+        }
 
         resp.sendRedirect(req.getContextPath() + "/profile");
+    }
+
+    private boolean isEqual(String s1, String s2) {
+        if (s1 == null && s2 == null) return true;
+        if (s1 == null || s2 == null) return false;
+        return s1.trim().equals(s2.trim());
     }
 
     // =========================

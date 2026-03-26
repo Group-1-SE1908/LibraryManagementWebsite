@@ -372,11 +372,6 @@
                             <c:set var="bookTitle" value="${fn:length(bookParts) > 1 ? bookParts[1] : ''}"/>
                             <c:set var="bookAuthor" value="${fn:length(bookParts) > 2 ? bookParts[2] : ''}"/>
 
-                            <div style="margin-bottom: 8px; padding: 12px 0; border-left: 3px solid #667eea; padding-left: 16px;">
-                                <div style="font-weight: 600; color: #1e293b; font-size: 13px; margin-bottom: 4px;">
-                                    📅 ${dateKey} · 📖 ${bookTitle} <span style="background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">${fn:length(bookResList)} đặt</span>
-                                </div>
-                            </div>
 
                             <c:forEach var="res" items="${bookResList}">
                                 <div class="order-card" data-status="${res.status}" 
@@ -421,7 +416,7 @@
                                             </div>
 
                                             <div class="book-actions">
-                                                <c:if test="${res.status == 'AVAILABLE'}">
+                                                <c:if test="${res.status == 'AVAILABLE' || (res.status == 'WAITING' && res.queuePosition == 1)}">
                                                     <div class="barcode-scanner">
                                                         <input type="text" placeholder="Scan barcode..." 
                                                                onkeypress="if(event.key=='Enter') {
@@ -433,6 +428,8 @@
                                                             class="btn-modern btn-success" style="padding: 8px 12px; font-size: 12px; white-space: nowrap;">
                                                         ✓ Xác nhận lấy
                                                     </button>
+                                                </c:if>
+                                                <c:if test="${res.status == 'AVAILABLE'}">
                                                     <button type="button" onclick="rejectAvailable(${res.id})" 
                                                             class="btn-modern btn-warning" style="padding: 8px 12px; font-size: 12px; white-space: nowrap;">
                                                         ⏱️ User không tới
@@ -443,6 +440,13 @@
                                                             class="btn-modern btn-danger" style="padding: 8px 12px; font-size: 12px; white-space: nowrap;">
                                                         ❌ Từ chối
                                                     </button>
+                                                </c:if>
+                                                <c:if test="${res.status == 'BORROWED'}">
+                                                    <a href="${pageContext.request.contextPath}/staff/borrowlibrary" 
+                                                       class="btn-modern btn-primary text-center" 
+                                                       style="padding: 8px 12px; font-size: 12px; white-space: nowrap; text-decoration: none; display: inline-block;">
+                                                        ➡️ Chuyển đến Quản lý Mượn / Trả
+                                                    </a>
                                                 </c:if>
                                                 <button type="button" onclick="viewQueue(${res.bookId})" 
                                                         class="btn-modern btn-secondary" style="padding: 8px 12px; font-size: 12px; white-space: nowrap;">
@@ -570,16 +574,27 @@
             Swal.fire({
                 title: 'Từ chối đặt trước?',
                 input: 'textarea',
-                inputLabel: 'Lý do từ chối:',
-                inputPlaceholder: 'Nhập lý do...',
+                inputLabel: 'Lý do từ chối (bắt buộc):',
+                inputPlaceholder: 'Nhập lý do chi tiết để người dùng biết...',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Từ chối',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Xác nhận từ chối',
+                cancelButtonText: 'Hủy',
+                inputAttributes: {
+                    'aria-label': 'Lý do từ chối',
+                    'required': 'true'
+                },
+                preConfirm: (value) => {
+                    if (!value || value.trim().length < 5) {
+                        Swal.showValidationMessage('Vui lòng nhập lý do từ chối (ít nhất 5 ký tự)');
+                        return false;
+                    }
+                    return value;
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const reason = result.value || 'Không có lý do';
+                    const reason = result.value;
                     
                     // Gửi request lên server
                     fetch('${pageContext.request.contextPath}/staff/reservation', {
@@ -592,7 +607,13 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 200) {
-                            Swal.fire('Thành công', 'Đã từ chối đặt trước', 'success').then(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: 'Đã từ chối đặt trước và thông báo cho người dùng.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
                                 location.reload();
                             });
                         } else {

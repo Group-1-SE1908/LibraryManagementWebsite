@@ -359,6 +359,7 @@
                                             </span>
                                         </div>
                                                     <div class="feedback-text" style="margin-top: 6px;">
+                                                        <strong>Sách:</strong> ${report.bookTitle} <br/>
                                                         <strong>Bình luận:</strong> ${report.commentContent}
                                                     </div>
                                                     <div class="feedback-meta">

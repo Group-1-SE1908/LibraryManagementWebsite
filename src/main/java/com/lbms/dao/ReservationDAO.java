@@ -141,6 +141,16 @@ public class ReservationDAO {
         }
     }
 
+    public void reject(long reservationId, String reason) throws SQLException {
+        String sql = "UPDATE reservations SET status = 'CANCELLED', reject_reason = ?, updated_at = GETDATE(), queue_position = NULL WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setLong(2, reservationId);
+            ps.executeUpdate();
+        }
+    }
+
     // ── markAvailable: set status=AVAILABLE, notified_at=now, expired_at=now+3days ──
     public void markAvailable(long reservationId) throws SQLException {
         // Bước 1: Lấy thông tin reservation để biết book_id và queue_position hiện tại
@@ -179,7 +189,7 @@ public class ReservationDAO {
     public Reservation getFirstWaiting(long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -198,7 +208,7 @@ public class ReservationDAO {
     public List<Reservation> findExpiredAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -218,7 +228,7 @@ public class ReservationDAO {
     public List<Reservation> findExpiringAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -250,7 +260,7 @@ public class ReservationDAO {
     public Reservation findCancelledOrExpired(long userId, long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -271,7 +281,7 @@ public class ReservationDAO {
     public List<Reservation> listByUser(long userId) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -291,7 +301,7 @@ public class ReservationDAO {
     public List<Reservation> listAll() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image, " +
                 "u.full_name AS user_name " +
                 "FROM reservations r " +
@@ -314,7 +324,7 @@ public class ReservationDAO {
     public List<Reservation> listWaitingQueue(long bookId) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "ROW_NUMBER() OVER (ORDER BY CASE WHEN r.status = 'AVAILABLE' THEN 0 ELSE 1 END, r.created_at ASC) AS queue_position, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image, " +
                 "u.full_name AS user_name, u.email AS user_email, u.phone AS user_phone " +
@@ -341,7 +351,7 @@ public class ReservationDAO {
     public Reservation getById(long id) throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
-                "r.created_at, r.updated_at, " +
+                "r.created_at, r.updated_at, r.reject_reason, " +
                 "b.title AS book_title, b.author AS book_author, b.image AS book_image " +
                 "FROM reservations r " +
                 "INNER JOIN Book b ON r.book_id = b.book_id " +
@@ -367,6 +377,7 @@ public class ReservationDAO {
         r.setExpiredAt(rs.getTimestamp("expired_at"));
         r.setCreatedAt(rs.getTimestamp("created_at"));
         r.setUpdatedAt(rs.getTimestamp("updated_at"));
+        r.setRejectReason(rs.getString("reject_reason"));
         r.setBookTitle(rs.getString("book_title"));
         r.setBookAuthor(rs.getString("book_author"));
         r.setBookImage(rs.getString("book_image"));

@@ -10,6 +10,7 @@ import com.lbms.util.DBConnection;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
@@ -124,12 +125,12 @@ public class ReservationService {
         Reservation res = reservationDAO.getById(reservationId);
         if (res == null) return;
 
-        // Set status = CANCELLED
-        reservationDAO.updateStatus(reservationId, "CANCELLED");
+        // Set status = CANCELLED and store reason
+        reservationDAO.reject(reservationId, reason);
 
         // Notify user about rejection
         notifService.notifyReservationCancelled(res.getUserId(), 
-                "Đặt trước sách \"" + res.getBookTitle() + "\" đã bị từ chối" + 
+                "Đặt trước sách \"" + res.getBookTitle() + "\" đã bị từ chối. " + 
                 (reason != null && !reason.isEmpty() ? "Lý do: " + reason : ""));
 
         // Move next person in queue
@@ -141,30 +142,66 @@ public class ReservationService {
      * Tạo một BorrowRecord trong hệ thống để user thấy trong lịch sử mượn
      * @param reservationId ID của reservation
      */
-    public void confirmReservationPickup(long reservationId) throws SQLException {
+    public void confirmReservationPickup(long reservationId, String optionalBarcode) throws SQLException {
         Reservation res = reservationDAO.getById(reservationId);
         if (res == null) return;
 
         try (Connection conn = DBConnection.getConnection()) {
             conn.setAutoCommit(false);
             try {
+                // 0. Cố gắng tìm và gán một cuốn BookCopy cụ thể (để có thể scan trả về sau này)
+                int copyId = -1;
+                String findCopySql;
+                if (optionalBarcode != null && !optionalBarcode.trim().isEmpty()) {
+                    findCopySql = "SELECT TOP 1 copy_id FROM BookCopy WHERE book_id = ? AND barcode = ? AND status = 'AVAILABLE'";
+                } else {
+                    findCopySql = "SELECT TOP 1 copy_id FROM BookCopy WHERE book_id = ? AND status = 'AVAILABLE'";
+                }
+                
+                try (PreparedStatement ps = conn.prepareStatement(findCopySql)) {
+                    ps.setLong(1, res.getBookId());
+                    if (optionalBarcode != null && !optionalBarcode.trim().isEmpty()) {
+                        ps.setString(2, optionalBarcode.trim());
+                    }
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            copyId = rs.getInt("copy_id");
+                        } else {
+                            throw new SQLException("Không tìm thấy copy sách hợp lệ hoặc sách đã bị lấy mất.");
+                        }
+                    }
+                }
+
+                // 0.1 Update trạng thái BookCopy thành BORROWED
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE BookCopy SET status = 'BORROWED' WHERE copy_id = ?")) {
+                    ps.setInt(1, copyId);
+                    ps.executeUpdate();
+                }
+
                 LocalDate today = LocalDate.now();
                 LocalDate dueDate = today.plusDays(7);
 
                 // 1. Tạo BorrowRecord trong hệ thống (reservation → borrow conversion)
                 long borrowId = borrowDAO.createRequest(res.getUserId(), res.getBookId(), 1, "IN_PERSON", null);
 
-                // 2. Update borrow_record: Set status = BORROWED + dates
-                String sql = "UPDATE borrow_records SET status = 'BORROWED', borrow_date = ?, due_date = ? WHERE id = ?";
+                // 2. Update borrow_record: Set status = BORROWED + dates + lưu copy_id
+                String sql = "UPDATE borrow_records SET status = 'BORROWED', borrow_date = ?, due_date = ?, copy_id = ? WHERE id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setDate(1, Date.valueOf(today));
                     ps.setDate(2, Date.valueOf(dueDate));
-                    ps.setLong(3, borrowId);
+                    ps.setInt(3, copyId);
+                    ps.setLong(4, borrowId);
                     ps.executeUpdate();
                 }
 
                 // 3. Update reservation status = BORROWED
                 reservationDAO.updateStatus(reservationId, "BORROWED");
+                
+                // Giảm 1 quyền sách trong kho (vì đã cho mượn)
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
+                    ps.setLong(1, res.getBookId());
+                    ps.executeUpdate();
+                }
 
                 conn.commit();
             } catch (Exception ex) {
@@ -189,15 +226,18 @@ public class ReservationService {
         Reservation res = reservationDAO.getById(reservationId);
         if (res == null) return false;
 
-        // Fetch book to check barcode/ISBN
-        Book book = bookDAO.findById(res.getBookId());
-        if (book == null) return false;
-
-        // Compare barcode with ISBN (using ISBN as barcode)
-        String storedISBN = book.getIsbn();
-        if (storedISBN == null) return false;
-
-        return storedISBN.equals(barcode.trim());
+        String query = "SELECT COUNT(*) FROM BookCopy WHERE book_id = ? AND barcode = ? AND status = 'AVAILABLE'";
+        try (Connection conn = DBConnection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setLong(1, res.getBookId());
+            ps.setString(2, barcode.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 
     // ════════════════════════════════════════════════════════════════

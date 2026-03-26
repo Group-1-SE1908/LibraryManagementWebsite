@@ -203,6 +203,12 @@
                                                     <span class="mp-badge mp-badge--cancelled is-outline">
                                                         <span class="mp-badge__dot"></span>Đã hủy
                                                     </span>
+                                                    <c:if test="${not empty res.rejectReason}">
+                                                        <div style="font-size: 0.8rem; color: #ef4444; margin-top: 6px; display: flex; align-items: start; gap: 4px;">
+                                                            <i class="bi bi-info-circle-fill" style="margin-top:2px;"></i>
+                                                            <span>Lý do: ${res.rejectReason}</span>
+                                                        </div>
+                                                    </c:if>
                                                 </c:when>
                                                 <c:when test="${res.status == 'EXPIRED'}">
                                                     <span class="mp-badge mp-badge--expired">

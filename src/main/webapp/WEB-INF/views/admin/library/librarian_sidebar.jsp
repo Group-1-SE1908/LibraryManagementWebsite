@@ -95,15 +95,15 @@
                             </div>
                         </nav>
 
-                        <div class="ps-footer">
-                            <div class="ps-profile">
-                                <div class="ps-avatar">${userInitial.toUpperCase()}</div>
-                                <div>
-                                    <div class="ps-user-name">${userName}</div>
-                                    <div class="ps-user-role">Thủ thư</div>
+                        <div class="ps-footer" style="padding: 0;">
+                            <div class="ps-profile" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-top: 1px solid var(--panel-border);">
+                                <div class="ps-avatar" style="width: 40px; height: 40px; border-radius: 8px; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${userInitial.toUpperCase()}</div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div class="ps-user-name" style="font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${userName}</div>
+                                    <div class="ps-user-role" style="font-size: 0.75rem; color: var(--panel-text-sub);">Thủ thư</div>
                                 </div>
                                 <a href="${pageContext.request.contextPath}/notifications" class="ps-notification-link"
-                                    title="Thông báo">
+                                    title="Thông báo" style="color: var(--panel-text-sub); display: flex; align-items: center;">
                                     <div class="nav-notification"
                                         style="position: relative; display: flex; align-items: center;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"

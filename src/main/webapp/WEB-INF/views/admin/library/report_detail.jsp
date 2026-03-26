@@ -335,6 +335,22 @@
                                 <span><strong>ID bình luận:</strong> #${report.commentId}</span>
                                 <span><strong>Tác giả:</strong> ${report.commentUserFullName}</span>
                             </div>
+                            <div class="info-group" style="margin-bottom: 12px;">
+                                <div class="info-label">Sách liên quan</div>
+                                <div class="info-value">
+                                    <i class="fas fa-book" style="margin-right:8px; color:var(--panel-text-sub);"></i>
+                                    <strong>${report.bookTitle}</strong> (ID: ${report.bookId})
+                                </div>
+                            </div>
+                            <div class="info-group" style="margin-bottom: 12px;">
+                                <div class="info-label">Đánh giá</div>
+                                <div class="info-value">
+                                    <div style="color: #fbbf24; font-size: 1.1rem; letter-spacing: 2px;">
+                                        <c:forEach begin="1" end="${report.rating}">★</c:forEach>
+                                        <c:forEach begin="${report.rating + 1}" end="5"><span style="color: #e5e7eb;">★</span></c:forEach>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="comment-preview">
                                 ${report.commentContent}
                             </div>

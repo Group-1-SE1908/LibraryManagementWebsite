@@ -495,8 +495,10 @@
                 </c:choose>
                 </main>
                 </div>
+            </div>
+        </div>
 
-                <%-- Modal Soạn tin --%>
+        <%-- Modal Soạn tin --%>
                     <div class="modal fade" id="sendNotifModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius);">
@@ -563,7 +565,9 @@
                         </div>
                     </div>
 
-                    <jsp:include page="/WEB-INF/views/footer.jsp" />
+                    <c:if test="${not isStaff}">
+                        <jsp:include page="/WEB-INF/views/footer.jsp" />
+                    </c:if>
 
                     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

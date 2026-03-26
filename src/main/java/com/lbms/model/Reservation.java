@@ -18,6 +18,8 @@ public class Reservation {
     private String bookTitle;
     private String bookAuthor;
     private String bookImage;
+    private String rejectReason;
+
     private String userName;
     private String userEmail;
     private String userPhone;
@@ -98,7 +100,11 @@ public class Reservation {
     public String getBookImage() { return bookImage; }
     public void setBookImage(String bookImage) { this.bookImage = bookImage; }
 
+    public String getRejectReason() { return rejectReason; }
+    public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
+
     public String getUserName() { return userName; }
+
     public void setUserName(String userName) { this.userName = userName; }
 
     public String getUserEmail() { return userEmail; }

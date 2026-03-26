@@ -331,12 +331,12 @@
                                     enctype="multipart/form-data" style="display: flex; flex-direction: column; align-items: center;">
 
                                     <c:choose>
-                                        <c:when test="${not empty user.avatar}">
+                                        <c:when test="${not empty user.avatar && user.avatar != 'null'}">
                                             <img src="${pageContext.request.contextPath}/${user.avatar}?v=${timestamp}"
                                                 id="previewAvatar"
                                                 onclick="document.getElementById('avatarUpload').click();"
-                                                onerror="this.style.display='none'; this.parentElement.querySelector('.default-avatar').style.display='flex';">
-                                            <div class="default-avatar" style="display:none; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #60a5fa); color: #fff; font-weight: 700; font-size: 48px; align-items: center; justify-content: center; cursor: pointer; border: 5px solid #eef1ff;" onclick="document.getElementById('avatarUpload').click();">${userInitial}</div>
+                                                onerror="this.style.display='none'; document.getElementById('previewAvatarContainer').style.display='flex';">
+                                            <div id="previewAvatarContainer" class="default-avatar" style="display:none; width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #60a5fa); color: #fff; font-weight: 700; font-size: 48px; align-items: center; justify-content: center; cursor: pointer; border: 5px solid #eef1ff;" onclick="document.getElementById('avatarUpload').click();">${userInitial}</div>
                                         </c:when>
                                         <c:otherwise>
                                             <div class="default-avatar" style="width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #60a5fa); color: #fff; font-weight: 700; font-size: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 5px solid #eef1ff;" onclick="document.getElementById('avatarUpload').click();" id="previewAvatarContainer">${userInitial}</div>
