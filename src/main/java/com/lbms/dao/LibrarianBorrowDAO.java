@@ -277,17 +277,17 @@ public class LibrarianBorrowDAO {
 //                + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE user_id = ? AND is_paid = 0) as unpaid_fines, "
 //                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
 //                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
-            
-                String sql = "SELECT "
-            + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
-            + " AND status IN ('REQUESTED', 'APPROVED', 'SHIPPING', 'RECEIVED', 'BORROWED','RETURN_REQUESTED')) as current_borrowed, "
-            + "(SELECT CASE WHEN EXISTS (SELECT 1 FROM borrow_records WHERE user_id = ? "
-            + " AND (status = 'RECEIVED' OR status = 'BORROWED' OR status = 'SHIPPING') "
-            + " AND due_date < GETDATE()) THEN 1 ELSE 0 END) as has_overdue, "
-            + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE user_id = ? AND is_paid = 0) as unpaid_fines, "
-            + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
-            + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
-            + " AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
+
+        String sql = "SELECT "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
+                + " AND status IN ('REQUESTED', 'APPROVED', 'SHIPPING', 'RECEIVED', 'BORROWED','RETURN_REQUESTED')) as current_borrowed, "
+                + "(SELECT CASE WHEN EXISTS (SELECT 1 FROM borrow_records WHERE user_id = ? "
+                + " AND (status = 'RECEIVED' OR status = 'BORROWED' OR status = 'SHIPPING') "
+                + " AND due_date < GETDATE()) THEN 1 ELSE 0 END) as has_overdue, "
+                + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE user_id = ? AND is_paid = 0) as unpaid_fines, "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
+                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
+                + " AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
         try (Connection connection = DBConnection.getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int i = 1; i <= 5; i++) {
                 ps.setLong(i, userId);
@@ -358,4 +358,6 @@ public class LibrarianBorrowDAO {
         }
         return null;
     }
+
+    
 }
