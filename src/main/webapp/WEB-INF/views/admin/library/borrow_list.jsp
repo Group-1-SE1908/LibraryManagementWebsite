@@ -327,13 +327,7 @@
                                 <c:set var="normalizedGroupStatus" value="${fn:toUpperCase(fn:trim(firstRecord.status))}" />
 
                                 
-                                <c:if test="${normalizedGroupStatus == 'APPROVED'}">
-                                    <button onclick="createManualShipment('${groupCode}')" 
-                                            class="btn-modern primary" 
-                                            style="background: #0284c7; margin-bottom: 8px;">
-                                        🚚 Giao đơn hàng này (Tạo mã)
-                                    </button>
-                                </c:if>
+                                
 
                                 <span class="status-badge status-${normalizedGroupStatus}">
                                     <c:choose>

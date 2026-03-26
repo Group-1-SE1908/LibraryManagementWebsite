@@ -26,11 +26,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @WebServlet(urlPatterns = {
-        "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock",
-        "/staff/books", "/staff/books/new", "/staff/books/edit", "/staff/books/delete", "/staff/books/detail",
-        "/staff/books/search", "/staff/books/restock",
-        "/admin/books", "/admin/books/new", "/admin/books/edit", "/admin/books/delete", "/admin/books/detail",
-        "/admin/books/search", "/admin/books/restock"
+    "/books", "/books/new", "/books/edit", "/books/delete", "/books/detail", "/books/search", "/books/restock",
+    "/staff/books", "/staff/books/new", "/staff/books/edit", "/staff/books/delete", "/staff/books/detail",
+    "/staff/books/search", "/staff/books/restock",
+    "/admin/books", "/admin/books/new", "/admin/books/edit", "/admin/books/delete", "/admin/books/detail",
+    "/admin/books/search", "/admin/books/restock"
 })
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
@@ -82,6 +82,10 @@ public class BookController extends HttpServlet {
                 case "/books/new":
                     req.setAttribute("mode", "create");
                     req.setAttribute("categories", categoryDAO.listAll());
+                    String redirect = req.getParameter("redirect");
+                    if (redirect != null) {
+                        req.setAttribute("redirect", redirect);
+                    }
                     req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
                     break;
                 case "/books/edit":
@@ -90,7 +94,13 @@ public class BookController extends HttpServlet {
                 case "/books/delete":
                     int delId = Integer.parseInt(req.getParameter("id"));
                     bookService.delete(delId, ((User) req.getSession().getAttribute("currentUser")).getId());
-                    resp.sendRedirect(req.getContextPath() + booksBasePath);
+
+//                    resp.sendRedirect(req.getContextPath() + booksBasePath);
+                    if ("importList".equals(req.getParameter("redirect"))) {
+                        resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + booksBasePath);
+                    }
                     break;
 
                 case "/books/restock":
@@ -131,6 +141,7 @@ public class BookController extends HttpServlet {
                 return;
             }
             long userId = currentUser.getId();
+            String redirectParam = req.getParameter("redirect");
 
             // 3. Thực hiện tạo mới hoặc cập nhật
             if ("/books/new".equals(normalizedPath)) {
@@ -140,6 +151,13 @@ public class BookController extends HttpServlet {
                 b.setQuantity(0);
                 bookService.create(b, userId);
                 req.getSession().setAttribute("flash", "Thêm sách \"" + b.getTitle() + "\" thành công!");
+                if ("importList".equals(redirectParam)) {
+                    resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + booksBasePath);
+                }
+                return;
+
             } else if ("/books/edit".equals(normalizedPath)) {
                 String imagePath = uploadImage(req);
                 int id = Integer.parseInt(req.getParameter("id"));
@@ -153,6 +171,13 @@ public class BookController extends HttpServlet {
                 b.setQuantity(existingBook.getQuantity());
                 bookService.update(b, userId);
                 req.getSession().setAttribute("flash", "Cập nhật sách \"" + b.getTitle() + "\" thành công!");
+
+                if ("importList".equals(redirectParam)) {
+                    resp.sendRedirect(req.getContextPath() + booksBasePath + "?action=viewImportList");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + booksBasePath);
+                }
+                return;
             } else if ("restock".equals(action)) {
                 int bookId = Integer.parseInt(req.getParameter("bookId"));
                 int amount = Integer.parseInt(req.getParameter("amount"));
@@ -295,7 +320,12 @@ public class BookController extends HttpServlet {
         req.setAttribute("book", b);
         req.setAttribute("mode", "edit");
         req.setAttribute("categories", categoryDAO.listAll());
+        String redirect = req.getParameter("redirect");
+        if (redirect != null) {
+            req.setAttribute("redirect", redirect);   // <-- Thêm dòng này
+        }
         req.getRequestDispatcher("/WEB-INF/views/admin/library/book_form.jsp").forward(req, resp);
+
     }
 
     private void handleDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
@@ -345,6 +375,7 @@ public class BookController extends HttpServlet {
         }
 
         req.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(req, resp);
+
     }
 
     private Book readBookFromRequest(HttpServletRequest req) {
@@ -361,7 +392,6 @@ public class BookController extends HttpServlet {
 
         // String qtyStr = req.getParameter("quantity");
         // b.setQuantity(qtyStr != null ? Integer.parseInt(qtyStr) : 0);
-
         String catIdStr = req.getParameter("categoryId");
         if (catIdStr != null && !catIdStr.isEmpty()) {
             b.setCategoryId(Long.valueOf(catIdStr));
