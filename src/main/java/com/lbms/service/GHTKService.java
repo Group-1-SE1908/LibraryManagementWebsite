@@ -30,9 +30,8 @@ public class GHTKService {
         this.gson = new Gson();
     }
 
-    /**
-     * HÀM HELPER 1: Xử lý chuẩn hóa Tỉnh/Thành phố khớp với DB của GHTK
-     */
+      // Xử lý chuẩn hóa Tỉnh/Thành phố khớp với DB của GHTK
+     
     private String cleanProvince(String province) {
         if (province == null) return "";
         province = province.trim();
@@ -49,9 +48,7 @@ public class GHTKService {
         return province;
     }
 
-    /**
-     * HÀM HELPER 2: An toàn Encode URL (Tương thích Java 8) và chặn NullPointer
-     */
+   
     private String safeEncode(String value) {
         if (value == null || value.trim().isEmpty()) {
             return "";
@@ -63,15 +60,15 @@ public class GHTKService {
         }
     }
 
-    /**
-     * 1. API Tính phí vận chuyển
-     */
+   
+     // 1. API Tính phí vận chuyển
+    
     public long calculateFee(ShippingDetails userAddress, int weightGram) {
         // GHTK yêu cầu trọng lượng tối thiểu, set cứng 200g nếu nhỏ hơn hoặc bằng 0
         int validWeight = weightGram > 0 ? weightGram : 200; 
 
         if (AppConfig.GHTK_TOKEN == null || AppConfig.GHTK_TOKEN.isBlank()) {
-            return 30000; // Trả về phí ảo nếu chưa cấu hình Token
+            return 30000; 
         }
 
         try {
@@ -107,9 +104,9 @@ public class GHTKService {
         }
     }
 
-    /**
-     * 2. API Tạo đơn hàng tự động
-     */
+    
+     // 2. API Tạo đơn hàng tự động
+    
     public String createOrder(BorrowRecord record, int weightGram) {
         int validWeight = weightGram > 0 ? weightGram : 200;
 
@@ -167,9 +164,9 @@ public class GHTKService {
         }
     }
 
-    /**
-     * 3. API Lấy trạng thái đơn hàng theo tracking code
-     */
+    
+     // 3. API Lấy trạng thái đơn hàng theo tracking code
+    
     public String getStatus(String trackingCode) {
         if (trackingCode == null || trackingCode.isBlank()) return "CREATED";
         if (AppConfig.GHTK_TOKEN == null || AppConfig.GHTK_TOKEN.isBlank()) return "CREATED";

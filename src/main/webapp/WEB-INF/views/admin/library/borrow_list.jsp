@@ -406,6 +406,8 @@
                                                 <input type="text" id="bc-input-${r.id}"
                                                        placeholder="Quét mã..."
                                                        style="padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; width: 110px; outline:none;">
+                                                <button type="button" onclick="suggestBarcode(${r.id}, ${r.book.id})" 
+                                                        class="btn-modern secondary" style="padding: 6px; font-size: 10px;">Gợi ý</button>
                                                 <button onclick="confirmApprove(${r.id})"
                                                         class="btn-modern primary">OK</button>
                                             </div>
@@ -424,20 +426,41 @@
 
                                         </c:if>
 
-                                        <c:if
-                                            test="${itemStatus == 'BORROWED' || (itemStatus == 'RECEIVED' && !isOnline)}">
-                                            <div id="return-box-${r.id}"
-                                                 style="display:none; gap:5px; align-items:center;">
-                                                <input type="text" id="ret-bc-${r.id}"
-                                                       placeholder="Mã trả sách..."
-                                                       style="padding: 6px; border: 1px solid #10b981; border-radius: 4px; width: 110px; outline:none;">
-                                                <button onclick="submitReturn(${r.id})"
-                                                        class="btn-modern success">Xác nhận</button>
-                                            </div>
 
-                                            <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})"
-                                                    class="btn-modern success">Nhận trả</button>
+                                        <c:if test="${itemStatus == 'BORROWED' || (itemStatus == 'RECEIVED' && !isOnline)}">
 
+                                            <%-- BƯỚC A: Thêm logic tính toán ngày ngay tại đây --%>
+                                            <jsp:useBean id="now" class="java.util.Date" />
+                                            <fmt:parseDate value="${r.dueDate}" pattern="yyyy-MM-dd" var="dueDateObj" />
+                                            <c:set var="diffInDays" value="${(now.time - dueDateObj.time) / (1000 * 60 * 60 * 24)}" />
+
+                                            <c:choose>
+                                                <%-- BƯỚC B: Nếu quá hạn > 10 ngày, hiện nút báo mất/đóng đơn --%>
+                                                <c:when test="${diffInDays > 10}">
+                                                    <form action="${pageContext.request.contextPath}${borrowBase}/mark-lost" method="POST" 
+                                                          onsubmit="return confirm('Đơn hàng đã quá hạn 10 ngày. Bạn có chắc chắn muốn đóng đơn và báo mất tài sản?')">
+                                                        <input type="hidden" name="id" value="${r.id}">
+                                                        <button type="button" onclick="confirmMarkLost(${r.id})" class="btn-modern danger" style="background: #475569;">
+                                                            Đóng đơn (Báo mất)
+                                                        </button>
+                                                    </form>
+                                                </c:when>
+
+                                                <%-- BƯỚC C: Nếu chưa quá 10 ngày, hiện nút Nhận trả cũ --%>
+                                                <c:otherwise>
+                                                    <div id="return-box-${r.id}" style="display:none; gap:5px; align-items:center;">
+                                                        <input type="text" id="ret-bc-${r.id}" placeholder="Mã trả sách..."
+                                                               style="padding: 6px; border: 1px solid #10b981; border-radius: 4px; width: 110px; outline:none;">
+                                                        <button onclick="submitReturn(${r.id})" class="btn-modern success">Xác nhận</button>
+                                                    </div>
+                                                    <button id="btn-ret-show-${r.id}" onclick="showReturn(${r.id})" class="btn-modern success">Nhận trả</button>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:if>
+
+                                        <%-- BƯỚC D: Thêm badge hiển thị cho trạng thái LOST (nếu có) --%>
+                                        <c:if test="${itemStatus == 'LOST'}">
+                                            <span class="status-badge" style="background: #1e293b; color: white;">❌ ĐÃ ĐÓNG (MẤT SÁCH)</span>
                                         </c:if>
 
                                         <c:if test="${r.status == 'APPROVED'}">
@@ -708,6 +731,59 @@
 
                     document.body.appendChild(form);
                     form.submit();
+                }
+                function confirmMarkLost(id) {
+                    Swal.fire({
+                        title: 'Cảnh báo mất sách!',
+                        text: "Bạn có chắc chắn muốn đóng đơn #" + id + " không? Thao tác này sẽ đánh dấu sách là 'MẤT' và không thể hoàn tác.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626', // Màu đỏ đậm cho hành động nguy hiểm
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Đồng ý, đóng đơn!',
+                        cancelButtonText: 'Quay lại',
+                        background: '#fff',
+                        backdrop: `rgba(0,0,123,0.4)`
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Tạo form ẩn để gửi request POST lên server
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '${pageContext.request.contextPath}${borrowBase}/mark-lost';
+                            form.innerHTML = '<input type="hidden" name="id" value="' + id + '">';
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                }
+                function suggestBarcode(borrowId, bookId) {
+                    // Gọi AJAX lấy danh sách mã vạch có sẵn
+                    fetch('${pageContext.request.contextPath}${borrowBase}/available-copies?bookId=' + bookId)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    // Điền mã đầu tiên tìm thấy vào ô input
+                                    document.getElementById('bc-input-' + borrowId).value = data[0];
+
+                                    // Hiển thị thông báo nhỏ để Thủ thư biết
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: 'top-end',
+                                        showConfirmButton: false,
+                                        timer: 2000
+                                    });
+                                    Toast.fire({
+                                        icon: 'info',
+                                        title: 'Đã chọn mã: ' + data[0]
+                                    });
+                                } else {
+                                    Swal.fire('Hết sách!', 'Hiện không còn bản sao nào khả dụng trong kho.', 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire('Lỗi', 'Không thể kết nối máy chủ', 'error');
+                            });
                 }
             </script>
         </main>

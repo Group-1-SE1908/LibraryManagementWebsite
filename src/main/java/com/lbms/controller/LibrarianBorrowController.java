@@ -52,7 +52,10 @@ import java.util.stream.Collectors;
     "/admin/renewal/reject",
     "/admin/renewal/view",
     "/admin/borrowlibrary/ship_fee",
-    "/admin/borrowlibrary/ship_confirm"
+    "/admin/borrowlibrary/ship_confirm",
+    "/staff/borrowlibrary/mark-lost",
+    "/admin/borrowlibrary/mark-lost",
+    "/staff/borrowlibrary/available-copies"
 })
 public class LibrarianBorrowController extends HttpServlet {
 
@@ -229,71 +232,23 @@ public class LibrarianBorrowController extends HttpServlet {
                     resp.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
                     return;
                 }
-//            } else {
-//
-//                String methodFilter = req.getParameter("filter");
-//                String q = req.getParameter("q");
-//                String status = req.getParameter("status");
-//
-//                List<BorrowRecord> list;
-//                if ("OVERDUE".equals(methodFilter)) {
-//                    list = libDAO.listOverdue();
-//                } else {
-//                    list = libService.searchBorrowings(q, status, methodFilter);
-//                }
-//
-              
-                ////                java.util.Map<String, List<BorrowRecord>> groupedRecords = new java.util.LinkedHashMap<>();
-////                java.util.Map<Long, Integer> renewalCountMap = new java.util.HashMap<>();
-////                for (BorrowRecord br : list) {
-////                    // Nếu là dữ liệu cũ chưa có groupCode, tự cấp 1 mã giả dựa trên ID để không bị
-////                    // lỗi gộp
-////                    String gc = br.getGroupCode();
-////                    if (gc == null || gc.isBlank()) {
-////                        gc = "DON-LE-" + br.getId();
-////                    }
-////                    groupedRecords.computeIfAbsent(gc, k -> new java.util.ArrayList<>()).add(br);
-////                    renewalCountMap.put(br.getId(), libService.countRenewalRequestsForBorrow(br.getId()));
-////                }
-//                Map<String, List<BorrowRecord>> groupedRecords = new LinkedHashMap<>();
-//                Map<Long, Integer> renewalCountMap = new HashMap<>();
-//
-//                for (BorrowRecord br : list) {
-//                    // Ưu tiên dùng groupCode thật từ DB
-//                    String groupKey = (br.getGroupCode() != null && !br.getGroupCode().trim().isEmpty())
-//                            ? br.getGroupCode()
-//                            : "SINGLE-" + br.getId();   // đơn lẻ cũ không có groupCode
-//
-//                    groupedRecords.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(br);
-//
-//                    renewalCountMap.put(br.getId(), libService.countRenewalRequestsForBorrow(br.getId()));
-//                }
-//
-//                // Sắp xếp nhóm: đơn mới nhất lên trên
-//                groupedRecords = groupedRecords.entrySet().stream()
-//                        .sorted((e1, e2) -> {
-//                            BorrowRecord r1 = e1.getValue().get(0);
-//                            BorrowRecord r2 = e2.getValue().get(0);
-//                            return Long.compare(r2.getId(), r1.getId()); // DESC by id
-//                        })
-//                        .collect(Collectors.toMap(
-//                                Map.Entry::getKey,
-//                                Map.Entry::getValue,
-//                                (oldValue, newValue) -> oldValue,
-//                                LinkedHashMap::new));
-//
-//                req.setAttribute("groupedRecords", groupedRecords);
-//                req.setAttribute("renewalCountMap", renewalCountMap);
-//                java.util.List<RenewalRequest> pendingRenewals = libService.listPendingRenewalRequests();
-//                java.util.Map<Long, RenewalRequest> renewalLookup = new java.util.HashMap<>();
-//                for (RenewalRequest pending : pendingRenewals) {
-//                    renewalLookup.put(pending.getBorrowId(), pending);
-//                }
-//                req.setAttribute("pendingRenewalMap", renewalLookup);
-//                req.setAttribute("staffBorrowBase", borrowBase);
-//                req.getRequestDispatcher("/WEB-INF/views/admin/library/borrow_list.jsp").forward(req, resp);
-//            }
-                        } else {
+
+            }
+            else if ("available-copies".equals(action)) {
+                try {
+                    int bookId = Integer.parseInt(req.getParameter("bookId"));
+                    List<String> availableBarcodes = libDAO.getAvailableBarcodesByBookId(bookId);
+
+                    resp.setContentType("application/json");
+                    resp.setCharacterEncoding("UTF-8");
+                    String json = new com.google.gson.Gson().toJson(availableBarcodes);
+                    resp.getWriter().write(json);
+                    return;
+                } catch (Exception e) {
+                    resp.setStatus(500);
+                    return;
+                }
+            } else {
                 String methodFilter = req.getParameter("filter");
                 String q = req.getParameter("q");
                 String status = req.getParameter("status");
@@ -493,6 +448,12 @@ public class LibrarianBorrowController extends HttpServlet {
 
                 req.getSession().setAttribute("flash", "Đã đẩy đơn hàng gồm nhiều sách sang GHTK thành công!");
                 // Sau khi giao xong cả nhóm, quay thẳng về trang danh sách (borrow_list)
+                resp.sendRedirect(req.getContextPath() + redirectBase);
+                return;
+            } else if ("mark-lost".equals(action)) {
+                long id = Long.parseLong(req.getParameter("id"));
+                libService.markAsLost(id, staffId); // staffId lấy từ session đã có sẵn
+                req.getSession().setAttribute("flash", "Đã chuyển đơn #" + id + " sang trạng thái MẤT/HỦY và khóa đơn.");
                 resp.sendRedirect(req.getContextPath() + redirectBase);
                 return;
             }

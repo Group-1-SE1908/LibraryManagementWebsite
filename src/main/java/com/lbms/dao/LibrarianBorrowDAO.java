@@ -49,7 +49,6 @@ public class LibrarianBorrowDAO {
                 + "LEFT JOIN BookCopy bc ON br.copy_id = bc.copy_id";
     }
 
-    // --- CÁC PHƯƠNG THỨC SAO CHÉP TỪ BorrowDAO VÀ TỐI ƯU ---
     public long createRequest(long userId, long bookId, String method, int qty, String groupCode) throws SQLException {
         String sql = "INSERT INTO borrow_records(user_id, book_id, borrow_date, status, borrow_method, quantity,group_code) "
                 + "VALUES(?, ?, GETDATE(), 'REQUESTED', ?, ?, ?)";
@@ -272,13 +271,6 @@ public class LibrarianBorrowDAO {
     }
 
     public UserBorrowingSummary getUserSummary(long userId) throws SQLException {
-//        String sql = "SELECT "
-//                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND status = 'RECEIVED') as current_borrowed, "
-//                + "(SELECT CASE WHEN EXISTS (SELECT 1 FROM borrow_records WHERE user_id = ? AND status = 'RECEIVED' AND due_date < GETDATE()) THEN 1 ELSE 0 END) as has_overdue, "
-//                + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE user_id = ? AND is_paid = 0) as unpaid_fines, "
-//                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ?) as total_history, "
-//                + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND (status = 'OVERDUE' OR (return_date > due_date))) as overdue_count";
-
         String sql = "SELECT "
                 + "(SELECT COUNT(*) FROM borrow_records WHERE user_id = ? "
                 + " AND status IN ('REQUESTED', 'APPROVED', 'SHIPPING', 'RECEIVED', 'BORROWED','RETURN_REQUESTED')) as current_borrowed, "
@@ -333,7 +325,7 @@ public class LibrarianBorrowDAO {
     }
 
     public com.lbms.model.BookCopy findCopyByBarcode(String barcode) throws SQLException {
-        // Câu lệnh SQL JOIN để lấy cả thông tin bản sao và tên sách từ bảng Book
+
         String sql = "SELECT bc.*, b.title as book_title "
                 + "FROM BookCopy bc "
                 + "JOIN Book b ON bc.book_id = b.book_id "
@@ -350,9 +342,6 @@ public class LibrarianBorrowDAO {
                     copy.setStatus(rs.getString("status"));
                     copy.setBookTitle(rs.getString("book_title"));
 
-                    // Lưu ý: Nếu model BookCopy của bạn chưa có trường bookTitle, 
-                    // bạn có thể in trực tiếp hoặc tạo thêm trường trong model.
-                    // Ở đây tôi giả định bạn dùng để hiển thị thông tin sách.
                     return copy;
                 }
             }
@@ -360,5 +349,55 @@ public class LibrarianBorrowDAO {
         return null;
     }
 
-    
+//Chuyển đơn mượn sang trạng thái LOST và khóa luôn bản sao sách
+    public void markAsLost(long borrowId) throws SQLException {
+        String sqlBorrow = "UPDATE borrow_records SET status = 'LOST', is_paid = 0 WHERE id = ?";
+        String sqlCopy = "UPDATE BookCopy SET status = 'LOST' WHERE copy_id = (SELECT copy_id FROM borrow_records WHERE id = ?)";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps1 = conn.prepareStatement(sqlBorrow); PreparedStatement ps2 = conn.prepareStatement(sqlCopy)) {
+
+                ps1.setLong(1, borrowId);
+                ps1.executeUpdate();
+
+                ps2.setLong(1, borrowId);
+                ps2.executeUpdate();
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
+// Lấy danh sách các đơn bị LOST để làm báo cáo
+    public List<BorrowRecord> listLostRecords() throws SQLException {
+        try (Connection connection = DBConnection.getConnection()) {
+            com.lbms.dao.BorrowSchemaSupport.BorrowSchemaInfo schema = com.lbms.dao.BorrowSchemaSupport.inspect(connection);
+            // baseSelect đã được định nghĩa trong file của bạn
+            String sql = baseSelect(schema) + " WHERE br.status = 'LOST' ORDER BY br.id DESC";
+            try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+                return mapList(rs);
+            }
+        }
+    }
+
+    // lấy barcode cho việc tìm kiếm
+    public List<String> getAvailableBarcodesByBookId(int bookId) throws SQLException {
+        List<String> barcodes = new ArrayList<>();
+        String sql = "SELECT barcode FROM BookCopy WHERE book_id = ? AND status = 'AVAILABLE' ORDER BY barcode ASC";
+
+        try (Connection conn = com.lbms.util.DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    barcodes.add(rs.getString("barcode"));
+                }
+            }
+        }
+        return barcodes;
+    }
+
 }
