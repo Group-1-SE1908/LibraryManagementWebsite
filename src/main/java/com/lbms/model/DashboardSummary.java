@@ -2,7 +2,7 @@ package com.lbms.model;
 
 import java.util.List;
 
-public class DashboardModel {
+public class DashboardSummary {
 
     private int totalBooks;
     private int activeUsers;
@@ -16,7 +16,7 @@ public class DashboardModel {
     private List<TopUser> topUsers;
     private List<TopBook> topBooks;
 
-    public DashboardModel() {
+    public DashboardSummary() {
     }
 
     public static class TopUser {

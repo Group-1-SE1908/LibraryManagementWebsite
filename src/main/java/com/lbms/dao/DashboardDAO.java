@@ -1,6 +1,6 @@
 package com.lbms.dao;
 
-import com.lbms.model.DashboardModel;
+import com.lbms.model.DashboardSummary;
 import com.lbms.util.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,8 +10,8 @@ import java.util.List;
 
 public class DashboardDAO {
 
-    public DashboardModel getDashboardData(String startDate, String endDate, int userLimit) {
-        DashboardModel ds = new DashboardModel();
+    public DashboardSummary getDashboardData(String startDate, String endDate, int userLimit) {
+        DashboardSummary ds = new DashboardSummary();
 
         boolean hasFilter = (startDate != null && !startDate.trim().isEmpty()
                 && endDate != null && !endDate.trim().isEmpty());
@@ -21,9 +21,9 @@ public class DashboardDAO {
                 String sqlStats = "SELECT "
                         + "(SELECT COUNT(*) FROM Book) as totalBooks, "
                         + "(SELECT COUNT(*) FROM [User] WHERE status = 'ACTIVE') as activeUsers, "
-                        + "(SELECT COUNT(*) FROM borrow_records WHERE return_date IS NULL AND due_date >= CAST(GETDATE() AS DATE)"
+                        + "(SELECT ISNULL(SUM(quantity), 0) FROM borrow_records WHERE return_date IS NULL AND due_date >= CAST(GETDATE() AS DATE)"
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") as pendingReturns, "
-                        + "(SELECT COUNT(*) FROM borrow_records WHERE return_date IS NULL AND due_date < CAST(GETDATE() AS DATE)"
+                        + "(SELECT ISNULL(SUM(quantity), 0) FROM borrow_records WHERE return_date IS NULL AND due_date < CAST(GETDATE() AS DATE)"
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") as overdueBooks, "
                         + "(SELECT ISNULL(SUM(fine_amount), 0) FROM borrow_records WHERE is_paid = 1"
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS finesCollected, "
@@ -31,13 +31,13 @@ public class DashboardDAO {
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS finesPending, "
                         + "(SELECT ISNULL(SUM(deposit_amount), 0) FROM borrow_records WHERE status IN ('BORROWED', 'REQUESTED', 'SHIPPING')"
                         + (hasFilter ? " AND borrow_date BETWEEN ? AND ?" : "") + ") AS totalDeposits, "
-                        // THÊM DÒNG NÀY: Tính trung bình cộng rating
+
                         + "(SELECT ISNULL(AVG(CAST(rating AS DECIMAL(3,2))), 0) FROM Comment WHERE status = 'VISIBLE'"
                         + (hasFilter ? " AND created_at BETWEEN ? AND ?" : "") + ") AS avgRating";
 
                 try (PreparedStatement ps = conn.prepareStatement(sqlStats)) {
                     if (hasFilter) {
-                        // Cập nhật loop: Bây giờ có 6 subqueries cần filter ngày (i <= 12)
+
                         for (int i = 1; i <= 12; i += 2) {
                             ps.setString(i, startDate);
                             ps.setString(i + 1, endDate);
@@ -75,9 +75,9 @@ public class DashboardDAO {
                         ps.setString(3, endDate);
                     }
                     try (ResultSet rs = ps.executeQuery()) {
-                        List<DashboardModel.TopUser> userList = new ArrayList<>();
+                        List<DashboardSummary.TopUser> userList = new ArrayList<>();
                         while (rs.next()) {
-                            userList.add(new DashboardModel.TopUser(
+                            userList.add(new DashboardSummary.TopUser(
                                     rs.getInt("user_id"), rs.getString("full_name"),
                                     rs.getString("email"), rs.getString("phone"),
                                     rs.getString("address"), rs.getString("status"),
@@ -100,9 +100,9 @@ public class DashboardDAO {
                         ps.setString(2, endDate);
                     }
                     try (ResultSet rs = ps.executeQuery()) {
-                        List<DashboardModel.TopBook> bookList = new ArrayList<>();
+                        List<DashboardSummary.TopBook> bookList = new ArrayList<>();
                         while (rs.next()) {
-                            bookList.add(new DashboardModel.TopBook(
+                            bookList.add(new DashboardSummary.TopBook(
                                     rs.getString("title"), rs.getString("isbn"),
                                     rs.getInt("borrowCount")));
                         }
