@@ -145,14 +145,34 @@ public class BorrowService {
 
     public long requestBorrow(long userId, long bookId, int quantity, String method,
             ShippingDetails shippingDetails) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                String groupCode = "REQ-" + System.currentTimeMillis() + "CCCCCCCC";
 
-        String groupCode = "REQ-" + System.currentTimeMillis() + "CCCCCCCC";
+                // Gọi hàm chính (có depositAmount), truyền null để tự tính bên trong
+                List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails,
+                        quantity, groupCode, null, c);
 
-        // Gọi hàm chính (có depositAmount), truyền null để tự tính bên trong
-        List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails,
-                quantity, groupCode, null);
+                // Giảm số lượng sách trong kho ngay khi tạo request thành công
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity - ? WHERE book_id = ? AND quantity >= ?")) {
+                    ps.setInt(1, quantity);
+                    ps.setLong(2, bookId);
+                    ps.setInt(3, quantity);
+                    int rowsAffected = ps.executeUpdate();
+                    if (rowsAffected == 0) {
+                        throw new IllegalArgumentException("Sách không đủ số lượng trong kho");
+                    }
+                }
 
-        return ids.isEmpty() ? 0 : ids.get(0);
+                c.commit();
+                return ids.isEmpty() ? 0 : ids.get(0);
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            }
+        }
     }
 
     /**
@@ -162,6 +182,36 @@ public class BorrowService {
     public List<Long> requestBorrowCopies(long userId, long bookId, String method,
             ShippingDetails shippingDetails, int quantity, String groupCode,
             BigDecimal depositAmount) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                List<Long> ids = requestBorrowCopies(userId, bookId, method, shippingDetails,
+                        quantity, groupCode, depositAmount, c);
+
+                // Giảm số lượng sách trong kho ngay khi tạo request thành công
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity - ? WHERE book_id = ? AND quantity >= ?")) {
+                    ps.setInt(1, quantity);
+                    ps.setLong(2, bookId);
+                    ps.setInt(3, quantity);
+                    int rowsAffected = ps.executeUpdate();
+                    if (rowsAffected == 0) {
+                        throw new IllegalArgumentException("Sách không đủ số lượng trong kho");
+                    }
+                }
+
+                c.commit();
+                return ids;
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            }
+        }
+    }
+
+    private List<Long> requestBorrowCopies(long userId, long bookId, String method,
+            ShippingDetails shippingDetails, int quantity, String groupCode,
+            BigDecimal depositAmount, Connection c) throws SQLException {
 
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
@@ -199,6 +249,7 @@ public class BorrowService {
         // Tách mỗi cuốn thành 1 bản ghi riêng biệt nhưng dùng chung finalCode
         for (int i = 0; i < quantity; i++) {
             long newId = borrowDAO.createRequest(
+                    c,
                     userId,
                     bookId,
                     1,
@@ -260,6 +311,20 @@ public class BorrowService {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
             try {
+                // Lấy thông tin borrow record để biết book_id
+                long bookId = -1;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT book_id FROM borrow_records WHERE id = ?")) {
+                    ps.setLong(1, borrowId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            bookId = rs.getLong("book_id");
+                        } else {
+                            throw new IllegalArgumentException("Phiếu mượn không tồn tại!");
+                        }
+                    }
+                }
+
                 long copyId = -1;
                 try (PreparedStatement ps = c.prepareStatement(
                         "SELECT copy_id FROM BookCopy WITH (UPDLOCK) WHERE barcode = ? AND status = 'AVAILABLE'")) {
@@ -305,14 +370,31 @@ public class BorrowService {
     }
 
     public void reject(long borrowId) throws SQLException {
-        BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null) {
-            throw new IllegalArgumentException("Yêu cầu không tồn tại");
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                BorrowRecord br = borrowDAO.findById(borrowId);
+                if (br == null) {
+                    throw new IllegalArgumentException("Yêu cầu không tồn tại");
+                }
+                if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
+                    throw new IllegalArgumentException("Trạng thái không hợp lệ để từ chối");
+                }
+
+                // Tăng lại số lượng sách trong kho vì request bị từ chối
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?")) {
+                    ps.setLong(1, br.getBook().getId());
+                    ps.executeUpdate();
+                }
+
+                borrowDAO.updateStatus(borrowId, "REJECTED");
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            }
         }
-        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Trạng thái không hợp lệ để từ chối");
-        }
-        borrowDAO.updateStatus(borrowId, "REJECTED");
     }
 
     public void cancelRenewalRequest(long userId, long borrowId) throws SQLException {
@@ -335,17 +417,34 @@ public class BorrowService {
     }
 
     public void cancelRequest(long borrowId, long userId) throws SQLException {
-        BorrowRecord br = borrowDAO.findById(borrowId);
-        if (br == null) {
-            throw new IllegalArgumentException("Yêu cầu không tồn tại");
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                BorrowRecord br = borrowDAO.findById(borrowId);
+                if (br == null) {
+                    throw new IllegalArgumentException("Yêu cầu không tồn tại");
+                }
+                if (br.getUser().getId() != userId) {
+                    throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
+                }
+                if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
+                    throw new IllegalArgumentException("Chỉ có thể hủy yêu cầu khi đang chờ duyệt");
+                }
+
+                // Tăng lại số lượng sách trong kho vì request bị hủy
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?")) {
+                    ps.setLong(1, br.getBook().getId());
+                    ps.executeUpdate();
+                }
+
+                borrowDAO.updateStatus(borrowId, "CANCELLED");
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            }
         }
-        if (br.getUser().getId() != userId) {
-            throw new IllegalArgumentException("Bạn không có quyền hủy yêu cầu này");
-        }
-        if (!"REQUESTED".equalsIgnoreCase(br.getStatus())) {
-            throw new IllegalArgumentException("Chỉ có thể hủy yêu cầu khi đang chờ duyệt");
-        }
-        borrowDAO.updateStatus(borrowId, "CANCELLED");
     }
 
     public long requestRenewal(long userId, long borrowId, String reason,

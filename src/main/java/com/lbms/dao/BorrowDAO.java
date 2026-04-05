@@ -100,6 +100,12 @@ public class BorrowDAO {
         return createRequestInternal(userId, bookId, quantity, method, shippingDetails, groupCode, depositAmount);
     }
 
+    public long createRequest(Connection connection, long userId, long bookId, int quantity, String method,
+            ShippingDetails shippingDetails, String groupCode, BigDecimal depositAmount)
+            throws SQLException {
+        return createRequestInternal(connection, userId, bookId, quantity, method, shippingDetails, groupCode, depositAmount);
+    }
+
     public List<BorrowRecord> listAll() throws SQLException {
         try (Connection connection = DBConnection.getConnection()) {
             BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
@@ -414,78 +420,83 @@ public class BorrowDAO {
     private long createRequestInternal(long userId, long bookId, int quantity, String method,
             ShippingDetails shippingDetails, String groupCode, BigDecimal depositAmount) throws SQLException {
         try (Connection connection = DBConnection.getConnection()) {
-            BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
-            List<String> columns = new ArrayList<>();
-            List<Object> values = new ArrayList<>();
-            List<Integer> sqlTypes = new ArrayList<>();
+            return createRequestInternal(connection, userId, bookId, quantity, method, shippingDetails, groupCode, depositAmount);
+        }
+    }
 
-            addInsertField(columns, values, sqlTypes, "user_id", userId, Types.BIGINT);
-            addInsertField(columns, values, sqlTypes, "book_id", bookId, Types.BIGINT);
-            if (schema.hasQuantity()) {
-                addInsertField(columns, values, sqlTypes, "quantity", quantity, Types.INTEGER);
-            }
-            if (schema.hasBorrowMethod()) {
-                addInsertField(columns, values, sqlTypes, "borrow_method", normalizeText(method), Types.VARCHAR);
-            }
-            addInsertField(columns, values, sqlTypes, "status", "REQUESTED", Types.VARCHAR);
-            if (schema.hasGroupCode() && groupCode != null) {
-                addInsertField(columns, values, sqlTypes, "group_code", normalizeText(groupCode), Types.VARCHAR);
-            }
-            if (schema.hasDepositAmount()) {
-                addInsertField(columns, values, sqlTypes, "deposit_amount", depositAmount, Types.DECIMAL);
-            }
+    private long createRequestInternal(Connection connection, long userId, long bookId, int quantity, String method,
+            ShippingDetails shippingDetails, String groupCode, BigDecimal depositAmount) throws SQLException {
+        BorrowSchemaSupport.BorrowSchemaInfo schema = BorrowSchemaSupport.inspect(connection);
+        List<String> columns = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+        List<Integer> sqlTypes = new ArrayList<>();
 
-            String recipient = shippingDetails != null ? normalizeText(shippingDetails.getRecipient()) : null;
-            String phone = shippingDetails != null ? normalizeText(shippingDetails.getPhone()) : null;
-            String street = shippingDetails != null ? normalizeText(shippingDetails.getStreet()) : null;
-            String residence = shippingDetails != null ? normalizeText(shippingDetails.getResidence()) : null;
-            String ward = shippingDetails != null ? normalizeText(shippingDetails.getWard()) : null;
-            String district = shippingDetails != null ? normalizeText(shippingDetails.getDistrict()) : null;
-            String city = shippingDetails != null ? normalizeText(shippingDetails.getCity()) : null;
-            String receiverAddress = shippingDetails != null ? normalizeText(shippingDetails.getFormattedAddress())
-                    : null;
+        addInsertField(columns, values, sqlTypes, "user_id", userId, Types.BIGINT);
+        addInsertField(columns, values, sqlTypes, "book_id", bookId, Types.BIGINT);
+        if (schema.hasQuantity()) {
+            addInsertField(columns, values, sqlTypes, "quantity", quantity, Types.INTEGER);
+        }
+        if (schema.hasBorrowMethod()) {
+            addInsertField(columns, values, sqlTypes, "borrow_method", normalizeText(method), Types.VARCHAR);
+        }
+        addInsertField(columns, values, sqlTypes, "status", "REQUESTED", Types.VARCHAR);
+        if (schema.hasGroupCode() && groupCode != null) {
+            addInsertField(columns, values, sqlTypes, "group_code", normalizeText(groupCode), Types.VARCHAR);
+        }
+        if (schema.hasDepositAmount()) {
+            addInsertField(columns, values, sqlTypes, "deposit_amount", depositAmount, Types.DECIMAL);
+        }
 
-            if (schema.hasShippingRecipient()) {
-                addInsertField(columns, values, sqlTypes, "shipping_recipient", recipient, Types.NVARCHAR);
-            }
-            if (schema.hasReceiverName()) {
-                addInsertField(columns, values, sqlTypes, "receiver_name", recipient, Types.NVARCHAR);
-            }
-            if (schema.hasShippingPhone()) {
-                addInsertField(columns, values, sqlTypes, "shipping_phone", phone, Types.VARCHAR);
-            }
-            if (schema.hasReceiverPhone()) {
-                addInsertField(columns, values, sqlTypes, "receiver_phone", phone, Types.VARCHAR);
-            }
-            if (schema.hasShippingStreet()) {
-                addInsertField(columns, values, sqlTypes, "shipping_street", street, Types.NVARCHAR);
-            }
-            if (schema.hasReceiverAddress()) {
-                addInsertField(columns, values, sqlTypes, "receiver_address", receiverAddress, Types.NVARCHAR);
-            }
-            if (schema.hasShippingResidence()) {
-                addInsertField(columns, values, sqlTypes, "shipping_residence", residence, Types.NVARCHAR);
-            }
-            if (schema.hasShippingWard()) {
-                addInsertField(columns, values, sqlTypes, "shipping_ward", ward, Types.NVARCHAR);
-            }
-            if (schema.hasShippingDistrict()) {
-                addInsertField(columns, values, sqlTypes, "shipping_district", district, Types.NVARCHAR);
-            }
-            if (schema.hasShippingCity()) {
-                addInsertField(columns, values, sqlTypes, "shipping_city", city, Types.NVARCHAR);
-            }
+        String recipient = shippingDetails != null ? normalizeText(shippingDetails.getRecipient()) : null;
+        String phone = shippingDetails != null ? normalizeText(shippingDetails.getPhone()) : null;
+        String street = shippingDetails != null ? normalizeText(shippingDetails.getStreet()) : null;
+        String residence = shippingDetails != null ? normalizeText(shippingDetails.getResidence()) : null;
+        String ward = shippingDetails != null ? normalizeText(shippingDetails.getWard()) : null;
+        String district = shippingDetails != null ? normalizeText(shippingDetails.getDistrict()) : null;
+        String city = shippingDetails != null ? normalizeText(shippingDetails.getCity()) : null;
+        String receiverAddress = shippingDetails != null ? normalizeText(shippingDetails.getFormattedAddress())
+                : null;
 
-            String placeholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
-            String sql = "INSERT INTO borrow_records (" + String.join(", ", columns) + ") VALUES (" + placeholders
-                    + ")";
+        if (schema.hasShippingRecipient()) {
+            addInsertField(columns, values, sqlTypes, "shipping_recipient", recipient, Types.NVARCHAR);
+        }
+        if (schema.hasReceiverName()) {
+            addInsertField(columns, values, sqlTypes, "receiver_name", recipient, Types.NVARCHAR);
+        }
+        if (schema.hasShippingPhone()) {
+            addInsertField(columns, values, sqlTypes, "shipping_phone", phone, Types.VARCHAR);
+        }
+        if (schema.hasReceiverPhone()) {
+            addInsertField(columns, values, sqlTypes, "receiver_phone", phone, Types.VARCHAR);
+        }
+        if (schema.hasShippingStreet()) {
+            addInsertField(columns, values, sqlTypes, "shipping_street", street, Types.NVARCHAR);
+        }
+        if (schema.hasReceiverAddress()) {
+            addInsertField(columns, values, sqlTypes, "receiver_address", receiverAddress, Types.NVARCHAR);
+        }
+        if (schema.hasShippingResidence()) {
+            addInsertField(columns, values, sqlTypes, "shipping_residence", residence, Types.NVARCHAR);
+        }
+        if (schema.hasShippingWard()) {
+            addInsertField(columns, values, sqlTypes, "shipping_ward", ward, Types.NVARCHAR);
+        }
+        if (schema.hasShippingDistrict()) {
+            addInsertField(columns, values, sqlTypes, "shipping_district", district, Types.NVARCHAR);
+        }
+        if (schema.hasShippingCity()) {
+            addInsertField(columns, values, sqlTypes, "shipping_city", city, Types.NVARCHAR);
+        }
 
-            try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                bindInsertParameters(ps, values, sqlTypes);
-                ps.executeUpdate();
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    return rs.next() ? rs.getLong(1) : 0;
-                }
+        String placeholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
+        String sql = "INSERT INTO borrow_records (" + String.join(", ", columns) + ") VALUES (" + placeholders
+                + ")";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            bindInsertParameters(ps, values, sqlTypes);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                return rs.next() ? rs.getLong(1) : 0;
             }
         }
     }

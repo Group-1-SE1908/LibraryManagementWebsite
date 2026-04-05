@@ -226,17 +226,7 @@ public class LibrarianBorrowService {
                     ps.executeUpdate();
                 }
 
-                // 5. Trừ số lượng sách trong kho
-                try (PreparedStatement ps = c.prepareStatement(
-                        "UPDATE Book SET quantity = quantity - 1 WHERE book_id = ? AND quantity > 0")) {
-                    ps.setLong(1, bookIdFromCopy);
-                    int rowsAffected = ps.executeUpdate();
-                    if (rowsAffected == 0) {
-                        throw new SQLException("Sách đã hết trong kho, không thể duyệt.");
-                    }
-                }
-
-                // 6. Ghi log hoạt động
+                // 5. Ghi log hoạt động
                 logDAO.addActivityLog((int) staffId,
                         "Duyệt mượn: " + bookTitle + " - Độc giả: " + userName + " [ID:" + borrowId + "]");
 
@@ -262,35 +252,52 @@ public class LibrarianBorrowService {
     }
 
     public void rejectRequest(long borrowId, String reason, long staffId) throws SQLException {
-        BorrowRecord record = libDAO.findById(borrowId);
-        if (record == null) {
-            throw new IllegalArgumentException("Không tìm thấy phiếu mượn.");
-        }
-
-        BigDecimal depositAmount = record.getDepositAmount();
-        long userId = record.getUser().getId();
-        String bookTitle = record.getBook().getTitle();
-
-        // 1. Cập nhật trạng thái REJECTED (để lưu lý do từ chối)
-        libDAO.rejectRequest(borrowId, reason);
-
-        // 2. HOÀN TIỀN 100%: Nếu là đơn Online có đặt cọc thì trả lại ví
-        if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+        try (Connection c = DBConnection.getConnection()) {
+            c.setAutoCommit(false);
             try {
-                String note = "Hoàn 100% tiền cọc do yêu cầu mượn bị từ chối: " + reason;
-                // Nạp lại tiền vào ví khách hàng
-                walletService.creditWallet(userId, depositAmount, "REJECT_REFUND",
-                        note, "REJECT-REFUND-" + borrowId);
+                BorrowRecord record = libDAO.findById(borrowId);
+                if (record == null) {
+                    throw new IllegalArgumentException("Không tìm thấy phiếu mượn.");
+                }
 
-                // Gửi thông báo cho khách (nếu có hệ thống Notification)
-                notificationService.notifyDepositRefunded(userId, bookTitle, depositAmount, note);
-            } catch (Exception e) {
-                System.err.println("Lỗi hoàn tiền khi từ chối: " + e.getMessage());
+                BigDecimal depositAmount = record.getDepositAmount();
+                long userId = record.getUser().getId();
+                String bookTitle = record.getBook().getTitle();
+
+                // Tăng lại số lượng sách trong kho vì request bị từ chối
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE Book SET quantity = quantity + 1 WHERE book_id = ?")) {
+                    ps.setLong(1, record.getBook().getId());
+                    ps.executeUpdate();
+                }
+
+                // 1. Cập nhật trạng thái REJECTED (để lưu lý do từ chối)
+                libDAO.rejectRequest(borrowId, reason);
+
+                // 2. HOÀN TIỀN 100%: Nếu là đơn Online có đặt cọc thì trả lại ví
+                if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    try {
+                        String note = "Hoàn 100% tiền cọc do yêu cầu mượn bị từ chối: " + reason;
+                        // Nạp lại tiền vào ví khách hàng
+                        walletService.creditWallet(userId, depositAmount, "REJECT_REFUND",
+                                note, "REJECT-REFUND-" + borrowId);
+
+                        // Gửi thông báo cho khách (nếu có hệ thống Notification)
+                        notificationService.notifyDepositRefunded(userId, bookTitle, depositAmount, note);
+                    } catch (Exception e) {
+                        System.err.println("Lỗi hoàn tiền khi từ chối: " + e.getMessage());
+                    }
+                }
+
+                // Ghi log hoạt động của thủ thư
+                logDAO.addActivityLog((int) staffId, "Từ chối mượn: " + bookTitle + " [ID:" + borrowId + "]");
+
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
             }
         }
-
-        // Ghi log hoạt động của thủ thư
-        logDAO.addActivityLog((int) staffId, "Từ chối mượn: " + bookTitle + " [ID:" + borrowId + "]");
     }
 
     public void borrowMultipleInPerson(long userId, List<String> barcodes) throws SQLException {
