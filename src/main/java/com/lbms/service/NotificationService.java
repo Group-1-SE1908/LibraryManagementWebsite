@@ -23,9 +23,8 @@ public class NotificationService {
     private final EmailService emailService = new EmailService();
     private final UserDAO userDAO = new UserDAO();
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 1: Sách đã có sẵn
-    // ════════════════════════════════════════════════════════════════
+
     public void notifyBookAvailable(long userId, String bookTitle) throws SQLException {
         String title = "Sách đã sẵn sàng để nhận!";
         String message = "Cuốn sách \"" + bookTitle + "\" bạn đặt trước đã có sẵn. "
@@ -43,9 +42,8 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 2: Sắp hết hạn
-    // ════════════════════════════════════════════════════════════════
+
     public void notifyBookExpiringSoon(long userId, String bookTitle,
             Timestamp expiredAt) throws SQLException {
         String deadline = new SimpleDateFormat("HH:mm - dd/MM/yyyy").format(expiredAt);
@@ -64,9 +62,8 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 3: Đã hết hạn
-    // ════════════════════════════════════════════════════════════════
+
     public void notifyReservationExpired(long userId, String bookTitle) throws SQLException {
         String title = "Đặt trước đã bị hủy do hết hạn";
         String message = "Đặt trước cho cuốn sách \"" + bookTitle + "\" đã bị hủy tự động "
@@ -77,16 +74,15 @@ public class NotificationService {
                     "❌ Đặt trước đã bị hủy",
                     "Đặt trước cho cuốn sách <strong>\"" + bookTitle + "\"</strong> đã bị hủy tự động.",
                     "📌 Lý do: Bạn không đến nhận sách trong vòng 3 ngày. "
-                    + "Bạn có thể tìm kiếm và đặt trước lại cuốn sách này nếu muốn.",
+                            + "Bạn có thể tìm kiếm và đặt trước lại cuốn sách này nếu muốn.",
                     "#ef4444", "🔍 Tìm sách đặt lại"));
         } catch (Exception e) {
             logger.log(Level.WARNING, "[Notification] Bỏ qua lỗi email userId=" + userId + ": " + e.getMessage());
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 4: User tự hủy
-    // ════════════════════════════════════════════════════════════════
+
     public void notifyReservationCancelled(long userId, String bookTitle) throws SQLException {
         String title = "Đặt trước đã được hủy";
         String message = "Đặt trước cho cuốn sách \"" + bookTitle + "\" đã được hủy thành công.";
@@ -102,9 +98,8 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 5: Đặt trước đã được chuyển thành mượn
-    // ════════════════════════════════════════════════════════════════
+
     public void notifyReservationBorrowed(long userId, String bookTitle) throws SQLException {
         String title = "Đặt trước đã được xác nhận";
         String message = "Bạn đã nhận sách \"" + bookTitle + "\" thành công. Thời hạn mượn là 7 ngày.";
@@ -120,16 +115,16 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // SỰ KIỆN 6: Hoàn tiền cọc sau khi trả sách
-    // ════════════════════════════════════════════════════════════════
-    // Trong com.lbms.service.NotificationService.java
-    // Trong com.lbms.service.NotificationService.java
-    public void notifyDepositRefunded(long userId, String bookTitle, BigDecimal depositRefund, String note) throws SQLException {
+
+    public void notifyDepositRefunded(long userId, String bookTitle, BigDecimal depositRefund, String note)
+            throws SQLException {
         String formattedAmount = formatVnd(depositRefund);
         String title = "Xác nhận hoàn tiền cọc";
-        // Sử dụng tham số 'note' để thông báo linh hoạt theo từng luồng (tại chỗ hay online)
-        String message = "Sách \"" + bookTitle + "\": " + note + ". Số tiền +" + formattedAmount + " đã được cộng vào ví.";
+        // Sử dụng tham số 'note' để thông báo linh hoạt theo từng luồng (tại chỗ hay
+        // online)
+        String message = "Sách \"" + bookTitle + "\": " + note + ". Số tiền +" + formattedAmount
+                + " đã được cộng vào ví.";
 
         insertNotification(userId, "DEPOSIT_REFUNDED", title, message);
 
@@ -144,9 +139,25 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
+    // SỰ KIỆN 7: Đã trả sách thành công (Không hoàn vào ví)
+    
+    public void notifyBookReturned(long userId, String bookTitle) throws SQLException {
+        String title = "Xác nhận trả sách";
+        String message = "Bạn đã trả cuốn sách \"" + bookTitle + "\" thành công.";
+        insertNotification(userId, "BOOK_RETURNED", title, message);
+        try {
+            sendEmail(userId, "✅ " + title, buildEmailHtml(
+                    "✅ Xác nhận trả sách",
+                    "Cảm ơn bạn đã sử dụng dịch vụ thư viện.",
+                    "Cuốn sách <strong>\"" + bookTitle + "\"</strong> đã được xác nhận trả thành công.",
+                    "#10b981", "📖 Lịch sử mượn trả"));
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "[Notification] Lỗi gửi email: " + e.getMessage());
+        }
+    }
+
     // QUERY METHODS
-    // ════════════════════════════════════════════════════════════════
+
     public int countUnread(long userId) throws SQLException {
         String sql = "SELECT COUNT(1) FROM notifications WHERE user_id = ? AND is_read = 0";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -194,9 +205,8 @@ public class NotificationService {
         }
     }
 
-    // ════════════════════════════════════════════════════════════════
     // PRIVATE HELPERS
-    // ════════════════════════════════════════════════════════════════
+
     private void insertNotification(long userId, String type,
             String title, String message) throws SQLException {
         String sql = "INSERT INTO notifications (user_id, type, title, message, created_at) "
@@ -256,7 +266,8 @@ public class NotificationService {
                 + "<tr><td style='padding:0 40px 32px;text-align:center;'>"
                 + "<a href='" + appUrl + "/reservation' style='display:inline-block;background:" + accentColor
                 + ";color:#fff;"
-                + "text-decoration:none;padding:12px 32px;border-radius:8px;font-size:0.9rem;font-weight:600;'>" + ctaText
+                + "text-decoration:none;padding:12px 32px;border-radius:8px;font-size:0.9rem;font-weight:600;'>"
+                + ctaText
                 + "</a>"
                 + "</td></tr>"
                 + "<tr><td style='background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0;'>"

@@ -1,6 +1,7 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -365,6 +366,16 @@
                                         test="${(record.status == 'RECEIVED' && !isDetailOnline) || record.status == 'BORROWED'}">
                                         <div class="text-center">
                                             <p class="small text-muted mb-3">Nhập mã vạch để nhận lại sách</p>
+                                            
+                                            <c:if test="${not empty record.depositAmount && record.depositAmount > 0 && !isDetailOnline}">
+                                                <div class="alert alert-info py-2 mb-3">
+                                                    <span class="text-dark small">Tiền cọc cần hoàn trả (50%): </span><br/>
+                                                    <strong class="text-danger fs-5">
+                                                        <fmt:formatNumber value="${record.depositAmount * 0.5}" type="number" pattern="#,##0"/> đ
+                                                    </strong>
+                                                </div>
+                                            </c:if>
+
                                             <input type="text" id="bcReturn"
                                                    class="form-control mb-3 text-center fw-bold"
                                                    placeholder="LIB-XXXXXX">

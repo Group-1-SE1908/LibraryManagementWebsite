@@ -10,49 +10,57 @@ import java.util.List;
 public class ReservationDAO {
 
     // existsActive: kiểm tra user đã có reservation đang active cho book chưa
-    // gác cổng : check xem liệu đã đặt chưa
+   
     public boolean existsActive(long userId, long bookId) throws SQLException {
-        String sql = "SELECT COUNT(1) FROM reservations " +
+        String sql = "SELECT 1 FROM reservations " +
                 "WHERE user_id = ? AND book_id = ? " +
                 "AND status IN ('WAITING', 'AVAILABLE')";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             ps.setLong(2, bookId);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() && rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 
     // countActive: đếm số reservation đang active của user (để check giới hạn)
-    // gác cổng: số lượng reservation hiện tại
+   
     public int countActive(long userId) throws SQLException {
-        String sql = "SELECT COUNT(1) FROM reservations " +
+        String sql = "SELECT COUNT(*) FROM reservations " +
                 "WHERE user_id = ? AND status IN ('WAITING', 'AVAILABLE')";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() ? rs.getInt(1) : 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                return 0;
+            }
         }
     }
 
     // getNextQueuePosition: lấy vị trí kế tiếp trong hàng chờ của 1 cuốn sách
-    // xếp hàng: gán giá trị tiếp theo của queue
+ 
     public int getNextQueuePosition(long bookId) throws SQLException {
-        String sql = "SELECT ISNULL(MAX(queue_position), 0) + 1 " +
-                "FROM reservations " +
+        String sql = "SELECT MAX(queue_position) FROM reservations " +
                 "WHERE book_id = ? AND status IN ('WAITING', 'AVAILABLE')";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, bookId);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() ? rs.getInt(1) : 1;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) + 1;
+                }
+                return 1;
+            }
         }
     }
 
     // create: insert reservation mới với queue_position, trả về id vừa tạo
-    //xếp hàng: vô list
+ 
     public long create(long userId, long bookId, int queuePosition) throws SQLException {
         String sql = "INSERT INTO reservations " +
                 "(user_id, book_id, status, queue_position, created_at) " +
@@ -71,7 +79,7 @@ public class ReservationDAO {
     }
 
     // reactivate: kích hoạt lại reservation CANCELLED/EXPIRED với queue mới
-    // quay xe, kh cần tạo mới
+    
     public void reactivate(long reservationId, int queuePosition) throws SQLException {
         String sql = "UPDATE reservations " +
                 "SET status = 'WAITING', " +
@@ -92,7 +100,7 @@ public class ReservationDAO {
     }
 
     // cancel: hủy reservation của chính user (đang WAITING hoặc AVAILABLE)
-    // rời hàng
+   
     public void cancel(long reservationId, long userId) throws SQLException {
         // Lấy thông tin trước khi hủy để re-order queue
         Reservation res = getById(reservationId);
@@ -121,7 +129,7 @@ public class ReservationDAO {
     }
 
     // reorderQueueAfterRemoval: cập nhật lại queue_position sau khi 1 người rời hàng
-    //dồn hàng, 2 lên 1, 3 lên 2
+  
     private void reorderQueueAfterRemoval(long bookId, int removedPosition) throws SQLException {
         String sql = "UPDATE reservations " +
                 "SET queue_position = queue_position - 1, " +
@@ -195,7 +203,7 @@ public class ReservationDAO {
         }
     }
     // getFirstWaiting: lấy người đầu tiên trong hàng chờ của 1 cuốn sách
-    // tìm ông có đầu hàng 
+ 
     public Reservation getFirstWaiting(long bookId) throws SQLException {
         String sql = "SELECT TOP 1 r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -215,7 +223,7 @@ public class ReservationDAO {
     }
 
     // findExpiredAvailable: tìm các reservation AVAILABLE đã quá hạn
-    // available nhưng k lấy sách
+  
     public List<Reservation> findExpiredAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +
@@ -236,7 +244,7 @@ public class ReservationDAO {
     }
 
     // findExpiringAvailable: tìm AVAILABLE sắp hết hạn trong vòng 1 ngày (để nhắc nhở)
-    // sắp hết hạn trong 1 ngày để nhắc
+    
     public List<Reservation> findExpiringAvailable() throws SQLException {
         String sql = "SELECT r.id, r.user_id, r.book_id, r.status, " +
                 "r.note, r.notified_at, r.expired_at, r.queue_position, " +

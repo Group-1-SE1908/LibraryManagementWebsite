@@ -113,44 +113,50 @@ public class LibrarianBorrowService {
                 try {
                     reservationService.onBookReturned(bookId);
                 } catch (Exception e) {
-                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId + ": " + e.getMessage());
+                    System.err.println("[LibrarianBorrowService] Lỗi xử lý reservation sau trả sách bookId=" + bookId
+                            + ": " + e.getMessage());
                 }
 
                 // 7. Xử lý hoàn tiền cọc dựa trên borrow_method
                 BigDecimal depositRefund = BigDecimal.ZERO;
                 if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0 && borrowUserId > 0) {
-                    String note;
                     if ("ONLINE".equalsIgnoreCase(borrowMethod)) {
                         // Logic Online: Giữ lại 30k ship + 25% cọc
                         BigDecimal shipFee = new BigDecimal("30000");
                         BigDecimal retentionAmount = depositAmount.multiply(new BigDecimal("0.25")).add(shipFee);
                         depositRefund = depositAmount.subtract(retentionAmount);
 
-                        note = "Hoàn tiền cọc sau khi trừ 30k ship và 25% phí vận hành";
-                    } else {
-                        // Logic Tại chỗ: Hoàn 50% cọc (như bạn đã thống nhất cho BorrowService)
-                        depositRefund = depositAmount.multiply(new BigDecimal("0.5"));
-                        note = "Hoàn lại 50% tiền cọc (mượn tại chỗ)";
-                    }
+                        String note = "Hoàn tiền cọc sau khi trừ 30k ship và 25% phí vận hành";
 
-                    if (depositRefund.compareTo(BigDecimal.ZERO) < 0) {
-                        depositRefund = BigDecimal.ZERO;
-                    }
-
-                    // Chỉ hoàn tiền khi depositRefund > 0 (tránh creditWallet(0) throw exception)
-                    if (depositRefund.compareTo(BigDecimal.ZERO) > 0) {
-                        try {
-                            walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND", note,
-                                    "DEPOSIT-REFUND-" + borrowId);
-                            notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund, note);
-                        } catch (Exception e) {
-                            System.err
-                                    .println("[LibrarianBorrowService] Lỗi hoàn tiền khi trả sách: " + e.getMessage());
+                        if (depositRefund.compareTo(BigDecimal.ZERO) < 0) {
+                            depositRefund = BigDecimal.ZERO;
                         }
+
+                        // Chỉ hoàn tiền khi depositRefund > 0
+                        if (depositRefund.compareTo(BigDecimal.ZERO) > 0) {
+                            try {
+                                walletService.creditWallet(borrowUserId, depositRefund, "DEPOSIT_REFUND", note,
+                                        "DEPOSIT-REFUND-" + borrowId);
+                                notificationService.notifyDepositRefunded(borrowUserId, bookTitle, depositRefund, note);
+                            } catch (Exception e) {
+                                System.err.println("[LibrarianBorrowService] Lỗi hoàn tiền khi trả sách: " + e.getMessage());
+                            }
+                        }
+                    } else {
+                        // Logic Tại chỗ:
+                        // Chỉ gửi thông báo đã trả sách thành công, KHÔNG hoàn tiền tự động vào ví ảo.
+                        try {
+                            notificationService.notifyBookReturned(borrowUserId, bookTitle);
+                        } catch (Exception e) {
+                            System.err.println("[LibrarianBorrowService] Lỗi gửi thông báo: " + e.getMessage());
+                        }
+                        
+                        // Set bằng 0 để Controller không hiển thị flash message báo đã hoàn tiền
+                        depositRefund = BigDecimal.ZERO;
                     }
                 }
 
-                return new BigDecimal[]{fineAmount, depositRefund};
+                return new BigDecimal[] { fineAmount, depositRefund };
             } catch (Exception e) {
                 c.rollback();
                 throw e;
@@ -324,7 +330,7 @@ public class LibrarianBorrowService {
                 if (currentBorrowed + barcodes.size() > BorrowService.MAX_ACTIVE_BORROWS) {
                     throw new IllegalArgumentException(
                             "Vượt quá giới hạn mượn (Tối đa " + BorrowService.MAX_ACTIVE_BORROWS + " cuốn). Đang mượn: "
-                            + currentBorrowed);
+                                    + currentBorrowed);
                 }
 
                 LocalDate borrowDate = LocalDate.now();
@@ -545,6 +551,7 @@ public class LibrarianBorrowService {
         libDAO.markAsLost(borrowId);
 
         // Ghi log hoạt động
-        logDAO.addActivityLog((int) staffId, "BÁO MẤT/ĐÓNG ĐƠN: Sách " + record.getBook().getTitle() + " [ID:" + borrowId + "]");
+        logDAO.addActivityLog((int) staffId,
+                "BÁO MẤT/ĐÓNG ĐƠN: Sách " + record.getBook().getTitle() + " [ID:" + borrowId + "]");
     }
 }
